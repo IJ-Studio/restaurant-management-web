@@ -1,0 +1,301 @@
+{
+  "repo_notes": [
+    {
+      "content": ""
+    }
+  ],
+  "pages": [
+    {
+      "title": "Overview",
+      "purpose": "Introduce the restaurant management platform, explaining its purpose as a Next.js-based authentication system with PostgreSQL backend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Technology Stack",
+      "purpose": "Detail the core technologies: Next.js 16, React 19, Drizzle ORM, PostgreSQL, bcrypt, and Tailwind CSS",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Getting Started",
+      "purpose": "Guide developers through initial setup, environment configuration, and running the application",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Architecture",
+      "purpose": "Explain the high-level architecture including App Router structure, authentication flow, and database integration",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Application Structure",
+      "purpose": "Describe the Next.js App Router file system, layout hierarchy, and routing conventions",
+      "parent": "Architecture",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Database Architecture",
+      "purpose": "Explain PostgreSQL setup via Supabase, Drizzle ORM configuration, and connection management",
+      "parent": "Architecture",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Authentication Flow",
+      "purpose": "Document the complete authentication system from user registration through login to protected routes",
+      "parent": "Architecture",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Pages and Routes",
+      "purpose": "Document all user-facing pages including public and protected routes",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Home Page",
+      "purpose": "Describe the landing page with its navigation and call-to-action button",
+      "parent": "Pages and Routes",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Login Page",
+      "purpose": "Detail the login page form, validation, and authentication flow",
+      "parent": "Pages and Routes",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Registration Page",
+      "purpose": "Explain the registration form with client-side validation, password strength checking, and account creation",
+      "parent": "Pages and Routes",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Dashboard Page",
+      "purpose": "Document the protected dashboard page with profile menu and logout functionality",
+      "parent": "Pages and Routes",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Special Pages",
+      "purpose": "Describe loading states, error boundaries, and 404 page handling",
+      "parent": "Pages and Routes",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Frontend Components",
+      "purpose": "Document reusable UI components used throughout the application",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Layout System",
+      "purpose": "Explain the root layout, authentication layout, and dashboard layout hierarchy",
+      "parent": "Frontend Components",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Navigation Component",
+      "purpose": "Document the Nav component with logo, children slot, and styling",
+      "parent": "Frontend Components",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Button Component",
+      "purpose": "Describe the configurable Button component with navigation capabilities",
+      "parent": "Frontend Components",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Dropdown Component",
+      "purpose": "Explain the Dropdown menu component with toggle and menu items",
+      "parent": "Frontend Components",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "API Routes",
+      "purpose": "Document backend API endpoints for authentication and data operations",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Login API",
+      "purpose": "Detail the POST /api/auth/login endpoint with credential validation and bcrypt password comparison",
+      "parent": "API Routes",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Register API",
+      "purpose": "Explain the POST /api/auth/register endpoint with user creation and password hashing",
+      "parent": "API Routes",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Custom Hooks",
+      "purpose": "Document custom React hooks for form handling, navigation, and utilities",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Form Submission Hook",
+      "purpose": "Explain useHandleSubmit for API calls, error handling, and navigation after form submission",
+      "parent": "Custom Hooks",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Navigation Hook",
+      "purpose": "Document useRedirect for programmatic client-side navigation",
+      "parent": "Custom Hooks",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Utility Functions",
+      "purpose": "Describe utility functions like createItems and local storage helpers",
+      "parent": "Custom Hooks",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Styling System",
+      "purpose": "Document Tailwind CSS configuration, global styles, and component-specific styling",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Tailwind Configuration",
+      "purpose": "Explain PostCSS and Tailwind CSS setup with content paths and plugins",
+      "parent": "Styling System",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Global Styles",
+      "purpose": "Document the global stylesheet imports and base styling",
+      "parent": "Styling System",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Loading Animation",
+      "purpose": "Describe the custom CSS-based loading animation with cooking pan effect",
+      "parent": "Styling System",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Type Definitions",
+      "purpose": "Document TypeScript types and interfaces used throughout the application",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    }
+  ]
+}The content has been copied to your clipboard. Please paste it here to complete the file creation.
