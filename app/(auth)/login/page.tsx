@@ -8,6 +8,7 @@ export default function LoginPage() {
     const [correo, setCorreo] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string | null>(null)
+    const [success, setSuccess] = useState<string | null>(null)
 
     const { handleSubmit } = useHandleSubmit()
 
@@ -29,12 +30,18 @@ export default function LoginPage() {
 
                     </div>
 
+                    {success && (
+                        <div className="mt-4 p-3 rounded-md text-sm font-semibold text-center bg-green-100 text-green-700 border border-green-300 shadow transition-all duration-300">
+                            {success}
+                        </div>
+                    )}
+
                     {error && (
                         <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
                             {error}
                         </div>
                     )}
-{/* 
+                    {/* 
                     <Button
                         type='button'
                         style=''
@@ -67,7 +74,7 @@ export default function LoginPage() {
                                 e,
                                 // `${process.env.API_BACKEND_URL}/auth/register`,
                                 "/api/auth/login",
-                                {correo, password},
+                                { correo, password },
                                 setError,
                                 '/dashboard'
                             )
@@ -114,7 +121,7 @@ export default function LoginPage() {
                             {/* Olvidaste tu contraseña? {' '} */}
                             <Button
                                 type='button'
-                                style='' 
+                                style=''
                                 label='Recuperar contraseña'
                                 url='/frm_reset'
                                 className='font-semibold leading-6 text-[#232f38] hover:text-[#3b4b57]'

@@ -16,7 +16,7 @@ export default function RecoverPage() {
         if (!correo) return;
 
         const result = await handleSendEmail(auth, correo);
-        
+
         if (result.success) setResponse("Correo enviado correctamente.");
         else setResponse(result.message);
     }
@@ -45,12 +45,24 @@ export default function RecoverPage() {
                         </div>
                     )}
 
+                    {response && (
+                        <div className={`mt-4 p-3 rounded-md text-sm font-semibold text-center transition-all duration-300
+                            ${response.includes('correctamente') ? 'bg-green-100 text-green-700 border border-green-300 shadow' : 'bg-red-100 text-red-700 border border-red-300 shadow'}`}>
+                            {response}
+                            {response.includes('correctamente') && (
+                                <div className="mt-2 text-xs font-normal text-gray-700">
+                                    Revisa tu correo electrónico y sigue el enlace para continuar con el cambio de contraseña.
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <form className="space-y-6"
                         onSubmit={async (e) => {
                             e.preventDefault();
                             await handleSend();
                         }}
-                      >
+                    >
 
                         <div className='relative'>
                             <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900 sr-only">
