@@ -110,6 +110,18 @@ export default function LoginPage() {
                             <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">Contraseña*</span>
                         </div>
 
+                        <p className="mt-8 text-right text-sm text-gray-500">
+                            {/* Olvidaste tu contraseña? {' '} */}
+                            <Button
+                                type='button'
+                                style='' 
+                                label='Recuperar contraseña'
+                                url='/frm_reset'
+                                className='font-semibold leading-6 text-[#232f38] hover:text-[#3b4b57]'
+                                ico=''
+                            />
+                        </p>
+
                         <div>
                             <Button
                                 type='submit'
