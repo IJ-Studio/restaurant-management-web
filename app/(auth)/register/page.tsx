@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Button from '@/components/Button';
 import { useHandleSubmit } from '@/hooks/handleSubmit';
 import { registerWithEmail } from "@/actions/(email-actions)/sendEmailVerification";
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
     const [nombre, setNombre] = useState('');
@@ -15,6 +16,7 @@ export default function RegisterPage() {
     const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { handleSubmit } = useHandleSubmit();
+    const router = useRouter();
 
     const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{1,30}$/;
     const phoneRegex = /^\d{10,15}$/;
@@ -92,6 +94,10 @@ export default function RegisterPage() {
 
                             setSuccess("¡Cuenta creada exitosamente! Revisa tu correo y confirma tu cuenta antes de iniciar sesión.");
                             setError(null);
+
+                            setTimeout(() => {
+                                router.push('/login'); // o la página que corresponda
+                            }, 1800);
                         }}
                     >
                         <div className="flex space-x-2">

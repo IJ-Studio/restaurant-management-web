@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Button from '@/components/Button'
 import { useHandleSubmit } from '@/hooks/handleSubmit';
 
@@ -11,6 +12,7 @@ export default function LoginPage() {
     const [success, setSuccess] = useState<string | null>(null)
 
     const { handleSubmit } = useHandleSubmit()
+    const router = useRouter();
 
     return (
         <div className="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[1fr_1.3fr] lg:items-center">
@@ -41,43 +43,25 @@ export default function LoginPage() {
                             {error}
                         </div>
                     )}
-                    {/* 
-                    <Button
-                        type='button'
-                        style=''
-                        label='Continuar con Google'
-                        url='/google-auth'
-                        className='flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200'
-                        ico={
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3" width="18" height="18" aria-hidden>
-                                <path fill="#4285F4" d="M533.5 278.4c0-17.4-1.5-34.3-4.3-50.6H272.1v95.7h147.5c-.7 4.2-3.8 7.7-8.7 10.3v68h86.1c50.4-46.4 81.1-115 81.1-196.1z" />
-                                <path fill="#34A853" d="M272.1 544.3c72.8 0 134-24.1 178.7-65.6l-86.1-68c-24 16.2-54.9 25.8-92.6 25.8-71 0-131.3-47.8-152.9-112.1h-90.6v70.4c44.3 87.9 135.4 150.1 243.5 150.1z" />
-                                <path fill="#FBBC05" d="M119.2 321.4c-10.9-32.6-10.9-67.6 0-100.2V150.8H28.6C-2.1 204.5-2.1 339.8 28.6 393.5l90.6-72.1z" />
-                                <path fill="#EA4335" d="M272.1 109.1c39.6-.6 75.5 14.1 103.6 40.6l77.8-77.8C413.8 24.9 356.7 1 272.1 1 163.9 1 72.8 63.1 28.6 150.8l90.6 70.4C140.8 156.9 201.1 109.1 272.1 109.1z" />
-                            </svg>
-                        }
-                    />
-
-                    <div className="relative my-8">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200"></div>
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="bg-white px-4 text-gray-400 font-light">o</span>
-                        </div>
-                    </div> */}
 
                     <form
                         className="space-y-6"
                         onSubmit={
-                            (e) => handleSubmit(
-                                e,
-                                // `${process.env.API_BACKEND_URL}/auth/register`,
-                                "/api/auth/login",
-                                { correo, password },
-                                setError,
-                                '/dashboard'
-                            )
+                            (e) => {
+                                handleSubmit(
+                                    e,
+                                    "/api/auth/login",
+                                    { correo, password },
+                                    setError,
+                                    '/dashboard'
+                                );
+                                setSuccess("¡Inicio de sesión exitoso!");
+                                setError(null);
+
+                                setTimeout(() => {
+                                    router.push('/dashboard');
+                                }, 1500);
+                            }
                         }
                     >
 
@@ -118,7 +102,6 @@ export default function LoginPage() {
                         </div>
 
                         <p className="mt-8 text-right text-sm text-gray-500">
-                            {/* Olvidaste tu contraseña? {' '} */}
                             <Button
                                 type='button'
                                 style=''
