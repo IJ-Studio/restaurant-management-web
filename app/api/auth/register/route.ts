@@ -2,6 +2,7 @@ import { hash } from "bcrypt";
 import { db } from "@/lib/db";
 import { users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { adminAuth } from "@/lib/firebaseAdmin";
 
 export async function POST(req: Request) {
 
@@ -53,6 +54,12 @@ export async function POST(req: Request) {
       phone: telefono,
       password: newpass,
     });
+    await adminAuth.createUser({
+      email: correo,
+      password: password,
+      displayName: `${nombre} ${apellido}`,
+    });
+    
   } catch (insertErr) {
     console.error("DB Error (insert):", insertErr);
     return Response.json(
