@@ -18,6 +18,7 @@ export default function RegisterPage() {
 
     const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{1,30}$/;
     const phoneRegex = /^\d{10,15}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     const isNameValid = nameRegex.test(nombre);
     const isLastnameValid = nameRegex.test(apellido);
@@ -152,6 +153,9 @@ export default function RegisterPage() {
                             <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">
                                 Correo electrónico*
                             </span>
+                            {correo && !emailRegex.test(correo) && (
+                                <p className="text-xs text-red-500 mt-1">Ingresa un correo electrónico válido.</p>
+                            )}
                         </div>
 
                         <div>
