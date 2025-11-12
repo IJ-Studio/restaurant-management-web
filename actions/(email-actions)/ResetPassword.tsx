@@ -9,6 +9,14 @@ export async function handleResetPassword(auth, actionCode, newPassword ) {
         const usr_email = await verifyPasswordResetCode(auth, actionCode);         
         await confirmPasswordReset(auth, actionCode, newPassword);    
         console.log("contraseña reseteada correctamente:");
+
+        // Llamada al endpoint para actualizar en Drizzle
+        await fetch("/api/auth/reset-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ correo: usr_email, password: newPassword }),
+        });
+        
         return { success: true, email: usr_email };
 
     } catch (error) {
