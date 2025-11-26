@@ -3,23 +3,30 @@
 import { auth } from "@/lib/firebaseConfig";
 import { useState } from 'react';
 import Button from '@/components/Button'
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { handleResetPassword } from "@/actions/(email-actions)/ResetPassword";
 
 export default function VerificationPage() {
     const params = useSearchParams();
     const mode = params.get("mode");
     const actionCode = params.get("oobCode");
+    const apiKey = params.get("apiKey");
+    const continueUrl = params.get("continueUrl");
     const [new_pass, setPass] = useState('');
     const [error, setError] = useState<string | null>(null)
     const [response, setResponse] = useState("");
+    const router = useRouter();
 
     async function handleReset() {
         if (!actionCode) return;
 
         const result = await handleResetPassword(auth, actionCode, new_pass);
-        if (result.success) setResponse("Contraseña restablecida correctamente.");
-        else setResponse(result.message);
+        if (result.success) {
+            setResponse("Contraseña restablecida correctamente.");
+            setTimeout(() => router.push('/login'), 1800);
+        } else {
+            setResponse(result.message);
+        }
     }
 
     return (
@@ -37,8 +44,15 @@ export default function VerificationPage() {
                         <h2 className="text-3xl font-bold text-gray-900">
                             Restablecer contraseña
                         </h2>
-
                     </div>
+
+                    {response && (
+                        <div className={`mt-4 p-3 rounded-md text-sm font-semibold text-center transition-all duration-300
+                            ${response.includes('correctamente') ? 'bg-green-100 text-green-700 border border-green-300 shadow' : 'bg-red-100 text-red-700 border border-red-300 shadow'}`}
+                        >
+                            {response}
+                        </div>
+                    )}
 
                     {error && (
                         <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
@@ -68,19 +82,15 @@ export default function VerificationPage() {
                                 value={new_pass}
                                 onChange={(e) => setPass(e.target.value)}
                             />
-                            <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">Correo electronico*</span>
+                            <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">Nueva contraseña*</span>
                         </div>
 
-                        <div>
-                            <Button
-                                type='submit'
-                                style=''
-                                label='Establecer nueva contraseña'
-                                url=''
-                                className='flex w-full justify-center rounded-xl bg-[#232f38] px-3 py-3.5 text-sm font-semibold leading-6 text-white shadow-lg hover:bg-[#3b4b57] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#232f38]'
-                                ico=''
-                            />
-                        </div>
+                        <button
+                            type="submit"
+                            className="flex w-full justify-center rounded-xl bg-[#232f38] px-3 py-3.5 text-sm font-semibold leading-6 text-white shadow-lg hover:bg-[#3b4b57]"
+                        >
+                            Establecer nueva contraseña
+                        </button>
                     </form>
                 </div>
             </div>

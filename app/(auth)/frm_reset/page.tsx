@@ -12,9 +12,11 @@ export default function RecoverPage() {
 
 
     async function handleSend() {
+        console.log("Ejecutando handleSend con:", correo);
         if (!correo) return;
 
         const result = await handleSendEmail(auth, correo);
+
         if (result.success) setResponse("Correo enviado correctamente.");
         else setResponse(result.message);
     }
@@ -43,12 +45,24 @@ export default function RecoverPage() {
                         </div>
                     )}
 
+                    {response && (
+                        <div className={`mt-4 p-3 rounded-md text-sm font-semibold text-center transition-all duration-300
+                            ${response.includes('correctamente') ? 'bg-green-100 text-green-700 border border-green-300 shadow' : 'bg-red-100 text-red-700 border border-red-300 shadow'}`}>
+                            {response}
+                            {response.includes('correctamente') && (
+                                <div className="mt-2 text-xs font-normal text-gray-700">
+                                    Revisa tu correo electrónico y sigue el enlace para continuar con el cambio de contraseña.
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <form className="space-y-6"
-                        onSubmit={(e) => {
+                        onSubmit={async (e) => {
                             e.preventDefault();
-                            handleSend();
-                            
-                        }}>
+                            await handleSend();
+                        }}
+                    >
 
                         <div className='relative'>
                             <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900 sr-only">
@@ -68,16 +82,13 @@ export default function RecoverPage() {
                             <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">Correo electronico*</span>
                         </div>
 
-                        <div>
-                            <Button
-                                type='submit'
-                                style=''
-                                label='Enviar enlace de recuperación de contraseña'
-                                url=''
-                                className='flex w-full justify-center rounded-xl bg-[#232f38] px-3 py-3.5 text-sm font-semibold leading-6 text-white shadow-lg hover:bg-[#3b4b57] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#232f38]'
-                                ico=''
-                            />
-                        </div>
+                        <button
+                            type="submit"
+                            className="flex w-full justify-center rounded-xl bg-[#232f38] px-3 py-3.5 text-sm font-semibold leading-6 text-white shadow-lg hover:bg-[#3b4b57]"
+                        >
+                            Enviar enlace de recuperación de contraseña
+                        </button>
+
                     </form>
                 </div>
             </div>

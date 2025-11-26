@@ -1,5 +1,6 @@
-export default function AuthLayout({ children, imageUrl}) {
-    return (
+export default function RootLayout({ children, }: {
+    children: React.ReactNode;
+}) {    return (
         <div>
             {children}
         </div>

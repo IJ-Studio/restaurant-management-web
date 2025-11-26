@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import Button from '@/components/Button';
 import { useHandleSubmit } from '@/hooks/handleSubmit';
+import { registerWithEmail } from "@/actions/(email-actions)/sendEmailVerification";
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
     const [nombre, setNombre] = useState('');
@@ -11,12 +13,14 @@ export default function RegisterPage() {
     const [telefono, setTelefono] = useState('');
     const [password, setpassword] = useState('');
     const [agreed, setAgreed] = useState(false);
-
+    const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { handleSubmit } = useHandleSubmit();
+    const router = useRouter();
 
     const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{1,30}$/;
     const phoneRegex = /^\d{10,15}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     const isNameValid = nameRegex.test(nombre);
     const isLastnameValid = nameRegex.test(apellido);
@@ -35,10 +39,10 @@ export default function RegisterPage() {
     const passwordScore = getPasswordScore(password);
 
     const strengthColor = [
-        "bg-red-500",     
-        "bg-orange-400",  
-        "bg-yellow-400",  
-        "bg-green-500",   
+        "bg-red-500",
+        "bg-orange-400",
+        "bg-yellow-400",
+        "bg-green-500",
         "bg-green-900"
     ][Math.min(passwordScore, 4)];
 
@@ -63,49 +67,38 @@ export default function RegisterPage() {
                         </div>
                     )}
 
-                    {/* <Button
-                        type="button"
-                        style=''
-                        label="Registrarse con Google"
-                        url="/google-auth"
-                        className="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200"
-                        ico={
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 533.5 544.3"
-                                width="18"
-                                height="18"
-                                aria-hidden
-                            >
-                                <path fill="#4285F4" d="M533.5 278.4c0-17.4-1.5-34.3-4.3-50.6H272.1v95.7h147.5c-.7 4.2-3.8 7.7-8.7 10.3v68h86.1c50.4-46.4 81.1-115 81.1-196.1z" />
-                                <path fill="#34A853" d="M272.1 544.3c72.8 0 134-24.1 178.7-65.6l-86.1-68c-24 16.2-54.9 25.8-92.6 25.8-71 0-131.3-47.8-152.9-112.1h-90.6v70.4c44.3 87.9 135.4 150.1 243.5 150.1z" />
-                                <path fill="#FBBC05" d="M119.2 321.4c-10.9-32.6-10.9-67.6 0-100.2V150.8H28.6C-2.1 204.5-2.1 339.8 28.6 393.5l90.6-72.1z" />
-                                <path fill="#EA4335" d="M272.1 109.1c39.6-.6 75.5 14.1 103.6 40.6l77.8-77.8C413.8 24.9 356.7 1 272.1 1 163.9 1 72.8 63.1 28.6 150.8l90.6 70.4C140.8 156.9 201.1 109.1 272.1 109.1z" />
-                            </svg>
-                        }
-                    />
-
-                    <div className="relative my-6">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200"></div>
+                    {success && (
+                        <div className="mt-4 p-3 rounded-md text-sm font-semibold text-center bg-green-100 text-green-700 border border-green-300 shadow transition-all duration-300">
+                            {success}
                         </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="bg-white px-4 text-gray-400 font-light">o</span>
-                        </div>
-                    </div> */}
+                    )}
 
                     <form
                         className="space-y-4"
-                        onSubmit={(e) =>
-                            handleSubmit(
+                        onSubmit={async (e) => {
+                            const result = await handleSubmit(
                                 e,
-                                // `${process.env.API_BACKEND_URL}/auth/register`,
                                 "/api/auth/register",
                                 { nombre, apellido, correo, telefono: `${lada}${telefono}`, password },
                                 setError,
                                 '/dashboard'
-                            )
-                        }
+                            );
+
+                            // Enviar correo de verificación con Firebase
+                            try {
+                                await registerWithEmail(nombre, apellido, correo, password);
+                            } catch (err) {
+                                // Puedes mostrar un mensaje de error si falla el envío
+                                setError("No se pudo enviar el correo de verificación.");
+                            }
+
+                            setSuccess("¡Cuenta creada exitosamente! Revisa tu correo y confirma tu cuenta antes de iniciar sesión.");
+                            setError(null);
+
+                            setTimeout(() => {
+                                router.push('/login'); // o la página que corresponda
+                            }, 1800);
+                        }}
                     >
                         <div className="flex space-x-2">
                             <div className='relative w-1/2'>
@@ -118,7 +111,7 @@ export default function RegisterPage() {
                                     placeholder="Nombre"
                                     className={`block w-full rounded-lg border py-2.5 px-3 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 sm:text-sm
                                         ${nombre && !isNameValid ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-gray-300"}`}
-                                                                     value={nombre}
+                                    value={nombre}
                                     onChange={(e) => setNombre(e.target.value)}
                                 />
                                 {nombre && !isNameValid && (
@@ -139,7 +132,7 @@ export default function RegisterPage() {
                                     placeholder="Apellido"
                                     className={`block w-full rounded-lg border py-2.5 px-3 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 sm:text-sm
                                         ${apellido && !isLastnameValid ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-gray-300"}`}
-                                                                    value={apellido}
+                                    value={apellido}
                                     onChange={(e) => setApellido(e.target.value)}
                                 />
                                 {apellido && !isLastnameValid && (
@@ -166,6 +159,9 @@ export default function RegisterPage() {
                             <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">
                                 Correo electrónico*
                             </span>
+                            {correo && !emailRegex.test(correo) && (
+                                <p className="text-xs text-red-500 mt-1">Ingresa un correo electrónico válido.</p>
+                            )}
                         </div>
 
                         <div>
