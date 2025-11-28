@@ -1,7 +1,6 @@
 import store from './localstore';
 import { useRedirect } from './useRedirect';
 
-
 export function useHandleSubmit() {
 
     const { redirectTo } = useRedirect()
@@ -34,14 +33,23 @@ export function useHandleSubmit() {
             }
             const data = await response.json();
 
-            // store(
-            //     [
-            //         ['token', data.token],
-            //         ['user', data.user]
-            //     ]
-            // )
+            // 1. Guardar sesión en localStorage
+            store(
+                [
+                    // ['token', data.token], // Token comentado por ahora
+                    ['user', data.user]    // Guardamos id, email y ROLE
+                ],
+                true // true para stringify
+            )
 
-            if (nexturl) redirectTo(nexturl)
+            // 2. Lógica de Redirección Inteligente por Rol
+            if (data.user && data.user.role === 'admin') {
+                // Si es admin, forzamos la redirección a su panel
+                redirectTo('/dashboard/admin');
+            } else {
+                // Si es usuario normal, usamos el nexturl original (ej. /dashboard)
+                if (nexturl) redirectTo(nexturl);
+            }
             
         } catch (err: any) {
             setError(err.message)

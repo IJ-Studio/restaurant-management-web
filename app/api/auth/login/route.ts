@@ -49,8 +49,17 @@ export async function POST(req: Request) {
         );     
     }
 
-    try {
-        return Response.json({ ok: true });        
+  try {
+        // 1. Separa la contraseña del resto de los datos del usuario
+        // 'password: _' significa: toma la contraseña y ponla en una variable '_' (que ignoraremos)
+        // '...userWithoutPass' significa: pon el resto (nombre, email, ROLE) en esta variable
+        const { password: _, ...userWithoutPass } = usr;
+        
+        // 2. Devuelve el usuario limpio al frontend
+        return Response.json({ 
+            ok: true, 
+            user: userWithoutPass 
+        });        
     } catch (unexpectedError: any) {
         console.error("Error inesperado:", unexpectedError);
         return Response.json(
@@ -58,4 +67,6 @@ export async function POST(req: Request) {
             { status: 500 }
         );
     }
+
+
 }
