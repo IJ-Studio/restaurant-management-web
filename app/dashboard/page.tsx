@@ -8,7 +8,14 @@ export default function HomePage() {
 
     const {redirectTo} = useRedirect();
 
-    const handleLogout = (e) => {
+    const handleLogout = async () => {
+        // 1. Pedir al servidor que borre la cookie
+        await fetch('/api/auth/logout', { method: 'POST' });
+        
+        // 2. Borrar datos locales (cosmético)
+        localStorage.removeItem('user');
+        
+        // 3. Redirigir al login (ahora sí, el middleware nos dejará entrar)
         redirectTo('/login');
     };
 

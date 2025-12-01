@@ -2,14 +2,16 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/schema";
 import { compare } from "bcrypt";
 import { eq } from "drizzle-orm";
+import { createSession } from "@/lib/session"; 
 
 export async function POST(req: Request) {
     let usr, ok;
  
     const body = await req.json(); 
 
-    const {correo, password } = body;
+    const { correo, password } = body;
     
+    // 1. Validación de campos vacíos
     if (!correo || !password) {
         return Response.json(
             { message: "Faltan credenciales" },
@@ -17,6 +19,7 @@ export async function POST(req: Request) {
         );
     }
     
+    // 2. Buscar usuario en la Base de Datos
     try {
         [usr] = await db.select().from(users).where(eq(users.email, correo));
     } catch (dbError: any) {
@@ -27,11 +30,13 @@ export async function POST(req: Request) {
         );
     }
     
+    // 3. Verificar si el usuario existe
     if (!usr) return Response.json(
         { message: "El usuario no existe" },
         { status: 404 }
     );
 
+    // 4. Verificar la contraseña (bcrypt)
     try {
         ok = await compare(password, usr.password);
     } catch (bcryptError: any) {
@@ -49,24 +54,26 @@ export async function POST(req: Request) {
         );     
     }
 
-  try {
-        // 1. Separa la contraseña del resto de los datos del usuario
-        // 'password: _' significa: toma la contraseña y ponla en una variable '_' (que ignoraremos)
-        // '...userWithoutPass' significa: pon el resto (nombre, email, ROLE) en esta variable
+    // 5. Crear Sesión y Responder
+    try {
+        // Separamos la contraseña para no enviarla al cliente ni guardarla en sesión
         const { password: _, ...userWithoutPass } = usr;
         
-        // 2. Devuelve el usuario limpio al frontend
+        // ---PARTE DE LAS COOKIES ---
+        // Esto crea una cookie HttpOnly en el navegador del usuario automáticamente
+        await createSession(userWithoutPass);
+        
+        // Devolvemos el usuario (id, email, role) para que el frontend sepa a dónde redirigir
         return Response.json({ 
             ok: true, 
             user: userWithoutPass 
         });        
+
     } catch (unexpectedError: any) {
-        console.error("Error inesperado:", unexpectedError);
+        console.error("Error inesperado al crear sesión:", unexpectedError);
         return Response.json(
             { message: "Error inesperado en el servidor" },
             { status: 500 }
         );
     }
-
-
 }

@@ -5,6 +5,7 @@
 		"drizzle-orm": "^0.44.7",
 		"firebase": "^12.5.0",
 		"firebase-admin": "^13.6.0",
+		"jose": "^6.1.2",
 		"next": "^16.0.1",
 		"pg": "^8.16.3",
 		"react": "^19.2.0",
@@ -30,10 +31,9 @@
 		"tailwindcss": "^4.1.16",
 		"typescript": "5.9.3"
 	},
-	
 	"pnpm": {
-    "overrides": {
-      "esbuild": "^0.25.0"
-    }
-  }
+		"overrides": {
+			"esbuild": "^0.25.0"
+		}
+	}
 }
