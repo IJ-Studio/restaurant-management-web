@@ -2,14 +2,17 @@
 
 import { auth } from "@/lib/firebaseConfig";
 import { useState } from 'react';
-import Button from '@/components/Button';
 import { handleSendEmail } from "@/actions/(email-actions)/sendPasswordResetEmail";
+import { emailRegex } from "@/utils/validators";
 
 export default function RecoverPage() {
     const [correo, setCorreo] = useState('')
     const [error, setError] = useState<string | null>(null);
     const [response, setResponse] = useState("");
+    
+    const isEmailValid = emailRegex.test(correo);
 
+    const isFormReady = isEmailValid;
 
     async function handleSend() {
         console.log("Ejecutando handleSend con:", correo);
@@ -79,12 +82,21 @@ export default function RecoverPage() {
                                 value={correo}
                                 onChange={(e) => setCorreo(e.target.value)}
                             />
-                            <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">Correo electronico*</span>
+                            <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">
+                                Correo electrónico*
+                            </span>
+                            {correo && !isEmailValid && (
+                                <p className="text-xs text-red-500 mt-1">Ingresa un correo electrónico válido.</p>
+                            )}
                         </div>
 
                         <button
                             type="submit"
-                            className="flex w-full justify-center rounded-xl bg-[#232f38] px-3 py-3.5 text-sm font-semibold leading-6 text-white shadow-lg hover:bg-[#3b4b57]"
+                            disabled={!isFormReady}
+                            aria-disabled={!isFormReady}
+                            className={`flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg 
+                                transition-all duration-300 
+                                ${isFormReady ? "bg-[#232f38] hover:bg-[#3b4b57]" : "bg-[#232f38] opacity-40 cursor-not-allowed"}`}
                         >
                             Enviar enlace de recuperación de contraseña
                         </button>

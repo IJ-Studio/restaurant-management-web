@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Button from '@/components/Button'
 import { useHandleSubmit } from '@/hooks/handleSubmit';
+import { emailRegex } from "@/utils/validators";
 
 export default function LoginPage() {
     const [correo, setCorreo] = useState('')
@@ -10,6 +11,11 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
 
+    const isEmailValid = emailRegex.test(correo);
+    
+    const isFormReady = isEmailValid && password.length>=8;
+    
+    
     const { handleSubmit } = useHandleSubmit()
 
     return (
@@ -96,7 +102,12 @@ export default function LoginPage() {
                                 value={correo}
                                 onChange={(e) => setCorreo(e.target.value)}
                             />
-                            <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">Correo electronico*</span>
+                            <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">
+                                Correo electrónico*
+                            </span>
+                            {correo && !isEmailValid && (
+                                <p className="text-xs text-red-500 mt-1">Ingresa un correo electrónico válido.</p>
+                            )}
                         </div>
 
                         <div className='relative'>
@@ -129,16 +140,16 @@ export default function LoginPage() {
                             />
                         </p>
 
-                        <div>
-                            <Button
-                                type='submit'
-                                style=''
-                                label='Iniciar Sesión'
-                                url=''
-                                className='flex w-full justify-center rounded-xl bg-[#232f38] px-3 py-3.5 text-sm font-semibold leading-6 text-white shadow-lg hover:bg-[#3b4b57] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#232f38]'
-                                ico=''
-                            />
-                        </div>
+                        <button
+                            type="submit"
+                            disabled={!isFormReady}
+                            aria-disabled={!isFormReady}
+                            className={`flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg 
+                                transition-all duration-300 
+                                ${isFormReady ? "bg-[#232f38] hover:bg-[#3b4b57]" : "bg-[#232f38] opacity-40 cursor-not-allowed"}`}
+                        >
+                            Iniciar Sesión
+                        </button>
                     </form>
 
                     <p className="mt-8 text-center text-sm text-gray-500">

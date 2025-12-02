@@ -27,6 +27,9 @@
       "@/lib/*": [
         "lib/*"
       ],
+      "@/utils/*": [
+        "utils/*"
+      ],
       "@/public/*": [
         "public/*"
       ],
@@ -60,7 +63,7 @@
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "components/Input.tssx"  ],
   "exclude": [
     "node_modules"
   ]
