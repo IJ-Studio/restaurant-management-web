@@ -55,8 +55,85 @@ export default function VerificationPage() {
         number: number.test(new_pass),
         special: specialChar.test(new_pass)
     }
+    const MIN_SEQ = 3;
 
-    const isPasswordValid = Object.values(validations).every(Boolean);
+    const hasIncrementalNumbers = (pwd: string) => {
+        const digits = "0123456789";
+        for (let i = 0; i <= digits.length - MIN_SEQ; i++) {
+            const seq = digits.slice(i, i + MIN_SEQ);
+            if (pwd.includes(seq)) return true;
+        }
+        return false;
+    };
+
+    const hasDecrementalNumbers = (pwd: string) => {
+        const digits = "9876543210";
+        for (let i = 0; i <= digits.length - MIN_SEQ; i++) {
+            const seq = digits.slice(i, i + MIN_SEQ);
+            if (pwd.includes(seq)) return true;
+        }
+        return false;
+    };
+
+    const hasIncrementalLetters = (pwd: string) => {
+        const letters = "abcdefghijklmnopqrstuvwxyz";
+        const lowerPwd = pwd.toLowerCase();
+        for (let i = 0; i <= letters.length - MIN_SEQ; i++) {
+            const seq = letters.slice(i, i + MIN_SEQ);
+            if (lowerPwd.includes(seq)) return true;
+        }
+        return false;
+    };
+
+    const hasDecrementalLetters = (pwd: string) => {
+        const letters = "zyxwvutsrqponmlkjihgfedcba";
+        const lowerPwd = pwd.toLowerCase();
+        for (let i = 0; i <= letters.length - MIN_SEQ; i++) {
+            const seq = letters.slice(i, i + MIN_SEQ);
+            if (lowerPwd.includes(seq)) return true;
+        }
+        return false;
+    };
+
+    const hasRepeatedCharacters = (pwd: string) => /(.)\1{2,}/.test(pwd); // 3 iguales
+
+    const hasSequentialPattern = (pwd: string) => {
+        return (hasRepeatedCharacters(pwd) || hasIncrementalNumbers(pwd) || hasDecrementalNumbers(pwd) || hasIncrementalLetters(pwd) || hasDecrementalLetters(pwd));
+    };
+
+
+    const normalize = (str: string) =>
+        str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+
+    const isPasswordContainingPersonalData = (
+        pwd: string,
+        nombre: string,
+        apellido: string,
+        correo: string,
+        telefono: string
+    ) => {
+        const lowerPwd = normalize(pwd);
+        const emailUser = normalize(correo.split("@")[0]);
+        const nombreParts = normalize(nombre).split(/\s+/).filter(Boolean);
+        const apellidoParts = normalize(apellido).split(/\s+/).filter(Boolean);
+
+        const telefonoLimpio = telefono.replace(/\D/g, "");
+
+        const personalData = [
+            emailUser,
+            telefonoLimpio,
+            ...nombreParts,
+            ...apellidoParts
+        ].filter(v => v && v.length >= 3);
+
+        return personalData.some(data => lowerPwd.includes(data));
+    };
+
+
+    const isPasswordValid =
+        Object.values(validations).every(Boolean) &&
+        !hasSequentialPattern(new_pass);    
     
     async function handleReset() {
         if (!actionCode) return;
@@ -105,6 +182,12 @@ export default function VerificationPage() {
                         className="space-y-6"
                         onSubmit={(e) => {
                             e.preventDefault();
+
+                            if (hasSequentialPattern(new_pass)) {
+                                setError("La contraseña contiene secuencias fáciles de adivinar. Usa una combinación menos predecible.");
+                                return;
+                            }
+
                             if (!isPasswordValid) {
                                 setError("Completa todos los campos correctamente antes de continuar.");
                                 return;
@@ -140,6 +223,12 @@ export default function VerificationPage() {
                                     ></div>
                                 </div>
                             )}
+                            {new_pass && hasSequentialPattern(new_pass) && (
+                                <p className="text-xs text-red-500 mt-1">
+                                    La contraseña contiene secuencias predecibles.
+                                </p>
+                            )}
+
                             <div>
                                 <p className="mt-5 text-sm font-medium text-gray-600 mb-3">
                                     La Contraseña debe contener al menos:

@@ -62,11 +62,93 @@ export default function RegisterPage() {
         special: specialChar.test(password)
     }
 
+    const MIN_SEQ = 3;
+
+    const hasIncrementalNumbers = (pwd: string) => {
+        const digits = "0123456789";
+        for (let i = 0; i <= digits.length - MIN_SEQ; i++) {
+            const seq = digits.slice(i, i + MIN_SEQ);
+            if (pwd.includes(seq)) return true;
+        }
+        return false;
+    };
+
+    const hasDecrementalNumbers = (pwd: string) => {
+        const digits = "9876543210";
+        for (let i = 0; i <= digits.length - MIN_SEQ; i++) {
+            const seq = digits.slice(i, i + MIN_SEQ);
+            if (pwd.includes(seq)) return true;
+        }
+        return false;
+    };
+
+    const hasIncrementalLetters = (pwd: string) => {
+        const letters = "abcdefghijklmnopqrstuvwxyz";
+        const lowerPwd = pwd.toLowerCase();
+        for (let i = 0; i <= letters.length - MIN_SEQ; i++) {
+            const seq = letters.slice(i, i + MIN_SEQ);
+            if (lowerPwd.includes(seq)) return true;
+        }
+        return false;
+    };
+
+    const hasDecrementalLetters = (pwd: string) => {
+        const letters = "zyxwvutsrqponmlkjihgfedcba";
+        const lowerPwd = pwd.toLowerCase();
+        for (let i = 0; i <= letters.length - MIN_SEQ; i++) {
+            const seq = letters.slice(i, i + MIN_SEQ);
+            if (lowerPwd.includes(seq)) return true;
+        }
+        return false;
+    };
+
+    const hasRepeatedCharacters = (pwd: string) => /(.)\1{2,}/.test(pwd); // 3 iguales
+
+    const hasSequentialPattern = (pwd: string) => {
+        return (hasRepeatedCharacters(pwd) ||hasIncrementalNumbers(pwd) ||hasDecrementalNumbers(pwd) ||hasIncrementalLetters(pwd) ||hasDecrementalLetters(pwd));
+    };
+
+    
+    const normalize = (str: string) =>
+        str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+
+    const isPasswordContainingPersonalData = (
+        pwd: string,
+        nombre: string,
+        apellido: string,
+        correo: string,
+        telefono: string
+    ) => {
+        const lowerPwd = normalize(pwd);
+        const emailUser = normalize(correo.split("@")[0]);
+        const nombreParts = normalize(nombre).split(/\s+/).filter(Boolean);
+        const apellidoParts = normalize(apellido).split(/\s+/).filter(Boolean);
+
+        const telefonoLimpio = telefono.replace(/\D/g, "");
+    
+        const personalData = [
+            emailUser,
+            telefonoLimpio,
+            ...nombreParts,
+            ...apellidoParts
+        ].filter(v => v && v.length >= 3);
+    
+        return personalData.some(data => lowerPwd.includes(data));
+    };
+    
+    
+      
+      
+      
     const isNameValid = nameRegex.test(nombre);
     const isLastnameValid = nameRegex.test(apellido);
     const isPhoneValid = phoneRegex.test(telefono);
     const isEmailValid = emailRegex.test(correo);
-    const isPasswordValid = Object.values(validations).every(Boolean);
+    const isPasswordValid =
+        Object.values(validations).every(Boolean) &&
+        !hasSequentialPattern(password) &&
+        !isPasswordContainingPersonalData(password, nombre, apellido, correo, telefono);
 
     const isFormFieldsValid = isNameValid && isLastnameValid && isPhoneValid && isEmailValid && isPasswordValid;
 
@@ -102,8 +184,16 @@ export default function RegisterPage() {
                         className="space-y-4"
                         onSubmit={async (e) => {
                             e.preventDefault();
-                           
-                            // validación final por seguridad (cliente)
+
+                            if (isPasswordContainingPersonalData(password, nombre, apellido, correo, telefono)) {
+                                setError("La contraseña no puede contener tu nombre, apellido, correo o teléfono.");
+                                return;
+                            }
+                              
+                            if (hasSequentialPattern(password)) {
+                                setError("La contraseña contiene secuencias fáciles de adivinar. Usa una combinación menos predecible.");
+                                return;
+                            }
                             if (!isFormFieldsValid) {
                                 setError("Completa todos los campos correctamente antes de continuar.");
                                 return;
@@ -131,11 +221,11 @@ export default function RegisterPage() {
                                 setError("No se pudo enviar el correo de verificación.");
                             }
 
-                            setSuccess("¡Cuenta creada exitosamente! Revisa tu correo y confirma tu cuenta antes de iniciar sesión.");
                             setError(null);
+                            setSuccess("¡Cuenta creada exitosamente! Revisa tu correo y confirma tu cuenta antes de iniciar sesión.");
 
                             setTimeout(() => {
-                                router.push('/login'); // o la página que corresponda
+                                router.push('/login');
                             }, 1800);
                         }}
                     >
@@ -229,7 +319,7 @@ export default function RegisterPage() {
                                         ${telefono && !isPhoneValid ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-gray-300"}`}
                                     value={telefono}
                                     onChange={(e) => setTelefono(e.target.value.replace(/\D/g, ''))}
-                                />
+                                    />
                                 {telefono && !isPhoneValid && (
                                     <p className="text-xs text-red-500 mt-1">Debe contener entre 7 y 15 dígitos.</p>
                                 )}
@@ -259,6 +349,19 @@ export default function RegisterPage() {
                                     ></div>
                                 </div>
                             )}
+                            
+                            {password && hasSequentialPattern(password) && (
+                                <p className="text-xs text-red-500 mt-1">
+                                    La contraseña contiene secuencias predecibles.
+                                </p>
+                            )}
+
+                            {password && isPasswordContainingPersonalData(password, nombre, apellido, correo, telefono) && (
+                                <p className="text-xs text-red-500 mt-1">
+                                    La contraseña contiene información personal.
+                                </p>
+                            )}
+
                             <div>
                                 <p className="mt-5 text-sm font-medium text-gray-600 mb-3">
                                     La Contraseña debe contener al menos:

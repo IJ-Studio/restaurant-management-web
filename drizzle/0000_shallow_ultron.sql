@@ -5,5 +5,6 @@ CREATE TABLE "users" (
 	"email" varchar(100) NOT NULL,
 	"phone" varchar(20) NOT NULL,
 	"password" text NOT NULL,
+	"role" varchar(20) DEFAULT 'user' NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
