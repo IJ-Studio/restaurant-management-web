@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/firebaseConfig";
 import { useState } from 'react';
-import { handleSendEmail } from "@/actions/(email-actions)/sendPasswordResetEmail";
+import { handleSendEmail } from "@/actions/(email-actions)/handleSendPasswordResetEmail";
 import { emailRegex } from "@/utils/validators";
 
 export default function RecoverPage() {

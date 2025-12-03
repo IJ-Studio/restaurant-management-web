@@ -3,7 +3,7 @@
 import { auth } from "@/lib/firebaseConfig";
 import { useState } from 'react';
 import { useSearchParams, useRouter } from "next/navigation";
-import { handleResetPassword } from "@/actions/(email-actions)/ResetPassword";
+import { handleResetPassword } from "@/actions/(email-actions)/handleResetPassword";
 import { length, lowercase, uppercase, number, specialChar } from "@/utils/validators";
 
 

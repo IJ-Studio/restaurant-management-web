@@ -80,7 +80,7 @@ export default function LoginPage() {
                                 e,
                                 // `${process.env.API_BACKEND_URL}/auth/register`,
                                 "/api/auth/login",
-                                { correo, password },
+                                { correo, password, },
                                 setError,
                                 '/dashboard'
                             )

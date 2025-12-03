@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import Button from '@/components/Button';
 import { useHandleSubmit } from '@/hooks/handleSubmit';
-import { registerWithEmail } from "@/actions/(email-actions)/sendEmailVerification";
-import { useRouter } from 'next/navigation';
+import { registerWithEmail } from "@/lib/auth/sendEmailVerification";
 import { nameRegex, phoneRegex, emailRegex } from "@/utils/validators";
 import { length, lowercase, uppercase,number, specialChar} from "@/utils/validators";
 
@@ -19,7 +18,6 @@ export default function RegisterPage() {
     const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { handleSubmit } = useHandleSubmit();
-    const router = useRouter();
 
     const CheckIcon = () => (
         <svg viewBox="0 0 24 24" className="w-3.5 h-3.5">
@@ -205,14 +203,6 @@ export default function RegisterPage() {
 
                             setError(null);
 
-                            const result = await handleSubmit(
-                                e,
-                                "/api/auth/register",
-                                { nombre, apellido, correo, telefono: `${lada}${telefono}`, password },
-                                setError,
-                                '/dashboard'
-                            );
-
                             // Enviar correo de verificación con Firebase
                             try {
                                 await registerWithEmail(nombre, apellido, correo, password);
@@ -221,12 +211,16 @@ export default function RegisterPage() {
                                 setError("No se pudo enviar el correo de verificación.");
                             }
 
+                            const result = await handleSubmit(
+                                e,
+                                "/api/auth/register",
+                                { nombre, apellido, correo, telefono: `${lada}${telefono}`, password },
+                                setError,
+                                '/login'
+                            );
+
                             setError(null);
                             setSuccess("¡Cuenta creada exitosamente! Revisa tu correo y confirma tu cuenta antes de iniciar sesión.");
-
-                            setTimeout(() => {
-                                router.push('/login');
-                            }, 1800);
                         }}
                     >
                         <div className="flex space-x-2">
