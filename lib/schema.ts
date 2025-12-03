@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, text, boolean } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(), // serial crea números autoincrementales
@@ -8,4 +8,5 @@ export const users = pgTable("users", {
   phone: varchar("phone", { length: 20 }).notNull(),
   password: text("password").notNull(),
   role: varchar("role", { length: 20 }).default('user').notNull(),
+  isVerified: boolean("verified").default(false).notNull(),
 });

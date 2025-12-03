@@ -1,5 +1,5 @@
 {
-  "id": "f95f9dcd-ea9d-4280-aee1-f5fa62b844a5",
+  "id": "de7cb33a-7100-48bb-9d5d-aaddbb143add",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -50,6 +50,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'user'"
+        },
+        "verified": {
+          "name": "verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
