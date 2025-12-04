@@ -4,23 +4,22 @@ import { compare } from "bcrypt";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { createSession } from "@/lib/session";
 
 export async function POST(req: Request) {
   const body = await req.json();
   const { correo, password } = body;
 
+  // --- Validación inicial ---
   if (!correo || !password) {
     return Response.json({ message: "Faltan credenciales" }, { status: 400 });
   }
 
   let firebaseUser;
 
+  // --- Login con Firebase ---
   try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      correo,
-      password
-    );
+    const userCredential = await signInWithEmailAndPassword(auth, correo, password);
     await userCredential.user.reload();
     firebaseUser = userCredential.user;
 
@@ -28,19 +27,20 @@ export async function POST(req: Request) {
       return Response.json(
         {
           message:
-            "Cuenta no verificada, revisa la bandeja de entrada de tu correo electronico, se ha enviado un correo de verificación",
+            "Cuenta no verificada, revisa la bandeja de entrada de tu correo, se ha enviado un correo de verificación",
           code: "UNVERIFIED",
         },
         { status: 403 }
       );
     }
-  } catch (authError: any) {
+  } catch {
     return Response.json(
       { message: "Credenciales inválidas" },
       { status: 401 }
     );
   }
 
+  // --- Usuario en la base de datos ---
   let usr;
 
   try {
@@ -53,10 +53,13 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!usr)
+  if (!usr) {
     return Response.json({ message: "El usuario no existe" }, { status: 404 });
+  }
 
+  // --- Bloqueo por intentos fallidos ---
   const now = Date.now();
+
   if (usr.loginLockUntil > now) {
     const waitSeconds = Math.ceil((usr.loginLockUntil - now) / 1000);
     return Response.json(
@@ -67,6 +70,7 @@ export async function POST(req: Request) {
     );
   }
 
+  // --- Comparación de contraseña en BD ---
   let ok;
   try {
     ok = await compare(password, usr.password);
@@ -78,21 +82,23 @@ export async function POST(req: Request) {
     );
   }
 
+  // --- Manejo de intentos fallidos ---
   if (!ok) {
     const newAttempts = usr.loginAttempts + 1;
 
     if (newAttempts >= 3) {
-      const lockTimeMs = 30_000; // 30 segundos
+      const lockTimeMs = 30000; // 30 segundos
       await db
         .update(users)
         .set({ loginAttempts: 0, loginLockUntil: now + lockTimeMs })
         .where(eq(users.id, usr.id));
+
       return Response.json(
         { message: "Demasiados intentos fallidos. Debes esperar 30 segundos." },
         { status: 429 }
       );
     }
-    // Si aun no se llega al límite de intentos
+
     await db
       .update(users)
       .set({ loginAttempts: newAttempts })
@@ -101,19 +107,26 @@ export async function POST(req: Request) {
     return Response.json({ message: "Contraseña incorrecta" }, { status: 401 });
   }
 
+  // --- Reset de intentos fallidos ---
   try {
-    // 1. Separa la contraseña del resto de los datos del usuario
-    // 'password: _' significa: toma la contraseña y ponla en una variable '_' (que ignoraremos)
-    // '...userWithoutPass' significa: pon el resto (nombre, email, ROLE) en esta variable
     await db
       .update(users)
       .set({ loginAttempts: 0, loginLockUntil: 0 })
       .where(eq(users.id, usr.id));
-    const { password: _, ...userWithoutPass } = usr;
-    // 2. Devuelve el usuario limpio al frontend
-    return Response.json({ ok: true, user: userWithoutPass });
   } catch (unexpectedError: any) {
     console.error("Error inesperado:", unexpectedError);
+  }
+
+  // --- Crear sesión + retornar usuario sin contraseña ---
+  try {
+    const { password: _, ...userWithoutPass } = usr;
+
+    // funcionalidad del archivo 1
+    await createSession(userWithoutPass);
+
+    return Response.json({ ok: true, user: userWithoutPass });
+  } catch (unexpectedError: any) {
+    console.error("Error inesperado al crear sesión:", unexpectedError);
     return Response.json(
       { message: "Error inesperado en el servidor" },
       { status: 500 }
