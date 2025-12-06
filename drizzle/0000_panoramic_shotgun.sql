@@ -12,5 +12,6 @@ CREATE TABLE "users" (
 	"recovery_attempts" integer DEFAULT 0 NOT NULL,
 	"recovery_lock_until" bigint DEFAULT 0 NOT NULL,
 	"session time" bigint DEFAULT 0 NOT NULL,
+	"lock_step" integer DEFAULT 0 NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );

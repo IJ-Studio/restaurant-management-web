@@ -1,5 +1,5 @@
 {
-  "id": "5a3c8bf5-664f-4ebf-8a74-a2d79a62e644",
+  "id": "eeadfc10-ba66-4b0d-8df3-013aedc39a9f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -89,6 +89,13 @@
         "session time": {
           "name": "session time",
           "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "lock_step": {
+          "name": "lock_step",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0

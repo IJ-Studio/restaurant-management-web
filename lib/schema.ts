@@ -22,4 +22,6 @@ export const users = pgTable("users", {
   recoveryAttempts: integer("recovery_attempts").default(0).notNull(),
   recoveryLockUntil: bigint("recovery_lock_until", { mode: "number" }).default(0).notNull(),
   timeSession: bigint("session time", { mode: "number" }).default(0).notNull(), //ms
+  lockStep: integer("lock_step").default(0).notNull(),
+
 });
