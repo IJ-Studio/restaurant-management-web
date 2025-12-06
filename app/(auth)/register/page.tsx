@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Button from '@/components/Button';
 import { useHandleSubmit } from '@/hooks/handleSubmit';
 import { registerWithEmail } from "@/lib/auth/sendEmailVerification";
-import { nameRegex, phoneRegex, emailRegex } from "@/utils/validators";
+import { phoneRegex, emailRegex } from "@/utils/validators";
+import { letters ,haveAnVowel, noRepeatMoreThreeTimes, noRepeatConsonantsMoreThreeTimes } from "@/utils/validators";
 import { length, lowercase, uppercase,number, specialChar} from "@/utils/validators";
 
 export default function RegisterPage() {
@@ -18,6 +19,8 @@ export default function RegisterPage() {
     const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { handleSubmit } = useHandleSubmit();
+
+      const repeatedChars = /(.)\1{2,}/;
 
     const CheckIcon = () => (
         <svg viewBox="0 0 24 24" className="w-3.5 h-3.5">
@@ -52,13 +55,7 @@ export default function RegisterPage() {
         "bg-green-900"
     ][Math.min(passwordScore, 4)];
 
-    const validations = {
-        length: length.test(password),
-        lowercase: lowercase.test(password),
-        uppercase: uppercase.test(password),
-        number: number.test(password),
-        special: specialChar.test(password)
-    }
+
 
     const MIN_SEQ = 3;
 
@@ -106,9 +103,27 @@ export default function RegisterPage() {
         return (hasRepeatedCharacters(pwd) ||hasIncrementalNumbers(pwd) ||hasDecrementalNumbers(pwd) ||hasIncrementalLetters(pwd) ||hasDecrementalLetters(pwd));
     };
 
+    const validateNameBlock = (value: string) => {
+        if (!value) return false;
+
+        const cleaned = value.trim().replace(/\s+/g, " ");
+        const parts = cleaned.split(" ");
+
+        // 1–2 palabras permitidas (para nombres o apellidos)
+        if (parts.length < 1 || parts.length > 2) return false;
+
+        for (const p of parts) {
+            if (!letters.test(p)) return false;
+            if (!haveAnVowel.test(p)) return false;
+            if (noRepeatMoreThreeTimes.test(p)) return false;
+            if (noRepeatConsonantsMoreThreeTimes.test(p)) return false;
+        }
+
+        return true;
+    };
     
     const normalize = (str: string) =>
-        str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
 
     const isPasswordContainingPersonalData = (
@@ -137,10 +152,18 @@ export default function RegisterPage() {
     
     
       
+    const validations = {
+        length: length.test(password),
+        lowercase: lowercase.test(password),
+        uppercase: uppercase.test(password),
+        number: number.test(password),
+        special: specialChar.test(password)
+    }
       
-      
-    const isNameValid = nameRegex.test(nombre);
-    const isLastnameValid = nameRegex.test(apellido);
+
+    const isNameValid = validateNameBlock(nombre);
+    const isLastnameValid = validateNameBlock(apellido);
+    
     const isPhoneValid = phoneRegex.test(telefono);
     const isEmailValid = emailRegex.test(correo);
     const isPasswordValid =
