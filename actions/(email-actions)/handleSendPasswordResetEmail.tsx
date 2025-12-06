@@ -3,7 +3,7 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 export async function handleSendEmail(auth, correo) {
     try {
         const actionCodeSettings = {
-            url: 'https://restaurant-management-platform-4tfe.vercel.app/reset',
+            url: 'https://restaurant-management-platform-4tfe.vercel.app/actions',
 
             handleCodeInApp: true,
         };
