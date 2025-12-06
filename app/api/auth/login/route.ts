@@ -10,126 +10,112 @@ export async function POST(req: Request) {
   const body = await req.json();
   const { correo, password } = body;
 
-  // --- Validación inicial ---
   if (!correo || !password) {
     return Response.json({ message: "Faltan credenciales" }, { status: 400 });
   }
 
-  let firebaseUser;
+  // === 1. Obtener usuario desde DB ===
+  const [usr] = await db.select().from(users).where(eq(users.email, correo));
 
-  // --- Login con Firebase ---
+  if (!usr) {
+    return Response.json({ message: "El usuario no existe" }, { status: 404 });
+  }
+
+  const now = Date.now();
+
+  // === 2. Bloqueo previo (si aún no expira) ===
+  if (usr.loginLockUntil > now) {
+    const waitMs = usr.loginLockUntil - now;
+    const waitSeconds = Math.ceil(waitMs / 1000);
+
+    return Response.json(
+      {
+        message: `Debes esperar ${waitSeconds} segundos.`,
+        waitSeconds,
+        max: 300,
+      },
+      { status: 429 }
+    );
+  }
+
+  // === 3. Intento de login con Firebase ===
+  let firebaseUser;
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, correo, password);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      correo,
+      password
+    );
     await userCredential.user.reload();
     firebaseUser = userCredential.user;
+  } catch {
+    // --- Intento fallido → lógica progresiva ---
+    const attempts = usr.loginAttempts + 1;
 
-    if (!firebaseUser.emailVerified) {
+    // Si llegó a 3 intentos fallidos → activar bloqueo
+    if (attempts >= 3) {
+      const newLockStep = usr.lockStep + 1;
+
+      const base = 30000; // 30s
+      const lockDuration = Math.min(base * 2 ** (newLockStep - 1), 300000); // máx 5 min (300k ms)
+
+      await db
+        .update(users)
+        .set({
+          loginAttempts: 0,
+          loginLockUntil: now + lockDuration,
+          lockStep: newLockStep,
+        })
+        .where(eq(users.id, usr.id));
+
       return Response.json(
         {
-          message:
-            "Cuenta no verificada, revisa la bandeja de entrada de tu correo, se ha enviado un correo de verificación",
-          code: "UNVERIFIED",
+          message: `Demasiados intentos fallidos. Espera ${Math.ceil(
+            lockDuration / 1000
+          )} segundos.`,
+          waitSeconds: Math.ceil(lockDuration / 1000),
+          max: 300,
         },
-        { status: 403 }
+        { status: 429 }
       );
     }
-  } catch {
+
+    // Si NO llegó a 3 intentos → solo aumentar el contador
+    await db
+      .update(users)
+      .set({ loginAttempts: attempts })
+      .where(eq(users.id, usr.id));
+
     return Response.json(
       { message: "Credenciales inválidas" },
       { status: 401 }
     );
   }
 
-  // --- Usuario en la base de datos ---
-  let usr;
-
-  try {
-    [usr] = await db.select().from(users).where(eq(users.email, correo));
-  } catch (dbError: any) {
-    console.error("DB Error (select):", dbError);
-    return Response.json(
-      { message: "Error de conexión a la base de datos" },
-      { status: 500 }
-    );
-  }
-
-  if (!usr) {
-    return Response.json({ message: "El usuario no existe" }, { status: 404 });
-  }
-
-  // --- Bloqueo por intentos fallidos ---
-  const now = Date.now();
-
-  if (usr.loginLockUntil > now) {
-    const waitSeconds = Math.ceil((usr.loginLockUntil - now) / 1000);
+  // === 4. Email no verificado ===
+  if (!firebaseUser.emailVerified) {
     return Response.json(
       {
-        message: `Has superado el límite de intentos. Espera ${waitSeconds} segundos para volver a intentarlo.`,
+        message: "Cuenta no verificada. Revisa tu correo.",
+        code: "UNVERIFIED",
       },
-      { status: 429 }
+      { status: 403 }
     );
   }
 
-  // --- Comparación de contraseña en BD ---
-  let ok;
-  try {
-    ok = await compare(password, usr.password);
-  } catch (bcryptError: any) {
-    console.error("Error en bcrypt:", bcryptError);
-    return Response.json(
-      { message: "Error al verificar la contraseña" },
-      { status: 500 }
-    );
-  }
+  // === 5. Reset total al iniciar sesión correctamente ===
+  await db
+    .update(users)
+    .set({
+      loginAttempts: 0,
+      loginLockUntil: 0,
+      lockStep: 0,
+    })
+    .where(eq(users.id, usr.id));
 
-  // --- Manejo de intentos fallidos ---
-  if (!ok) {
-    const newAttempts = usr.loginAttempts + 1;
+  // === 6. Crear sesión y retornar usuario ===
+  const { password: _, ...userWithoutPass } = usr;
+  await createSession(userWithoutPass);
 
-    if (newAttempts >= 3) {
-      const lockTimeMs = 30000; // 30 segundos
-      await db
-        .update(users)
-        .set({ loginAttempts: 0, loginLockUntil: now + lockTimeMs })
-        .where(eq(users.id, usr.id));
-
-      return Response.json(
-        { message: "Demasiados intentos fallidos. Debes esperar 30 segundos." },
-        { status: 429 }
-      );
-    }
-
-    await db
-      .update(users)
-      .set({ loginAttempts: newAttempts })
-      .where(eq(users.id, usr.id));
-
-    return Response.json({ message: "Contraseña incorrecta" }, { status: 401 });
-  }
-
-  // --- Reset de intentos fallidos ---
-  try {
-    await db
-      .update(users)
-      .set({ loginAttempts: 0, loginLockUntil: 0 })
-      .where(eq(users.id, usr.id));
-  } catch (unexpectedError: any) {
-    console.error("Error inesperado:", unexpectedError);
-  }
-
-  // --- Crear sesión + retornar usuario sin contraseña ---
-  try {
-    const { password: _, ...userWithoutPass } = usr;
-
-    // funcionalidad del archivo 1
-    await createSession(userWithoutPass);
-
-    return Response.json({ ok: true, user: userWithoutPass });
-  } catch (unexpectedError: any) {
-    console.error("Error inesperado al crear sesión:", unexpectedError);
-    return Response.json(
-      { message: "Error inesperado en el servidor" },
-      { status: 500 }
-    );
-  }
+  return Response.json({ ok: true, user: userWithoutPass });
 }
