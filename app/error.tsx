@@ -1,37 +1,53 @@
 'use client';
+import { useEffect } from 'react';
+import styles from './error.module.css';
 
 export default function ErrorPage({ error, reset }: { error: Error; reset: () => void }) {
+    useEffect(() => {
+        // Aquí podrías loguear el error a un servicio de reporte
+        console.error(error);
+    }, [error]);
+
     return (
-        <div
-            className="max-w-md mx-auto p-4 border border-white rounded-lg bg-gradient-to-b from-red-100 to-red-50 flex items-start space-x-3 shadow-md"
-        >
-            <div className="flex-shrink-0">
-                <div
-                    className="w-10 h-10 flex items-center justify-center bg-white border border-red-300 rounded-full"
-                >
-                    <span className="text-red-500">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="size-6"
-                        >
-                            <path
-                                fillRule="evenodd"
-                                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
-                                clipRule="evenodd"
-                            ></path>
-                        </svg>
-                    </span>
+        <div className="relative flex h-screen w-full flex-col items-center justify-center bg-gray-50 overflow-hidden">
+            {/* Background Text */}
+            <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10rem] md:text-[20rem] font-black text-red-50 select-none z-0 whitespace-nowrap opacity-80">
+                500
+            </h1>
+
+            {/* Content Wrapper */}
+            <div className="relative z-10 flex flex-col items-center gap-8">
+
+                {/* Animation: Boiling Pot */}
+                <div className={`${styles.potContainer} ${styles.shakingPot}`}>
+                    <div className={styles.bubble}></div>
+                    <div className={styles.bubble}></div>
+                    <div className={styles.bubble}></div>
+                    <div className={styles.bubble}></div>
+
+                    <div className={styles.potBody}>
+                        <div className={styles.potRim}></div>
+                    </div>
+                    <div className={styles.potHandle}></div>
+                </div>
+
+                {/* Text and Action */}
+                <div className="text-center space-y-4 px-4">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+                        ¡Se nos quemó la cocina!
+                    </h2>
+                    <p className="text-gray-600 max-w-md mx-auto">
+                        Hubo un error inesperado en nuestro servidor. Nuestros chefs digitales ya están trabajando para limpiarlo.
+                    </p>
+
+                    <button
+                        onClick={reset}
+                        className="inline-block mt-4 px-8 py-3 bg-[#c0392b] text-white rounded-xl font-semibold hover:bg-[#a93226] transition-all shadow-lg hover:shadow-xl"
+                    >
+                        Intentar de nuevo
+                    </button>
                 </div>
             </div>
-            <div>
-                <h3 className="text-lg font-semibold text-gray-900">This is error message</h3>
-                <p className="text-gray-700 text-sm">
-                    {error.message}
-                </p>
-            </div>
         </div>
-                
     );
 }

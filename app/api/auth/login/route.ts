@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     );
     await userCredential.user.reload();
     firebaseUser = userCredential.user;
-  } catch {
+  } catch (error: any) {
     // --- Intento fallido → lógica progresiva ---
     const attempts = usr.loginAttempts + 1;
 
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
       .where(eq(users.id, usr.id));
 
     return Response.json(
-      { message: "Credenciales inválidas" },
+      { message: `Error: ${(error as any).message}` },
       { status: 401 }
     );
   }
