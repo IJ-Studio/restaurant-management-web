@@ -11,6 +11,13 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'i.pravatar.cc',
       },
+      // Añadimos el dominio de Google para las fotos de perfil
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 
@@ -20,10 +27,9 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
-          { key: 'X-Frame-Options', value: 'DENY' }, // Previene clickjacking
-          { key: 'X-Content-Type-Options', value: 'nosniff' }, // Previene inyección MIME
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
-          // HSTS forzado (solo funciona si tienes HTTPS)
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         ],
       },
