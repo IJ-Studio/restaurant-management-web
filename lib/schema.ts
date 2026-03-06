@@ -39,7 +39,25 @@ export const users = pgTable("users", {
 });
 
 // ─── TIPOS INFERIDOS ─────────────────────────────────────────────────────────
+// ─── TABLA DE BACKUPS ─────────────────────────────────────────────────────────
+export const backups = pgTable("backups", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  sizeBytes: bigint("size_bytes", { mode: "number" }).default(0).notNull(),
+  driveFileId: varchar("drive_file_id", { length: 200 }),
+  driveUrl: varchar("drive_url", { length: 500 }),
+  type: varchar("type", { length: 20 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(),
+  errorMessage: text("error_message"),
+  tables: jsonb("tables"),
+  rowCount: integer("row_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── TIPOS INFERIDOS ─────────────────────────────────────────────────────────
 export type Role = typeof roles.$inferSelect;
 export type NewRole = typeof roles.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type Backup = typeof backups.$inferSelect;
+export type NewBackup = typeof backups.$inferInsert;

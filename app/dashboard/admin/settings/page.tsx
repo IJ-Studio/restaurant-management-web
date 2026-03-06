@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useSelector } from "react-redux";
@@ -38,6 +38,9 @@ import {
   ToggleRight,
 } from "lucide-react";
 
+// relative URL so frontend calls the Next.js API routes
+const API = '/api';
+
 const T = {
   brand: "#e85d04",
   bg: "#faf9f7",
@@ -57,6 +60,12 @@ const T = {
   warn: "#d97706",
   danger: "#dc2626",
   info: "#2563eb",
+};
+
+const formatSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 function NavItem({
@@ -265,53 +274,12 @@ function SettingRow({
 interface Backup {
   id: number;
   name: string;
-  size: string;
-  date: string;
-  type: "auto" | "manual";
-  status: "ok" | "error";
+  sizeBytes: number;  // antes era size: string
+  driveUrl?: string;
+  type: 'auto' | 'manual';
+  status: 'ok' | 'error';
+  createdAt: string;
 }
-const BACKUPS: Backup[] = [
-  {
-    id: 1,
-    name: "backup_2026-03-04_23-00",
-    size: "42.3 MB",
-    date: "2026-03-04 23:00",
-    type: "auto",
-    status: "ok",
-  },
-  {
-    id: 2,
-    name: "backup_2026-03-03_23-00",
-    size: "41.8 MB",
-    date: "2026-03-03 23:00",
-    type: "auto",
-    status: "ok",
-  },
-  {
-    id: 3,
-    name: "backup_manual_20260302",
-    size: "40.1 MB",
-    date: "2026-03-02 14:32",
-    type: "manual",
-    status: "ok",
-  },
-  {
-    id: 4,
-    name: "backup_2026-03-01_23-00",
-    size: "39.7 MB",
-    date: "2026-03-01 23:00",
-    type: "auto",
-    status: "ok",
-  },
-  {
-    id: 5,
-    name: "backup_2026-02-28_23-00",
-    size: "0 MB",
-    date: "2026-02-28 23:00",
-    type: "auto",
-    status: "error",
-  },
-];
 
 // ─── Gateway ──────────────────────────────────────────────────────────────────
 interface Gateway {
@@ -388,7 +356,7 @@ export default function SettingsPage() {
   const [pendingOps] = useState(0);
 
   // ── Backups state ────────────────────────────────────────────────────────
-  const [backups, setBackups] = useState<Backup[]>(BACKUPS);
+  const [backups, setBackups] = useState<Backup[]>([]);
   const [autoBackup, setAutoBackup] = useState(true);
   const [backupFreq, setBackupFreq] = useState("diario");
   const [backupTime, setBackupTime] = useState("23:00");
@@ -401,8 +369,22 @@ export default function SettingsPage() {
   const [showKeys, setShowKeys] = useState<Record<number, boolean>>({});
   const [gwModal, setGwModal] = useState<Gateway | null>(null);
 
-    const user = useSelector((state) => state.auth.user);
-  
+    //const user = useSelector((state) => state.auth.user);
+  const user = useSelector((state: any) => state.auth.user);
+
+  // Cargar al montar
+  useEffect(() => {
+    fetch(`${API}/backups`)
+      .then((r) => r.json())
+      .then((data) => {
+        // Forzamos que sea un arreglo, si llega un objeto vacío {} o algo inesperado, lo convertimos a []
+        setBackups(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error("Error de red:", err);
+        setBackups([]); // Si hay error de fetch, mantenemos la lista vacía
+      });
+  }, []);
 
   function toggleGwStatus(id: number) {
     setGateways((gs) =>
@@ -419,18 +401,23 @@ export default function SettingsPage() {
 
   function handleManualBackup() {
     setSyncing(true);
-    setTimeout(() => {
-      const newB: Backup = {
-        id: Date.now(),
-        name: `backup_manual_${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
-        size: "42.6 MB",
-        date: new Date().toLocaleString("es-MX", { hour12: false }),
-        type: "manual",
-        status: "ok",
-      };
-      setBackups((bs) => [newB, ...bs]);
-      setSyncing(false);
-    }, 1800);
+    const res = fetch(`${API}/backups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      .then(r => r.json())
+      .then(newB => {
+        setBackups(bs => [newB, ...bs]);
+        setSyncing(false);
+      })
+      .catch(() => setSyncing(false));
+  }
+
+  // Eliminar real — en el botón Trash2 de cada backup:
+  async function handleDelete(id: number) {
+    await fetch(`${API}/backups?id=${id}`, { method: 'DELETE' });
+    setBackups(bs => bs.filter(x => x.id !== id));
   }
 
   const STATUS_CFG: Record<
@@ -758,7 +745,7 @@ export default function SettingsPage() {
                 {[
                   {
                     l: "Total respaldos",
-                    v: backups.filter((b) => b.status === "ok").length,
+                    v: Array.isArray(backups) ? backups.filter((b) => b.status === "ok").length : 0,
                     c: T.info,
                     icon: <Database size={16} />,
                   },
@@ -911,9 +898,9 @@ export default function SettingsPage() {
               Historial de respaldos
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {backups.map((b) => (
+              {Array.isArray(backups) && backups.map((b) => (
                 <div
-                  key={b.id}
+                  key={b.id || Math.random()}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -942,19 +929,31 @@ export default function SettingsPage() {
                     )}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: T.text,
-                        margin: "0 0 2px",
-                        fontFamily: "monospace",
-                      }}
-                    >
-                      {b.name}
-                    </p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <p
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: T.text,
+                          margin: "0 0 2px",
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        {b.name}
+                      </p>
+                      {b.driveUrl && (
+                        <a
+                          href={b.driveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: T.brand }}
+                        >
+                          <Cloud size={14} />
+                        </a>
+                      )}
+                    </div>
                     <p style={{ fontSize: 10, color: T.textMut, margin: 0 }}>
-                      {b.date} · {b.size}
+                      {b.createdAt} · {formatSize(b.sizeBytes)}
                       <span
                         style={{
                           marginLeft: 8,
@@ -991,9 +990,7 @@ export default function SettingsPage() {
                       </button>
                     )}
                     <button
-                      onClick={() =>
-                        setBackups((bs) => bs.filter((x) => x.id !== b.id))
-                      }
+                      onClick={() => handleDelete(b.id)}
                       style={{
                         padding: 5,
                         background: "none",
