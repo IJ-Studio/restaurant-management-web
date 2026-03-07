@@ -300,7 +300,7 @@ function PreviewModal({
         <div
           style={{
             height: 200,
-            background: `linear-gradient(135deg,${T.brandDark ?? T.brand} 0%,#f4722b 100%)`,
+            background: `linear-gradient(135deg,${T.brand} 0%,#f4722b 100%)`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
