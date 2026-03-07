@@ -23,5 +23,5 @@
 // NOTA: Reset de contraseña manejado por Supabase
 export async function handleResetPassword() {
     console.log('[DEPRECATED] Firebase password reset removed - use Supabase instead');
-    return { success: false, message: 'Firebase password reset is disabled' };
+    return { success: false, message: 'the Firebase password reset is disabled' };
 }
