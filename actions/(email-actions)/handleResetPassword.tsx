@@ -25,10 +25,3 @@ export async function handleResetPassword() {
     console.log('[DEPRECATED] Firebase password reset removed - use Supabase instead');
     return { success: false, message: 'Firebase password reset is disabled' };
 }
-
-    } catch (error) {
-        console.error("Error al resetear la contraseña:", error);
-        return { success: false, message: error.message || "Error desconocido" };
-    }
-
-}
