@@ -2,8 +2,9 @@ import { db } from "@/lib/db";
 import { users, roles } from "@/lib/schema";
 import { compare } from "bcrypt";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
+// COMENTADO: Firebase auth - Migration to Supabase
+// import { auth } from "@/lib/firebaseConfig";
+// import { signInWithEmailAndPassword } from "firebase/auth";
 import { createSession } from "@/lib/session";
 
 export async function POST(req: Request) {
@@ -14,20 +15,8 @@ export async function POST(req: Request) {
     return Response.json({ message: "Faltan credenciales" }, { status: 400 });
   }
 
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, correo, password);
-    await userCredential.user.reload();
-    const firebaseUser = userCredential.user;
-
-    if (!firebaseUser.emailVerified) {
-      return Response.json(
-        { message: "Cuenta no verificada, revisa tu correo", code: "UNVERIFIED" },
-        { status: 403 }
-      );
-    }
-  } catch {
-    return Response.json({ message: "Credenciales inválidas" }, { status: 401 });
-  }
+  // NOTA: Firebase authentication comentada - ahora usando Drizzle + BD para autenticación
+  // Email verification ya no es requerida (será manejada por Supabase)
 
   // JOIN con roles para traer roleName y permissions
   let usr: any;
@@ -55,7 +44,10 @@ export async function POST(req: Request) {
     usr = result[0];
   } catch (dbError: any) {
     console.error("DB Error:", dbError);
-    return Response.json({ message: "Error de base de datos" }, { status: 500 });
+    return Response.json(
+      { message: "Error de base de datos" },
+      { status: 500 },
+    );
   }
 
   if (!usr) {
@@ -67,7 +59,7 @@ export async function POST(req: Request) {
     const waitSeconds = Math.ceil((usr.loginLockUntil - now) / 1000);
     return Response.json(
       { message: `Demasiados intentos. Espera ${waitSeconds} segundos.` },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
@@ -76,18 +68,24 @@ export async function POST(req: Request) {
   if (!ok) {
     const newAttempts = usr.loginAttempts + 1;
     if (newAttempts >= 3) {
-      await db.update(users)
+      await db
+        .update(users)
         .set({ loginAttempts: 0, loginLockUntil: now + 30000 })
         .where(eq(users.id, usr.id));
-      return Response.json({ message: "Demasiados intentos. Espera 30 segundos." }, { status: 429 });
+      return Response.json(
+        { message: "Demasiados intentos. Espera 30 segundos." },
+        { status: 429 },
+      );
     }
-    await db.update(users)
+    await db
+      .update(users)
       .set({ loginAttempts: newAttempts })
       .where(eq(users.id, usr.id));
     return Response.json({ message: "Contraseña incorrecta" }, { status: 401 });
   }
 
-  await db.update(users)
+  await db
+    .update(users)
     .set({ loginAttempts: 0, loginLockUntil: 0 })
     .where(eq(users.id, usr.id));
 
