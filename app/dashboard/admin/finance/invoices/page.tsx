@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -1314,7 +1315,7 @@ export default function InvoicesPage() {
       ),
     );
   }
-    const user = useSelector((state) => state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user);
   
     function handleLogout() {}
 

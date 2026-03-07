@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -35,6 +36,7 @@ import {
 
 const T = {
   brand: "#e85d04",
+  brandDark: "#c14400",
   bg: "#faf9f7",
   surface: "#ffffff",
   elevated: "#f5f3ef",
@@ -540,7 +542,7 @@ export default function AboutPage() {
   const [newFeatureIcon, setNewFeatureIcon] = useState("✨");
   const [newGalleryUrl, setNewGalleryUrl] = useState("");
   const [newGalleryCaption, setNewGalleryCaption] = useState("");
-  const user = useSelector((state) => state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user);
 
   function save() {
     setSaved(true);

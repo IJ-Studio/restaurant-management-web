@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
 import {
   LayoutDashboard,
@@ -1144,7 +1145,7 @@ export default function AdminUsersPage() {
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [searchFocus, setSearchFocus] = useState(false);
 
-  const user = useSelector((state) => state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const filtered = users.filter((u) => {
     const matchSearch = [u.name, u.lastname, u.email, u.phone]

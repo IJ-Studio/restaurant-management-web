@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+
 
 import {
   LayoutDashboard,
@@ -1595,7 +1597,7 @@ export default function SuppliersPage() {
     return ms && mst;
   });
 
-      const user = useSelector((state) => state.auth.user);
+      const user = useSelector((state: RootState) => state.auth.user);
     
       function handleLogout() {}
 
