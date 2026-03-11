@@ -11,4 +11,5 @@ const client = new Client({
 });
 
 await client.connect();
+export const pgClient = client;
 export const db = drizzle(client);

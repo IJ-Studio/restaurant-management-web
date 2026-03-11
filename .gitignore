@@ -34,6 +34,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# local clones / scratch
+backend_tmp/
+
 
 ### Firebase ###
 .idea
@@ -43,3 +46,4 @@ next-env.d.ts
 ### Firebase Patch ###
 .runtimeconfig.json
 .firebase/
+.env

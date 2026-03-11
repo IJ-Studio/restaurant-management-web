@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useSelector } from "react-redux";
@@ -30,6 +30,8 @@ import {
   Flame,
   Leaf,
   Wheat,
+  Upload,
+  Download,
 } from "lucide-react";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -71,6 +73,119 @@ interface Category {
   items: MenuItem[];
 }
 type TagKey = "popular" | "vegano" | "picante" | "nuevo" | "sin-gluten";
+
+const MENU_STORAGE_KEY = "rmp_admin_menu_v1";
+
+function normalizeStr(s: string) {
+  return (s || "").trim();
+}
+
+function normalizeKey(s: string) {
+  return normalizeStr(s).toLowerCase();
+}
+
+function parseBool(value: unknown, fallback = true) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    if (["1", "true", "si", "sí", "yes", "y", "on"].includes(v)) return true;
+    if (["0", "false", "no", "n", "off"].includes(v)) return false;
+  }
+  return fallback;
+}
+
+function parseNumber(value: unknown, fallback = 0) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const v = value.trim().replace(",", ".");
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return fallback;
+}
+
+function toTagKeys(raw: unknown): TagKey[] {
+  const allowed: TagKey[] = ["popular", "vegano", "picante", "nuevo", "sin-gluten"];
+  const pushIfAllowed = (k: string, out: TagKey[]) => {
+    const key = normalizeKey(k);
+    if (!key) return;
+    if ((allowed as string[]).includes(key)) out.push(key as TagKey);
+  };
+
+  const out: TagKey[] = [];
+  if (Array.isArray(raw)) {
+    raw.forEach((x) => pushIfAllowed(String(x), out));
+    return Array.from(new Set(out));
+  }
+  if (typeof raw === "string") {
+    raw
+      .split(/[|,]/g)
+      .map((s) => s.trim())
+      .forEach((x) => pushIfAllowed(x, out));
+    return Array.from(new Set(out));
+  }
+  return [];
+}
+
+function csvEscape(v: unknown) {
+  const s = String(v ?? "");
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function parseCsv(text: string) {
+  // Minimal CSV parser with quotes support.
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (inQuotes) {
+      if (ch === '"' && next === '"') {
+        cell += '"';
+        i++;
+        continue;
+      }
+      if (ch === '"') {
+        inQuotes = false;
+        continue;
+      }
+      cell += ch;
+      continue;
+    }
+
+    if (ch === '"') {
+      inQuotes = true;
+      continue;
+    }
+
+    if (ch === ",") {
+      row.push(cell);
+      cell = "";
+      continue;
+    }
+
+    if (ch === "\r") continue;
+    if (ch === "\n") {
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+      continue;
+    }
+
+    cell += ch;
+  }
+
+  row.push(cell);
+  rows.push(row);
+  return rows.filter((r) => r.some((c) => String(c).trim().length > 0));
+}
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 const INITIAL_CATEGORIES: Category[] = [
@@ -1127,6 +1242,36 @@ export default function AdminMenuPage() {
     item: MenuItem | null;
   } | null>(null);
   const [searchFocus, setSearchFocus] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importBusy, setImportBusy] = useState(false);
+
+  // Load saved menu (local draft) on mount.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(MENU_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setCategories(parsed as Category[]);
+      } else if (parsed && Array.isArray(parsed.categories)) {
+        setCategories(parsed.categories as Category[]);
+      }
+    } catch (e) {
+      console.error("Menu load failed", e);
+    }
+  }, []);
+
+  // Persist menu changes locally so imports/edits survive reload.
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        MENU_STORAGE_KEY,
+        JSON.stringify({ version: 1, savedAt: new Date().toISOString(), categories }),
+      );
+    } catch (e) {
+      console.error("Menu save failed", e);
+    }
+  }, [categories]);
 
   const totalItems = categories.reduce((s, c) => s + c.items.length, 0);
   const availItems = categories.reduce(
@@ -1194,7 +1339,195 @@ export default function AdminMenuPage() {
   }
   const user = useSelector((state: RootState) => state.auth.user);
   
-    function handleLogout() {}
+  function handleLogout() {}
+
+  function exportMenuJson() {
+    const payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      categories,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `menu_export_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportMenuCsv() {
+    const header = [
+      "category",
+      "name",
+      "description",
+      "price",
+      "available",
+      "tags",
+      "prepTime",
+      "calories",
+    ];
+    const lines: string[] = [header.join(",")];
+
+    categories.forEach((c) => {
+      c.items.forEach((i) => {
+        lines.push(
+          [
+            csvEscape(c.name),
+            csvEscape(i.name),
+            csvEscape(i.description),
+            csvEscape(i.price),
+            csvEscape(i.available ? 1 : 0),
+            csvEscape(i.tags.join("|")),
+            csvEscape(i.prepTime),
+            csvEscape(i.calories),
+          ].join(","),
+        );
+      });
+    });
+
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `menu_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function mergeImportedItems(items: Array<Record<string, unknown>>) {
+    let createdCats = 0;
+    let createdItems = 0;
+    let updatedItems = 0;
+    const errors: string[] = [];
+
+    setCategories((prev) => {
+      const next = [...prev];
+      const catIndexByKey = new Map<string, number>();
+      next.forEach((c, idx) => catIndexByKey.set(normalizeKey(c.name), idx));
+
+      for (let idx = 0; idx < items.length; idx++) {
+        const it = items[idx] || {};
+        const categoryName = normalizeStr(String(it.category ?? it.categoria ?? it.categoryName ?? ""));
+        const name = normalizeStr(String(it.name ?? it.nombre ?? ""));
+
+        if (!categoryName || !name) {
+          errors.push(`Fila ${idx + 1}: falta category o name.`);
+          continue;
+        }
+
+        let catIdx = catIndexByKey.get(normalizeKey(categoryName));
+        if (catIdx == null) {
+          const newCat: Category = {
+            id: Date.now() + idx,
+            name: categoryName,
+            icon: "🍽️",
+            color: T.brand,
+            items: [],
+          };
+          next.push(newCat);
+          catIdx = next.length - 1;
+          catIndexByKey.set(normalizeKey(categoryName), catIdx);
+          createdCats++;
+        }
+
+        const cat = next[catIdx];
+        const itemIdx = cat.items.findIndex((x) => normalizeKey(x.name) === normalizeKey(name));
+
+        const patch: MenuItem = {
+          id: itemIdx >= 0 ? cat.items[itemIdx].id : Date.now() + idx,
+          name,
+          description: normalizeStr(String(it.description ?? it.descripcion ?? "")),
+          price: parseNumber(it.price ?? it.precio, 0),
+          available: parseBool(it.available ?? it.disponible, true),
+          tags: toTagKeys(it.tags ?? it.etiquetas),
+          prepTime: Math.max(0, Math.floor(parseNumber(it.prepTime ?? it.tiempoPreparacion, 10))),
+          calories: Math.max(0, Math.floor(parseNumber(it.calories ?? it.calorias, 0))),
+        };
+
+        if (itemIdx >= 0) {
+          cat.items[itemIdx] = { ...cat.items[itemIdx], ...patch };
+          updatedItems++;
+        } else {
+          cat.items.push(patch);
+          createdItems++;
+        }
+      }
+
+      return next;
+    });
+
+    return { createdCats, createdItems, updatedItems, errors };
+  }
+
+  async function handleImportFile(file: File) {
+    setImportBusy(true);
+    try {
+      const text = await file.text();
+      const name = file.name.toLowerCase();
+
+      if (name.endsWith(".json")) {
+        const parsed = JSON.parse(text);
+        let items: Array<Record<string, unknown>> = [];
+
+        if (Array.isArray(parsed)) {
+          items = parsed as Array<Record<string, unknown>>;
+        } else if (parsed && Array.isArray(parsed.categories)) {
+          // exported format: { categories: [...] }
+          const cats = parsed.categories as Category[];
+          items = cats.flatMap((c) =>
+            (c.items || []).map((i) => ({ category: c.name, ...i })),
+          );
+        } else {
+          throw new Error("Formato JSON no soportado.");
+        }
+
+        const r = mergeImportedItems(items);
+        alert(
+          `Importación lista.\nCategorías nuevas: ${r.createdCats}\nPlatillos nuevos: ${r.createdItems}\nPlatillos actualizados: ${r.updatedItems}\nErrores: ${r.errors.length}`,
+        );
+        if (r.errors.length) console.warn("Import errors", r.errors.slice(0, 20));
+        return;
+      }
+
+      // CSV
+      const rows = parseCsv(text);
+      if (!rows.length) throw new Error("CSV vacío.");
+
+      const header = rows[0].map((h) => normalizeKey(h));
+      const hasHeader = header.includes("category") || header.includes("categoria") || header.includes("name") || header.includes("nombre");
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+
+      const get = (r: string[], key: string, fallbackIdx: number) => {
+        const idx = hasHeader ? header.indexOf(key) : fallbackIdx;
+        return idx >= 0 ? r[idx] : "";
+      };
+
+      const items = dataRows.map((r) => ({
+        category: get(r, "category", 0) || get(r, "categoria", 0),
+        name: get(r, "name", 1) || get(r, "nombre", 1),
+        description: get(r, "description", 2) || get(r, "descripcion", 2),
+        price: get(r, "price", 3) || get(r, "precio", 3),
+        available: get(r, "available", 4) || get(r, "disponible", 4),
+        tags: get(r, "tags", 5) || get(r, "etiquetas", 5),
+        prepTime: get(r, "preptime", 6) || get(r, "tiempopreparacion", 6),
+        calories: get(r, "calories", 7) || get(r, "calorias", 7),
+      }));
+
+      const r = mergeImportedItems(items);
+      alert(
+        `Importación lista.\nCategorías nuevas: ${r.createdCats}\nPlatillos nuevos: ${r.createdItems}\nPlatillos actualizados: ${r.updatedItems}\nErrores: ${r.errors.length}`,
+      );
+      if (r.errors.length) console.warn("Import errors", r.errors.slice(0, 20));
+    } finally {
+      setImportBusy(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
   const stats = [
     {
       label: "Total Platillos",
@@ -1269,6 +1602,78 @@ export default function AdminMenuPage() {
               </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.json,text/csv,application/json"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleImportFile(f);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importBusy}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  border: `1px solid ${T.border}`,
+                  cursor: importBusy ? "not-allowed" : "pointer",
+                  color: T.textSecond,
+                  background: T.bgSurface,
+                  opacity: importBusy ? 0.7 : 1,
+                }}
+                title="Importar platillos (CSV/JSON)"
+              >
+                <Upload size={16} /> {importBusy ? "Importando..." : "Importar"}
+              </button>
+              <button
+                type="button"
+                onClick={exportMenuCsv}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  border: `1px solid ${T.border}`,
+                  cursor: "pointer",
+                  color: T.textSecond,
+                  background: T.bgSurface,
+                }}
+                title="Exportar menú a CSV"
+              >
+                <Download size={16} /> CSV
+              </button>
+              <button
+                type="button"
+                onClick={exportMenuJson}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  border: `1px solid ${T.border}`,
+                  cursor: "pointer",
+                  color: T.textSecond,
+                  background: T.bgSurface,
+                }}
+                title="Exportar menú a JSON"
+              >
+                <Download size={16} /> JSON
+              </button>
               <button
                 style={{
                   padding: 8,
