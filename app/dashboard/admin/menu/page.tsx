@@ -34,6 +34,10 @@ import {
   Download,
 } from "lucide-react";
 
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL?.trim();
+const API = (RAW_API_BASE && RAW_API_BASE.length > 0 ? RAW_API_BASE : "/api").replace(/\/$/, "");
+const IS_EXTERNAL_API = API.startsWith("http");
+
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const T = {
   brand: "#e85d04",
@@ -188,6 +192,46 @@ function parseCsv(text: string) {
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
+function apiUrl(path: string) {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${API}${p}`;
+}
+
+function filenameFromContentDisposition(value: string | null) {
+  if (!value) return null;
+  const m = value.match(/filename\*?=(?:UTF-8''|\"?)([^\";]+)\"?/i);
+  if (!m?.[1]) return null;
+  try {
+    return decodeURIComponent(m[1]);
+  } catch {
+    return m[1];
+  }
+}
+
+async function downloadAsFile(url: string, fallbackFilename: string) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(
+      `HTTP ${res.status} ${res.statusText}${body ? `: ${body}` : ""}`,
+    );
+  }
+
+  const blob = await res.blob();
+  const filename =
+    filenameFromContentDisposition(res.headers.get("content-disposition")) ??
+    fallbackFilename;
+
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
 const INITIAL_CATEGORIES: Category[] = [
   {
     id: 1,
@@ -1244,9 +1288,13 @@ export default function AdminMenuPage() {
   const [searchFocus, setSearchFocus] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [importBusy, setImportBusy] = useState(false);
+  const pendingImportFormatRef = useRef<"csv" | "json" | null>(null);
+  const [ioOpen, setIoOpen] = useState<null | "import" | "export">(null);
+  const ioWrapRef = useRef<HTMLDivElement | null>(null);
 
   // Load saved menu (local draft) on mount.
   useEffect(() => {
+    if (IS_EXTERNAL_API) return;
     try {
       const raw = localStorage.getItem(MENU_STORAGE_KEY);
       if (!raw) return;
@@ -1263,6 +1311,7 @@ export default function AdminMenuPage() {
 
   // Persist menu changes locally so imports/edits survive reload.
   useEffect(() => {
+    if (IS_EXTERNAL_API) return;
     try {
       localStorage.setItem(
         MENU_STORAGE_KEY,
@@ -1272,6 +1321,24 @@ export default function AdminMenuPage() {
       console.error("Menu save failed", e);
     }
   }, [categories]);
+
+  useEffect(() => {
+    if (!IS_EXTERNAL_API) return;
+    setCategories([]);
+    void loadPlatillosFromDb();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!ioOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (!ioWrapRef.current?.contains(t)) setIoOpen(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [ioOpen]);
 
   const totalItems = categories.reduce((s, c) => s + c.items.length, 0);
   const availItems = categories.reduce(
@@ -1399,6 +1466,108 @@ export default function AdminMenuPage() {
     URL.revokeObjectURL(url);
   }
 
+  function ensureExternalApi() {
+    if (!IS_EXTERNAL_API && API === "/api") {
+      alert(
+        "Configura NEXT_PUBLIC_API_URL (ej: http://localhost:3001) para usar import/export de platillos.",
+      );
+      return false;
+    }
+    return true;
+  }
+
+  function mapPlatillosRows(rows: any[]): Category[] {
+    const byCat = new Map<number, Category>();
+    const colors = ["#e85d04", "#2563eb", "#059669", "#7c3aed", "#d97706"];
+
+    rows.forEach((r, idx) => {
+      const catIdRaw = r?.categoria_id ?? r?.categoriaId ?? 0;
+      const catIdNum = Number(catIdRaw);
+      const catId = Number.isFinite(catIdNum) ? catIdNum : 0;
+
+      if (!byCat.has(catId)) {
+        byCat.set(catId, {
+          id: catId || idx + 1,
+          name: catId ? `Categoría ${catId}` : "Platillos",
+          icon: "🍽️",
+          color: colors[Math.abs(catId) % colors.length],
+          items: [],
+        });
+      }
+
+      const idNum = Number(r?.id);
+      const itemId = Number.isFinite(idNum) ? idNum : Date.now() + idx;
+      const tags: TagKey[] = [];
+      if (r?.es_popular) tags.push("popular");
+      if (r?.es_vegano) tags.push("vegano");
+      if (r?.es_picante) tags.push("picante");
+      if (r?.es_nuevo) tags.push("nuevo");
+      if (r?.es_sin_gluten) tags.push("sin-gluten");
+
+      byCat.get(catId)!.items.push({
+        id: itemId,
+        name: String(r?.nombre ?? r?.name ?? ""),
+        description: String(r?.descripcion_corta ?? r?.descripcion ?? ""),
+        price: parseNumber(r?.precio, 0),
+        available: parseBool(r?.disponible, true),
+        tags,
+        prepTime: Math.max(
+          0,
+          Math.floor(parseNumber(r?.tiempo_preparacion ?? r?.prepTime, 10)),
+        ),
+        calories: 0,
+      });
+    });
+
+    return Array.from(byCat.values()).sort((a, b) => a.id - b.id);
+  }
+
+  async function loadPlatillosFromDb() {
+    if (!ensureExternalApi()) return;
+    try {
+      const res = await fetch(apiUrl("/platillos/export.json"));
+      if (!res.ok) {
+        console.error("Platillos export failed", res.status);
+        return;
+      }
+      const data = await res.json().catch(() => null);
+      const rows = Array.isArray(data)
+        ? data
+        : Array.isArray((data as any)?.rows)
+          ? ((data as any).rows as any[])
+          : [];
+      setCategories(mapPlatillosRows(rows));
+    } catch (e) {
+      console.error("Platillos load failed", e);
+    }
+  }
+
+  async function downloadTemplate(format: "csv" | "json") {
+    if (!ensureExternalApi()) return;
+    setImportBusy(true);
+    try {
+      await downloadAsFile(
+        apiUrl(`/platillos/template.${format}`),
+        `template_platillos_${new Date().toISOString().slice(0, 10)}.${format}`,
+      );
+    } finally {
+      setImportBusy(false);
+    }
+  }
+
+  async function exportPlatillos(format: "csv" | "json") {
+    if (!ensureExternalApi()) return;
+    setImportBusy(true);
+    try {
+      await downloadAsFile(
+        apiUrl(`/platillos/export.${format}`),
+        `platillos_${new Date().toISOString().slice(0, 10)}.${format}`,
+      );
+    } finally {
+      setImportBusy(false);
+    }
+  }
+
   function mergeImportedItems(items: Array<Record<string, unknown>>) {
     let createdCats = 0;
     let createdItems = 0;
@@ -1467,62 +1636,66 @@ export default function AdminMenuPage() {
   async function handleImportFile(file: File) {
     setImportBusy(true);
     try {
-      const text = await file.text();
-      const name = file.name.toLowerCase();
+      const requested = pendingImportFormatRef.current;
+      pendingImportFormatRef.current = null;
+      const lower = file.name.toLowerCase();
+      const inferred: "csv" | "json" = lower.endsWith(".json") ? "json" : "csv";
+      const format = requested ?? inferred;
 
-      if (name.endsWith(".json")) {
-        const parsed = JSON.parse(text);
-        let items: Array<Record<string, unknown>> = [];
-
-        if (Array.isArray(parsed)) {
-          items = parsed as Array<Record<string, unknown>>;
-        } else if (parsed && Array.isArray(parsed.categories)) {
-          // exported format: { categories: [...] }
-          const cats = parsed.categories as Category[];
-          items = cats.flatMap((c) =>
-            (c.items || []).map((i) => ({ category: c.name, ...i })),
-          );
-        } else {
-          throw new Error("Formato JSON no soportado.");
-        }
-
-        const r = mergeImportedItems(items);
-        alert(
-          `Importación lista.\nCategorías nuevas: ${r.createdCats}\nPlatillos nuevos: ${r.createdItems}\nPlatillos actualizados: ${r.updatedItems}\nErrores: ${r.errors.length}`,
-        );
-        if (r.errors.length) console.warn("Import errors", r.errors.slice(0, 20));
+      if (requested && requested === "csv" && lower.endsWith(".json")) {
+        alert("Seleccionaste CSV, pero el archivo es JSON.");
+        return;
+      }
+      if (requested && requested === "json" && lower.endsWith(".csv")) {
+        alert("Seleccionaste JSON, pero el archivo es CSV.");
         return;
       }
 
-      // CSV
-      const rows = parseCsv(text);
-      if (!rows.length) throw new Error("CSV vacío.");
+      if (!ensureExternalApi()) return;
 
-      const header = rows[0].map((h) => normalizeKey(h));
-      const hasHeader = header.includes("category") || header.includes("categoria") || header.includes("name") || header.includes("nombre");
-      const dataRows = hasHeader ? rows.slice(1) : rows;
+      if (format === "csv") {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch(apiUrl("/platillos/import.csv?mode=upsert"), {
+          method: "POST",
+          body: fd,
+        });
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(msg || `Import CSV falló (${res.status})`);
+        }
+        const out = await res.json().catch(() => null);
+        await loadPlatillosFromDb();
+        alert(
+          `Importación lista.\nInsertados: ${out?.inserted ?? 0}\nActualizados: ${out?.updated ?? 0}\nErrores: ${
+            Array.isArray(out?.errors) ? out.errors.length : 0
+          }`,
+        );
+        return;
+      }
 
-      const get = (r: string[], key: string, fallbackIdx: number) => {
-        const idx = hasHeader ? header.indexOf(key) : fallbackIdx;
-        return idx >= 0 ? r[idx] : "";
-      };
-
-      const items = dataRows.map((r) => ({
-        category: get(r, "category", 0) || get(r, "categoria", 0),
-        name: get(r, "name", 1) || get(r, "nombre", 1),
-        description: get(r, "description", 2) || get(r, "descripcion", 2),
-        price: get(r, "price", 3) || get(r, "precio", 3),
-        available: get(r, "available", 4) || get(r, "disponible", 4),
-        tags: get(r, "tags", 5) || get(r, "etiquetas", 5),
-        prepTime: get(r, "preptime", 6) || get(r, "tiempopreparacion", 6),
-        calories: get(r, "calories", 7) || get(r, "calorias", 7),
-      }));
-
-      const r = mergeImportedItems(items);
+      // JSON
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const res = await fetch(apiUrl("/platillos/import.json?mode=upsert"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(parsed),
+      });
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        throw new Error(msg || `Import JSON falló (${res.status})`);
+      }
+      const out = await res.json().catch(() => null);
+      await loadPlatillosFromDb();
       alert(
-        `Importación lista.\nCategorías nuevas: ${r.createdCats}\nPlatillos nuevos: ${r.createdItems}\nPlatillos actualizados: ${r.updatedItems}\nErrores: ${r.errors.length}`,
+        `Importación lista.\nInsertados: ${out?.inserted ?? 0}\nActualizados: ${out?.updated ?? 0}\nErrores: ${
+          Array.isArray(out?.errors) ? out.errors.length : 0
+        }`,
       );
-      if (r.errors.length) console.warn("Import errors", r.errors.slice(0, 20));
+    } catch (e: any) {
+      console.error("Import failed", e);
+      alert(e?.message ? String(e.message) : "Importación falló.");
     } finally {
       setImportBusy(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1601,7 +1774,15 @@ export default function AdminMenuPage() {
                 Administra platillos, categorías y disponibilidad
               </p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div
+              ref={ioWrapRef}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                position: "relative",
+              }}
+            >
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1612,68 +1793,200 @@ export default function AdminMenuPage() {
                   if (f) void handleImportFile(f);
                 }}
               />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={importBusy}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  border: `1px solid ${T.border}`,
-                  cursor: importBusy ? "not-allowed" : "pointer",
-                  color: T.textSecond,
-                  background: T.bgSurface,
-                  opacity: importBusy ? 0.7 : 1,
-                }}
-                title="Importar platillos (CSV/JSON)"
-              >
-                <Upload size={16} /> {importBusy ? "Importando..." : "Importar"}
-              </button>
-              <button
-                type="button"
-                onClick={exportMenuCsv}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  border: `1px solid ${T.border}`,
-                  cursor: "pointer",
-                  color: T.textSecond,
-                  background: T.bgSurface,
-                }}
-                title="Exportar menú a CSV"
-              >
-                <Download size={16} /> CSV
-              </button>
-              <button
-                type="button"
-                onClick={exportMenuJson}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  border: `1px solid ${T.border}`,
-                  cursor: "pointer",
-                  color: T.textSecond,
-                  background: T.bgSurface,
-                }}
-                title="Exportar menú a JSON"
-              >
-                <Download size={16} /> JSON
-              </button>
+              <div style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  onClick={() => setIoOpen((v) => (v === "import" ? null : "import"))}
+                  disabled={importBusy}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    border: `1px solid ${T.border}`,
+                    cursor: importBusy ? "not-allowed" : "pointer",
+                    color: T.textSecond,
+                    background: T.bgSurface,
+                    opacity: importBusy ? 0.7 : 1,
+                  }}
+                  title="Importar platillos a la base"
+                >
+                  <Upload size={16} /> {importBusy ? "Cargando..." : "Importar"}
+                </button>
+                {ioOpen === "import" && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 8px)",
+                      left: 0,
+                      minWidth: 160,
+                      background: T.bgSurface,
+                      border: `1px solid ${T.border}`,
+                      borderRadius: 14,
+                      boxShadow: T.shadowCard,
+                      padding: 6,
+                      zIndex: 10,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIoOpen(null);
+                        if (!ensureExternalApi()) return;
+                        const wantTemplate = confirm(
+                          "CSV:\nAceptar = descargar plantilla\nCancelar = seleccionar archivo",
+                        );
+                        if (wantTemplate) {
+                          void downloadTemplate("csv");
+                          return;
+                        }
+                        pendingImportFormatRef.current = "csv";
+                        fileInputRef.current?.click();
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      CSV <span style={{ color: T.textMuted, fontWeight: 700 }}>.</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIoOpen(null);
+                        if (!ensureExternalApi()) return;
+                        const wantTemplate = confirm(
+                          "JSON:\nAceptar = descargar plantilla\nCancelar = seleccionar archivo",
+                        );
+                        if (wantTemplate) {
+                          void downloadTemplate("json");
+                          return;
+                        }
+                        pendingImportFormatRef.current = "json";
+                        fileInputRef.current?.click();
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      JSON <span style={{ color: T.textMuted, fontWeight: 700 }}>.</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  onClick={() => setIoOpen((v) => (v === "export" ? null : "export"))}
+                  disabled={importBusy}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    border: `1px solid ${T.border}`,
+                    cursor: importBusy ? "not-allowed" : "pointer",
+                    color: T.textSecond,
+                    background: T.bgSurface,
+                    opacity: importBusy ? 0.7 : 1,
+                  }}
+                  title="Exportar platillos desde la base"
+                >
+                  <Download size={16} /> {importBusy ? "Cargando..." : "Exportar"}
+                </button>
+                {ioOpen === "export" && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 8px)",
+                      left: 0,
+                      minWidth: 160,
+                      background: T.bgSurface,
+                      border: `1px solid ${T.border}`,
+                      borderRadius: 14,
+                      boxShadow: T.shadowCard,
+                      padding: 6,
+                      zIndex: 10,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIoOpen(null);
+                        if (!ensureExternalApi()) return;
+                        void exportPlatillos("csv");
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      CSV <span style={{ color: T.textMuted, fontWeight: 700 }}>.</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIoOpen(null);
+                        if (!ensureExternalApi()) return;
+                        void exportPlatillos("json");
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      JSON <span style={{ color: T.textMuted, fontWeight: 700 }}>.</span>
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 style={{
                   padding: 8,
