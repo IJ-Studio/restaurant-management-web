@@ -1,30 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { backups as backupsTable, roles, users } from "@/lib/schema";
+import { db, pgClient } from "@/lib/db";
+import { backups as backupsTable } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 
 // helper to generate a real database dump
 async function generateDatabaseDump() {
   try {
-    // Get all data from main tables 
-    const [rolesData, usersData] = await Promise.all([
-      db.select().from(roles),
-      db.select().from(users),
-    ]);
+    const now = new Date();
+    const tablesRes = await pgClient.query<{
+      table_name: string;
+    }>(
+      `
+      select table_name
+      from information_schema.tables
+      where table_schema = 'public'
+        and table_type = 'BASE TABLE'
+      order by table_name
+      `,
+    );
+
+    const tableNames = tablesRes.rows
+      .map((r) => r.table_name)
+      .filter((t) => t && t !== "drizzle_migrations");
+
+    const tables: Record<string, unknown[]> = {};
+    const rowCounts: Record<string, number> = {};
+
+    for (const t of tableNames) {
+      const q = `select * from "${t.replace(/"/g, '""')}"`;
+      const r = await pgClient.query(q);
+      tables[t] = r.rows;
+      rowCounts[t] = r.rowCount ?? r.rows.length;
+    }
 
     const dump = {
-      timestamp: new Date().toISOString(),
-      tables: {
-        roles: rolesData,
-        users: usersData,
-      },
+      timestamp: now.toISOString(),
+      tables,
       metadata: {
-        totalRoles: rolesData.length,
-        totalUsers: usersData.length,
+        tableCount: tableNames.length,
+        rowCounts,
+        totalRows: Object.values(rowCounts).reduce((s, n) => s + n, 0),
       },
     };
 
-    return JSON.stringify(dump, null, 2);
+    return JSON.stringify(
+      dump,
+      (_k, v) => {
+        if (typeof v === "bigint") return v.toString();
+        if (v instanceof Date) return v.toISOString();
+        // pg can return Buffer for bytea
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (typeof Buffer !== "undefined" && (Buffer as any).isBuffer?.(v)) {
+          return (v as Buffer).toString("base64");
+        }
+        return v;
+      },
+      2,
+    );
   } catch (err) {
     console.error("Error generating dump", err);
     return `Error generating dump: ${err}`;
@@ -76,9 +108,13 @@ export async function GET() {
       id: r.id,
       name: r.name,
       sizeBytes: r.sizeBytes,
+      driveFileId: r.driveFileId || null,
       driveUrl: r.driveUrl || null,
       type: r.type,
       status: r.status,
+      errorMessage: r.errorMessage || null,
+      tables: (r.tables as unknown) || null,
+      rowCount: r.rowCount ?? 0,
       createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : r.createdAt,
     }));
     return NextResponse.json(mapped);
@@ -97,6 +133,14 @@ export async function POST(req: NextRequest) {
     const dumpContent = await generateDatabaseDump();
     const dumpBuffer = Buffer.from(dumpContent);
     const dumpSize = dumpBuffer.length;
+    let parsedMeta: { tables?: Record<string, unknown[]>; metadata?: { totalRows?: number } } | null = null;
+    try {
+      parsedMeta = JSON.parse(dumpContent);
+    } catch {
+      parsedMeta = null;
+    }
+    const tablesIncluded = parsedMeta?.tables ? Object.keys(parsedMeta.tables) : [];
+    const totalRows = parsedMeta?.metadata?.totalRows ?? 0;
 
     // Upload to Drive if configured
     let driveUrl: string | null = null;
@@ -114,6 +158,8 @@ export async function POST(req: NextRequest) {
         driveUrl: driveUrl || body.driveUrl || null,
         type: body.type || "manual",
         status: body.status || "ok",
+        tables: tablesIncluded.length ? tablesIncluded : undefined,
+        rowCount: totalRows,
         createdAt: now,
       })
       .returning();
@@ -123,9 +169,13 @@ export async function POST(req: NextRequest) {
         id: r.id,
         name: r.name,
         sizeBytes: r.sizeBytes,
+        driveFileId: r.driveFileId || null,
         driveUrl: r.driveUrl || null,
         type: r.type,
         status: r.status,
+        errorMessage: r.errorMessage || null,
+        tables: (r.tables as unknown) || null,
+        rowCount: r.rowCount ?? 0,
         createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : r.createdAt,
       };
       return NextResponse.json(resp);

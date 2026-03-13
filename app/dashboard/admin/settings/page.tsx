@@ -38,8 +38,11 @@ import {
   ToggleRight,
 } from "lucide-react";
 
-// relative URL so frontend calls the Next.js API routes
-const API = '/api';
+// By default this page calls Next.js API routes (/api). If NEXT_PUBLIC_API_URL
+// is set, it will call an external backend instead (for example: http://localhost:3001).
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL?.trim();
+const API = (RAW_API_BASE && RAW_API_BASE.length > 0 ? RAW_API_BASE : "/api").replace(/\/$/, "");
+const IS_EXTERNAL_BACKUP_API = API.startsWith("http");
 
 const T = {
   brand: "#e85d04",
@@ -416,7 +419,10 @@ export default function SettingsPage() {
 
   // Eliminar real — en el botón Trash2 de cada backup:
   async function handleDelete(id: number) {
-    await fetch(`${API}/backups?id=${id}`, { method: 'DELETE' });
+    const url = IS_EXTERNAL_BACKUP_API
+      ? `${API}/backups/${id}`
+      : `${API}/backups?id=${id}`;
+    await fetch(url, { method: 'DELETE' });
     setBackups(bs => bs.filter(x => x.id !== id));
   }
 
