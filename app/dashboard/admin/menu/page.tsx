@@ -1836,13 +1836,30 @@ export default function AdminMenuPage() {
                       onClick={() => {
                         setIoOpen(null);
                         if (!ensureExternalApi()) return;
-                        const wantTemplate = confirm(
-                          "CSV:\nAceptar = descargar plantilla\nCancelar = seleccionar archivo",
-                        );
-                        if (wantTemplate) {
-                          void downloadTemplate("csv");
-                          return;
-                        }
+                        void downloadTemplate("csv");
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      Plantilla CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIoOpen(null);
+                        if (!ensureExternalApi()) return;
                         pendingImportFormatRef.current = "csv";
                         fileInputRef.current?.click();
                       }}
@@ -1861,20 +1878,38 @@ export default function AdminMenuPage() {
                         color: T.textPrimary,
                       }}
                     >
-                      CSV <span style={{ color: T.textMuted, fontWeight: 700 }}>.</span>
+                      Importar CSV
+                    </button>
+                    <div style={{ height: 1, background: T.border, margin: "6px 8px" }} />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIoOpen(null);
+                        if (!ensureExternalApi()) return;
+                        void downloadTemplate("json");
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      Plantilla JSON
                     </button>
                     <button
                       type="button"
                       onClick={() => {
                         setIoOpen(null);
                         if (!ensureExternalApi()) return;
-                        const wantTemplate = confirm(
-                          "JSON:\nAceptar = descargar plantilla\nCancelar = seleccionar archivo",
-                        );
-                        if (wantTemplate) {
-                          void downloadTemplate("json");
-                          return;
-                        }
                         pendingImportFormatRef.current = "json";
                         fileInputRef.current?.click();
                       }}
@@ -1893,7 +1928,7 @@ export default function AdminMenuPage() {
                         color: T.textPrimary,
                       }}
                     >
-                      JSON <span style={{ color: T.textMuted, fontWeight: 700 }}>.</span>
+                      Importar JSON
                     </button>
                   </div>
                 )}
