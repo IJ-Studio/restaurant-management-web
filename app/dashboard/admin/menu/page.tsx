@@ -1288,7 +1288,7 @@ export default function AdminMenuPage() {
   const [searchFocus, setSearchFocus] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [importBusy, setImportBusy] = useState(false);
-  const pendingImportFormatRef = useRef<"csv" | "json" | null>(null);
+  const pendingImportFormatRef = useRef<"csv" | "json" | "xlsx" | null>(null);
   const [ioOpen, setIoOpen] = useState<null | "import" | "export">(null);
   const ioWrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -1405,7 +1405,7 @@ export default function AdminMenuPage() {
     );
   }
   const user = useSelector((state: RootState) => state.auth.user);
-  
+
   function handleLogout() {}
 
   function exportMenuJson() {
@@ -1542,14 +1542,21 @@ export default function AdminMenuPage() {
     }
   }
 
-  async function downloadTemplate(format: "csv" | "json") {
+  async function downloadTemplate(format: "csv" | "json" | "xlsx") {
     if (!ensureExternalApi()) return;
     setImportBusy(true);
     try {
-      await downloadAsFile(
-        apiUrl(`/platillos/template.${format}`),
-        `template_platillos_${new Date().toISOString().slice(0, 10)}.${format}`,
-      );
+      if (format === "xlsx") {
+        await downloadAsFile(
+          apiUrl(`/platillos/export/dishes/excel`),
+          `template_platillos_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        );
+      } else {
+        await downloadAsFile(
+          apiUrl(`/platillos/template.${format}`),
+          `template_platillos_${new Date().toISOString().slice(0, 10)}.${format}`,
+        );
+      }
     } finally {
       setImportBusy(false);
     }
@@ -1639,15 +1646,23 @@ export default function AdminMenuPage() {
       const requested = pendingImportFormatRef.current;
       pendingImportFormatRef.current = null;
       const lower = file.name.toLowerCase();
-      const inferred: "csv" | "json" = lower.endsWith(".json") ? "json" : "csv";
+      const inferred: "csv" | "json" | "xlsx" = lower.endsWith(".json")
+        ? "json"
+        : lower.endsWith(".xlsx")
+          ? "xlsx"
+          : "csv";
       const format = requested ?? inferred;
 
-      if (requested && requested === "csv" && lower.endsWith(".json")) {
-        alert("Seleccionaste CSV, pero el archivo es JSON.");
+      if (requested && requested === "csv" && (lower.endsWith(".json") || lower.endsWith(".xlsx"))) {
+        alert("Seleccionaste CSV, pero el archivo es " + (lower.endsWith(".json") ? "JSON" : "Excel") + ".");
         return;
       }
-      if (requested && requested === "json" && lower.endsWith(".csv")) {
-        alert("Seleccionaste JSON, pero el archivo es CSV.");
+      if (requested && requested === "json" && (lower.endsWith(".csv") || lower.endsWith(".xlsx"))) {
+        alert("Seleccionaste JSON, pero el archivo es " + (lower.endsWith(".csv") ? "CSV" : "Excel") + ".");
+        return;
+      }
+      if (requested && requested === "xlsx" && (lower.endsWith(".csv") || lower.endsWith(".json"))) {
+        alert("Seleccionaste Excel, pero el archivo es " + (lower.endsWith(".csv") ? "CSV" : "JSON") + ".");
         return;
       }
 
@@ -1663,6 +1678,27 @@ export default function AdminMenuPage() {
         if (!res.ok) {
           const msg = await res.text().catch(() => "");
           throw new Error(msg || `Import CSV falló (${res.status})`);
+        }
+        const out = await res.json().catch(() => null);
+        await loadPlatillosFromDb();
+        alert(
+          `Importación lista.\nInsertados: ${out?.inserted ?? 0}\nActualizados: ${out?.updated ?? 0}\nErrores: ${
+            Array.isArray(out?.errors) ? out.errors.length : 0
+          }`,
+        );
+        return;
+      }
+
+      if (format === "xlsx") {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch(apiUrl("/import/platillos/excel?mode=upsert"), {
+          method: "POST",
+          body: fd,
+        });
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(msg || `Import Excel falló (${res.status})`);
         }
         const out = await res.json().catch(() => null);
         await loadPlatillosFromDb();
@@ -1786,7 +1822,7 @@ export default function AdminMenuPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,.json,text/csv,application/json"
+                accept=".csv,.json,.xlsx,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 style={{ display: "none" }}
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -1929,6 +1965,56 @@ export default function AdminMenuPage() {
                       }}
                     >
                       Importar JSON
+                    </button>
+                    <div style={{ height: 1, background: T.border, margin: "6px 8px" }} />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIoOpen(null);
+                        if (!ensureExternalApi()) return;
+                        void downloadTemplate("xlsx");
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      Plantilla Excel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIoOpen(null);
+                        if (!ensureExternalApi()) return;
+                        pendingImportFormatRef.current = "xlsx";
+                        fileInputRef.current?.click();
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      Importar Excel
                     </button>
                   </div>
                 )}
