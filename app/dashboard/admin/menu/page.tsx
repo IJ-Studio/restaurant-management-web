@@ -1562,14 +1562,21 @@ export default function AdminMenuPage() {
     }
   }
 
-  async function exportPlatillos(format: "csv" | "json") {
+  async function exportPlatillos(format: "csv" | "json" | "xlsx") {
     if (!ensureExternalApi()) return;
     setImportBusy(true);
     try {
-      await downloadAsFile(
-        apiUrl(`/platillos/export.${format}`),
-        `platillos_${new Date().toISOString().slice(0, 10)}.${format}`,
-      );
+      if (format === "xlsx") {
+        await downloadAsFile(
+          apiUrl(`/platillos/export/dishes/excel`),
+          `platillos_${new Date().toISOString().slice(0, 10)}.xlsx`,
+        );
+      } else {
+        await downloadAsFile(
+          apiUrl(`/platillos/export.${format}`),
+          `platillos_${new Date().toISOString().slice(0, 10)}.${format}`,
+        );
+      }
     } finally {
       setImportBusy(false);
     }
@@ -2104,6 +2111,31 @@ export default function AdminMenuPage() {
                       }}
                     >
                       JSON <span style={{ color: T.textMuted, fontWeight: 700 }}>.</span>
+                    </button>
+                    <div style={{ height: 1, background: T.border, margin: "6px 8px" }} />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIoOpen(null);
+                        if (!ensureExternalApi()) return;
+                        void exportPlatillos("xlsx");
+                      }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      Excel <span style={{ color: T.textMuted, fontWeight: 700 }}>.</span>
                     </button>
                   </div>
                 )}
