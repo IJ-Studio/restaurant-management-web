@@ -1,0 +1,15 @@
+import "server-only";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Client } from "pg";
+
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL no está configurada en el .env");
+}
+
+const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+});
+
+await client.connect();
+export const pgClient = client;
+export const db = drizzle(client);

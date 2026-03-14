@@ -43,14 +43,14 @@ export function useHandleSubmit() {
             )
 
             // 2. Lógica de Redirección Inteligente por Rol
-            if (data.user && data.user.role === 'admin') {
-                // Si es admin, forzamos la redirección a su panel
-                redirectTo('/dashboard/admin');
-            } else {
-                // Si es usuario normal, usamos el nexturl original (ej. /dashboard)
-                if (nexturl) redirectTo(nexturl);
-            }
-            
+          
+    const role = data.user?.roleName;
+    if (role === 'admin')        redirectTo('/dashboard/admin');
+    else if (role === 'cajero')  redirectTo('/dashboard/cajero');
+    else if (role === 'mesero')  redirectTo('/dashboard/mesero');
+    else if (role === 'cocina')  redirectTo('/dashboard/cocina');
+    else                         redirectTo('/dashboard/cliente');
+                
         } catch (err: any) {
             setError(err.message)
         }

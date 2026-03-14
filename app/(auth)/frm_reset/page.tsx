@@ -1,139 +1,58 @@
-'use client';
+// COMENTADO: Firebase Password Recovery Form - Migration to Supabase
+// 'use client';
+//
+// import { auth } from "@/lib/firebaseConfig";
+// import { useState } from 'react';
+// import { handleSendEmail } from "@/actions/(email-actions)/handleSendPasswordResetEmail";
+// import { emailRegex } from "@/utils/validators";
 
-import { useState, useEffect, useRef } from 'react';
+"use client";
+
+import { useState } from "react";
 import { emailRegex } from "@/utils/validators";
 
 export default function RecoverPage() {
-    const [correo, setCorreo] = useState('');
-    const [error, setError] = useState<string | null>(null);
-    const [response, setResponse] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [response, setResponse] = useState("");
 
-    const [waitSeconds, setWaitSeconds] = useState<number | null>(null);
-    const intervalRef = useRef<any>(null);
+  const isEmailValid = emailRegex.test(correo);
+  const isFormReady = isEmailValid;
 
-    const isEmailValid = emailRegex.test(correo);
-    const isFormReady = isEmailValid;
+  return (
+    <div className="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[1fr_1.3fr] lg:items-center">
+      <div className="flex flex-col justify-center px-6 py-12 lg:px-10">
+        <div className="mx-auto w-full max-w-sm lg:max-w-md">
+          <div className="flex items-center space-x-2 mb-12">
+            <span className="text-xl font-medium text-[#3b4b57]">
+              Restaurante El Quijote
+            </span>
+          </div>
 
-    // === 1. Timer ===
-    useEffect(() => {
-        if (waitSeconds === null) return;
+          <div className="mb-10">
+            <h2 className="text-3xl font-bold text-gray-900">
+              Recuperación de contraseña
+            </h2>
+          </div>
 
-        if (waitSeconds <= 0) {
-            setWaitSeconds(null);
-            return;
-        }
-
-        intervalRef.current = setInterval(() => {
-            setWaitSeconds(prev =>
-                prev !== null ? prev - 1 : null
-            );
-        }, 1000);
-
-        return () => clearInterval(intervalRef.current);
-    }, [waitSeconds]);
-
-    async function handleSend() {
-        setError(null);
-        setResponse("");
-
-        const res = await fetch("/api/auth/recovery_request", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ correo }),
-        });
-
-        const data = await res.json();
-
-        if (data.waitSeconds) {
-            setWaitSeconds(data.waitSeconds);
-        }
-
-        if (!res.ok) {
-            // Error normal o cooldown
-            if (!data.waitSeconds) setError(data.message);
-            return;
-        }
-
-        // Éxito
-        setResponse("Correo enviado correctamente.");
-    }
-
-    return (
-        <div className="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[1fr_1.3fr] lg:items-center">
-            <div className="flex flex-col justify-center px-6 py-12 lg:px-10">
-                <div className="mx-auto w-full max-w-sm lg:max-w-md">
-
-                    <h2 className="text-3xl font-bold text-gray-900 mb-10">Recuperación de contraseña</h2>
-
-                    {/* Error normal */}
-                    {error && !waitSeconds && (
-                        <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Mensaje éxito */}
-                    {response && (
-                        <div className="mt-4 p-3 bg-green-100 text-green-700 border border-green-300 rounded-md text-sm font-semibold text-center">
-                            {response}
-                            <div className="mt-2 text-xs text-gray-700">
-                                Revisa tu correo electrónico.
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Bloqueo */}
-                    {waitSeconds !== null && (
-                        <div className="mt-4 p-3 bg-yellow-100 text-yellow-700 border border-yellow-300 rounded-md text-sm font-semibold text-center">
-                            Debes esperar {waitSeconds} segundos antes de enviar otro correo.
-                        </div>
-                    )}
-
-                    <form
-                        className="space-y-6"
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            handleSend();
-                        }}
-                    >
-
-                        <div className="relative">
-                            <input
-                                type="email"
-                                placeholder="Ingresa tu correo electrónico"
-                                className="block w-full rounded-lg border border-gray-200 py-3.5 px-4"
-                                value={correo}
-                                onChange={(e) => setCorreo(e.target.value)}
-                                required
-                            />
-                            <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">
-                                Correo electrónico*
-                            </span>
-                            {correo && !isEmailValid && (
-                                <p className="text-xs text-red-500 mt-1">Ingresa un correo electrónico válido.</p>
-                            )}
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={!isFormReady || waitSeconds !== null}
-                            className={`flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300
-                                ${waitSeconds !== null
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : isFormReady
-                                        ? "bg-[#232f38] hover:bg-[#3b4b57]"
-                                        : "bg-[#232f38] opacity-40 cursor-not-allowed"
-                                }`}
-                        >
-                            {waitSeconds !== null
-                                ? `Bloqueado (${waitSeconds}s)`
-                                : "Enviar enlace de recuperación"}
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div className="hidden lg:block h-screen p-10" />
+          <div className="p-4 bg-yellow-100 border border-yellow-400 rounded-md">
+            <p className="text-yellow-800">
+              Password recovery through email has been disabled. This feature is
+              now handled by Supabase. Please contact support for password reset
+              assistance.
+            </p>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
+
+// COMENTADO: Función original con handleSendEmail de Firebase - Desactivada
+// ========================================================================
+// Las siguientes funciones y lógica han sido removidas:
+// - import { handleSendEmail } from "@/actions/(email-actions)/handleSendPasswordResetEmail";
+// - async function handleSend() { const result = await handleSendEmail(auth, correo); }
+// - Form submit que llamaba handleSend()
+// - Estado error para mostrar errores
+// La lógica de envío de email será implementada en Supabase cuando sea necesario
+// ========================================================================

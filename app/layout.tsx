@@ -1,15 +1,22 @@
-import '@/styles/globals.css';
-import IdleLogout from '@/components/IdleLogout';
+"use client";
 
-export default function RootLayout({ children,}: {
-        children: React.ReactNode;
-    }) {
-    return (
-        <html lang="es">
-            <body className='bg-gray-50'>
-                <IdleLogout />
-                {children}  {/* Representa el contenido de las páginas o layouts anidados. El RootLayout envuelve todo lo demás. */}
-            </body>
-        </html>
-    );
+import { Provider } from "react-redux";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { store } from "@/store";
+import "@/styles/globals.css";
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="es" suppressHydrationWarning>
+      <body>
+        <Provider store={store}>
+          <ThemeProvider>{children}</ThemeProvider>
+        </Provider>
+      </body>
+    </html>
+  );
 }

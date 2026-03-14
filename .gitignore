@@ -3,6 +3,10 @@
 /node_modules
 /.pnp
 .pnp.js
+.vscode
+.env
+.env.developmet
+.env.developmet.local
 
 # testing
 /coverage
@@ -25,7 +29,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
-.env*.local
+.env*
 
 # vercel
 .vercel
@@ -33,6 +37,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local clones / scratch
+backend_tmp/
 
 
 ### Firebase ###
@@ -43,3 +50,5 @@ next-env.d.ts
 ### Firebase Patch ###
 .runtimeconfig.json
 .firebase/
+.env
+.vscode/settings.json
