@@ -26,7 +26,8 @@ export default function RegisterPage() {
   const [correo, setCorreo] = useState("");
   const [lada, setLada] = useState("+52");
   const [telefono, setTelefono] = useState("");
-  const [password, setpassword] = useState("");
+  const [password, setpassword] = useState("")
+  ;
   const [agreed, setAgreed] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -575,8 +576,8 @@ export default function RegisterPage() {
               type="submit"
               disabled={!isFormReady}
               aria-disabled={!isFormReady}
-              className={`flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg 
-                                transition-all duration-300 
+              className={`flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg
+                                transition-all duration-300
                                 ${isFormReady ? "bg-[#232f38] hover:bg-[#3b4b57]" : "bg-[#232f38] opacity-40 cursor-not-allowed"}`}
             >
               Crear cuenta
