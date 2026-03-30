@@ -71,6 +71,7 @@ interface MenuItem {
 }
 interface Category {
   id: number;
+  order?: number;
   name: string;
   icon: string;
   color: string;
@@ -1486,10 +1487,38 @@ export default function AdminMenuPage() {
       const catId = Number.isFinite(catIdNum) ? catIdNum : 0;
 
       if (!byCat.has(catId)) {
+        const rawCatName =
+          r?.categoria_nombre ??
+          r?.categoriaNombre ??
+          r?.categoria_name ??
+          r?.categoriaName ??
+          r?.categoria ??
+          null;
+        const rawCatIcon =
+          r?.categoria_icono ??
+          r?.categoriaIcono ??
+          r?.categoria_icon ??
+          r?.categoriaIcon ??
+          null;
+        const rawCatOrder = r?.categoria_orden ?? r?.categoriaOrden ?? null;
+        const catOrderNum = parseNumber(rawCatOrder, Number.NaN);
+        const catOrder = Number.isFinite(catOrderNum) ? catOrderNum : undefined;
+        const catName =
+          typeof rawCatName === "string" && rawCatName.trim()
+            ? rawCatName.trim()
+            : catId
+              ? `Categoría ${catId}`
+              : "Platillos";
+        const catIcon =
+          typeof rawCatIcon === "string" && rawCatIcon.trim()
+            ? rawCatIcon.trim()
+            : "🍽️";
+
         byCat.set(catId, {
           id: catId || idx + 1,
-          name: catId ? `Categoría ${catId}` : "Platillos",
-          icon: "🍽️",
+          order: catOrder,
+          name: catName,
+          icon: catIcon,
           color: colors[Math.abs(catId) % colors.length],
           items: [],
         });
@@ -1519,7 +1548,12 @@ export default function AdminMenuPage() {
       });
     });
 
-    return Array.from(byCat.values()).sort((a, b) => a.id - b.id);
+    return Array.from(byCat.values()).sort((a, b) => {
+      const ao = typeof a.order === "number" ? a.order : a.id;
+      const bo = typeof b.order === "number" ? b.order : b.id;
+      if (ao !== bo) return ao - bo;
+      return a.id - b.id;
+    });
   }
 
   async function loadPlatillosFromDb() {
