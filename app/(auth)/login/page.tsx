@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import Button from "@/components/Button";
-import { useHandleSubmit } from "@/hooks/handleSubmit";
+import { useRouter } from "next/navigation";
 import { emailRegex } from "@/utils/validators";
+import { SettingsService } from "@/features/shared/services/dataService";
+import { type SystemSettings } from "@/features/shared/data/restaurantData";
 
 export default function LoginPage() {
     const [correo, setCorreo] = useState("");
@@ -18,7 +20,13 @@ export default function LoginPage() {
     const isEmailValid = emailRegex.test(correo);
     const isFormReady = isEmailValid && password.length >= 8;
 
-    const { handleSubmit } = useHandleSubmit();
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+    const [settings, setSettings] = useState<SystemSettings | null>(null);
+
+    useEffect(() => {
+        setSettings(SettingsService.getSettings());
+    }, []);
 
     // --- 1. Si backend indica bloqueo, extraer segundos y NO mostrar mensaje rojo ---
     useEffect(() => {
@@ -54,9 +62,10 @@ export default function LoginPage() {
         <div className="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[1fr_1.3fr] lg:items-center">
             <div className="flex flex-col justify-center px-6 py-12 lg:px-10">
                 <div className="mx-auto w-full max-w-sm lg:max-w-md">
-                    <div className="flex items-center space-x-2 mb-12">
-                        <span className="text-xl font-medium text-[#3b4b57]">
-                            Restaurante El Quijote
+                    <div className="flex items-center space-x-2 mb-12 animate-in fade-in slide-in-from-left-4 duration-700">
+                        <span className="text-2xl mr-2">{settings?.logoEmoji || "🍽️"}</span>
+                        <span className="text-xl font-display font-black text-text">
+                            {settings?.restaurantName || "Cargando..."}
                         </span>
                     </div>
 
@@ -66,7 +75,7 @@ export default function LoginPage() {
                         </h2>
                     </div>
 
-                    <Button
+ <Button
                         type="button"
                         label="Continuar con Google"
                         url="/google-auth"
@@ -112,15 +121,31 @@ export default function LoginPage() {
 
                     <form
                         className="space-y-6"
-                        onSubmit={(e) =>
-                            handleSubmit(
-                                e,
-                                "/api/auth/login",
-                                { correo, password },
-                                setError,
-                                "/dashboard"
-                            )
-                        }
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            setLoading(true);
+                            setError(null);
+
+                            try {
+                                const res = await fetch("/api/auth/login", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ correo, password })
+                                });
+
+                                const data = await res.json();
+
+                                if (!res.ok) {
+                                    throw new Error(data.error || "Ocurrió un error");
+                                }
+
+                                router.push("/dashboard");
+                            } catch (err: any) {
+                                setError(err.message || "Error al iniciar sesión");
+                            } finally {
+                                setLoading(false);
+                            }
+                        }}
                     >
                         <div className="relative">
                             <input
@@ -163,16 +188,16 @@ export default function LoginPage() {
 
                         <button
                             type="submit"
-                            disabled={!isFormReady || waitSeconds !== null}
-                            className={`flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 
-                                ${waitSeconds !== null
+                            disabled={!isFormReady || waitSeconds !== null || loading}
+                            className={`flex w-full justify-center rounded-xl px-3 py-3 text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all duration-300
+                                ${waitSeconds !== null || loading
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : isFormReady
-                                        ? "bg-[#232f38] hover:bg-[#3b4b57]"
-                                        : "bg-[#232f38] opacity-40 cursor-not-allowed"
+                                        ? "bg-brand hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0"
+                                        : "bg-brand opacity-40 cursor-not-allowed"
                                 }`}
                         >
-                            {waitSeconds !== null ? `Bloqueado (${waitSeconds}s)` : "Iniciar Sesión"}
+                            {loading ? "Cargando..." : (waitSeconds !== null ? `Bloqueado (${waitSeconds}s)` : "Iniciar Sesión")}
                         </button>
                     </form>
 
@@ -190,9 +215,9 @@ export default function LoginPage() {
 
             <div className="hidden lg:block h-screen p-10">
                 <div
-                    className="relative h-full w-full rounded-[3rem] shadow-xl overflow-hidden bg-cover bg-center"
+                    className="relative h-full w-full rounded-[3rem] shadow-xl overflow-hidden bg-cover bg-center transition-all duration-1000 animate-in zoom-in-95"
                     style={{
-                        backgroundImage: `url('https://cdn.pixabay.com/photo/2019/01/25/21/07/food-3955317_1280.jpg')`,
+                        backgroundImage: `url('${settings?.loginBgImageUrl || "https://cdn.pixabay.com/photo/2019/01/25/21/07/food-3955317_1280.jpg"}')`,
                         backgroundSize: "cover",
                         backgroundRepeat: "no-repeat",
                     }}

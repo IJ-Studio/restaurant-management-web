@@ -19,7 +19,7 @@ export default function Button({
             className={`${className}`}
             onClick={() => redirectTo(url)}
         >
-            {ico && <span className="mr-2"> {ico}</span>} {/*&& = si condición es verdadera mostrar*/}
+            {ico && <span className="mr-2"> {ico}</span>}
             {label}
         </button>
     )

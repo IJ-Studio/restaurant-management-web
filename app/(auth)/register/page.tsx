@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "@/components/Button";
-import { useHandleSubmit } from "@/hooks/handleSubmit";
-// COMENTADO: Firebase email verification - Migration to Supabase
-// import { registerWithEmail } from "@/lib/auth/sendEmailVerification";
+import { useRouter } from "next/navigation";
 import { phoneRegex, emailRegex } from "@/utils/validators";
+import { SettingsService } from "@/features/shared/services/dataService";
+import { type SystemSettings } from "@/features/shared/data/restaurantData";
 import {
   letters,
   haveAnVowel,
@@ -30,7 +30,13 @@ export default function RegisterPage() {
   const [agreed, setAgreed] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { handleSubmit } = useHandleSubmit();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
+
+  useEffect(() => {
+     setSettings(SettingsService.getSettings());
+  }, []);
 
   const repeatedChars = /(.)\1{2,}/;
 
@@ -212,9 +218,10 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[1fr_1.3fr] lg:items-center">
       <div className="flex flex-col justify-center h-full px-4 py-8 sm:px-8 lg:px-10 lg:py-8">
         <div className="mx-auto w-full max-w-xs sm:max-w-sm lg:max-w-sm">
-          <div className="flex items-center space-x-2 mb-4 sm:mb-6">
-            <span className="text-xl font-medium text-[#3b4b57]">
-              Restaurante El Quijote
+          <div className="flex items-center space-x-2 mb-4 sm:mb-6 animate-in fade-in slide-in-from-left-4 duration-700">
+            <span className="text-2xl mr-2">{settings?.logoEmoji || "🍽️"}</span>
+            <span className="text-xl font-display font-black text-text">
+              {settings?.restaurantName || "Cargando..."}
             </span>
           </div>
 
@@ -283,24 +290,42 @@ export default function RegisterPage() {
               // }
               // NOTA: Email verification ahora manejada por Supabase
 
-              const result = await handleSubmit(
-                e,
-                "/api/auth/register",
-                {
+              setLoading(true);
+              try {
+                const reqData = {
                   nombre,
                   apellido,
                   correo,
                   telefono: `${lada}${telefono}`,
                   password,
-                },
-                setError,
-                "/login",
-              );
-
-              setError(null);
-              setSuccess(
-                "¡Cuenta creada exitosamente! Revisa tu correo y confirma tu cuenta antes de iniciar sesión.",
-              );
+                };
+                
+                const res = await fetch("/api/auth/register", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(reqData)
+                });
+                
+                const data = await res.json();
+                
+                if (!res.ok) {
+                   throw new Error(data.error || "Ocurrió un error al registrarse");
+                }
+                
+                setError(null);
+                setSuccess(
+                  "¡Cuenta creada exitosamente! Revisa tu correo y confirma tu cuenta antes de iniciar sesión.",
+                );
+                
+                // Redirigir al usuario después de unos segundos
+                setTimeout(() => {
+                   router.push("/login");
+                }, 3000);
+              } catch (err: any) {
+                setError(err.message || "Error al conectar con el servidor.");
+              } finally {
+                setLoading(false);
+              }
             }}
           >
             <div className="flex space-x-2">
@@ -573,13 +598,13 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={!isFormReady}
-              aria-disabled={!isFormReady}
-              className={`flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg 
+              disabled={!isFormReady || loading}
+              aria-disabled={!isFormReady || loading}
+              className={`flex w-full justify-center rounded-xl px-3 py-3 text-sm font-black uppercase tracking-widest text-white shadow-lg 
                                 transition-all duration-300 
-                                ${isFormReady ? "bg-[#232f38] hover:bg-[#3b4b57]" : "bg-[#232f38] opacity-40 cursor-not-allowed"}`}
+                                ${isFormReady && !loading ? "bg-brand hover:brightness-110 hover:-translate-y-0.5" : "bg-brand opacity-40 cursor-not-allowed"}`}
             >
-              Crear cuenta
+              {loading ? "Registrando..." : "Crear cuenta"}
             </button>
           </form>
 
@@ -599,9 +624,9 @@ export default function RegisterPage() {
 
       <div className="hidden lg:block h-screen p-10">
         <div
-          className="relative h-full w-full rounded-[3rem] shadow-xl overflow-hidden bg-cover bg-center"
+          className="relative h-full w-full rounded-[3rem] shadow-xl overflow-hidden bg-cover bg-center transition-all duration-1000 animate-in zoom-in-95"
           style={{
-            backgroundImage: `url('https://cdn.pixabay.com/photo/2020/02/11/19/03/meal-4840665_1280.jpg')`,
+            backgroundImage: `url('${settings?.loginBgImageUrl || "https://cdn.pixabay.com/photo/2020/02/11/19/03/meal-4840665_1280.jpg"}')`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
           }}

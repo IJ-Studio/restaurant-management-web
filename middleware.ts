@@ -1,58 +1,107 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
-const secretKey = process.env.SESSION_SECRET || 'secret-key-super-segura-cambiame';
-const encodedKey = new TextEncoder().encode(secretKey);
+// ─── Rutas públicas (no requieren autenticación) ───────────────────────────
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/reset", "/frm_reset"];
 
-export async function middleware(req: NextRequest) {
-  const session = req.cookies.get('session')?.value;
+// ─── Rutas protegidas por rol ──────────────────────────────────────────────
+const ROLE_ROUTES: Record<string, string[]> = {
+  admin:   ["/dashboard/admin"],
+  cajero:  ["/dashboard/cajero"],
+  mesero:  ["/dashboard/mesero"],
+  cocina:  ["/dashboard/cocina"],
+  cliente: ["/dashboard/cliente"],
+};
 
-  const isDashboard = req.nextUrl.pathname.startsWith('/dashboard');
-  const isAuthPage = req.nextUrl.pathname.startsWith('/login') || 
-                     req.nextUrl.pathname.startsWith('/register');
+// ─── Rutas del dashboard que siempre requieren auth ───────────────────────
+const DASHBOARD_PREFIX = "/dashboard";
 
-  if (isDashboard && !session) {
-    return NextResponse.redirect(new URL('/login', req.url));
+function getSecretKey(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET environment variable is not set");
+  return new TextEncoder().encode(secret);
+}
+
+async function getSessionFromRequest(
+  request: NextRequest
+): Promise<{ roleName?: string } | null> {
+  // Intentar desde cookie primero, luego header Authorization
+  const token =
+    request.cookies.get("session")?.value ??
+    request.headers.get("authorization")?.replace("Bearer ", "");
+
+  if (!token) return null;
+
+  try {
+    const { payload } = await jwtVerify(token, getSecretKey());
+    return payload as { roleName?: string };
+  } catch {
+    return null;
+  }
+}
+
+export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl;
+
+  // Permitir rutas públicas directamente
+  if (PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"))) {
+    return NextResponse.next();
   }
 
-  if (isAuthPage && session) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+  // Rutas especiales — siempre accesibles
+  if (
+    pathname.startsWith("/maintenance") ||
+    pathname.startsWith("/forbidden") ||
+    pathname.startsWith("/unauthorized") ||
+    pathname.startsWith("/api/")
+  ) {
+    return NextResponse.next();
   }
 
-  if (session) {
-    try {
-      const { payload } = await jwtVerify(session, encodedKey, {
-        algorithms: ['HS256'],
-      });
+  // Verificar si es una ruta del dashboard
+  if (!pathname.startsWith(DASHBOARD_PREFIX)) {
+    return NextResponse.next();
+  }
 
-      const roleName = payload.roleName as string;
-      const pathname = req.nextUrl.pathname;
+  // ── Validar sesión ────────────────────────────────────────────────────────
+  const session = await getSessionFromRequest(request);
 
-      // Proteger rutas por rol
-      if (pathname.startsWith('/dashboard/admin') && roleName !== 'admin') {
-        return NextResponse.redirect(new URL('/dashboard', req.url));
-      }
-      if (pathname.startsWith('/dashboard/cajero') && roleName !== 'cajero' && roleName !== 'admin') {
-        return NextResponse.redirect(new URL('/dashboard', req.url));
-      }
-      if (pathname.startsWith('/dashboard/cocina') && roleName !== 'cocina' && roleName !== 'admin') {
-        return NextResponse.redirect(new URL('/dashboard', req.url));
-      }
-      if (pathname.startsWith('/dashboard/mesero') && roleName !== 'mesero' && roleName !== 'admin') {
-        return NextResponse.redirect(new URL('/dashboard', req.url));
-      }
+  if (!session) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
-    } catch {
-      const response = NextResponse.redirect(new URL('/login', req.url));
-      response.cookies.delete('session');
-      return response;
-    }
+  const role = session.roleName as string | undefined;
+
+  if (!role) {
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  }
+
+  // ── Verificar acceso por rol ──────────────────────────────────────────────
+  const allowedRoutes = ROLE_ROUTES[role] ?? [];
+  const hasAccess = allowedRoutes.some((route) => pathname.startsWith(route));
+
+  // El path /dashboard base redirige según rol (manejado en app/dashboard/page.tsx)
+  if (pathname === DASHBOARD_PREFIX || pathname === DASHBOARD_PREFIX + "/") {
+    return NextResponse.next();
+  }
+
+  if (!hasAccess) {
+    return NextResponse.redirect(new URL("/forbidden", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  /*
+   * Excluir:
+   * - Archivos estáticos (_next/static, _next/image, favicon, assets)
+   * - Rutas de API internas de Next.js
+   */
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|assets/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

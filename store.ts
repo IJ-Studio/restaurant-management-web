@@ -1,11 +1,9 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from "./store/authSlice";
-
-export const store = configureStore({
-  reducer: {
-    auth: authReducer,
-  },
-});
-
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+/**
+ *
+ * This file is kept temporarily for backward compatibility.
+ * All imports should be updated to use '@/store' (store/index.ts).
+ *
+ * TODO: Remove this file after migrating all consumers.
+ */
+export { store } from "./store/index";
+export type { RootState, AppDispatch } from "./store/index";

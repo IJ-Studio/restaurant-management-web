@@ -1,39 +1,5 @@
-// Archivo de configuración para TypeScript
 {
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "baseUrl": "./",
-    "paths": {
-      "@/*": ["./*"],
-      // alias para rutas
-      "@/actions/*": [
-        "actions/*"
-      ],      
-      "@/styles/*": [
-        "styles/*"
-      ],
-      "@/components/*": [
-        "components/*"
-      ],
-      "@/types/*": [
-        "types/*"
-      ],
-      "@/hooks/*": [
-        "hooks/*"
-      ],
-      "@/app/*": [
-        "app/*"
-      ],
-      "@/lib/*": [
-        "lib/*"
-      ],
-      "@/utils/*": [
-        "utils/*"
-      ],
-      "@/public/*": [
-        "public/*"
-      ],
-    },
     "target": "ES2017",
     "lib": [
       "dom",
@@ -42,14 +8,21 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": false,
+    "strict": true,
     "noEmit": true,
     "incremental": true,
     "module": "esnext",
-    "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
     "plugins": [
       {
         "name": "next"
@@ -59,11 +32,11 @@
   "include": [
     "next-env.d.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts",
     "**/*.ts",
-    "**/*.tsx"
-, "components/Input.tssx"  ],
+    "**/*.tsx",
+    "**/*.mts",
+    ".next/dev/types/**/*.ts"
+  ],
   "exclude": [
     "node_modules"
   ]

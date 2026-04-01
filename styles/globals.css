@@ -1,5 +1,71 @@
 @import "tailwindcss";
 
-body {
-  transition: colors 500ms ease-in-out;
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * DESIGN SYSTEM — TailwindCSS v4 CSS-first configuration
+ *
+ * En TailwindCSS v4, los tokens de diseño se definen aquí con @theme.
+ * NO se usa tailwind.config.js para el tema.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+@theme {
+  /* ── Brand colors ── */
+  --color-brand:        #e85d04;
+  --color-brand-light:  #ff7c2a;
+  --color-brand-dark:   #c44d03;
+
+  /* ── Neutral surface colors (light mode) ── */
+  --color-surface:      #ffffff;
+  --color-surface-alt:  #f5f3ef;
+  --color-border:       #e8e1d8;
+
+  /* ── Text colors ── */
+  --color-text:         #1a1208;
+  --color-text-sec:     #6b5e4e;
+  --color-text-muted:   #a89880;
+
+  /* ── Typography ── */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body:    "DM Sans", system-ui, sans-serif;
+
+  /* ── Sidebar ── */
+  --sidebar-width: 260px;
+
+  /* ── Radius ── */
+  --radius-standard: 1rem;
+
+  /* ── Animations ── */
+  --animate-spin-slow: spin 40s linear infinite;
+}
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * BASE STYLES
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+@layer base {
+  html {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    transition: background-color 300ms ease-in-out, color 300ms ease-in-out;
+  }
+
+  /* Focus visible global — accesibilidad */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Scrollbar global delgada */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
 }
