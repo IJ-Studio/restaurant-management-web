@@ -2,7 +2,7 @@
  * features/shared/data/restaurantData.ts
  *
  * THE "BASE" - Single Source of Truth for the whole restaurant.
- * All modules (Admin, Cashier, Kitchen, Client) must consume and 
+ * All modules (Admin, Cashier, Kitchen, Client) must consume and
  * update this data through a unified service.
  */
 
@@ -269,9 +269,9 @@ export const INITIAL_MERMAS: Merma[] = [
 
 export const INITIAL_ORDERS: Order[] = [
   {
-    id: "#9024", 
-    table: "Barra 1", 
-    timestamp: "2 min", 
+    id: "#9024",
+    table: "Barra 1",
+    timestamp: "2 min",
     status: "nuevo",
     items: [
       { name: "Guacamole Quijote", qty: 1, notes: "Sin cebolla" },
@@ -280,9 +280,9 @@ export const INITIAL_ORDERS: Order[] = [
     total: 170,
   },
   {
-    id: "#9023", 
-    table: "Mesa 3", 
-    timestamp: "8 min", 
+    id: "#9023",
+    table: "Mesa 3",
+    timestamp: "8 min",
     status: "preparando",
     items: [
       { name: "Corte New York", qty: 2, notes: "Término medio" },
@@ -319,7 +319,7 @@ export const INITIAL_SETTINGS: SystemSettings = {
     fontBody: "DM Sans",
     borderRadius: "medium",
   },
-  loginBgImageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1974&auto=format&fit=crop",
+  loginBgImageUrl:"https://cdn.pixabay.com/photo/2019/01/25/21/07/food-3955317_1280.jpg",
 };
 
 export const INITIAL_ROLES: Role[] = [

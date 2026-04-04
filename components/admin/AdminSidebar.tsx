@@ -15,6 +15,7 @@ import {
   FileText,
   Info,
   ChevronDown,
+  Database,
 } from "lucide-react";
 
 const T = {
@@ -360,6 +361,13 @@ export default function AdminSidebar({
         />
 
         <SectionLabel label="Sistema" />
+
+        <NavBtn
+          icon={<Database size={17} />}
+          label="Rendimiento BD"
+          active={is("performance")}
+          onClick={() => router.push("/dashboard/admin/db-performance")}
+        />
 
         <NavBtn
           icon={<Settings size={17} />}

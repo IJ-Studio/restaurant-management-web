@@ -250,7 +250,7 @@ export default function LoginPage() {
         <div
           className="relative h-full w-full rounded-[3rem] shadow-xl overflow-hidden bg-cover bg-center transition-all duration-1000 animate-in zoom-in-95"
           style={{
-            backgroundImage: `url('${settings?.loginBgImageUrl || "https://cdn.pixabay.com/photo/2019/01/25/21/07/food-3955317_1280.jpg"}')`,
+            backgroundImage: `url('${settings?.loginBgImageUrl }')`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
           }}

@@ -26,7 +26,8 @@ export default function RegisterPage() {
   const [correo, setCorreo] = useState("");
   const [lada, setLada] = useState("+52");
   const [telefono, setTelefono] = useState("");
-  const [password, setpassword] = useState("");
+  const [password, setpassword] = useState("")
+  ;
   const [agreed, setAgreed] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -299,24 +300,24 @@ export default function RegisterPage() {
                   telefono: `${lada}${telefono}`,
                   password,
                 };
-                
+
                 const res = await fetch("/api/auth/register", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify(reqData)
                 });
-                
+
                 const data = await res.json();
-                
+
                 if (!res.ok) {
                    throw new Error(data.error || "Ocurrió un error al registrarse");
                 }
-                
+
                 setError(null);
                 setSuccess(
                   "¡Cuenta creada exitosamente! Revisa tu correo y confirma tu cuenta antes de iniciar sesión.",
                 );
-                
+
                 // Redirigir al usuario después de unos segundos
                 setTimeout(() => {
                    router.push("/login");
@@ -598,11 +599,12 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={!isFormReady || loading}
-              aria-disabled={!isFormReady || loading}
-              className={`flex w-full justify-center rounded-xl px-3 py-3 text-sm font-black uppercase tracking-widest text-white shadow-lg 
-                                transition-all duration-300 
-                                ${isFormReady && !loading ? "bg-brand hover:brightness-110 hover:-translate-y-0.5" : "bg-brand opacity-40 cursor-not-allowed"}`}
+
+              disabled={!isFormReady}
+              aria-disabled={!isFormReady}
+              className={`flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg
+                                transition-all duration-300
+                                ${isFormReady ? "bg-[#232f38] hover:bg-[#3b4b57]" : "bg-[#232f38] opacity-40 cursor-not-allowed"}`}
             >
               {loading ? "Registrando..." : "Crear cuenta"}
             </button>
