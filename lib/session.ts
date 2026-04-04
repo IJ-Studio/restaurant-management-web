@@ -16,7 +16,8 @@ export interface SessionPayload extends JWTPayload {
 }
 
 function getSecretKey(): Uint8Array {
-  const secret = process.env.JWT_SECRET || "fallback_secret_key_for_development";
+  const secret =
+    process.env.JWT_SECRET || "fallback_secret_key_for_development";
   return new TextEncoder().encode(secret);
 }
 

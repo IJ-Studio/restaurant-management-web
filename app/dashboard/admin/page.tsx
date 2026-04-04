@@ -12,12 +12,16 @@ import { StockAlerts } from "@/features/dashboard/admin/components/StockAlerts";
 import { QuickActions } from "@/features/dashboard/admin/components/QuickActions";
 import { AlertTriangle, TrendingUp, Clock, Utensils } from "lucide-react";
 
-import { 
-  OrderService, 
-  InventoryService, 
-  TableService 
+import {
+  OrderService,
+  InventoryService,
+  TableService,
 } from "@/features/shared/services/dataService";
-import type { Order, InventoryProduct, DiningTable } from "@/features/shared/data/restaurantData";
+import type {
+  Order,
+  InventoryProduct,
+  DiningTable,
+} from "@/features/shared/data/restaurantData";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -42,7 +46,11 @@ export default function AdminDashboardPage() {
   }, [router]);
 
   if (loading || !user) {
-    return <div className="p-10 text-text-muted animate-pulse">Cargando dashboard central...</div>;
+    return (
+      <div className="p-10 text-text-muted animate-pulse">
+        Cargando dashboard central...
+      </div>
+    );
   }
 
   // Cálculos reales desde los servicios
@@ -51,10 +59,12 @@ export default function AdminDashboardPage() {
     .reduce((s, o) => s + o.total, 0);
 
   const activeOrders = orders.filter((o) => o.status !== "listo").length;
-  
+
   const lowStockProducts = inventory.filter((p) => p.stock <= p.minStock);
-  const criticalStock = lowStockProducts.filter((p) => p.stock <= p.minStock / 2).length;
-  
+  const criticalStock = lowStockProducts.filter(
+    (p) => p.stock <= p.minStock / 2,
+  ).length;
+
   const freeTables = tables.filter((t) => t.status === "libre").length;
   const occupiedTables = tables.filter((t) => t.status === "ocupada").length;
 
@@ -74,7 +84,9 @@ export default function AdminDashboardPage() {
         <h1 className="font-display font-black text-3xl tracking-tight leading-none mb-1">
           Buenas noches, {user.name} 👋
         </h1>
-        <p className="text-[13px] text-text-muted m-0">{today} · Restaurante El Quijote</p>
+        <p className="text-[13px] text-text-muted m-0">
+          {today} · Restaurante El Quijote
+        </p>
       </div>
 
       {/* Alerta de Stock */}
@@ -87,7 +99,7 @@ export default function AdminDashboardPage() {
               {" — "}Se recomienda generar una orden urgente.
             </p>
           </div>
-          <button 
+          <button
             onClick={() => router.push("/dashboard/admin/inventory")}
             className="text-xs font-extrabold text-red-600 bg-transparent border-none cursor-pointer whitespace-nowrap underline"
           >

@@ -7,11 +7,11 @@ const PUBLIC_ROUTES = ["/", "/login", "/register", "/reset", "/frm_reset"];
 
 // ─── Rutas protegidas por rol ──────────────────────────────────────────────
 const ROLE_ROUTES: Record<number, string[]> = {
-  1: ["/dashboard/admin"],      // admin
-  2: ["/dashboard/cajero"],     // cajero
-  3: ["/dashboard/mesero"],     // mesero
-  4: ["/dashboard/cocina"],     // cocina
-  5: ["/dashboard/cliente"],    // cliente
+  1: ["/dashboard/admin"], // admin
+  2: ["/dashboard/cajero"], // cajero
+  3: ["/dashboard/mesero"], // mesero
+  4: ["/dashboard/cocina"], // cocina
+  5: ["/dashboard/cliente"], // cliente
 };
 
 // ─── Rutas del dashboard que siempre requieren auth ───────────────────────
@@ -23,9 +23,7 @@ function getSecretKey(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-async function getSessionFromRequest(
-  request: NextRequest,
-): Promise<{
+async function getSessionFromRequest(request: NextRequest): Promise<{
   id: string;
   email: string;
   roleId: number;
@@ -55,7 +53,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // Permitir rutas públicas directamente
-  if (PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"))) {
+  if (
+    PUBLIC_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(route + "/"),
+    )
+  ) {
     return NextResponse.next();
   }
 

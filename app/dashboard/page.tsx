@@ -8,10 +8,15 @@ export default async function DashboardPage() {
   const roleId = session.roleId as number;
 
   switch (roleId) {
-    case 1:      redirect("/dashboard/admin");
-    case 2:      redirect("/dashboard/cajero");
-    case 3:      redirect("/dashboard/mesero");
-    case 4:      redirect("/dashboard/cocina");
-    default:     redirect("/dashboard/cliente");
+    case 1:
+      redirect("/dashboard/admin");
+    case 2:
+      redirect("/dashboard/cajero");
+    case 3:
+      redirect("/dashboard/mesero");
+    case 4:
+      redirect("/dashboard/cocina");
+    default:
+      redirect("/dashboard/cliente");
   }
 }
