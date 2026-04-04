@@ -8,7 +8,7 @@ import { SettingsService } from "@/features/shared/services/dataService";
 import { type SystemSettings } from "@/features/shared/data/restaurantData";
 
 export default function LoginPage() {
-    const [correo, setCorreo] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const [error, setError] = useState<string | null>(null);
@@ -17,7 +17,7 @@ export default function LoginPage() {
     const [waitSeconds, setWaitSeconds] = useState<number | null>(null);
     const intervalRef = useRef<any>(null);
 
-    const isEmailValid = emailRegex.test(correo);
+    const isEmailValid = emailRegex.test(email);
     const isFormReady = isEmailValid && password.length >= 8;
 
     const router = useRouter();
@@ -130,7 +130,7 @@ export default function LoginPage() {
                                 const res = await fetch("/api/auth/login", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ correo, password })
+                                    body: JSON.stringify({ email, password })
                                 });
 
                                 const data = await res.json();
@@ -139,7 +139,16 @@ export default function LoginPage() {
                                     throw new Error(data.error || "Ocurrió un error");
                                 }
 
-                                router.push("/dashboard");
+                                // Guardar token en cookie Y localStorage
+                                if (data.accessToken) {
+                                  // Cookie para el middleware (server-side)
+                                  document.cookie = `session=${data.accessToken}; path=/; max-age=86400; samesite=strict`;
+                                  // localStorage para las requests al backend
+                                  localStorage.setItem("authToken", data.accessToken);
+                                }
+
+                                setSuccess("¡Login exitoso! Redirigiendo...");
+                                setTimeout(() => router.push("/dashboard"), 500);
                             } catch (err: any) {
                                 setError(err.message || "Error al iniciar sesión");
                             } finally {
@@ -154,8 +163,8 @@ export default function LoginPage() {
                                 required
                                 placeholder="Ingresa tu correo electronico"
                                 className="block w-full rounded-lg border border-gray-200 py-3.5 px-4"
-                                value={correo}
-                                onChange={(e) => setCorreo(e.target.value)}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
                             <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">
                                 Correo electrónico*

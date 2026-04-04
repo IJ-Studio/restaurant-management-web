@@ -19,7 +19,6 @@ import {
   type Reservation, 
   type DiningTable 
 } from "@/features/shared/data/restaurantData";
-import { getSessionUser } from "@/lib/session";
 
 import { ReservationList } from "@/features/dashboard/admin/components/reservations/ReservationList";
 import { ReservationCalendar } from "@/features/dashboard/admin/components/reservations/ReservationCalendar";
@@ -27,7 +26,7 @@ import { ReservationModal } from "@/features/dashboard/admin/components/reservat
 
 export default function ReservationsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>({ name: "Admin" });
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [tables, setTables] = useState<DiningTable[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,17 +37,13 @@ export default function ReservationsPage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    async function init() {
-      const u = await getSessionUser();
-      if (!u || u.roleName !== "admin") {
-        router.push("/login");
-        return;
-      }
-      setUser(u);
+    // El layout ya validó que el usuario esté autenticado
+    // Solo cargar datos
+    try {
       refreshData();
+    } finally {
       setLoading(false);
     }
-    init();
   }, [router]);
 
   const refreshData = () => {

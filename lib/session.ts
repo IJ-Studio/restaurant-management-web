@@ -9,11 +9,10 @@ import { cookies } from "next/headers";
 import type { SessionUser } from "@/types/auth";
 
 export interface SessionPayload extends JWTPayload {
-  userId?:   string;
-  email?:    string;
-  roleName?: string;
-  name?:     string;
-  lastname?: string;
+  id?: string;
+  email?: string;
+  roleId?: number;
+  tokenId?: string;
 }
 
 function getSecretKey(): Uint8Array {
@@ -37,13 +36,24 @@ export async function getSession(): Promise<SessionPayload | null> {
 
 export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await getSession();
-  if (!session?.userId || !session.email || !session.roleName) return null;
+  if (!session?.id || !session.email || !session.roleId) return null;
 
   return {
-    id:       session.userId,
-    email:    session.email,
-    name:     session.name     ?? "",
-    lastname: session.lastname ?? "",
-    roleName: session.roleName as SessionUser["roleName"],
+    id: session.id,
+    email: session.email,
+    name: "",
+    lastname: "",
+    roleName: getRoleNameFromId(session.roleId),
   };
+}
+
+function getRoleNameFromId(roleId: number): SessionUser["roleName"] {
+  const roleMap: Record<number, SessionUser["roleName"]> = {
+    1: "admin",
+    2: "cajero",
+    3: "mesero",
+    4: "cocina",
+    5: "cliente",
+  };
+  return roleMap[roleId] || "cliente";
 }

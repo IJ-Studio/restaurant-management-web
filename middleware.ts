@@ -6,12 +6,12 @@ import { jwtVerify } from "jose";
 const PUBLIC_ROUTES = ["/", "/login", "/register", "/reset", "/frm_reset"];
 
 // ─── Rutas protegidas por rol ──────────────────────────────────────────────
-const ROLE_ROUTES: Record<string, string[]> = {
-  admin:   ["/dashboard/admin"],
-  cajero:  ["/dashboard/cajero"],
-  mesero:  ["/dashboard/mesero"],
-  cocina:  ["/dashboard/cocina"],
-  cliente: ["/dashboard/cliente"],
+const ROLE_ROUTES: Record<number, string[]> = {
+  1: ["/dashboard/admin"],      // admin
+  2: ["/dashboard/cajero"],     // cajero
+  3: ["/dashboard/mesero"],     // mesero
+  4: ["/dashboard/cocina"],     // cocina
+  5: ["/dashboard/cliente"],    // cliente
 };
 
 // ─── Rutas del dashboard que siempre requieren auth ───────────────────────
@@ -24,8 +24,13 @@ function getSecretKey(): Uint8Array {
 }
 
 async function getSessionFromRequest(
-  request: NextRequest
-): Promise<{ roleName?: string } | null> {
+  request: NextRequest,
+): Promise<{
+  id: string;
+  email: string;
+  roleId: number;
+  tokenId: string;
+} | null> {
   // Intentar desde cookie primero, luego header Authorization
   const token =
     request.cookies.get("session")?.value ??
@@ -35,7 +40,12 @@ async function getSessionFromRequest(
 
   try {
     const { payload } = await jwtVerify(token, getSecretKey());
-    return payload as { roleName?: string };
+    return payload as {
+      id: string;
+      email: string;
+      roleId: number;
+      tokenId: string;
+    };
   } catch {
     return null;
   }
@@ -73,14 +83,14 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = session.roleName as string | undefined;
+  const roleId = session.roleId;
 
-  if (!role) {
+  if (!roleId) {
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 
   // ── Verificar acceso por rol ──────────────────────────────────────────────
-  const allowedRoutes = ROLE_ROUTES[role] ?? [];
+  const allowedRoutes = ROLE_ROUTES[roleId] ?? [];
   const hasAccess = allowedRoutes.some((route) => pathname.startsWith(route));
 
   // El path /dashboard base redirige según rol (manejado en app/dashboard/page.tsx)

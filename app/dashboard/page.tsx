@@ -5,13 +5,13 @@ export default async function DashboardPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const role = session.roleName as string;
+  const roleId = session.roleId as number;
 
-  switch (role) {
-    case "admin":   redirect("/dashboard/admin");
-    case "cajero":  redirect("/dashboard/cajero");
-    case "mesero":  redirect("/dashboard/mesero");
-    case "cocina":  redirect("/dashboard/cocina");
-    default:        redirect("/dashboard/cliente");
+  switch (roleId) {
+    case 1:      redirect("/dashboard/admin");
+    case 2:      redirect("/dashboard/cajero");
+    case 3:      redirect("/dashboard/mesero");
+    case 4:      redirect("/dashboard/cocina");
+    default:     redirect("/dashboard/cliente");
   }
 }

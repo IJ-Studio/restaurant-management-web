@@ -17,33 +17,28 @@ import {
   InventoryService, 
   TableService 
 } from "@/features/shared/services/dataService";
-import { getSessionUser } from "@/lib/session";
 import type { Order, InventoryProduct, DiningTable } from "@/features/shared/data/restaurantData";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>({ name: "Admin" });
   const [orders, setOrders] = useState<Order[]>([]);
   const [inventory, setInventory] = useState<InventoryProduct[]>([]);
   const [tables, setTables] = useState<DiningTable[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadSession() {
-      const u = await getSessionUser();
-      if (!u || u.roleName !== "admin") {
-        router.push("/login");
-        return;
-      }
-      setUser(u);
-      
-      // Cargar datos de "La Base"
+    // El layout ya validó que el usuario esté autenticado
+    // Solo cargar datos de los servicios
+    try {
       setOrders(OrderService.getOrders());
       setInventory(InventoryService.getInventory());
       setTables(TableService.getTables());
+    } catch (error) {
+      console.error("Error cargando datos:", error);
+    } finally {
       setLoading(false);
     }
-    loadSession();
   }, [router]);
 
   if (loading || !user) {
