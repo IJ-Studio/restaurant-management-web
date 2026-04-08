@@ -1,188 +1,155 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { 
-  Users, 
-  Calendar, 
-  ShieldCheck, 
-  FileText, 
-  Plus,
-  Clock,
-  LayoutDashboard
-} from "lucide-react";
+import React, { useState } from "react";
+import { Users } from "lucide-react";
+import { ROLE_LABELS, CREATABLE_ROLES } from "@/config/roles.config";
 
-import { StaffService, RoleService } from "@/features/shared/services/dataService";
-import type { StaffMember, Role } from "@/features/shared/data/restaurantData";
+export default function UsersPage() {
+  const [formData, setFormData] = useState({
+    name: "",
+    lastname: "",
+    email: "",
+    phone: "",
+    password: "",
+    roleId: 2,
+  });
 
-// Components
-import { UserTable } from "@/features/dashboard/admin/components/users/UserTable";
-import { UserModal } from "@/features/dashboard/admin/components/users/UserModal";
-import { UserFilters } from "@/features/dashboard/admin/components/users/UserFilters";
-import { AccessMatrix } from "@/features/dashboard/admin/components/users/AccessMatrix";
-import { ShiftCalendar } from "@/features/dashboard/admin/components/users/ShiftCalendar";
-import { IncidencePanel } from "@/features/dashboard/admin/components/users/IncidencePanel";
-import { AdminReports } from "@/features/dashboard/admin/components/users/AdminReports";
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-export default function AdminUsersPage() {
-  const [activeTab, setActiveTab] = useState<"directory" | "shifts" | "access" | "reports">("directory");
-  const [staff, setStaff] = useState<StaffMember[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [search, setSearch] = useState("");
-  const [modal, setModal] = useState<StaffMember | null | "new">(null);
-  
-  // Stats
-  const activeStaffCount = staff.filter(s => s.status === "activo").length;
+    try {
+      const token = localStorage.getItem("authToken");
 
-  useEffect(() => {
-    setStaff(StaffService.getStaff());
-    setRoles(RoleService.getRoles());
-  }, []);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
 
-  const refreshData = () => {
-    setStaff(StaffService.getStaff());
+      if (!res.ok) throw new Error("Error creando usuario");
+
+      const newUser = await res.json();
+      alert(`Usuario ${newUser.email} creado con éxito`);
+
+      setFormData({
+        name: "",
+        lastname: "",
+        email: "",
+        phone: "",
+        password: "",
+        roleId: 2,
+      });
+    } catch (err) {
+      alert(`Error: ${err}`);
+    }
   };
 
-  const tabs = [
-    { id: "directory", label: "Directorio", icon: <Users size={18} /> },
-    { id: "shifts", label: "Turnos", icon: <Calendar size={18} /> },
-    { id: "access", label: "Accesos", icon: <ShieldCheck size={18} /> },
-    { id: "reports", label: "Reportes", icon: <FileText size={18} /> },
-  ] as const;
-
   return (
-    <main className="p-6 md:p-10 min-h-screen bg-gray-50/30">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-4xl font-black text-text tracking-tight animate-in fade-in slide-in-from-left-4 duration-700">
-            Gestión de Capital Humano
-          </h1>
-          <p className="text-text-muted text-sm font-semibold mt-1.5 animate-in fade-in slide-in-from-left-4 duration-700 delay-75 flex items-center gap-2">
-            <LayoutDashboard size={14} className="text-brand" /> Administración centralizada de personal, horarios y seguridad.
-          </p>
-        </div>
-
-        <button 
-          onClick={() => setModal("new")}
-          className="flex items-center gap-2 px-8 py-4 bg-brand text-white text-xs font-black rounded-2xl shadow-2xl shadow-brand/20 hover:shadow-brand/40 hover:-translate-y-1 transition-all active:translate-y-0 active:scale-95 animate-in fade-in slide-in-from-right-4 duration-700"
-        >
-          <Plus size={20} /> ALTA DE COLABORADOR
-        </button>
-      </header>
-
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-        <div className="bg-surface p-8 rounded-[40px] border border-border shadow-sm flex items-center gap-6 group hover:shadow-xl hover:border-brand/30 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
-          <div className="w-16 h-16 rounded-[22px] bg-brand/10 text-brand flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-            <Users size={28} />
+    <main className="p-6 md:p-10 min-h-screen bg-gray-50/30 flex items-center justify-center">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-xl bg-surface border border-border rounded-[40px] p-10 shadow-sm animate-in fade-in slide-in-from-bottom-6 duration-700"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-14 h-14 rounded-[20px] bg-brand/10 text-brand flex items-center justify-center shadow-inner">
+            <Users size={24} />
           </div>
           <div>
-            <p className="text-xs font-black text-text-muted uppercase tracking-[0.2em] mb-1">Plantilla Total</p>
-            <p className="text-4xl font-black text-text tracking-tighter leading-tight">{staff.length}</p>
+            <h2 className="text-3xl font-black text-text tracking-tight">
+              Alta de Usuario
+            </h2>
+            <p className="text-xs font-semibold text-text-muted mt-1">
+              Registro manual de nuevo colaborador
+            </p>
           </div>
         </div>
 
-        <div className="bg-surface p-8 rounded-[40px] border border-border shadow-sm flex items-center gap-6 group hover:shadow-xl hover:border-emerald-500/30 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 delay-100">
-          <div className="w-16 h-16 rounded-[22px] bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-            <Clock size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-black text-text-muted uppercase tracking-[0.2em] mb-1">Activos Ahora</p>
-            <p className="text-4xl font-black text-text tracking-tighter leading-tight">{activeStaffCount}</p>
-          </div>
-        </div>
+        {/* Inputs */}
+        <div className="space-y-5">
+          <input
+            type="text"
+            placeholder="Nombre"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+            className="w-full px-5 py-4 rounded-2xl border border-border bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand/30 transition"
+          />
 
-        <div className="bg-surface p-8 rounded-[40px] border border-border shadow-sm flex items-center gap-6 group hover:shadow-xl hover:border-purple-500/30 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 delay-200">
-          <div className="w-16 h-16 rounded-[22px] bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-            <ShieldCheck size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-black text-text-muted uppercase tracking-[0.2em] mb-1">Perfiles de Acceso</p>
-            <p className="text-4xl font-black text-text tracking-tighter leading-tight">{roles.length}</p>
-          </div>
-        </div>
-      </div>
+          <input
+            type="text"
+            placeholder="Apellido"
+            value={formData.lastname}
+            onChange={(e) =>
+              setFormData({ ...formData, lastname: e.target.value })
+            }
+            required
+            className="w-full px-5 py-4 rounded-2xl border border-border bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand/30 transition"
+          />
 
-      {/* Tabs Navigation */}
-      <nav className="flex gap-2 p-1.5 bg-surface border border-border rounded-[32px] mb-10 shadow-md w-fit animate-in fade-in duration-700 mx-auto">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`
-              flex items-center gap-3 px-8 py-4 rounded-[26px] text-xs font-black uppercase tracking-widest transition-all duration-500
-              ${activeTab === tab.id 
-                ? "bg-brand text-white shadow-2xl shadow-brand/20 -translate-y-1" 
-                : "text-text-muted hover:bg-gray-50 hover:text-text"
-              }
-            `}
+          <input
+            type="email"
+            placeholder="Correo"
+            value={formData.email}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
+            required
+            className="w-full px-5 py-4 rounded-2xl border border-border bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand/30 transition"
+          />
+
+          <input
+            type="tel"
+            placeholder="Teléfono"
+            value={formData.phone}
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
+            required
+            className="w-full px-5 py-4 rounded-2xl border border-border bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand/30 transition"
+          />
+
+          <input
+            type="password"
+            placeholder="Contraseña (mín. 8 caracteres)"
+            value={formData.password}
+            onChange={(e) =>
+              setFormData({ ...formData, password: e.target.value })
+            }
+            required
+            minLength={8}
+            className="w-full px-5 py-4 rounded-2xl border border-border bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand/30 transition"
+          />
+
+          <select
+            value={formData.roleId}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                roleId: parseInt(e.target.value),
+              })
+            }
+            className="w-full px-5 py-4 rounded-2xl border border-border bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand/30 transition"
           >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+            {CREATABLE_ROLES.map((roleId) => (
+              <option key={roleId} value={roleId}>
+                {ROLE_LABELS[roleId]}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {/* Tab Content */}
-      <section className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-        {activeTab === "directory" && (
-          <div className="space-y-8">
-            <UserFilters 
-              search={search}
-              onSearchChange={setSearch}
-              roleFilter="all"
-              onRoleFilterChange={() => {}}
-              statusFilter="all"
-              onStatusFilterChange={() => {}}
-            />
-            <UserTable 
-              users={staff.filter(s => s.name.toLowerCase().includes(search.toLowerCase()) || s.lastname.toLowerCase().includes(search.toLowerCase()))}
-              onEdit={setModal}
-              onDelete={(id) => {
-                if (confirm("¿Está seguro de eliminar definitivamente a este colaborador? Esta acción es irreversible.")) {
-                  StaffService.deleteMember(id as string);
-                  refreshData();
-                }
-              }}
-              onToggleStatus={(id) => {
-                const s = staff.find(x => x.id === id);
-                if (s) {
-                  const newStatus = s.status === "activo" ? "suspendido" : "activo";
-                  StaffService.upsertMember({ ...s, status: newStatus });
-                  refreshData();
-                }
-              }}
-              onViewAccess={() => setActiveTab("access")}
-              openMenu={null}
-              setOpenMenu={() => {}}
-            />
-          </div>
-        )}
-
-        {activeTab === "shifts" && <ShiftCalendar />}
-
-        {activeTab === "access" && <AccessMatrix />}
-
-        {activeTab === "reports" && (
-           <div className="space-y-12">
-              <AdminReports />
-              <div className="h-px bg-border max-w-4xl mx-auto opacity-40" />
-              <IncidencePanel />
-           </div>
-        )}
-      </section>
-
-      {modal && (
-        <UserModal 
-          user={modal === "new" ? null : modal}
-          onClose={() => setModal(null)}
-          onSave={(u) => {
-            StaffService.upsertMember(u as StaffMember);
-            setModal(null);
-            refreshData();
-          }}
-        />
-      )}
+        {/* Button */}
+        <button
+          type="submit"
+          className="w-full mt-8 py-4 rounded-2xl bg-brand text-white text-xs font-black tracking-widest shadow-2xl shadow-brand/20 hover:shadow-brand/40 hover:-translate-y-1 transition-all active:translate-y-0 active:scale-95"
+        >
+          CREAR USUARIO
+        </button>
+      </form>
     </main>
   );
 }
