@@ -1,6 +1,9 @@
 {
+	"type": "module",
 	"dependencies": {
 		"@reduxjs/toolkit": "^2.11.2",
+		"@supabase/ssr": "^0.10.2",
+		"@supabase/supabase-js": "^2.103.0",
 		"@types/grecaptcha": "^3.0.9",
 		"bcrypt": "^6.0.0",
 		"drizzle-orm": "^0.44.7",

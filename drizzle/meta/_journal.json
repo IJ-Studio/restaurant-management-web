@@ -15,6 +15,13 @@
       "when": 1771998777204,
       "tag": "0001_minor_black_cat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775873269302,
+      "tag": "0002_sturdy_lord_tyger",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
+import { useInventory, type Supplier, type PurchaseOrder, type OrderStatus, type OrderItem } from "@/hooks/useInventory";
 
 
 import {
@@ -58,135 +59,7 @@ const T = {
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface Supplier {
-  id: number;
-  name: string;
-  contact: string;
-  email: string;
-  phone: string;
-  website?: string;
-  category: string;
-  products: string[];
-  paymentTerms: string;
-  deliveryDays: number;
-  active: boolean;
-  notes?: string;
-}
 
-type OrderStatus =
-  | "borrador"
-  | "enviada"
-  | "confirmada"
-  | "en_camino"
-  | "recibida"
-  | "cancelada";
-
-interface OrderItem {
-  productName: string;
-  quantity: number;
-  unit: string;
-  unitCost: number;
-}
-
-interface PurchaseOrder {
-  id: number;
-  folio: string;
-  supplierId: number;
-  supplierName: string;
-  status: OrderStatus;
-  items: OrderItem[];
-  total: number;
-  createdAt: string;
-  expectedAt: string;
-  receivedAt?: string;
-  notes?: string;
-}
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const MOCK_SUPPLIERS: Supplier[] = [
-  {
-    id: 1,
-    name: "Carnicería El Sol",
-    contact: "Roberto Martínez",
-    email: "elsol@carnicerias.mx",
-    phone: "771-111-2233",
-    category: "Carnes y embutidos",
-    products: ["Filete de res", "Pollo entero", "Costillas", "Chorizo"],
-    paymentTerms: "Contado",
-    deliveryDays: 1,
-    active: true,
-    notes: "Entrega de lunes a viernes antes de las 10am.",
-  },
-  {
-    id: 2,
-    name: "Mercado Central HJL",
-    contact: "Doña Carmen López",
-    email: "mercadocentral@hjl.mx",
-    phone: "771-222-3344",
-    category: "Frutas y verduras",
-    products: ["Tomate", "Cebolla", "Chiles", "Hierbas frescas", "Limones"],
-    paymentTerms: "Crédito 7 días",
-    deliveryDays: 1,
-    active: true,
-  },
-  {
-    id: 3,
-    name: "Lácteos del Norte",
-    contact: "Ing. Pedraza",
-    email: "ventas@lacteosnorte.mx",
-    phone: "771-333-4455",
-    website: "www.lacteosnorte.mx",
-    category: "Lácteos",
-    products: ["Queso manchego", "Crema ácida", "Mantequilla", "Leche entera"],
-    paymentTerms: "Crédito 15 días",
-    deliveryDays: 2,
-    active: true,
-  },
-  {
-    id: 4,
-    name: "Distribuidora Pureza",
-    contact: "Carlos Vega",
-    email: "pureza@distribuidora.mx",
-    phone: "771-444-5566",
-    category: "Bebidas",
-    products: ["Agua mineral", "Refrescos", "Jugos", "Cervezas"],
-    paymentTerms: "Contado",
-    deliveryDays: 2,
-    active: true,
-  },
-  {
-    id: 5,
-    name: "Mayorista HJL",
-    contact: "Lic. Fuentes",
-    email: "mayorista@hjl.com",
-    phone: "771-555-6677",
-    website: "www.mayoristahujutla.com",
-    category: "Abarrotes",
-    products: [
-      "Arroz",
-      "Frijol",
-      "Aceite",
-      "Condimentos",
-      "Especias",
-      "Harinas",
-    ],
-    paymentTerms: "Crédito 30 días",
-    deliveryDays: 3,
-    active: true,
-  },
-  {
-    id: 6,
-    name: "Proveedor Anterior S.A.",
-    contact: "Sin contacto",
-    email: "",
-    phone: "",
-    category: "Varios",
-    products: ["Varios"],
-    paymentTerms: "—",
-    deliveryDays: 0,
-    active: false,
-  },
-];
 
 const ORDER_STATUS: Record<
   OrderStatus,
@@ -230,103 +103,7 @@ const ORDER_STATUS: Record<
   },
 };
 
-const MOCK_ORDERS: PurchaseOrder[] = [
-  {
-    id: 1,
-    folio: "OC-2026-001",
-    supplierId: 1,
-    supplierName: "Carnicería El Sol",
-    status: "recibida",
-    createdAt: "2026-02-28",
-    expectedAt: "2026-03-01",
-    receivedAt: "2026-03-01",
-    total: 2800,
-    notes: "Pedido semanal regular.",
-    items: [
-      { productName: "Filete de res", quantity: 10, unit: "kg", unitCost: 280 },
-    ],
-  },
-  {
-    id: 2,
-    folio: "OC-2026-002",
-    supplierId: 5,
-    supplierName: "Mayorista HJL",
-    status: "recibida",
-    createdAt: "2026-02-28",
-    expectedAt: "2026-03-02",
-    receivedAt: "2026-03-02",
-    total: 1560,
-    items: [
-      {
-        productName: "Arroz extra largo",
-        quantity: 20,
-        unit: "kg",
-        unitCost: 28,
-      },
-      { productName: "Frijol negro", quantity: 15, unit: "kg", unitCost: 32 },
-      { productName: "Aceite de oliva", quantity: 5, unit: "l", unitCost: 185 },
-      {
-        productName: "Chipotle en adobo",
-        quantity: 24,
-        unit: "pza",
-        unitCost: 35,
-      },
-    ],
-  },
-  {
-    id: 3,
-    folio: "OC-2026-003",
-    supplierId: 1,
-    supplierName: "Carnicería El Sol",
-    status: "en_camino",
-    createdAt: "2026-03-03",
-    expectedAt: "2026-03-04",
-    total: 3990,
-    notes: "URGENTE: stock crítico de pollo.",
-    items: [
-      { productName: "Pollo entero", quantity: 30, unit: "kg", unitCost: 95 },
-      { productName: "Filete de res", quantity: 8, unit: "kg", unitCost: 280 },
-    ],
-  },
-  {
-    id: 4,
-    folio: "OC-2026-004",
-    supplierId: 4,
-    supplierName: "Distribuidora Pureza",
-    status: "confirmada",
-    createdAt: "2026-03-03",
-    expectedAt: "2026-03-05",
-    total: 2880,
-    items: [
-      {
-        productName: "Refresco cola 355ml",
-        quantity: 12,
-        unit: "caja",
-        unitCost: 240,
-      },
-    ],
-  },
-  {
-    id: 5,
-    folio: "OC-2026-005",
-    supplierId: 2,
-    supplierName: "Mercado Central HJL",
-    status: "borrador",
-    createdAt: "2026-03-04",
-    expectedAt: "2026-03-05",
-    total: 440,
-    items: [
-      { productName: "Tomate bola", quantity: 10, unit: "kg", unitCost: 22 },
-      { productName: "Cebolla blanca", quantity: 10, unit: "kg", unitCost: 18 },
-      {
-        productName: "Chipotle en adobo",
-        quantity: 6,
-        unit: "pza",
-        unitCost: 35,
-      },
-    ],
-  },
-];
+// ─── Components ───────────────────────────────────────────────────────────────
 
 // ─── Components ───────────────────────────────────────────────────────────────
 function NavItem({
@@ -786,7 +563,7 @@ function SupplierModal({
           <button
             disabled={!form.name}
             onClick={() => {
-              onSave({ ...form, id: form.id || Date.now() });
+              onSave({ ...form, id: form.id || 0 });
               onClose();
             }}
             style={{
@@ -1202,7 +979,7 @@ function OrderModal({
                 order?.folio ??
                 `OC-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`;
               onSave({
-                id: order?.id ?? Date.now(),
+                id: order?.id ?? 0,
                 folio,
                 supplierId: suppId,
                 supplierName: s?.name ?? "",
@@ -1540,8 +1317,17 @@ function SupplierCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function SuppliersPage() {
   const router = useRouter();
-  const [suppliers, setSuppliers] = useState<Supplier[]>(MOCK_SUPPLIERS);
-  const [orders, setOrders] = useState<PurchaseOrder[]>(MOCK_ORDERS);
+  const {
+    suppliers,
+    orders,
+    loading,
+    error,
+    saveSupplier,
+    deleteSupplier,
+    saveOrder,
+    deleteOrder,
+  } = useInventory();
+
   const [tab, setTab] = useState<"proveedores" | "ordenes">("proveedores");
   const [suppModal, setSuppModal] = useState<Supplier | null | "new">(null);
   const [orderModal, setOrderModal] = useState<PurchaseOrder | null | "new">(
@@ -1552,35 +1338,10 @@ export default function SuppliersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [searchFocus, setSearchFocus] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const user = useSelector((state: RootState) => state.auth.user);
 
-  function saveSupplier(s: Supplier) {
-    setSuppliers((ss) => {
-      const ex = ss.find((x) => x.id === s.id);
-      return ex ? ss.map((x) => (x.id === s.id ? s : x)) : [...ss, s];
-    });
-  }
-  function saveOrder(o: PurchaseOrder) {
-    setOrders((os) => {
-      const ex = os.find((x) => x.id === o.id);
-      return ex ? os.map((x) => (x.id === o.id ? o : x)) : [...os, o];
-    });
-  }
-  function deleteSupplier(id: number) {
-    if (!confirm("¿Eliminar proveedor?")) return;
-    setSuppliers((ss) => ss.filter((s) => s.id !== id));
-    setOpenMenu(null);
-  }
-  function deleteOrder(id: number) {
-    if (!confirm("¿Eliminar esta orden?")) return;
-    setOrders((os) => os.filter((o) => o.id !== id));
-    setOpenMenu(null);
-  }
-
-  function openNewOrder(supplierId?: number) {
-    setPreselSupp(supplierId ?? null);
-    setOrderModal("new");
-  }
-
+  // Stats
   const pendingOrders = orders.filter(
     (o) => !["recibida", "cancelada"].includes(o.status),
   );
@@ -1588,6 +1349,7 @@ export default function SuppliersPage() {
     .filter((o) => o.status !== "cancelada")
     .reduce((s, o) => s + o.total, 0);
 
+  // Filter
   const filteredOrders = orders.filter((o) => {
     const ms = [o.folio, o.supplierName]
       .join(" ")
@@ -1597,9 +1359,93 @@ export default function SuppliersPage() {
     return ms && mst;
   });
 
-      const user = useSelector((state: RootState) => state.auth.user);
-    
-      function handleLogout() {}
+  // ── Handlers con manejo de errores ────────────────────────────────────────
+  async function handleSaveSupplier(s: Supplier) {
+    try {
+      await saveSupplier(s);
+    } catch {
+      setActionError("Error al guardar el proveedor.");
+    }
+  }
+
+  async function handleDeleteSupplier(id: number) {
+    if (!confirm("¿Eliminar proveedor?")) return;
+    try {
+      await deleteSupplier(id);
+    } catch {
+      setActionError("Error al eliminar el proveedor.");
+    }
+    setOpenMenu(null);
+  }
+
+  async function handleSaveOrder(o: PurchaseOrder) {
+    try {
+      await saveOrder(o);
+    } catch {
+      setActionError("Error al guardar la orden.");
+    }
+  }
+
+  async function handleDeleteOrder(id: number) {
+    if (!confirm("¿Eliminar esta orden?")) return;
+    try {
+      await deleteOrder(id);
+    } catch {
+      setActionError("Error al eliminar la orden.");
+    }
+    setOpenMenu(null);
+  }
+
+  function openNewOrder(supplierId?: number) {
+    setPreselSupp(supplierId ?? null);
+    setOrderModal("new");
+  }
+
+  function handleLogout() {}
+
+  // ── Render: loading / error state ─────────────────────────────────────────
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          minHeight: "100vh",
+          fontFamily: T.fontB,
+          background: T.bg,
+        }}
+      >
+        <AdminSidebar activePage="suppliers" user={user} onLogout={() => {}} />
+        <main
+          style={{
+            flex: 1,
+            marginLeft: 260,
+            padding: "40px 48px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                border: `4px solid ${T.border}`,
+                borderTopColor: T.brand,
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+                margin: "0 auto 16px",
+              }}
+            />
+            <p style={{ color: T.textMut, fontSize: 14 }}>
+              Cargando proveedores...
+            </p>
+          </div>
+        </main>
+        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -1619,6 +1465,36 @@ export default function SuppliersPage() {
         />
 
         <main style={{ flex: 1, marginLeft: 260, padding: "40px 48px" }}>
+          {/* Action Error Banner */}
+          {actionError && (
+            <div
+              style={{
+                padding: "12px 18px",
+                background: "#fef2f2",
+                borderRadius: 12,
+                border: "1px solid #fecaca",
+                marginBottom: 20,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span style={{ fontSize: 13, color: T.danger }}>
+                {actionError}
+              </span>
+              <button
+                onClick={() => setActionError(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: T.textMut,
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
           {/* Breadcrumb */}
           <div
             style={{
@@ -2157,7 +2033,7 @@ export default function SuppliersPage() {
                                     {
                                       icon: <Trash2 size={13} />,
                                       l: "Eliminar",
-                                      fn: () => deleteOrder(o.id),
+                                      fn: () => handleDeleteOrder(o.id),
                                       danger: true,
                                     },
                                   ].map((item, i) => (
@@ -2212,7 +2088,7 @@ export default function SuppliersPage() {
         <SupplierModal
           supplier={suppModal === "new" ? null : suppModal}
           onClose={() => setSuppModal(null)}
-          onSave={saveSupplier}
+          onSave={handleSaveSupplier}
         />
       )}
       {orderModal !== null && (
@@ -2223,7 +2099,7 @@ export default function SuppliersPage() {
             setOrderModal(null);
             setPreselSupp(null);
           }}
-          onSave={saveOrder}
+          onSave={handleSaveOrder}
         />
       )}
     </div>
