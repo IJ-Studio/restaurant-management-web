@@ -1279,6 +1279,186 @@ function ItemModal({
   );
 }
 
+function CategoryModal({
+  onClose,
+  onSave,
+}: {
+  onClose: () => void;
+  onSave: (name: string, icon: string) => Promise<void>;
+}) {
+  const [name, setName] = useState("");
+  const [icon, setIcon] = useState("🍽️");
+  const [busy, setBusy] = useState(false);
+
+  const inp: React.CSSProperties = {
+    width: "100%",
+    padding: "10px 12px",
+    border: `1px solid ${T.borderMed}`,
+    borderRadius: 12,
+    fontSize: 14,
+    fontFamily: T.fontBody,
+    color: T.textPrimary,
+    background: T.bgSurface,
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+        background: "rgba(26,18,8,0.5)",
+        backdropFilter: "blur(4px)",
+      }}
+    >
+      <div
+        style={{
+          background: T.bgSurface,
+          borderRadius: 28,
+          boxShadow: "0 24px 64px rgba(26,18,8,0.18)",
+          width: "100%",
+          maxWidth: 420,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            padding: "28px 32px 20px",
+            borderBottom: `1px solid ${T.border}`,
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: T.fontDisplay,
+              fontWeight: 900,
+              fontSize: 22,
+              color: T.textPrimary,
+              margin: "0 0 4px",
+              letterSpacing: "-.02em",
+            }}
+          >
+            Nueva categoría
+          </h2>
+          <p style={{ fontSize: 13, color: T.textMuted, margin: 0 }}>
+            Agrega una categoría nueva al menú.
+          </p>
+        </div>
+
+        <div
+          style={{
+            padding: "24px 32px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 700,
+                color: T.textSecond,
+                marginBottom: 6,
+              }}
+            >
+              Nombre de la categoría *
+            </label>
+            <input
+              style={inp}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ej. Entradas"
+            />
+          </div>
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 700,
+                color: T.textSecond,
+                marginBottom: 6,
+              }}
+            >
+              Icono (emoji)
+            </label>
+            <input
+              style={inp}
+              value={icon}
+              onChange={(e) => setIcon(e.target.value)}
+              placeholder="🍽️"
+            />
+          </div>
+        </div>
+
+        <div
+          style={{
+            padding: "18px 32px",
+            borderTop: `1px solid ${T.border}`,
+            background: T.bgElevated,
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+          }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              padding: "10px 20px",
+              borderRadius: 12,
+              fontSize: 13,
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              background: T.bgSubtle,
+              color: T.textSecond,
+            }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            disabled={!name.trim() || busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await onSave(name, icon);
+                onClose();
+              } catch (e: any) {
+                console.error("Create category failed", e);
+                alert(e?.message ? String(e.message) : "No se pudo crear la categoría.");
+              } finally {
+                setBusy(false);
+              }
+            }}
+            style={{
+              padding: "10px 20px",
+              borderRadius: 12,
+              fontSize: 13,
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              color: "#fff",
+              background: name.trim() ? T.brand : "#ccc",
+              boxShadow: name.trim() ? "0 4px 12px rgba(232,93,4,.3)" : "none",
+            }}
+          >
+            Agregar categoría
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminMenuPage() {
   const router = useRouter();
@@ -1291,6 +1471,7 @@ export default function AdminMenuPage() {
     catId: number;
     item: MenuItem | null;
   } | null>(null);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [searchFocus, setSearchFocus] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [importBusy, setImportBusy] = useState(false);
@@ -1540,6 +1721,66 @@ export default function AdminMenuPage() {
       }
     })();
   }
+
+  async function createCategory(name: string, icon: string) {
+    const trimmed = String(name ?? "").trim();
+    const safeIcon = String(icon ?? "🍽️").trim() || "🍽️";
+    if (!trimmed) {
+      throw new Error("El nombre de la categoría es requerido.");
+    }
+
+    if (!IS_EXTERNAL_API) {
+      const id = Date.now();
+      setCategories((cs) => [
+        ...cs,
+        {
+          id,
+          name: trimmed,
+          icon: safeIcon,
+          color: colorForCategory(id),
+          items: [],
+        },
+      ]);
+      return;
+    }
+
+    if (!ensureExternalApi()) {
+      throw new Error("No se puede crear categoría sin API externa configurada.");
+    }
+
+    const res = await fetch("/api/menu/categories", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: trimmed, icon: safeIcon }),
+    });
+    if (!res.ok) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(msg || `Crear categoría falló (${res.status})`);
+    }
+
+    const created = await res.json().catch(() => null);
+    const idNum = Number(created?.id);
+    const id = Number.isFinite(idNum) ? idNum : Date.now();
+    const orderNum = Number(created?.order);
+    const order = Number.isFinite(orderNum) ? orderNum : undefined;
+    const outName = String(created?.name ?? trimmed).trim() || trimmed;
+    const outIcon = String(created?.icon ?? safeIcon).trim() || "🍽️";
+
+    setCategories((cs) => {
+      const next = [
+        ...cs,
+        { id, order, name: outName, icon: outIcon, color: colorForCategory(id), items: [] },
+      ];
+      next.sort((a, b) => {
+        const ao = typeof a.order === "number" ? a.order : a.id;
+        const bo = typeof b.order === "number" ? b.order : b.id;
+        if (ao !== bo) return ao - bo;
+        return a.id - b.id;
+      });
+      return next;
+    });
+  }
+
   const user = useSelector((state: RootState) => state.auth.user);
   
   function handleLogout() {}
@@ -2258,66 +2499,7 @@ export default function AdminMenuPage() {
               <div style={{ width: 1, height: 28, background: T.border }} />
               <button
                 type="button"
-                onClick={() => {
-                  const name = prompt("Nombre de la nueva categoría:");
-                  if (!name) return;
-                  const trimmed = name.trim();
-                  if (!trimmed) return;
-
-                  if (!IS_EXTERNAL_API) {
-                    const id = Date.now();
-                    setCategories((cs) => [
-                      ...cs,
-                      {
-                        id,
-                        name: trimmed,
-                        icon: "🍽️",
-                        color: colorForCategory(id),
-                        items: [],
-                      },
-                    ]);
-                    return;
-                  }
-
-                  void (async () => {
-                    try {
-                      const icon = (prompt("Icono (emoji) para la categoría:", "🍽️") ?? "🍽️").trim() || "🍽️";
-                      const res = await fetch("/api/menu/categories", {
-                        method: "POST",
-                        headers: { "content-type": "application/json" },
-                        body: JSON.stringify({ name: trimmed, icon }),
-                      });
-                      if (!res.ok) {
-                        const msg = await res.text().catch(() => "");
-                        throw new Error(msg || `Crear categoría falló (${res.status})`);
-                      }
-                      const created = await res.json().catch(() => null);
-                      const idNum = Number(created?.id);
-                      const id = Number.isFinite(idNum) ? idNum : Date.now();
-                      const orderNum = Number(created?.order);
-                      const order = Number.isFinite(orderNum) ? orderNum : undefined;
-                      const outName = String(created?.name ?? trimmed).trim() || trimmed;
-                      const outIcon = String(created?.icon ?? icon).trim() || "🍽️";
-
-                      setCategories((cs) => {
-                        const next = [
-                          ...cs,
-                          { id, order, name: outName, icon: outIcon, color: colorForCategory(id), items: [] },
-                        ];
-                        next.sort((a, b) => {
-                          const ao = typeof a.order === "number" ? a.order : a.id;
-                          const bo = typeof b.order === "number" ? b.order : b.id;
-                          if (ao !== bo) return ao - bo;
-                          return a.id - b.id;
-                        });
-                        return next;
-                      });
-                    } catch (e: any) {
-                      console.error("Create category failed", e);
-                      alert(e?.message ? String(e.message) : "No se pudo crear la categoría.");
-                    }
-                  })();
-                }}
+                onClick={() => setCategoryModalOpen(true)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -2524,6 +2706,12 @@ export default function AdminMenuPage() {
           item={modal.item}
           onClose={() => setModal(null)}
           onSave={saveItem}
+        />
+      )}
+      {categoryModalOpen && (
+        <CategoryModal
+          onClose={() => setCategoryModalOpen(false)}
+          onSave={createCategory}
         />
       )}
     </div>
