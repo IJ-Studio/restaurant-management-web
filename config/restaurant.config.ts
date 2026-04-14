@@ -42,7 +42,6 @@ export const restaurantConfig = {
   theme: {
     brandColor: "#e85d04",
     brandColorLight: "#ff7c2a",
-    brandColorDark: "#c44d03",
     fontDisplay: '"Fraunces", Georgia, serif',
     fontBody: '"DM Sans", system-ui, sans-serif',
   },

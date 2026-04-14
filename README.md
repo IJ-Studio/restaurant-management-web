@@ -73,24 +73,41 @@ restaurant-management-platform
 │  ├─ unauthorized
 │  │  └─ page.tsx
 │  └─ unauthorized.module.css
+├─ cloudinary
+│  └─ page.tsx
 ├─ components
 │  ├─ admin
 │  │  ├─ AdminSidebar.tsx
 │  │  ├─ ExportModal.tsx
 │  │  └─ Importpreviewmodal.tsx
+│  ├─ BackButton.tsx
 │  ├─ Button.tsx
+│  ├─ Checkbox.tsx
+│  ├─ ConditionalNavbar.tsx
 │  ├─ dropdown.tsx
+│  ├─ FloatingInput.tsx
 │  ├─ handlerEmailActions.tsx
 │  ├─ IdleLogout.tsx
+│  ├─ landing
+│  │  ├─ AboutSection.tsx
+│  │  ├─ CategoriesSection.tsx
+│  │  ├─ Footer.tsx
+│  │  ├─ Hero.tsx
+│  │  ├─ MenuSection.tsx
+│  │  ├─ PromosSection.tsx
+│  │  ├─ ReservationSection.tsx
+│  │  └─ SkeletonCard.tsx
 │  ├─ layout
 │  │  └─ Sidebar.tsx
 │  ├─ nav.tsx
+│  ├─ Navbar.tsx
+│  ├─ PasswordRequirements.tsx
+│  ├─ PasswordToggleButton.tsx
+│  ├─ PhoneInput.tsx
 │  ├─ providers
 │  │  ├─ AppProviders.tsx
-│  │  └─ DesignSystemProvider.tsx
-│  ├─ shared
+│  │  ├─ DesignSystemProvider.tsx
 │  │  └─ ThemeProvider.tsx
-│  ├─ ThemeProvider.tsx
 │  └─ ui
 │     ├─ Button.tsx
 │     └─ index.ts
@@ -99,7 +116,8 @@ restaurant-management-platform
 │  │  ├─ admin.nav.ts
 │  │  ├─ cajero.nav.ts
 │  │  └─ cocina.nav.ts
-│  └─ restaurant.config.ts
+│  ├─ restaurant.config.ts
+│  └─ roles.config.ts
 ├─ features
 │  ├─ dashboard
 │  │  ├─ admin
@@ -223,9 +241,16 @@ restaurant-management-platform
 │        └─ dataService.ts
 ├─ hooks
 │  ├─ useAppSelector.ts
-│  └─ useRedirect.ts
+│  ├─ useAsyncAction.ts
+│  ├─ useBreakpoint.ts
+│  ├─ useFetch.ts
+│  ├─ useLockout.ts
+│  ├─ useMediaQuery.ts
+│  ├─ useRedirect.ts
+│  └─ useResponsiveNavbar.ts
 ├─ lib
-│  └─ session.ts
+│  ├─ session.ts
+│  └─ utils.ts
 ├─ middleware.ts
 ├─ next.config.js
 ├─ package.json

@@ -364,7 +364,7 @@ export default function AdminSidebar({
 
         <NavBtn
           icon={<Database size={17} />}
-          label="Rendimiento BD"
+          label="Base de datos"
           active={is("performance")}
           onClick={() => router.push("/dashboard/admin/db-performance")}
         />

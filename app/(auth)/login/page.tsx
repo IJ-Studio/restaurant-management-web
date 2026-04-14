@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { CldImage } from "next-cloudinary";
 import Button from "@/components/Button";
-import { useRouter } from "next/navigation";
+import PasswordToggleButton from "@/components/PasswordToggleButton";
+import BackButton from "@/components/BackButton";
+import FloatingInput from "@/components/FloatingInput";
+import { useLockout } from "@/hooks/useLockout";
+import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { emailRegex } from "@/utils/validators";
 import { SettingsService } from "@/features/shared/services/dataService";
 import { type SystemSettings } from "@/features/shared/data/restaurantData";
@@ -10,251 +15,152 @@ import { type SystemSettings } from "@/features/shared/data/restaurantData";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const [waitSeconds, setWaitSeconds] = useState<number | null>(null);
-  const intervalRef = useRef<any>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
 
   const isEmailValid = emailRegex.test(email);
   const isFormReady = isEmailValid && password.length >= 8;
-
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState<SystemSettings | null>(null);
 
   useEffect(() => {
     setSettings(SettingsService.getSettings());
   }, []);
 
-  // --- 1. Si backend indica bloqueo, extraer segundos y NO mostrar mensaje rojo ---
-  useEffect(() => {
-    if (!error) return;
+  // Lockout configurado para errores de bloqueo
+  const lockout = useLockout({
+    lockoutPatterns: ["Debes esperar", "Demasiados intentos"],
+    extractSeconds: (msg) => {
+      const match = msg.match(/(\d+)/);
+      return match ? Number(match[1]) : null;
+    },
+  });
 
-    if (
-      error.includes("Debes esperar") ||
-      error.includes("Demasiados intentos")
-    ) {
-      const match = error.match(/(\d+)/);
-      if (match) {
-        const seconds = Number(match[1]);
-        setWaitSeconds(seconds);
-        setError(null); // remover mensaje rojo
-      }
+  // Acción asíncrona: login
+  const loginAction = async () => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Ocurrió un error");
+    if (data.accessToken) {
+      document.cookie = `session=${data.accessToken}; path=/; max-age=86400; samesite=strict`;
+      localStorage.setItem("authToken", data.accessToken);
     }
-  }, [error]);
+    return data;
+  };
 
-  // --- 2. Timer real-time ---
-  useEffect(() => {
-    if (waitSeconds === null) return;
+  const {
+    execute: handleLogin,
+    loading,
+    error,
+    success,
+  } = useAsyncAction({
+    action: loginAction,
+    successMessage: "¡Login exitoso! Redirigiendo...",
+    onSuccess: () => {
+      setTimeout(() => window.location.assign("/dashboard"), 500);
+    },
+    lockout: {
+      checkLockout: lockout.checkLockout,
+      resetLockout: lockout.resetLockout,
+    },
+  });
 
-    if (waitSeconds <= 0) {
-      setWaitSeconds(null);
-      return;
-    }
-
-    intervalRef.current = setInterval(() => {
-      setWaitSeconds((prev) => (prev !== null ? prev - 1 : null));
-    }, 1000);
-
-    return () => clearInterval(intervalRef.current);
-  }, [waitSeconds]);
+  // El error del hook solo se muestra si no hay bloqueo activo
+  const displayError = error && lockout.waitSeconds === null ? error : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[1fr_1.3fr] lg:items-center">
-      <div className="flex flex-col justify-center px-6 py-12 lg:px-10">
-        <div className="mx-auto w-full max-w-sm lg:max-w-md">
-          <div className="flex items-center space-x-2 mb-12 animate-in fade-in slide-in-from-left-4 duration-700">
-            <span className="text-2xl mr-2">{settings?.logoEmoji || "🍽️"}</span>
-            <span className="text-xl font-display font-black text-text">
-              {settings?.restaurantName || "Cargando..."}
-            </span>
-          </div>
-
+    <div className="auth-grid">
+      <div className="auth-form-wrapper">
+        <div className="auth-form-inner">
           <div className="mb-10">
-            <h2 className="text-3xl font-bold text-gray-900">Iniciar sesión</h2>
+            <BackButton fallbackHref="/" label="Volver" />
+            <h2 className="auth-title">Iniciar sesión</h2>
           </div>
 
-          <Button
-            type="button"
-            label="Continuar con Google"
-            url="/google-auth"
-            className="flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-            ico={
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 533.5 544.3"
-                width="18"
-                height="18"
-                aria-hidden
-              >
-                <path
-                  fill="#4285F4"
-                  d="M533.5 278.4c0-17.4-1.5-34.3-4.3-50.6H272.1v95.7h147.5c-.7 4.2-3.8 7.7-8.7 10.3v68h86.1c50.4-46.4 81.1-115 81.1-196.1z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M272.1 544.3c72.8 0 134-24.1 178.7-65.6l-86.1-68c-24 16.2-54.9 25.8-92.6 25.8-71 0-131.3-47.8-152.9-112.1h-90.6v70.4c44.3 87.9 135.4 150.1 243.5 150.1z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M119.2 321.4c-10.9-32.6-10.9-67.6 0-100.2V150.8H28.6C-2.1 204.5-2.1 339.8 28.6 393.5l90.6-72.1z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M272.1 109.1c39.6-.6 75.5 14.1 103.6 40.6l77.8-77.8C413.8 24.9 356.7 1 272.1 1 163.9 1 72.8 63.1 28.6 150.8l90.6 70.4C140.8 156.9 201.1 109.1 272.1 109.1z"
-                />
-              </svg>
-            }
-          />
-
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-4 text-gray-400 font-light">o</span>
-            </div>
-          </div>
-
-          {success && (
-            <div className="mt-4 p-3 rounded-md text-sm font-semibold text-center bg-green-100 text-green-700 border border-green-300 shadow transition-all duration-300">
-              {success}
-            </div>
-          )}
-
-          {/* Error normal SOLO si no es bloqueo */}
-          {error && waitSeconds === null && (
-            <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Bloqueo */}
-          {waitSeconds !== null && (
-            <div className="mt-4 p-3 bg-yellow-100 text-yellow-700 border border-yellow-300 rounded-md text-sm font-semibold text-center">
-              Debes esperar {waitSeconds} segundos antes de intentar nuevamente.
+          {success && <div className="alert-success">{success}</div>}
+          {displayError && <div className="alert-error">{displayError}</div>}
+          {lockout.waitSeconds !== null && (
+            <div className="alert-warning">
+              Debes esperar {lockout.waitSeconds} segundos antes de intentar
+              nuevamente.
             </div>
           )}
 
           <form
             className="space-y-6"
-            onSubmit={async (e) => {
+            onSubmit={(e) => {
               e.preventDefault();
-              setLoading(true);
-              setError(null);
-
-              try {
-                const res = await fetch("/api/auth/login", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email, password }),
-                });
-
-                const data = await res.json();
-
-                if (!res.ok) {
-                  throw new Error(data.error || "Ocurrió un error");
-                }
-
-                // Guardar token en cookie Y localStorage
-                if (data.accessToken) {
-                  // Cookie para el middleware (server-side)
-                  document.cookie = `session=${data.accessToken}; path=/; max-age=86400; samesite=strict`;
-                  // localStorage para las requests al backend
-                  localStorage.setItem("authToken", data.accessToken);
-                }
-
-                setSuccess("¡Login exitoso! Redirigiendo...");
-                setTimeout(() => router.push("/dashboard"), 500);
-              } catch (err: any) {
-                setError(err.message || "Error al iniciar sesión");
-              } finally {
-                setLoading(false);
-              }
+              handleLogin();
             }}
           >
-            <div className="relative">
-              <input
-                id="email"
-                type="email"
-                required
-                placeholder="Ingresa tu correo electronico"
-                className="block w-full rounded-lg border border-gray-200 py-3.5 px-4"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">
-                Correo electrónico*
-              </span>
-            </div>
-
-            <div className="relative">
-              <input
-                id="password"
-                type="password"
-                required
-                placeholder="Ingresa tu contraseña"
-                className="block w-full rounded-lg border border-gray-200 py-3.5 px-4"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <span className="absolute left-4 top-0 -translate-y-1/2 bg-white px-1 text-xs text-gray-600">
-                Contraseña*
-              </span>
-            </div>
-
-            <p className="mt-8 text-right text-sm text-gray-500">
+            <FloatingInput
+              id="email"
+              type="email"
+              placeholder="Ingresa tu correo electrónico"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              label="Correo electrónico"
+              required
+            />
+            <FloatingInput
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Ingresa tu contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              label="Contraseña"
+              required
+              rightElement={
+                <PasswordToggleButton
+                  showPassword={showPassword}
+                  setShowPassword={setShowPassword}
+                />
+              }
+            />
+            <p className="mt-8 text-right text-sm text-[var(--color-text-sec)]">
               <Button
                 type="button"
                 label="Recuperar contraseña"
                 url="/frm_reset"
-                className="font-semibold text-[#232f38]"
+                className="link-secondary"
               />
             </p>
-
             <button
               type="submit"
-              disabled={!isFormReady || waitSeconds !== null || loading}
-              className={`flex w-full justify-center rounded-xl px-3 py-3 text-sm font-black uppercase tracking-widest text-white shadow-lg transition-all duration-300
-                                ${
-                                  waitSeconds !== null || loading
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : isFormReady
-                                      ? "bg-brand hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0"
-                                      : "bg-brand opacity-40 cursor-not-allowed"
-                                }`}
+              disabled={!isFormReady || lockout.waitSeconds !== null || loading}
+              className={`btn-primary ${lockout.waitSeconds !== null || loading ? "btn-primary--loading" : ""}`}
             >
               {loading
                 ? "Cargando..."
-                : waitSeconds !== null
-                  ? `Bloqueado (${waitSeconds}s)`
+                : lockout.waitSeconds !== null
+                  ? `Bloqueado (${lockout.waitSeconds}s)`
                   : "Iniciar Sesión"}
             </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-gray-500">
-            Aun tienes una cuenta?{" "}
+          <p className="mt-8 text-center text-sm text-[var(--color-text-sec)]">
+            ¿Aún no tienes una cuenta?{" "}
             <Button
               type="button"
               label="Registrarse"
               url="/register"
-              className="font-semibold text-[#232f38]"
+              className="link-secondary"
             />
           </p>
         </div>
       </div>
-
       <div className="hidden lg:block h-screen p-10">
-        <div
-          className="relative h-full w-full rounded-[3rem] shadow-xl overflow-hidden bg-cover bg-center transition-all duration-1000 animate-in zoom-in-95"
-          style={{
-            backgroundImage: `url('${settings?.loginBgImageUrl || "https://cdn.pixabay.com/photo/2019/01/25/21/07/food-3955317_1280.jpg"}')`,
-            backgroundSize: "cover",
-            backgroundRepeat: "no-repeat",
-          }}
-        />
+        <div className="relative h-full w-full rounded-[3rem] shadow-xl overflow-hidden transition-all duration-1000 animate-in zoom-in-95">
+          <CldImage
+            src={settings?.loginBgImageUrl || "food-3955317_1280"}
+            fill
+            alt="Login background"
+            className="object-cover"
+            sizes="100vw"
+          />
+        </div>
       </div>
     </div>
   );

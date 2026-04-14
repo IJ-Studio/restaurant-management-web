@@ -25,6 +25,7 @@ import {
 import { SupplierModal } from "@/features/dashboard/admin/components/SupplierModal";
 import { OrderModal } from "@/features/dashboard/admin/components/OrderModal";
 import { SupplierCard } from "@/features/dashboard/admin/components/SupplierCard";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export default function SuppliersPage() {
   const router = useRouter();

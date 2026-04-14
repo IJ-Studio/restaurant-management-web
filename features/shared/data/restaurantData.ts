@@ -94,6 +94,10 @@ export interface SystemAppearance {
 }
 
 export interface SystemSettings {
+  restaurantIco: string;
+  restaurantLogo: string;
+  restaurantLogo_light:string;
+  restaurantLogo_dark:string;
   restaurantName: string;
   shortName: string;
   tagline: string;
@@ -104,6 +108,7 @@ export interface SystemSettings {
   featuredCategoryIds: string[];
   appearance: SystemAppearance;
   loginBgImageUrl: string;
+  registerBgImageUrl: string;
 }
 
 export interface StaffMember {
@@ -304,10 +309,18 @@ export const INITIAL_TABLES: DiningTable[] = [
 ];
 
 export const INITIAL_SETTINGS: SystemSettings = {
+  restaurantIco:
+    "https://res.cloudinary.com/dcb1tspbj/image/upload/q_auto/f_auto/v1776136090/logo_wgyijz.ico",
+  restaurantLogo:
+    "https://res.cloudinary.com/dcb1tspbj/image/upload/q_auto/f_auto/v1775662960/logo_text_white_ktnpgg.png",
+  restaurantLogo_light:
+    "https://res.cloudinary.com/dcb1tspbj/image/upload/q_auto/f_auto/v1776056964/logo_dark_fvfcdk.svg",
+  restaurantLogo_dark:
+    "https://res.cloudinary.com/dcb1tspbj/image/upload/q_auto/f_auto/v1776056964/logo_light_xy8ce1.svg",
   restaurantName: "El Quijote",
   shortName: "Q",
   tagline: "Sabor con Alma",
-  logoEmoji: "🍔",
+  logoEmoji: "",
   heroTitle: "Bienvenido a Casa",
   heroSubtitle: "¿Qué delicia te gustaría probar hoy?",
   heroButtonText: "Ver Menú Completo",
@@ -319,7 +332,8 @@ export const INITIAL_SETTINGS: SystemSettings = {
     fontBody: "DM Sans",
     borderRadius: "medium",
   },
-  loginBgImageUrl:"https://cdn.pixabay.com/photo/2019/01/25/21/07/food-3955317_1280.jpg",
+  loginBgImageUrl: "food-3955317_1280_zstvf7.jpg",
+  registerBgImageUrl: "meal-4840665_1280_azmrqq.jpg",
 };
 
 export const INITIAL_ROLES: Role[] = [

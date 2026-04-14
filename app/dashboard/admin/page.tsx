@@ -10,6 +10,7 @@ import { PaymentSplit } from "@/features/dashboard/admin/components/PaymentSplit
 import { TableStatusGrid } from "@/features/dashboard/admin/components/TableStatusGrid";
 import { StockAlerts } from "@/features/dashboard/admin/components/StockAlerts";
 import { QuickActions } from "@/features/dashboard/admin/components/QuickActions";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 import { AlertTriangle, TrendingUp, Clock, Utensils } from "lucide-react";
 
 import {
@@ -76,90 +77,93 @@ export default function AdminDashboardPage() {
   });
 
   return (
-    <main className="p-8 md:p-10 min-w-0 flex flex-col min-h-screen">
-      <DashboardTopBar user={user} />
+    <div className="flex min-h-screen">
+      <AdminSidebar activePage="dashboard" user={user} />
+      <main className="flex-1 ml-[260px] p-8 md:p-10 min-w-0 flex flex-col">
+        <DashboardTopBar user={user} />
 
-      {/* Titulo */}
-      <div className="mb-5 text-text">
-        <h1 className="font-display font-black text-3xl tracking-tight leading-none mb-1">
-          Buenas noches, {user.name} 👋
-        </h1>
-        <p className="text-[13px] text-text-muted m-0">
-          {today} · Restaurante El Quijote
-        </p>
-      </div>
+        {/* Titulo */}
+        <div className="mb-5 text-text">
+          <h1 className="font-display font-black text-3xl tracking-tight leading-none mb-1">
+            Buenas noches, {user.name} 👋
+          </h1>
+          <p className="text-[13px] text-text-muted m-0">
+            {today} · Restaurante El Quijote
+          </p>
+        </div>
 
-      {/* Alerta de Stock */}
-      {criticalStock > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 bg-red-50 rounded-[13px] border border-red-200 mb-5">
-          <div className="flex items-center gap-2.5">
-            <AlertTriangle size={14} className="text-red-500 shrink-0" />
-            <p className="text-[13px] font-semibold text-red-600 m-0 leading-tight">
-              <strong>{criticalStock} productos con stock crítico</strong>
-              {" — "}Se recomienda generar una orden urgente.
-            </p>
+        {/* Alerta de Stock */}
+        {criticalStock > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 bg-red-50 rounded-[13px] border border-red-200 mb-5">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle size={14} className="text-red-500 shrink-0" />
+              <p className="text-[13px] font-semibold text-red-600 m-0 leading-tight">
+                <strong>{criticalStock} productos con stock crítico</strong>
+                {" — "}Se recomienda generar una orden urgente.
+              </p>
+            </div>
+            <button
+              onClick={() => router.push("/dashboard/admin/inventory")}
+              className="text-xs font-extrabold text-red-600 bg-transparent border-none cursor-pointer whitespace-nowrap underline"
+            >
+              Ver inventario →
+            </button>
           </div>
-          <button
-            onClick={() => router.push("/dashboard/admin/inventory")}
-            className="text-xs font-extrabold text-red-600 bg-transparent border-none cursor-pointer whitespace-nowrap underline"
-          >
-            Ver inventario →
-          </button>
+        )}
+
+        {/* KPIs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-4">
+          <KpiCard
+            label="Ventas activas"
+            value={`$${todaySales.toLocaleString()}`}
+            sub="en base actual"
+            colorClass="text-brand"
+            bgClass="bg-brand/10"
+            icon={<TrendingUp size={18} />}
+            change={12.5}
+          />
+          <KpiCard
+            label="Pedidos pendientes"
+            value={activeOrders}
+            sub="en preparación"
+            colorClass="text-blue-600"
+            bgClass="bg-blue-100"
+            icon={<Clock size={18} />}
+          />
+          <KpiCard
+            label="Ocupación de mesas"
+            value={`${occupiedTables}/${tables.length}`}
+            sub={`${freeTables} disponibles`}
+            colorClass="text-emerald-600"
+            bgClass="bg-emerald-100"
+            icon={<Utensils size={18} />}
+          />
+          <KpiCard
+            label="Alertas de stock"
+            value={lowStockProducts.length}
+            sub={`${criticalStock} críticos`}
+            colorClass={criticalStock > 0 ? "text-red-600" : "text-amber-600"}
+            bgClass={criticalStock > 0 ? "bg-red-100" : "bg-amber-100"}
+            icon={<AlertTriangle size={18} />}
+          />
         </div>
-      )}
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-4">
-        <KpiCard
-          label="Ventas activas"
-          value={`$${todaySales.toLocaleString()}`}
-          sub="en base actual"
-          colorClass="text-brand"
-          bgClass="bg-brand/10"
-          icon={<TrendingUp size={18} />}
-          change={12.5}
-        />
-        <KpiCard
-          label="Pedidos pendientes"
-          value={activeOrders}
-          sub="en preparación"
-          colorClass="text-blue-600"
-          bgClass="bg-blue-100"
-          icon={<Clock size={18} />}
-        />
-        <KpiCard
-          label="Ocupación de mesas"
-          value={`${occupiedTables}/${tables.length}`}
-          sub={`${freeTables} disponibles`}
-          colorClass="text-emerald-600"
-          bgClass="bg-emerald-100"
-          icon={<Utensils size={18} />}
-        />
-        <KpiCard
-          label="Alertas de stock"
-          value={lowStockProducts.length}
-          sub={`${criticalStock} críticos`}
-          colorClass={criticalStock > 0 ? "text-red-600" : "text-amber-600"}
-          bgClass={criticalStock > 0 ? "bg-red-100" : "bg-amber-100"}
-          icon={<AlertTriangle size={18} />}
-        />
-      </div>
-
-      {/* Main Grid: Orders & Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_308px] gap-4 mb-4 items-start">
-        <RecentOrdersTable />
-        <div className="flex flex-col gap-3.5">
-          <HourBarsChart todaySales={todaySales} />
-          <PaymentSplit />
+        {/* Main Grid: Orders & Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_308px] gap-4 mb-4 items-start">
+          <RecentOrdersTable />
+          <div className="flex flex-col gap-3.5">
+            <HourBarsChart todaySales={todaySales} />
+            <PaymentSplit />
+          </div>
         </div>
-      </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-10 flex-1">
-        <TableStatusGrid />
-        <StockAlerts />
-        <QuickActions />
-      </div>
-    </main>
+        {/* Bottom Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-10 flex-1">
+          <TableStatusGrid />
+          <StockAlerts />
+          <QuickActions />
+        </div>
+      </main>
+    </div>
   );
 }

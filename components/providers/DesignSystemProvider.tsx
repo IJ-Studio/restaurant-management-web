@@ -18,17 +18,16 @@ export function DesignSystemProvider({ children }: DesignSystemProviderProps) {
 
       // 1. Colors
       root.style.setProperty("--color-brand", appearance.primaryColor);
-      
+
       // Calculate variations using color-mix (modern CSS)
       root.style.setProperty("--color-brand-light", `color-mix(in srgb, ${appearance.primaryColor}, white 20%)`);
-      root.style.setProperty("--color-brand-dark", `color-mix(in srgb, ${appearance.primaryColor}, black 20%)`);
-      
+
       root.style.setProperty("--color-brand-sec", appearance.secondaryColor);
 
       // 2. Typography
       // Helper to handle font names (adding quotes if needed)
       const formatFont = (f: string) => f.includes(" ") ? `"${f}"` : f;
-      
+
       root.style.setProperty("--font-display", `${formatFont(appearance.fontDisplay)}, Georgia, serif`);
       root.style.setProperty("--font-body", `${formatFont(appearance.fontBody)}, system-ui, sans-serif`);
 
@@ -51,7 +50,7 @@ export function DesignSystemProvider({ children }: DesignSystemProviderProps) {
     // For now, let's just use the fact that the Admin page re-renders or the user refreshes.
     // OPTIONAL: Add a custom event listener if we want "Preview" mode without saving.
     window.addEventListener("design-system-update", applyDesignSystem);
-    
+
     return () => window.removeEventListener("design-system-update", applyDesignSystem);
   }, []);
 

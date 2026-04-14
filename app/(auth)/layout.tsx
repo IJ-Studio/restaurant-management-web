@@ -1,8 +1,15 @@
-export default function RootLayout({ children, }: {
-    children: React.ReactNode;
-}) {    return (
-        <div>
-            {children}
-        </div>
-    )
+// app/(auth)/layout.tsx
+"use client";
+
+
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      <main>{children}</main>
+    </>
+  );
 }

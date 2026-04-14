@@ -1,7 +1,7 @@
 "use client";
 
 import { Provider as ReduxProvider } from "react-redux";
-import { ThemeProvider } from "@/components/shared/ThemeProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { DesignSystemProvider } from "@/components/providers/DesignSystemProvider";
 import { store } from "@/store/index";
 
@@ -19,9 +19,11 @@ interface AppProvidersProps {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ReduxProvider store={store}>
-      <DesignSystemProvider>
-        <ThemeProvider>{children}</ThemeProvider>
-      </DesignSystemProvider>
+      <ThemeProvider>
+        <DesignSystemProvider>      
+          {children}
+        </DesignSystemProvider>
+      </ThemeProvider>
     </ReduxProvider>
   );
 }

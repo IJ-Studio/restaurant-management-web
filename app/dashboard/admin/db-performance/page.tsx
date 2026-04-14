@@ -166,11 +166,13 @@ interface DBMetricsState {
   lastUpdated: Date | null;
   error:       string | null;
   loading:     boolean;
+  isVacuuming: boolean; // Estado para el botón manual
 }
 
 // ════════════════════════════════════════════════════════════
 //  HOOK — Polling de todas las métricas
 // ════════════════════════════════════════════════════════════
+
 /**
  * useDBMetrics
  * Fetcha todos los endpoints en paralelo y rota cada `intervalMs`.
@@ -181,7 +183,7 @@ function useDBMetrics(intervalMs = 10_000) {
   const [state, setState] = useState<DBMetricsState>({
     cpu: null, rwRatio: null, autovacuum: null, storage: null,
     hotTables: null, latency: null, connections: null, waitEvents: null,
-    lastUpdated: null, error: null, loading: true,
+    lastUpdated: null, error: null, loading: true, isVacuuming: false
   });
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -229,13 +231,27 @@ function useDBMetrics(intervalMs = 10_000) {
     }
   }, []);
 
+  const runManualVacuum = useCallback(async () => {
+    setState(s => ({ ...s, isVacuuming: true }));
+    try {
+      const res = await fetch(endpoint("/db-metrics/vacuum-manual"), { method: "POST" });
+      if (!res.ok) throw new Error("Error al iniciar limpieza");
+      alert("La limpieza (Vacuum) ha comenzado en segundo plano. Esto mejorará el rendimiento de las tablas.");
+      fetchAll();
+    } catch (err: any) {
+      alert("No se pudo iniciar la limpieza: " + err.message);
+    } finally {
+      setState(s => ({ ...s, isVacuuming: false }));
+    }
+  }, [fetchAll]);
+
   useEffect(() => {
     fetchAll();
     timerRef.current = setInterval(fetchAll, intervalMs);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [fetchAll, intervalMs]);
 
-  return { ...state, refetch: fetchAll };
+  return { ...state, refetch: fetchAll, runManualVacuum };
 }
 
 // ════════════════════════════════════════════════════════════
@@ -262,34 +278,49 @@ function SparkLine({
   color = T.brand,
   height = 48,
   width = 180,
+  yLabel = "",
 }: {
   data: number[];
   color?: string;
   height?: number;
   width?: number;
+  yLabel?: string;
 }) {
   if (!data || data.length < 2) {
     return <svg width={width} height={height} />;
   }
-  const max  = Math.max(...data, 0.01);
+  const max  = Math.max(...data, 10);
   const min  = Math.min(...data);
   const span = max - min || 1;
-  const pad  = 4;
+  const padX = 40; // Espacio para etiquetas eje Y
+  const padY = 20; // Espacio para etiquetas eje X
   const pts  = data.map((v, i) => {
-    const x = pad + (i / (data.length - 1)) * (width - pad * 2);
-    const y = height - pad - ((v - min) / span) * (height - pad * 2);
+    const x = padX + (i / (data.length - 1)) * (width - padX - 10);
+    const y = (height - padY) - ((v - min) / span) * (height - padY - 10);
     return `${x},${y}`;
   });
   const area = [
     `M ${pts[0]}`,
     ...pts.slice(1).map(p => `L ${p}`),
-    `L ${pad + (width - pad * 2)},${height - pad}`,
-    `L ${pad},${height - pad}`,
+    `L ${padX + (width - padX - 10)},${height - padY}`,
+    `L ${padX},${height - padY}`,
     "Z",
   ].join(" ");
 
   return (
-    <svg width={width} height={height} style={{ overflow: "visible" }}>
+    <svg width="100%" height={height} style={{ overflow: "visible" }}>
+      {/* Ejes */}
+      <line x1={padX} y1={height - padY} x2={width} y2={height - padY} stroke={T.borderMed} strokeWidth={1} />
+      <line x1={padX} y1={0} x2={padX} y2={height - padY} stroke={T.borderMed} strokeWidth={1} />
+
+      {/* Etiquetas Eje Y */}
+      <text x={padX - 5} y={height - padY} fontSize="9" textAnchor="end" fill={T.textMut}>0</text>
+      <text x={padX - 5} y={10} fontSize="9" textAnchor="end" fill={T.textMut}>{max.toFixed(0)}{yLabel}</text>
+
+      {/* Etiquetas Eje X */}
+      <text x={padX} y={height - 5} fontSize="9" fill={T.textMut}>Antiguo</text>
+      <text x={width} y={height - 5} fontSize="9" textAnchor="end" fill={T.textMut}>Ahora</text>
+
       <path d={area} fill={`${color}18`} />
       <polyline
         points={pts.join(" ")}
@@ -459,42 +490,45 @@ function SectionCPU({ data }: { data: DBCpuMetrics | null }) {
 
   return (
     <Section
-      title="Uso de CPU del servidor de base de datos"
-      subtitle="Actualización cada 5–10 s · Fuente: métricas del sistema / OS"
+      title="Cerebro del Sistema (Procesador)"
+      subtitle="Representa qué tan ocupado está el motor que procesa tus pedidos y datos."
       icon={<Activity size={18} />}
       color={cpuColor}
     >
+      <p style={{ fontSize: 13, color: T.textSec, marginBottom: 15 }}>
+        Este gráfico muestra qué tanto esfuerzo está haciendo el servidor. Si el "Uso Total" llega al 100%, el sistema se pondrá lento para todos.
+      </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
         <KpiCard
-          label="CPU Total"
+          label="Uso Total General"
           value={data ? fmt(data.totalPct) : "—"}
           unit="%"
           color={data ? statusColor(data.totalPct) : T.textMut}
           icon={<Activity size={16} />}
-          sub="Uso general del servidor"
+          sub="Esfuerzo de toda la máquina"
         />
         <KpiCard
-          label="CPU PostgreSQL"
+          label="Uso por Base de Datos"
           value={data ? fmt(data.postgresPct) : "—"}
           unit="%"
           color={data ? statusColor(data.postgresPct) : T.textMut}
           icon={<Database size={16} />}
-          sub="Solo proceso postgres"
+          sub="Esfuerzo exclusivo de la BD"
         />
         <KpiCard
-          label="Load Avg (1m)"
+          label="Carga de Trabajo"
           value={data ? fmt(data.loadAvg1m, 2) : "—"}
           color={T.info}
           icon={<Layers size={16} />}
-          sub="Promedio de carga 1 minuto"
+          sub="Tareas acumuladas en cola"
         />
         <KpiCard
-          label="CPU iowait"
+          label="Espera de Disco"
           value={data ? fmt(data.iowaitPct) : "—"}
           unit="%"
           color={data && data.iowaitPct > 20 ? T.danger : T.warn}
           icon={<HardDrive size={16} />}
-          sub="Espera de E/S disco"
+          sub="Lentitud causada por el disco"
         />
       </div>
 
@@ -508,27 +542,23 @@ function SectionCPU({ data }: { data: DBCpuMetrics | null }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
           <div>
             <p style={{ fontFamily: T.fontD, fontWeight: 800, fontSize: 13, color: T.text, margin: 0 }}>
-              Tendencia de saturación
+              Historial de esfuerzo en el tiempo
             </p>
             <p style={{ fontSize: 10, color: T.textMut, margin: "2px 0 0" }}>
-              Últimas muestras · línea naranja = total · línea azul = postgres
+              Eje Vertical: Porcentaje (%) · Eje Horizontal: Tiempo (Últimos minutos)
             </p>
           </div>
           <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: T.brand }}>
-              <span style={{ width: 20, height: 2, background: T.brand, borderRadius: 99, display: "inline-block" }} />
-              Total
-            </span>
             <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: T.info }}>
               <span style={{ width: 20, height: 2, background: T.info, borderRadius: 99, display: "inline-block" }} />
-              PostgreSQL
+              Uso de Base de Datos
             </span>
           </div>
         </div>
-        <div style={{ position: "relative", height: 72 }}>
-          <SparkLine data={histData}   color={T.brand} height={72} width={1200} />
-          <div style={{ position: "absolute", top: 0, left: 0 }}>
-            <SparkLine data={pgHistData} color={T.info}  height={72} width={1200} />
+        <div style={{ position: "relative", height: 100 }}>
+          <SparkLine data={histData} color={T.brand} height={100} width={1000} yLabel="%" />
+          <div style={{ position: "absolute", top: 0, left: 0, width: "100%" }}>
+            <SparkLine data={pgHistData} color={T.info} height={100} width={1000} />
           </div>
           {histData.length === 0 && (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: T.textMut, fontSize: 12 }}>
@@ -540,20 +570,21 @@ function SectionCPU({ data }: { data: DBCpuMetrics | null }) {
 
       {/* Tooltip expandible — user / system / idle */}
       {data && (
-        <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 14 }}>
           {[
-            { label: "CPU User",   value: data.userPct,   color: "#7c3aed" },
-            { label: "CPU System", value: data.systemPct, color: T.info },
-            { label: "CPU Idle",   value: data.idlePct,   color: T.ok },
+            { label: "Uso por Aplicaciones",   value: data.userPct,   color: "#7c3aed", desc: "Lo que el programa está haciendo" },
+            { label: "Uso por el Sistema", value: data.systemPct, color: T.info, desc: "Tareas propias de la computadora" },
+            { label: "Capacidad Libre",   value: data.idlePct,   color: T.ok, desc: "Potencia disponible sin usar" },
           ].map(item => (
             <div key={item.label} style={{
-              flex: 1, padding: "10px 12px",
+              padding: "10px 12px",
               background: T.surface, borderRadius: 10,
               border: `1px solid ${T.border}`,
             }}>
-              <p style={{ fontSize: 9, fontWeight: 800, color: T.textMut, textTransform: "uppercase", letterSpacing: ".1em", margin: "0 0 4px" }}>
+              <p style={{ fontSize: 11, fontWeight: 800, color: T.text, margin: "0 0 2px" }}>
                 {item.label}
               </p>
+              <p style={{ fontSize: 9, color: T.textMut, margin: "0 0 6px" }}>{item.desc}</p>
               <ProgressBar pct={item.value} color={item.color} />
             </div>
           ))}
@@ -574,25 +605,28 @@ function SectionRWRatio({ data }: { data: DBRWRatio | null }) {
 
   return (
     <Section
-      title="Distribución de carga: Lectura vs Escritura"
-      subtitle="Actualización cada 1 min · Fuente: pg_stat_database"
+      title="¿Qué está pasando?: Ver vs Cambiar datos"
+      subtitle="Compara cuántas veces se consulta información frente a cuántas veces se guarda nueva."
       icon={<GitBranch size={18} />}
       color={T.info}
     >
+      <p style={{ fontSize: 13, color: T.textSec, marginBottom: 15 }}>
+        Las **Lecturas** ocurren cuando alguien abre el menú o ve un reporte. Las **Escrituras** ocurren cuando creas un pedido o editas un producto.
+      </p>
       <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
         <DonutChart segments={segments} size={130} stroke={24} />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
           {[
             {
-              label: "Lecturas",
-              desc: "tup_returned + tup_fetched",
+              label: "Consultas (Lecturas)",
+              desc: "Ver datos existentes",
               value: data?.reads,
               pct: data?.readPct ?? 0,
               color: T.info,
             },
             {
-              label: "Escrituras",
-              desc: "tup_inserted + tup_updated + tup_deleted",
+              label: "Cambios (Escrituras)",
+              desc: "Guardar o borrar información",
               value: data?.writes,
               pct: data?.writePct ?? 0,
               color: T.brand,
@@ -629,10 +663,10 @@ function SectionRWRatio({ data }: { data: DBRWRatio | null }) {
           display: "flex", justifyContent: "space-between", alignItems: "center",
         }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: T.textSec }}>
-            Ratio lectura / escritura
+            Por cada cambio, se realizan:
           </span>
           <span style={{ fontFamily: T.fontD, fontSize: 18, fontWeight: 900, color: T.info }}>
-            {data.writes > 0 ? (data.reads / data.writes).toFixed(2) : "∞"} : 1
+            {data.writes > 0 ? (data.reads / data.writes).toFixed(1) : "—"} Lecturas
           </span>
         </div>
       )}
@@ -643,8 +677,8 @@ function SectionRWRatio({ data }: { data: DBRWRatio | null }) {
 // ════════════════════════════════════════════════════════════
 //  SECCIÓN 3 — Autovacuum
 // ════════════════════════════════════════════════════════════
-function SectionAutovacuum({ data }: { data: DBAutovacuumTable[] | null }) {
-  const [sort, setSort] = useState<"deadPct" | "deadTuples" | "minutesSinceVacuum">("deadPct");
+function SectionAutovacuum({ data, onManual, isRunning }: { data: DBAutovacuumTable[] | null, onManual: () => void, isRunning: boolean }) {
+  const [sort, setSort] = useState<"deadPct" | "deadTuples" | "minutesSinceVacuum">("minutesSinceVacuum");
 
   const sorted = data
     ? [...data].sort((a, b) => {
@@ -672,41 +706,52 @@ function SectionAutovacuum({ data }: { data: DBAutovacuumTable[] | null }) {
 
   return (
     <Section
-      title="Estado de Autovacuum"
-      subtitle="Actualización cada 5–15 min · Fuente: pg_stat_user_tables · pg_stat_progress_vacuum"
+      title="Limpieza Automática (Mantenimiento)"
+      subtitle="El sistema borra 'basura' interna para recuperar espacio y velocidad."
       icon={<RefreshCw size={18} />}
       color={T.ok}
     >
-      {/* Ordenar por */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: T.textMut, alignSelf: "center" }}>
-          Ordenar por:
-        </span>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
+        <p style={{ fontSize: 13, color: T.textSec, margin: 0, maxWidth: "70%" }}>
+          Cuando borras un producto, queda un hueco vacío. La limpieza (Vacuum) cierra esos huecos para que la base de datos no crezca sin sentido.
+        </p>
+        <button
+          onClick={onManual}
+          disabled={isRunning}
+          style={{
+            padding: "10px 18px", borderRadius: 12, background: T.brand, color: "#fff",
+            border: "none", fontWeight: 800, fontSize: 12, cursor: isRunning ? "not-allowed" : "pointer",
+            boxShadow: "0 4px 12px rgba(232,93,4,0.2)", opacity: isRunning ? 0.6 : 1,
+            display: "flex", alignItems: "center", gap: 8
+          }}
+        >
+          {isRunning ? <RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Zap size={14} />}
+          Ejecutar Limpieza Manual
+        </button>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: T.textMut }}>Ordenar tablas por:</span>
         {[
-          { key: "deadPct" as const, label: "% Dead tuples" },
-          { key: "deadTuples" as const, label: "Filas muertas" },
-          { key: "minutesSinceVacuum" as const, label: "Tiempo sin vacuum" },
+          { key: "deadPct" as const, label: "% de Basura" },
+          { key: "minutesSinceVacuum" as const, label: "Tiempo sin limpiar" },
         ].map(o => (
           <button
             key={o.key}
             onClick={() => setSort(o.key)}
-            style={{
-              padding: "4px 12px", borderRadius: 8, fontSize: 11, fontWeight: 700,
-              border: "none", cursor: "pointer",
-              background: sort === o.key ? T.brand : T.elevated,
-              color: sort === o.key ? "#fff" : T.textSec,
-            }}
+            style={{ padding: "4px 12px", borderRadius: 8, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", background: sort === o.key ? T.brand : T.elevated, color: sort === o.key ? "#fff" : T.textSec }}
           >{o.label}</button>
         ))}
       </div>
 
       <div style={{
         border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden",
+        maxHeight: 320, overflowY: "auto"
       }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ background: T.elevated, borderBottom: `1px solid ${T.border}` }}>
-              {["", "Tabla", "Último vacuum", "Último analyze", "Filas muertas", "Filas vivas", "% Dead", "En ejecución", "Mins sin vacuum"].map((h, i) => (
+              {["", "Nombre de Tabla", "Última Limpieza", "Registros Basura", "Registros Reales", "% de Basura", "¿Limpiando ahora?", "Hace cuánto"].map((h, i) => (
                 <th key={i} style={{ ...colStyle, textAlign: i === 0 ? "center" : "left" }}>
                   {h}
                 </th>
@@ -716,9 +761,7 @@ function SectionAutovacuum({ data }: { data: DBAutovacuumTable[] | null }) {
           <tbody>
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={9} style={{ ...cellStyle, textAlign: "center", color: T.textMut, padding: 32 }}>
-                  Esperando datos del backend...
-                </td>
+                <td colSpan={8} style={{ ...cellStyle, textAlign: "center", color: T.textMut, padding: 32 }}>Esperando datos...</td>
               </tr>
             )}
             {sorted.map((row, i) => {
@@ -745,11 +788,6 @@ function SectionAutovacuum({ data }: { data: DBAutovacuumTable[] | null }) {
                     {row.lastAutovacuum
                       ? new Date(row.lastAutovacuum).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })
                       : <span style={{ color: T.danger, fontWeight: 700 }}>Nunca</span>}
-                  </td>
-                  <td style={cellStyle}>
-                    {row.lastAutoanalyze
-                      ? new Date(row.lastAutoanalyze).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" })
-                      : <span style={{ color: T.textMut }}>—</span>}
                   </td>
                   <td style={{ ...cellStyle, color: row.deadTuples > 1000 ? T.warn : T.text, fontWeight: 700 }}>
                     {row.deadTuples.toLocaleString("es-MX")}
@@ -794,18 +832,21 @@ function SectionStorage({ data }: { data: DBStorageMetrics | null }) {
 
   return (
     <Section
-      title="Almacenamiento total de la base de datos"
-      subtitle="Actualización cada 5–15 min · Fuente: pg_database_size() · pg_total_relation_size()"
+      title="Espacio en el Disco Duro"
+      subtitle="Muestra cuánto espacio ocupan tus datos físicos en el servidor."
       icon={<HardDrive size={18} />}
       color={T.info}
     >
+      <p style={{ fontSize: 13, color: T.textSec, marginBottom: 15 }}>
+        Los **Índices** son como el índice de un libro: ocupan espacio extra pero hacen que las búsquedas sean instantáneas.
+      </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 20 }}>
         {[
           { label: "Tamaño total DB",  value: fmtMB(data?.totalMB),    color: T.info },
           { label: "Tablas",           value: fmtMB(data?.tablesMB),    color: T.brand },
-          { label: "Índices",          value: fmtMB(data?.indexesMB),   color: "#7c3aed" },
-          { label: "TOAST",            value: fmtMB(data?.toastMB),     color: T.textSec },
-          { label: "Crecimiento 24h",  value: fmtMB(data?.growth24hMB), color: data && data.growth24hMB > 100 ? T.danger : T.ok },
+          { label: "Índices (Buscadores)", value: fmtMB(data?.indexesMB),   color: "#7c3aed" },
+          { label: "Archivos Pesados",     value: fmtMB(data?.toastMB),     color: T.textSec },
+          { label: "Crecimiento Diario",  value: fmtMB(data?.growth24hMB), color: data && data.growth24hMB > 100 ? T.danger : T.ok },
         ].map(item => (
           <div key={item.label} style={{
             padding: "12px 14px", background: T.elevated, borderRadius: 12,
@@ -826,10 +867,10 @@ function SectionStorage({ data }: { data: DBStorageMetrics | null }) {
         padding: "14px 16px",
         background: T.elevated, borderRadius: 12, border: `1px solid ${T.border}`,
       }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: T.textSec, margin: "0 0 10px" }}>
-          Tendencia de crecimiento (historial por hora)
+        <p style={{ fontSize: 12, fontWeight: 700, color: T.textSec, margin: "0 0 5px" }}>
+          Eje Y: Megabytes (MB) · Eje X: Tiempo
         </p>
-        <SparkLine data={histData} color={T.info} height={56} width={1200} />
+        <SparkLine data={histData} color={T.info} height={60} width={600} yLabel="MB" />
         {histData.length === 0 && (
           <p style={{ fontSize: 12, color: T.textMut, textAlign: "center", margin: 0 }}>
             Esperando datos del backend...
@@ -869,19 +910,22 @@ function SectionHotTables({ data }: { data: DBHotTable[] | null }) {
 
   return (
     <Section
-      title="Tablas con mayor carga"
-      subtitle="Top 15 por operaciones totales · Actualización 1–5 min · Fuente: pg_stat_user_tables"
+      title="Tablas con más Movimiento"
+      subtitle="Identifica cuáles son las partes del sistema que más se usan."
       icon={<Layers size={18} />}
       color={T.brand}
     >
-      <div style={{ border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden" }}>
+      <p style={{ fontSize: 13, color: T.textSec, marginBottom: 15 }}>
+        Un **Escaneo Lento** significa que la base de datos tuvo que leer toda la tabla fila por fila porque no encontró un buscador (índice) rápido.
+      </p>
+      <div style={{ border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", maxHeight: 350, overflowY: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ background: T.elevated, borderBottom: `1px solid ${T.border}` }}>
               <th style={colStyle}>Tabla</th>
-              {sortable("seqScan",     "Seq scans")}
-              {sortable("idxScan",     "Idx scans")}
-              {sortable("tupReturned", "Filas leídas")}
+              {sortable("seqScan",     "Lect. Lentas")}
+              {sortable("idxScan",     "Lect. Rápidas")}
+              {sortable("tupReturned", "Datos leídos")}
               {sortable("tupModified", "Filas modif.")}
               {sortable("totalOps",    "Total ops")}
               {sortable("sizeMB",      "Tamaño")}
@@ -960,12 +1004,12 @@ function SectionLatency({ data }: { data: DBLatencyMetrics | null }) {
                   fontSize: 11, fontWeight: 900, fontFamily: "monospace",
                   padding: "2px 8px", borderRadius: 6,
                   background: `${color}18`, color,
-                }}>{op}</span>
+                }}>{OPS_MAP[op]}</span>
               </div>
               {[
-                { label: "Promedio", value: entry?.avgMs, important: true },
-                { label: "p95",      value: entry?.p95Ms },
-                { label: "p99",      value: entry?.p99Ms },
+                { label: "Tiempo Promedio", value: entry?.avgMs, important: true },
+                { label: "Casos Lentos",      value: entry?.p95Ms },
+                { label: "Peor Caso",      value: entry?.p99Ms },
               ].map(row => (
                 <div key={row.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                   <span style={{ fontSize: 10, color: T.textMut, fontWeight: 600 }}>{row.label}</span>
@@ -1044,11 +1088,14 @@ function SectionConnections({ data }: { data: DBConnectionMetrics | null }) {
 
   return (
     <Section
-      title="Conexiones a la base de datos"
-      subtitle="Actualización cada 5–10 s · Fuente: pg_stat_activity"
+      title="Usuarios Conectados"
+      subtitle="Muestra cuántas 'puertas' de entrada están abiertas hacia la base de datos."
       icon={<Wifi size={18} />}
       color={connColor}
     >
+      <p style={{ fontSize: 13, color: T.textSec, marginBottom: 15 }}>
+        Cada conexión es una vía de comunicación. Si llegas al límite, nadie más podrá entrar al sistema. Las conexiones "En Espera" son peligrosas porque indican un atasco.
+      </p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         {/* KPIs izquierda */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1059,7 +1106,7 @@ function SectionConnections({ data }: { data: DBConnectionMetrics | null }) {
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
               <p style={{ fontFamily: T.fontD, fontWeight: 800, fontSize: 13, color: T.text, margin: 0 }}>
-                Uso de conexiones
+                Capacidad de entrada ocupada
               </p>
               <span style={{ fontFamily: T.fontD, fontSize: 22, fontWeight: 900, color: connColor }}>
                 {data ? `${data.usagePct.toFixed(1)}%` : "—"}
@@ -1067,7 +1114,7 @@ function SectionConnections({ data }: { data: DBConnectionMetrics | null }) {
             </div>
             <ProgressBar pct={data?.usagePct ?? 0} color={connColor} />
             <p style={{ fontSize: 10, color: T.textMut, margin: "6px 0 0" }}>
-              {data ? `${data.total} de ${data.maxConnections} max_connections` : "Esperando datos..."}
+              {data ? `${data.total} abiertas de ${data.maxConnections} permitidas` : "Esperando datos..."}
             </p>
           </div>
 
@@ -1111,7 +1158,7 @@ function SectionConnections({ data }: { data: DBConnectionMetrics | null }) {
           <div style={{ padding: "14px 16px", background: T.elevated, borderRadius: 12, border: `1px solid ${T.border}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: T.textSec, margin: 0 }}>
-                Tendencia de conexiones
+                Eje Y: Cantidad · Eje X: Tiempo
               </p>
               <div style={{ display: "flex", gap: 10 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: T.brand, display: "flex", alignItems: "center", gap: 4 }}>
@@ -1125,9 +1172,9 @@ function SectionConnections({ data }: { data: DBConnectionMetrics | null }) {
               </div>
             </div>
             <div style={{ position: "relative", height: 80 }}>
-              <SparkLine data={histTotal}  color={T.brand} height={80} width={460} />
-              <div style={{ position: "absolute", top: 0, left: 0 }}>
-                <SparkLine data={histActive} color={T.ok} height={80} width={460} />
+              <SparkLine data={histTotal} color={T.brand} height={80} width={400} />
+              <div style={{ position: "absolute", top: 0, left: 0, width: "100%" }}>
+                <SparkLine data={histActive} color={T.ok} height={80} width={400} />
               </div>
               {histTotal.length === 0 && (
                 <p style={{ fontSize: 12, color: T.textMut, textAlign: "center", lineHeight: "80px", margin: 0 }}>
@@ -1159,15 +1206,18 @@ function SectionWaitEvents({ data }: { data: DBWaitEvent[] | null }) {
 
   return (
     <Section
-      title="Distribución de tiempo de espera (Wait Events)"
-      subtitle="Actualización cada 5–10 s · Fuente: pg_stat_activity — métrica más directa para detectar bottlenecks"
+      title="Causas de Retraso (Atascos)"
+      subtitle="Muestra por qué la base de datos se detiene a esperar."
       icon={<Clock size={18} />}
       color={T.danger}
     >
+      <p style={{ fontSize: 13, color: T.textSec, marginBottom: 15 }}>
+        Lo ideal es que la mayoría del tiempo sea **Procesamiento**. Si el "Bloqueo" es alto, significa que una tarea está impidiendo que las demás avancen.
+      </p>
       {/* Barra apilada */}
       <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: 11, fontWeight: 700, color: T.textMut, margin: "0 0 8px" }}>
-          Distribución del tiempo total de espera
+        <p style={{ fontSize: 11, fontWeight: 700, color: T.textMut, margin: "0 0 5px" }}>
+          Eje X: Porcentaje del tiempo total (%)
         </p>
         <div style={{ display: "flex", height: 28, borderRadius: 8, overflow: "hidden", border: `1px solid ${T.border}` }}>
           {sorted.length > 0 ? sorted.map((event, i) => (
@@ -1193,7 +1243,7 @@ function SectionWaitEvents({ data }: { data: DBWaitEvent[] | null }) {
       </div>
 
       {/* Detalle por categoría */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 9, maxHeight: 300, overflowY: "auto" }}>
         {sorted.length > 0 ? sorted.map((event, i) => {
           const color = WAIT_COLORS[event.category] ?? T.textMut;
           const isCritical = event.category === "Lock" && event.pct > 20;
@@ -1215,7 +1265,7 @@ function SectionWaitEvents({ data }: { data: DBWaitEvent[] | null }) {
                     {event.category}
                     {isCritical && (
                       <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 800, color: T.danger }}>
-                        LOCK CONTENTION
+                        SISTEMA BLOQUEADO
                       </span>
                     )}
                   </span>
@@ -1226,7 +1276,7 @@ function SectionWaitEvents({ data }: { data: DBWaitEvent[] | null }) {
                 <ProgressBar pct={event.pct} color={color} />
               </div>
               <span style={{ fontSize: 11, color: T.textMut, minWidth: 70, textAlign: "right" }}>
-                {event.count.toLocaleString("es-MX")} ocurr.
+                {event.count.toLocaleString("es-MX")} veces
               </span>
             </div>
           );
@@ -1250,7 +1300,7 @@ export default function DBPerformancePage() {
   const {
     cpu, rwRatio, autovacuum, storage, hotTables,
     latency, connections, waitEvents,
-    lastUpdated, error, loading, refetch,
+    lastUpdated, error, loading, refetch, runManualVacuum, isVacuuming
   } = useDBMetrics(pollInterval);
 
   function handleLogout() {}
@@ -1451,7 +1501,7 @@ export default function DBPerformancePage() {
           </div>
 
           {/* Fila 6: Autovacuum (ancho completo) */}
-          <SectionAutovacuum data={autovacuum} />
+          <SectionAutovacuum data={autovacuum} onManual={runManualVacuum} isRunning={isVacuuming} />
 
         </div>
 

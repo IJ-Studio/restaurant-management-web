@@ -18,6 +18,7 @@ import {
   Truck,
   FileText,
   Info,
+  Database,
 } from "lucide-react";
 import type { SidebarSection } from "@/components/layout/Sidebar";
 
@@ -99,6 +100,12 @@ export const ADMIN_NAV_SECTIONS: SidebarSection[] = [
   {
     label: "Sistema",
     items: [
+      {
+        key:   "performance",
+        label: "Base de datos",
+        icon:  icon(Database),
+        href:  "/dashboard/admin/db-performance",
+      },
       {
         key:   "settings",
         label: "Configuración",

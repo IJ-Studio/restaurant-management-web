@@ -20,6 +20,7 @@ import { AppearanceSection } from "@/features/dashboard/admin/components/setting
 import { SettingsService, MenuService } from "@/features/shared/services/dataService";
 import { type SystemSettings, type MenuCategory, type SystemAppearance } from "@/features/shared/data/restaurantData";
 import { Save, CheckCircle2 } from "lucide-react";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 // API Base configuration
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL?.trim();
@@ -54,7 +55,7 @@ export default function SettingsPage() {
     SettingsService.saveSettings(settings);
     // Dispatch event to update dynamic style provider
     window.dispatchEvent(new CustomEvent("design-system-update"));
-    
+
     setTimeout(() => {
       setIsSaving(false);
       setSaveSuccess(true);
@@ -73,86 +74,87 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="p-8 md:p-10 min-w-0">
-      {/* Header Section */}
-      <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="font-display font-black text-3xl tracking-tight leading-none mb-1.5 text-text m-0">
-            Configuración del Sistema
-          </h1>
-          <p className="text-sm text-text-muted m-0">
-            Gestiona la identidad de marca, experiencia de usuario y configuraciones técnicas.
-          </p>
+    <div className="flex min-h-screen">
+      <AdminSidebar activePage="settings" user={user} />
+      <main className="flex-1 ml-[260px] p-8 md:p-10 min-w-0">
+        {/* Header Section */}
+        <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="font-display font-black text-3xl tracking-tight leading-none mb-1.5 text-text m-0">
+              Configuración del Sistema
+            </h1>
+            <p className="text-sm text-text-muted m-0">
+              Gestiona la identidad de marca, experiencia de usuario y configuraciones técnicas.
+            </p>
+          </div>
+
+          <button
+            onClick={saveAllSettings}
+            disabled={isSaving}
+            className={`px-8 py-4 rounded-2xl font-display font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center gap-3 shadow-xl ${
+              saveSuccess
+                ? "bg-emerald-500 text-white shadow-emerald-500/20"
+                : "bg-brand text-white shadow-brand/20 hover:shadow-brand/40 hover:-translate-y-1 active:translate-y-0 active:scale-95"
+            }`}
+          >
+            {isSaving ? "Guardando..." : saveSuccess ? (<><CheckCircle2 size={16} /> Guardado</>) : (<><Save size={16} /> Guardar Cambios</>)}
+          </button>
+        </header>
+
+        {/* Settings Sections Grid */}
+        <div className="flex flex-col gap-8 max-w-[1200px] pb-20">
+          {/* 1. Branding Identity */}
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <BrandingSection settings={settings} onChange={handleSettingsChange} />
+          </div>
+
+          {/* 2. UX & Landscape */}
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75">
+            <LandscapeSection settings={settings} categories={categories} onChange={handleSettingsChange} />
+          </div>
+
+          {/* 3. Global Appearance */}
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100">
+            <AppearanceSection appearance={settings.appearance} onChange={handleAppearanceChange} />
+          </div>
+
+          <div className="h-px bg-border/40 my-4" />
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-text-muted px-2">Configuración Técnica</p>
+
+          {/* 3. Offline Mode */}
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100">
+            <OfflineSection />
+          </div>
+
+          {/* 2. Backups & Database */}
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
+            <BackupSection API={API} isExternal={IS_EXTERNAL_API} />
+          </div>
+
+          {/* 3. Payment Gateways */}
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-300">
+            <GatewaySection
+              gateways={gateways}
+              onToggle={toggleGwStatus}
+              onConfigure={setGwModal}
+            />
+          </div>
         </div>
 
-        <button
-          onClick={saveAllSettings}
-          disabled={isSaving}
-          className={`px-8 py-4 rounded-2xl font-display font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center gap-3 shadow-xl ${
-            saveSuccess 
-              ? "bg-emerald-500 text-white shadow-emerald-500/20" 
-              : "bg-brand text-white shadow-brand/20 hover:shadow-brand/40 hover:-translate-y-1 active:translate-y-0 active:scale-95"
-          }`}
-        >
-          {isSaving ? "Guardando..." : saveSuccess ? (<><CheckCircle2 size={16} /> Guardado</>) : (<><Save size={16} /> Guardar Cambios</>)}
-        </button>
-      </header>
-
-      {/* Settings Sections Grid */}
-      <div className="flex flex-col gap-8 max-w-[1200px] pb-20">
-        {/* 1. Branding Identity */}
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <BrandingSection settings={settings} onChange={handleSettingsChange} />
-        </div>
-
-        {/* 2. UX & Landscape */}
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75">
-          <LandscapeSection settings={settings} categories={categories} onChange={handleSettingsChange} />
-        </div>
-
-        {/* 3. Global Appearance */}
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100">
-          <AppearanceSection appearance={settings.appearance} onChange={handleAppearanceChange} />
-        </div>
-
-        <div className="h-px bg-border/40 my-4" />
-        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-text-muted px-2">Configuración Técnica</p>
-
-        {/* 3. Offline Mode */}
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100">
-          <OfflineSection />
-        </div>
-
-        {/* 2. Backups & Database */}
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
-          <BackupSection API={API} isExternal={IS_EXTERNAL_API} />
-        </div>
-
-        {/* 3. Payment Gateways */}
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-300">
-          <GatewaySection
-            gateways={gateways}
-            onToggle={toggleGwStatus}
-            onConfigure={setGwModal}
+        {/* Gateway Configuration Modal */}
+        {gwModal && (
+          <GatewayModal
+            gw={gwModal}
+            onClose={() => setGwModal(null)}
           />
-        </div>
-      </div>
-
-      {/* Gateway Configuration Modal */}
-      {gwModal && (
-        <GatewayModal 
-          gw={gwModal} 
-          onClose={() => setGwModal(null)} 
-        />
-      )}
-
-      {/* Global Animations Style */}
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </main>
+        )}
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </main>
+    </div>
   );
 }

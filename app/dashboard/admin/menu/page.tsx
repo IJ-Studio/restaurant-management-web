@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 import ImportPreviewModal from "@/components/admin/Importpreviewmodal";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
@@ -348,167 +349,170 @@ export default function AdminMenuPage() {
   ];
 
   return (
-    <main className="p-8 md:p-10 min-w-0" onClick={() => setIoOpen(null)}>
-      {/* Preview Modal for Imports */}
-      {preview && (
-        <ImportPreviewModal
-          file={preview.file}
-          parsedRows={preview.parsedRows}
-          dbRows={preview.dbRows}
-          apiBase={API}
-          onClose={() => setPreview(null)}
-          onSuccess={handleImportSuccess}
-        />
-      )}
-
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10">
-        <div>
-          <h1 className="font-display font-black text-3xl tracking-tight leading-none mb-1.5 text-text m-0">
-            Catálogo del Menú
-          </h1>
-          <p className="text-sm text-text-muted m-0">
-            Gestiona platillos, categorías, precios y disponibilidad en tiempo real.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5" ref={ioWrapRef}>
-           <input ref={fileInputRef} type="file" accept=".csv,.json,.xlsx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImportFile(f); }} />
-          
-           {/* Actions Dropdowns */}
-           <div className="relative">
-              <button 
-                onClick={(e) => { e.stopPropagation(); setIoOpen(ioOpen === "import" ? null : "import"); }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-[13px] font-bold cursor-pointer bg-surface text-text-sec hover:bg-surface-alt transition-colors"
-                disabled={importBusy}
-              >
-                <Upload size={16} /> {importBusy ? "Cargando..." : "Importar"}
-              </button>
-              {ioOpen === "import" && (
-                <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-surface rounded-2xl border border-border shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95">
-                   {[
-                    { label: "CSV Plantilla", action: () => { if(ensureApi()) downloadTemplate("csv"); } },
-                    { label: "Subir CSV", action: () => { if(ensureApi()) { pendingFormatRef.current="csv"; fileInputRef.current?.click(); } } },
-                    "divider",
-                    { label: "Excel Plantilla", action: () => { if(ensureApi()) downloadTemplate("xlsx"); } },
-                    { label: "Subir Excel", action: () => { if(ensureApi()) { pendingFormatRef.current="xlsx"; fileInputRef.current?.click(); } } },
-                   ].map((item, i) => (
-                      item === "divider" 
-                        ? <div key={i} className="h-px bg-border my-1.5" />
-                        : <button key={i} onClick={(item as any).action} className="w-full text-left px-4 py-2.5 text-[12px] font-bold border-none bg-transparent cursor-pointer hover:bg-surface-alt hover:text-brand transition-colors">{(item as any).label}</button>
-                   ))}
-                </div>
-              )}
-           </div>
-
-           <div className="relative">
-              <button 
-                onClick={(e) => { e.stopPropagation(); setIoOpen(ioOpen === "export" ? null : "export"); }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-[13px] font-bold cursor-pointer bg-surface text-text-sec hover:bg-surface-alt transition-colors"
-              >
-                <Download size={16} /> Exportar
-              </button>
-              {ioOpen === "export" && (
-                <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-surface rounded-2xl border border-border shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95">
-                   {[
-                    { label: "CSV (Local)", action: () => exportCsv() },
-                    { label: "JSON (Local)", action: () => exportJson() },
-                    "divider",
-                    { label: "Excel (Desde BD)", action: () => { if(ensureApi()) exportDbExcel(); } },
-                   ].map((item, i) => (
-                      item === "divider" 
-                        ? <div key={i} className="h-px bg-border my-1.5" />
-                        : <button key={i} onClick={(item as any).action} className="w-full text-left px-4 py-2.5 text-[12px] font-bold border-none bg-transparent cursor-pointer hover:bg-surface-alt hover:text-brand transition-colors">{(item as any).label}</button>
-                   ))}
-                </div>
-              )}
-           </div>
-
-          <div className="w-px h-8 bg-border/60 mx-1 hidden sm:block" />
-          
-          <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl border-none font-black text-[13px] tracking-tight cursor-pointer bg-brand text-white shadow-[0_4px_12px_rgba(232,93,4,0.3)] hover:-translate-y-px transition-all ml-1">
-            <Plus size={16} /> Nueva Categoría
-          </button>
-        </div>
-      </header>
-
-      {/* Hero Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        {stats.map((s) => (
-          <div key={s.label} className="bg-surface rounded-3xl border border-border p-6 shadow-sm hover:shadow-lg transition-all group">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${s.color.split(" ")[0]} bg-opacity-10 ${s.color.split(" ")[1]}`}>
-              {s.icon}
-            </div>
-            <p className={`font-display text-3xl font-black m-0 mb-1 leading-none ${s.color.split(" ")[1]}`}>
-              {s.value}
-            </p>
-            <p className="text-xs font-black text-text m-0 uppercase tracking-widest">{s.label}</p>
-            <p className="text-[11px] text-text-muted m-0 mt-1 font-medium">{s.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Filters Bar */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-10">
-        <div className="relative flex-1 w-full max-w-sm group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand transition-colors" size={16} />
-          <input
-            placeholder="Buscar platillo..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-surface border border-border rounded-2xl text-sm font-bold text-text outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all shadow-sm"
+    <div className="flex min-h-screen">
+      <AdminSidebar activePage="menu" user={{ name: "Admin" }} />
+      <main className="flex-1 ml-[260px] p-8 md:p-10 min-w-0" onClick={() => setIoOpen(null)}>
+        {/* Preview Modal for Imports */}
+        {preview && (
+          <ImportPreviewModal
+            file={preview.file}
+            parsedRows={preview.parsedRows}
+            dbRows={preview.dbRows}
+            apiBase={API}
+            onClose={() => setPreview(null)}
+            onSuccess={handleImportSuccess}
           />
-        </div>
+        )}
 
-        <div className="flex p-1 bg-surface-alt rounded-[18px] border border-border gap-1 w-full md:w-auto overflow-hidden">
-          {[
-            { k: "all", l: "Todos" },
-            { k: "available", l: "Disponibles" },
-            { k: "unavailable", l: "Ocultos" },
-          ].map((o) => (
-            <button
-              key={o.k}
-              onClick={() => setFilterAvail(o.k as any)}
-              className={`px-5 py-2 rounded-xl text-[12px] font-black tracking-tight cursor-pointer transition-all border-none ${
-                filterAvail === o.k ? "bg-surface text-brand shadow-sm ring-1 ring-border" : "bg-transparent text-text-muted hover:text-text-sec"
-              }`}
-            >
-              {o.l}
+        {/* Header */}
+        <header className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10">
+          <div>
+            <h1 className="font-display font-black text-3xl tracking-tight leading-none mb-1.5 text-text m-0">
+              Catálogo del Menú
+            </h1>
+            <p className="text-sm text-text-muted m-0">
+              Gestiona platillos, categorías, precios y disponibilidad en tiempo real.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5" ref={ioWrapRef}>
+             <input ref={fileInputRef} type="file" accept=".csv,.json,.xlsx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImportFile(f); }} />
+
+             {/* Actions Dropdowns */}
+             <div className="relative">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIoOpen(ioOpen === "import" ? null : "import"); }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-[13px] font-bold cursor-pointer bg-surface text-text-sec hover:bg-surface-alt transition-colors"
+                  disabled={importBusy}
+                >
+                  <Upload size={16} /> {importBusy ? "Cargando..." : "Importar"}
+                </button>
+                {ioOpen === "import" && (
+                  <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-surface rounded-2xl border border-border shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95">
+                     {[
+                      { label: "CSV Plantilla", action: () => { if(ensureApi()) downloadTemplate("csv"); } },
+                      { label: "Subir CSV", action: () => { if(ensureApi()) { pendingFormatRef.current="csv"; fileInputRef.current?.click(); } } },
+                      "divider",
+                      { label: "Excel Plantilla", action: () => { if(ensureApi()) downloadTemplate("xlsx"); } },
+                      { label: "Subir Excel", action: () => { if(ensureApi()) { pendingFormatRef.current="xlsx"; fileInputRef.current?.click(); } } },
+                     ].map((item, i) => (
+                        item === "divider"
+                          ? <div key={i} className="h-px bg-border my-1.5" />
+                          : <button key={i} onClick={(item as any).action} className="w-full text-left px-4 py-2.5 text-[12px] font-bold border-none bg-transparent cursor-pointer hover:bg-surface-alt hover:text-brand transition-colors">{(item as any).label}</button>
+                     ))}
+                  </div>
+                )}
+             </div>
+
+             <div className="relative">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIoOpen(ioOpen === "export" ? null : "export"); }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-[13px] font-bold cursor-pointer bg-surface text-text-sec hover:bg-surface-alt transition-colors"
+                >
+                  <Download size={16} /> Exportar
+                </button>
+                {ioOpen === "export" && (
+                  <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-surface rounded-2xl border border-border shadow-xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95">
+                     {[
+                      { label: "CSV (Local)", action: () => exportCsv() },
+                      { label: "JSON (Local)", action: () => exportJson() },
+                      "divider",
+                      { label: "Excel (Desde BD)", action: () => { if(ensureApi()) exportDbExcel(); } },
+                     ].map((item, i) => (
+                        item === "divider"
+                          ? <div key={i} className="h-px bg-border my-1.5" />
+                          : <button key={i} onClick={(item as any).action} className="w-full text-left px-4 py-2.5 text-[12px] font-bold border-none bg-transparent cursor-pointer hover:bg-surface-alt hover:text-brand transition-colors">{(item as any).label}</button>
+                     ))}
+                  </div>
+                )}
+             </div>
+
+            <div className="w-px h-8 bg-border/60 mx-1 hidden sm:block" />
+
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl border-none font-black text-[13px] tracking-tight cursor-pointer bg-brand text-white shadow-[0_4px_12px_rgba(232,93,4,0.3)] hover:-translate-y-px transition-all ml-1">
+              <Plus size={16} /> Nueva Categoría
             </button>
+          </div>
+        </header>
+
+        {/* Hero Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {stats.map((s) => (
+            <div key={s.label} className="bg-surface rounded-3xl border border-border p-6 shadow-sm hover:shadow-lg transition-all group">
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${s.color.split(" ")[0]} bg-opacity-10 ${s.color.split(" ")[1]}`}>
+                {s.icon}
+              </div>
+              <p className={`font-display text-3xl font-black m-0 mb-1 leading-none ${s.color.split(" ")[1]}`}>
+                {s.value}
+              </p>
+              <p className="text-xs font-black text-text m-0 uppercase tracking-widest">{s.label}</p>
+              <p className="text-[11px] text-text-muted m-0 mt-1 font-medium">{s.sub}</p>
+            </div>
           ))}
         </div>
 
-        <button className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-border text-sm font-bold bg-surface text-text-sec hover:bg-surface-alt transition-colors cursor-pointer shadow-sm ml-auto">
-          <Filter size={16} /> Filtros avanzados
-        </button>
-      </div>
+        {/* Filters Bar */}
+        <div className="flex flex-col md:flex-row items-center gap-4 mb-10">
+          <div className="relative flex-1 w-full max-w-sm group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand transition-colors" size={16} />
+            <input
+              placeholder="Buscar platillo..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-surface border border-border rounded-2xl text-sm font-bold text-text outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all shadow-sm"
+            />
+          </div>
 
-      {/* Categories Grid */}
-      <div className="flex flex-col gap-4">
-        {categories.map((cat) => (
-          <CategorySection
-            key={cat.id}
-            category={cat}
-            search={search}
-            filterAvail={filterAvail}
-            onAdd={(cId) => setModal({ catId: cId, item: null })}
-            onToggle={toggleItem}
-            onEdit={(cId, item) => setModal({ catId: cId, item })}
-            onDelete={deleteItem}
+          <div className="flex p-1 bg-surface-alt rounded-[18px] border border-border gap-1 w-full md:w-auto overflow-hidden">
+            {[
+              { k: "all", l: "Todos" },
+              { k: "available", l: "Disponibles" },
+              { k: "unavailable", l: "Ocultos" },
+            ].map((o) => (
+              <button
+                key={o.k}
+                onClick={() => setFilterAvail(o.k as any)}
+                className={`px-5 py-2 rounded-xl text-[12px] font-black tracking-tight cursor-pointer transition-all border-none ${
+                  filterAvail === o.k ? "bg-surface text-brand shadow-sm ring-1 ring-border" : "bg-transparent text-text-muted hover:text-text-sec"
+                }`}
+              >
+                {o.l}
+              </button>
+            ))}
+          </div>
+
+          <button className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-border text-sm font-bold bg-surface text-text-sec hover:bg-surface-alt transition-colors cursor-pointer shadow-sm ml-auto">
+            <Filter size={16} /> Filtros avanzados
+          </button>
+        </div>
+
+        {/* Categories Grid */}
+        <div className="flex flex-col gap-4">
+          {categories.map((cat) => (
+            <CategorySection
+              key={cat.id}
+              category={cat}
+              search={search}
+              filterAvail={filterAvail}
+              onAdd={(cId) => setModal({ catId: cId, item: null })}
+              onToggle={toggleItem}
+              onEdit={(cId, item) => setModal({ catId: cId, item })}
+              onDelete={deleteItem}
+            />
+          ))}
+        </div>
+
+        {/* Item Modal */}
+        {modal && (
+          <ItemModal
+            catId={modal.catId}
+            categories={categories}
+            item={modal.item}
+            onClose={() => setModal(null)}
+            onSave={saveItem}
           />
-        ))}
-      </div>
-
-      {/* Item Modal */}
-      {modal && (
-        <ItemModal
-          catId={modal.catId}
-          categories={categories}
-          item={modal.item}
-          onClose={() => setModal(null)}
-          onSave={saveItem}
-        />
-      )}
-    </main>
+        )}
+      </main>
+    </div>
   );
 }

@@ -1,24 +1,36 @@
 import type { Metadata, Viewport } from "next";
 import { AppProviders } from "@/components/providers/AppProviders";
+import ConditionalNavbar from "@/components/ConditionalNavbar";
+import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
+import Footer from "@/components/landing/Footer";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Restaurante El Quijote",
-    template: "%s | El Quijote",
+    default: INITIAL_SETTINGS.restaurantName,
+    template: `%s | ${INITIAL_SETTINGS.restaurantName}`,
   },
   description:
+    INITIAL_SETTINGS.heroSubtitle ||
     "Sistema de gestión y menú digital de Restaurante El Quijote. Cocina nacional e internacional en Huejutla de Reyes, Hidalgo.",
-  keywords: ["restaurante", "menú", "El Quijote", "Huejutla", "comida mexicana"],
+  keywords: [
+    "restaurante",
+    "menú",
+    "El Quijote",
+    "Huejutla",
+    "comida mexicana",
+  ],
+  icons: {
+    icon: INITIAL_SETTINGS.restaurantIco,
+    shortcut: INITIAL_SETTINGS.restaurantLogo,
+    apple: INITIAL_SETTINGS.restaurantLogo,
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f0f0f" },
-  ],
+  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#ffffff" }],
 };
 
 export default function RootLayout({
@@ -29,7 +41,6 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
-        {/* Google Fonts — Fraunces (display) + DM Sans (body) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -42,7 +53,11 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          <ConditionalNavbar />
+          {children}
+          <Footer />
+        </AppProviders>
       </body>
     </html>
   );
