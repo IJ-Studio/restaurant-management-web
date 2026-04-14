@@ -81,6 +81,11 @@ type TagKey = "popular" | "vegano" | "picante" | "nuevo" | "sin-gluten";
 
 const MENU_STORAGE_KEY = "rmp_admin_menu_v1";
 
+const CATEGORY_COLORS = ["#e85d04", "#2563eb", "#059669", "#7c3aed", "#d97706"];
+function colorForCategory(id: number) {
+  return CATEGORY_COLORS[Math.abs(id || 0) % CATEGORY_COLORS.length];
+}
+
 function normalizeStr(s: string) {
   return (s || "").trim();
 }
@@ -1292,6 +1297,7 @@ export default function AdminMenuPage() {
   const pendingImportFormatRef = useRef<"csv" | "json" | null>(null);
   const [ioOpen, setIoOpen] = useState<null | "import" | "export">(null);
   const ioWrapRef = useRef<HTMLDivElement | null>(null);
+  const platillosColumnsRef = useRef<Set<string> | null>(null);
 
   // Load saved menu (local draft) on mount.
   useEffect(() => {
@@ -1326,7 +1332,7 @@ export default function AdminMenuPage() {
   useEffect(() => {
     if (!IS_EXTERNAL_API) return;
     setCategories([]);
-    void loadPlatillosFromDb();
+    void loadMenuFromDb();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1355,7 +1361,27 @@ export default function AdminMenuPage() {
     (totalItems || 1)
   ).toFixed(0);
 
+  async function getPlatillosColumns() {
+    if (platillosColumnsRef.current) return platillosColumnsRef.current;
+    if (!ensureExternalApi()) return new Set<string>();
+    try {
+      const res = await fetch(apiUrl("/platillos/schema"));
+      if (!res.ok) return new Set<string>();
+      const data = await res.json().catch(() => null);
+      const cols = Array.isArray((data as any)?.columns) ? ((data as any).columns as any[]) : [];
+      const names = cols.map((c) => String(c?.column_name ?? "")).filter((s) => s.trim().length > 0);
+      const set = new Set(names);
+      platillosColumnsRef.current = set;
+      return set;
+    } catch {
+      return new Set<string>();
+    }
+  }
+
   function toggleItem(catId: number, itemId: number) {
+    const current = categories.find((c) => c.id === catId)?.items.find((i) => i.id === itemId);
+    const nextAvailable = current ? !current.available : true;
+
     setCategories((cs) =>
       cs.map((c) =>
         c.id !== catId
@@ -1363,21 +1389,85 @@ export default function AdminMenuPage() {
           : {
               ...c,
               items: c.items.map((i) =>
-                i.id !== itemId ? i : { ...i, available: !i.available },
+                i.id !== itemId ? i : { ...i, available: nextAvailable },
               ),
             },
       ),
     );
+
+    if (!IS_EXTERNAL_API || !current) return;
+
+    void (async () => {
+      try {
+        if (!ensureExternalApi()) return;
+        const cols = await getPlatillosColumns();
+        const record: Record<string, unknown> = {
+          id: current.id,
+          categoria_id: catId,
+          nombre: current.name,
+          precio: current.price,
+          disponible: nextAvailable,
+        };
+        if (cols.has("descripcion_corta")) record.descripcion_corta = current.description;
+        if (cols.has("descripcion")) record.descripcion = current.description;
+        if (cols.has("tiempo_preparacion")) record.tiempo_preparacion = current.prepTime;
+        if (cols.has("es_popular")) record.es_popular = current.tags.includes("popular");
+        if (cols.has("es_vegano")) record.es_vegano = current.tags.includes("vegano");
+        if (cols.has("es_vegetariano")) record.es_vegetariano = current.tags.includes("vegano");
+        if (cols.has("es_picante")) record.es_picante = current.tags.includes("picante");
+        if (cols.has("es_nuevo")) record.es_nuevo = current.tags.includes("nuevo");
+        if (cols.has("es_sin_gluten")) record.es_sin_gluten = current.tags.includes("sin-gluten");
+        if (cols.has("nivel_picante")) record.nivel_picante = current.tags.includes("picante") ? 1 : 0;
+
+        const res = await fetch(apiUrl("/platillos/import.json?mode=upsert"), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify([record]),
+        });
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(msg || `Actualizar platillo falló (${res.status})`);
+        }
+        await loadMenuFromDb();
+      } catch (e: any) {
+        console.error("Toggle item sync failed", e);
+        alert(e?.message ? String(e.message) : "No se pudo actualizar el platillo.");
+        await loadMenuFromDb();
+      }
+    })();
   }
   function deleteItem(catId: number, itemId: number) {
     if (!confirm("¿Eliminar este platillo?")) return;
+    const numericItemId = Number(itemId);
+    if (!Number.isFinite(numericItemId) || numericItemId <= 0) {
+      alert("ID de platillo inválido");
+      return;
+    }
     setCategories((cs) =>
       cs.map((c) =>
         c.id !== catId
           ? c
-          : { ...c, items: c.items.filter((i) => i.id !== itemId) },
+          : { ...c, items: c.items.filter((i) => i.id !== numericItemId) },
       ),
     );
+
+    if (!IS_EXTERNAL_API) return;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/menu/items/${encodeURIComponent(String(numericItemId))}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(msg || `Eliminar platillo falló (${res.status})`);
+        }
+        await loadMenuFromDb();
+      } catch (e: any) {
+        console.error("Delete item failed", e);
+        alert(e?.message ? String(e.message) : "No se pudo eliminar el platillo.");
+        await loadMenuFromDb();
+      }
+    })();
   }
   function saveItem(catId: number, data: Partial<MenuItem>) {
     setCategories((cs) =>
@@ -1404,6 +1494,51 @@ export default function AdminMenuPage() {
         return { ...c, items: [...c.items, n] };
       }),
     );
+
+    if (!IS_EXTERNAL_API) return;
+    void (async () => {
+      try {
+        if (!ensureExternalApi()) return;
+        const isEdit = typeof data.id === "number" && Number.isFinite(data.id) && data.id > 0;
+        const cols = await getPlatillosColumns();
+        const tags = Array.isArray(data.tags) ? data.tags : [];
+        const record: Record<string, unknown> = {
+          categoria_id: catId,
+          nombre: String(data.name ?? ""),
+          precio: Number(data.price ?? 0),
+          disponible: Boolean(data.available ?? true),
+        };
+        if (isEdit) record.id = data.id;
+        const desc = String(data.description ?? "");
+        if (cols.has("descripcion_corta")) record.descripcion_corta = desc;
+        if (cols.has("descripcion")) record.descripcion = desc;
+        if (cols.has("tiempo_preparacion")) record.tiempo_preparacion = Number(data.prepTime ?? 10);
+        if (cols.has("es_popular")) record.es_popular = tags.includes("popular");
+        if (cols.has("es_vegano")) record.es_vegano = tags.includes("vegano");
+        if (cols.has("es_vegetariano")) record.es_vegetariano = tags.includes("vegano");
+        if (cols.has("es_picante")) record.es_picante = tags.includes("picante");
+        if (cols.has("es_nuevo")) record.es_nuevo = tags.includes("nuevo");
+        if (cols.has("es_sin_gluten")) record.es_sin_gluten = tags.includes("sin-gluten");
+        if (cols.has("nivel_picante")) record.nivel_picante = tags.includes("picante") ? 1 : 0;
+        if (cols.has("calorias")) record.calorias = Number(data.calories ?? 0);
+
+        const url = apiUrl(`/platillos/import.json?mode=${isEdit ? "upsert" : "insert"}`);
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify([record]),
+        });
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(msg || `Guardar platillo falló (${res.status})`);
+        }
+        await loadMenuFromDb();
+      } catch (e: any) {
+        console.error("Save item sync failed", e);
+        alert(e?.message ? String(e.message) : "No se pudo guardar el platillo.");
+        await loadMenuFromDb();
+      }
+    })();
   }
   const user = useSelector((state: RootState) => state.auth.user);
   
@@ -1479,7 +1614,6 @@ export default function AdminMenuPage() {
 
   function mapPlatillosRows(rows: any[]): Category[] {
     const byCat = new Map<number, Category>();
-    const colors = ["#e85d04", "#2563eb", "#059669", "#7c3aed", "#d97706"];
 
     rows.forEach((r, idx) => {
       const catIdRaw = r?.categoria_id ?? r?.categoriaId ?? 0;
@@ -1519,13 +1653,13 @@ export default function AdminMenuPage() {
           order: catOrder,
           name: catName,
           icon: catIcon,
-          color: colors[Math.abs(catId) % colors.length],
+          color: colorForCategory(catId || idx + 1),
           items: [],
         });
       }
 
       const idNum = Number(r?.id);
-      const itemId = Number.isFinite(idNum) ? idNum : Date.now() + idx;
+      const itemId = Number.isFinite(idNum) && idNum > 0 ? idNum : Date.now() + idx;
       const tags: TagKey[] = [];
       if (r?.es_popular) tags.push("popular");
       if (r?.es_vegano) tags.push("vegano");
@@ -1556,23 +1690,64 @@ export default function AdminMenuPage() {
     });
   }
 
-  async function loadPlatillosFromDb() {
+  async function loadMenuFromDb() {
     if (!ensureExternalApi()) return;
     try {
-      const res = await fetch(apiUrl("/platillos/export.json"));
+      const [catsRes, res] = await Promise.all([
+        fetch("/api/menu/categories"),
+        fetch(apiUrl("/platillos/export.json")),
+      ]);
+
+      const catsJson = catsRes.ok ? await catsRes.json().catch(() => null) : null;
+      const baseCatsRaw = Array.isArray(catsJson) ? catsJson : [];
+      const baseCats: Category[] = baseCatsRaw
+        .map((c: any, idx: number) => {
+          const idNum = Number(c?.id);
+          const id = Number.isFinite(idNum) ? idNum : idx + 1;
+          const orderNum = Number(c?.order);
+          const order = Number.isFinite(orderNum) ? orderNum : undefined;
+          const name =
+            typeof c?.name === "string" && c.name.trim() ? c.name.trim() : `Categoría ${id}`;
+          const icon = typeof c?.icon === "string" && c.icon.trim() ? c.icon.trim() : "🍽️";
+          return { id, order, name, icon, color: colorForCategory(id), items: [] };
+        })
+        .filter((c: Category) => !!c.id);
+
       if (!res.ok) {
         console.error("Platillos export failed", res.status);
+        setCategories(baseCats);
         return;
       }
+
       const data = await res.json().catch(() => null);
       const rows = Array.isArray(data)
         ? data
         : Array.isArray((data as any)?.rows)
           ? ((data as any).rows as any[])
           : [];
-      setCategories(mapPlatillosRows(rows));
+
+      const catsFromPlatillos = mapPlatillosRows(rows);
+      const map = new Map<number, Category>();
+      baseCats.forEach((c) => map.set(c.id, { ...c, items: [] }));
+      catsFromPlatillos.forEach((c) => {
+        const existing = map.get(c.id);
+        if (existing) {
+          map.set(c.id, { ...existing, items: c.items });
+        } else {
+          map.set(c.id, c);
+        }
+      });
+
+      const merged = Array.from(map.values()).sort((a, b) => {
+        const ao = typeof a.order === "number" ? a.order : a.id;
+        const bo = typeof b.order === "number" ? b.order : b.id;
+        if (ao !== bo) return ao - bo;
+        return a.id - b.id;
+      });
+
+      setCategories(merged);
     } catch (e) {
-      console.error("Platillos load failed", e);
+      console.error("Menu load failed", e);
     }
   }
 
@@ -1699,7 +1874,7 @@ export default function AdminMenuPage() {
           throw new Error(msg || `Import CSV falló (${res.status})`);
         }
         const out = await res.json().catch(() => null);
-        await loadPlatillosFromDb();
+        await loadMenuFromDb();
         alert(
           `Importación lista.\nInsertados: ${out?.inserted ?? 0}\nActualizados: ${out?.updated ?? 0}\nErrores: ${
             Array.isArray(out?.errors) ? out.errors.length : 0
@@ -1721,7 +1896,7 @@ export default function AdminMenuPage() {
         throw new Error(msg || `Import JSON falló (${res.status})`);
       }
       const out = await res.json().catch(() => null);
-      await loadPlatillosFromDb();
+      await loadMenuFromDb();
       alert(
         `Importación lista.\nInsertados: ${out?.inserted ?? 0}\nActualizados: ${out?.updated ?? 0}\nErrores: ${
           Array.isArray(out?.errors) ? out.errors.length : 0
@@ -2082,6 +2257,67 @@ export default function AdminMenuPage() {
               </button>
               <div style={{ width: 1, height: 28, background: T.border }} />
               <button
+                type="button"
+                onClick={() => {
+                  const name = prompt("Nombre de la nueva categoría:");
+                  if (!name) return;
+                  const trimmed = name.trim();
+                  if (!trimmed) return;
+
+                  if (!IS_EXTERNAL_API) {
+                    const id = Date.now();
+                    setCategories((cs) => [
+                      ...cs,
+                      {
+                        id,
+                        name: trimmed,
+                        icon: "🍽️",
+                        color: colorForCategory(id),
+                        items: [],
+                      },
+                    ]);
+                    return;
+                  }
+
+                  void (async () => {
+                    try {
+                      const icon = (prompt("Icono (emoji) para la categoría:", "🍽️") ?? "🍽️").trim() || "🍽️";
+                      const res = await fetch("/api/menu/categories", {
+                        method: "POST",
+                        headers: { "content-type": "application/json" },
+                        body: JSON.stringify({ name: trimmed, icon }),
+                      });
+                      if (!res.ok) {
+                        const msg = await res.text().catch(() => "");
+                        throw new Error(msg || `Crear categoría falló (${res.status})`);
+                      }
+                      const created = await res.json().catch(() => null);
+                      const idNum = Number(created?.id);
+                      const id = Number.isFinite(idNum) ? idNum : Date.now();
+                      const orderNum = Number(created?.order);
+                      const order = Number.isFinite(orderNum) ? orderNum : undefined;
+                      const outName = String(created?.name ?? trimmed).trim() || trimmed;
+                      const outIcon = String(created?.icon ?? icon).trim() || "🍽️";
+
+                      setCategories((cs) => {
+                        const next = [
+                          ...cs,
+                          { id, order, name: outName, icon: outIcon, color: colorForCategory(id), items: [] },
+                        ];
+                        next.sort((a, b) => {
+                          const ao = typeof a.order === "number" ? a.order : a.id;
+                          const bo = typeof b.order === "number" ? b.order : b.id;
+                          if (ao !== bo) return ao - bo;
+                          return a.id - b.id;
+                        });
+                        return next;
+                      });
+                    } catch (e: any) {
+                      console.error("Create category failed", e);
+                      alert(e?.message ? String(e.message) : "No se pudo crear la categoría.");
+                    }
+                  })();
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
