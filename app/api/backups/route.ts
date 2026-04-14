@@ -129,6 +129,20 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const now = new Date();
 
+    const requestedTypeRaw = typeof body?.type === "string" ? body.type.trim().toLowerCase() : "";
+    const requestedNameRaw = typeof body?.name === "string" ? body.name.trim() : "";
+
+    const dateStamp = now.toISOString().slice(0, 10).replace(/-/g, "");
+    const inferredType =
+      requestedTypeRaw === "auto" || requestedNameRaw.startsWith("backup_auto_") ? "auto" : "manual";
+
+    const backupName =
+      requestedNameRaw.length > 0
+        ? requestedNameRaw
+        : inferredType === "auto"
+          ? `backup_auto_${dateStamp}`
+          : `backup_manual_${dateStamp}`;
+
     // Generate real database dump
     const dumpContent = await generateDatabaseDump();
     const dumpBuffer = Buffer.from(dumpContent);
@@ -145,18 +159,16 @@ export async function POST(req: NextRequest) {
     // Upload to Drive if configured
     let driveUrl: string | null = null;
     if (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-      driveUrl = await uploadToDrive(`backup_${now.getTime()}.json`, dumpBuffer);
+      driveUrl = await uploadToDrive(`${backupName}.json`, dumpBuffer);
     }
 
     const inserted = await db
       .insert(backupsTable)
       .values({
-        name:
-          body.name ??
-          `backup_manual_${now.toISOString().slice(0, 10).replace(/-/g, "")}`,
+        name: backupName,
         sizeBytes: dumpSize,
         driveUrl: driveUrl || body.driveUrl || null,
-        type: body.type || "manual",
+        type: inferredType,
         status: body.status || "ok",
         tables: tablesIncluded.length ? tablesIncluded : undefined,
         rowCount: totalRows,
