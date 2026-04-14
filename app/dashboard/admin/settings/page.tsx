@@ -344,6 +344,29 @@ const inp: React.CSSProperties = {
   fontFamily: T.fontB,
 };
 
+function formatBackupDateTime(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+
+  const now = new Date();
+  const isSameDay =
+    now.getFullYear() === d.getFullYear() &&
+    now.getMonth() === d.getMonth() &&
+    now.getDate() === d.getDate();
+  const y = new Date(now);
+  y.setDate(now.getDate() - 1);
+  const isYesterday =
+    y.getFullYear() === d.getFullYear() &&
+    y.getMonth() === d.getMonth() &&
+    y.getDate() === d.getDate();
+
+  const time = d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false });
+  if (isSameDay) return `Hoy ${time}`;
+  if (isYesterday) return `Ayer ${time}`;
+  const date = d.toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" });
+  return `${date} ${time}`;
+}
+
 export default function SettingsPage() {
   const router = useRouter();
 
@@ -366,6 +389,9 @@ export default function SettingsPage() {
   const [backupCloud, setBackupCloud] = useState(true);
   const [backupRetain, setBackupRetain] = useState("30");
   const [syncing, setSyncing] = useState(false);
+
+  const lastOkBackup = backups.find((b) => b.status === "ok" && !!b.createdAt);
+  const lastBackupText = lastOkBackup?.createdAt ? formatBackupDateTime(lastOkBackup.createdAt) : "—";
 
   // ── Gateways state ───────────────────────────────────────────────────────
   const [gateways, setGateways] = useState<Gateway[]>(GATEWAYS_DEFAULT);
@@ -809,7 +835,7 @@ export default function SettingsPage() {
                   },
                   {
                     l: "Último respaldo",
-                    v: "Hoy 23:00",
+                    v: lastBackupText,
                     c: T.ok,
                     icon: <CheckCircle2 size={16} />,
                   },
