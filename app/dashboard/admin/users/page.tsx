@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
@@ -941,7 +941,7 @@ function UserModal({
           <button
             disabled={!form.name || !form.lastname || !form.email}
             onClick={() => {
-              onSave({ ...form, id: form.id || Date.now() });
+              onSave(form);
               onClose();
             }}
             style={{
@@ -1134,7 +1134,8 @@ function AccessDrawer({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function AdminUsersPage() {
   const router = useRouter();
-  const [users, setUsers] = useState<StaffUser[]>(MOCK_USERS);
+  const [users, setUsers] = useState<StaffUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<
@@ -1159,21 +1160,68 @@ export default function AdminUsersPage() {
     return matchSearch && matchRole && matchStatus;
   });
 
-  function saveUser(u: StaffUser) {
-    setUsers((us) => {
-      const exists = us.find((x) => x.id === u.id);
-      return exists ? us.map((x) => (x.id === u.id ? u : x)) : [...us, u];
-    });
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  async function fetchUsers() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/users");
+      const data = await res.json();
+      if (data.users) setUsers(data.users);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
-  function deleteUser(id: number) {
+
+  async function saveUser(u: StaffUser) {
+    try {
+      if (u.id) {
+        await fetch(`/api/admin/users/${u.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(u),
+        });
+      } else {
+        await fetch("/api/admin/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(u),
+        });
+      }
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function deleteUser(id: number) {
     if (!confirm("¿Eliminar este colaborador?")) return;
-    setUsers((us) => us.filter((u) => u.id !== id));
+    try {
+      await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
     setOpenMenu(null);
   }
-  function toggleActive(id: number) {
-    setUsers((us) =>
-      us.map((u) => (u.id !== id ? u : { ...u, active: !u.active })),
-    );
+
+  async function toggleActive(id: number) {
+    const u = users.find((x) => x.id === id);
+    if (!u) return;
+    try {
+      await fetch(`/api/admin/users/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...u, active: !u.active }),
+      });
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
     setOpenMenu(null);
   }
   const handleLogout = () => {};

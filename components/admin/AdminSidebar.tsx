@@ -194,10 +194,6 @@ export default function AdminSidebar({
   const is = (k: string) => activePage === k;
 
   const handleLogout = async () => {
-    if (onLogout) {
-      onLogout();
-      return;
-    }
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {

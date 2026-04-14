@@ -377,17 +377,41 @@ export default function SettingsPage() {
 
   // Cargar al montar
   useEffect(() => {
+    // 1. Cargar Settings
+    fetch("/api/settings")
+      .then(r => r.json())
+      .then(data => {
+        if(data.autoBackup !== undefined) setAutoBackup(data.autoBackup);
+        if(data.backupFreq !== undefined) setBackupFreq(data.backupFreq);
+        if(data.backupTime !== undefined) setBackupTime(data.backupTime);
+        if(data.backupCloud !== undefined) setBackupCloud(data.backupCloud);
+        if(data.backupRetain !== undefined) setBackupRetain(String(data.backupRetain));
+      })
+      .catch(err => console.error("Error cargando settings", err));
+
+    // 2. Cargar Backups
     fetch(`${API}/backups`)
       .then((r) => r.json())
       .then((data) => {
-        // Forzamos que sea un arreglo, si llega un objeto vacío {} o algo inesperado, lo convertimos a []
         setBackups(Array.isArray(data) ? data : []);
       })
       .catch((err) => {
         console.error("Error de red:", err);
-        setBackups([]); // Si hay error de fetch, mantenemos la lista vacía
+        setBackups([]);
       });
   }, []);
+
+  async function updateSetting(key: string, value: any) {
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: value })
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   function toggleGwStatus(id: number) {
     setGateways((gs) =>
@@ -424,6 +448,32 @@ export default function SettingsPage() {
       : `${API}/backups?id=${id}`;
     await fetch(url, { method: 'DELETE' });
     setBackups(bs => bs.filter(x => x.id !== id));
+  }
+
+  // Descargar backup — descarga el .json desde el backend
+  async function handleDownload(b: Backup) {
+    try {
+      // Si hay driveUrl, podemos intentar descargar directamente desde la URL pública
+      // Pero mejor usar el endpoint del backend que garantiza la descarga
+      const url = IS_EXTERNAL_BACKUP_API
+        ? `${API}/backups/${b.id}/download`
+        : (b.driveUrl || `${API}/backups/${b.id}/download`);
+      
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Error descargando backup');
+      
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${b.name}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      console.error('Error descargando backup:', err);
+      alert('No se pudo descargar el respaldo.');
+    }
   }
 
   const STATUS_CFG: Record<
@@ -687,7 +737,7 @@ export default function SettingsPage() {
                 >
                   <Toggle
                     value={autoBackup}
-                    onChange={setAutoBackup}
+                    onChange={(v) => { setAutoBackup(v); updateSetting('autoBackup', v); }}
                     color={T.info}
                   />
                 </SettingRow>
@@ -697,7 +747,7 @@ export default function SettingsPage() {
                     <SettingRow label="Frecuencia" border={false}>
                       <select
                         value={backupFreq}
-                        onChange={(e) => setBackupFreq(e.target.value)}
+                        onChange={(e) => { setBackupFreq(e.target.value); updateSetting('backupFreq', e.target.value); }}
                         style={{ ...inp, padding: "7px 12px" }}
                       >
                         {["diario", "semanal", "mensual"].map((f) => (
@@ -712,6 +762,7 @@ export default function SettingsPage() {
                         type="time"
                         value={backupTime}
                         onChange={(e) => setBackupTime(e.target.value)}
+                        onBlur={(e) => updateSetting('backupTime', e.target.value)}
                         style={{ ...inp, padding: "7px 12px" }}
                       />
                     </SettingRow>
@@ -727,7 +778,7 @@ export default function SettingsPage() {
                   >
                     <Toggle
                       value={backupCloud}
-                      onChange={setBackupCloud}
+                      onChange={(v) => { setBackupCloud(v); updateSetting('backupCloud', v); }}
                       color={T.info}
                     />
                   </SettingRow>
@@ -738,6 +789,7 @@ export default function SettingsPage() {
                       max={365}
                       value={backupRetain}
                       onChange={(e) => setBackupRetain(e.target.value)}
+                      onBlur={(e) => updateSetting('backupRetain', Number(e.target.value))}
                       style={{ ...inp, padding: "7px 12px", width: 80 }}
                     />
                   </SettingRow>
@@ -978,6 +1030,7 @@ export default function SettingsPage() {
                   <div style={{ display: "flex", gap: 6 }}>
                     {b.status === "ok" && (
                       <button
+                        onClick={() => handleDownload(b)}
                         style={{
                           display: "flex",
                           alignItems: "center",

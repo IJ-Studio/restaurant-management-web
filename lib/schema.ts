@@ -21,6 +21,48 @@ export const roles = pgTable("roles", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ─── TABLA DE PUESTOS ─────────────────────────────────────────────────────────
+export const puestos = pgTable("puestos", {
+  id: serial("id").primaryKey(),
+  nombre: varchar("nombre", { length: 150 }).notNull(),
+  descripcion: text("descripcion"),
+  salarioBase: numeric("salario_base", { precision: 10, scale: 2 }),
+  departamento: varchar("departamento", { length: 100 }),
+  activo: boolean("activo").default(true),
+  createdAt: timestamp("creado_en").defaultNow()
+});
+
+// ─── TABLA DE EMPLEADOS ───────────────────────────────────────────────────────
+import { uuid, date } from "drizzle-orm/pg-core";
+
+export const empleados = pgTable("empleados", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }).unique(),
+  puestoId: integer("puesto_id").references(() => puestos.id),
+  numeroEmpleado: varchar("numero_empleado", { length: 20 }).unique(),
+  fotoUrl: text("foto_url"),
+  fechaNacimiento: date("fecha_nacimiento", { mode: 'string' }),
+  genero: varchar("genero", { length: 20 }),
+  estadoCivil: varchar("estado_civil", { length: 20 }),
+  curp: varchar("curp", { length: 18 }).unique(),
+  nss: varchar("nss", { length: 15 }).unique(),
+  rfcEmpleado: varchar("rfc_empleado", { length: 13 }).unique(),
+  telefonoEmergencia: varchar("telefono_emergencia", { length: 20 }),
+  contactoEmergencia: varchar("contacto_emergencia", { length: 150 }),
+  direccionEmpleado: text("direccion_empleado"),
+  fechaIngreso: date("fecha_ingreso", { mode: 'string' }),
+  fechaBaja: date("fecha_baja", { mode: 'string' }),
+  tipoContrato: varchar("tipo_contrato", { length: 50 }),
+  jornada: varchar("jornada", { length: 30 }),
+  salarioMensual: numeric("salario_mensual", { precision: 10, scale: 2 }),
+  banco: varchar("banco", { length: 80 }),
+  clabeInterbancaria: varchar("clabe_interbancaria", { length: 18 }),
+  activo: boolean("activo").default(true),
+  notas: text("notas"),
+  createdAt: timestamp("creado_en").defaultNow(),
+  updatedAt: timestamp("actualizado_en").defaultNow(),
+});
+
 // ─── TABLA DE USUARIOS ────────────────────────────────────────────────────────
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -122,11 +164,23 @@ export const purchaseOrders = pgTable("inventario_ordenes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// ─── TABLA DE CONFIGURACIONES DEL SISTEMA ────────────────────────────────────
+export const settings = pgTable("system_settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: jsonb("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // ─── TIPOS INFERIDOS ─────────────────────────────────────────────────────────
 export type Role = typeof roles.$inferSelect;
 export type NewRole = typeof roles.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type Puesto = typeof puestos.$inferSelect;
+export type NewPuesto = typeof puestos.$inferInsert;
+export type Empleado = typeof empleados.$inferSelect;
+export type NewEmpleado = typeof empleados.$inferInsert;
 export type Backup = typeof backups.$inferSelect;
 export type NewBackup = typeof backups.$inferInsert;
 
@@ -138,3 +192,5 @@ export type Merma = typeof mermas.$inferSelect;
 export type NewMerma = typeof mermas.$inferInsert;
 export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
 export type NewPurchaseOrder = typeof purchaseOrders.$inferInsert;
+export type Setting = typeof settings.$inferSelect;
+export type NewSetting = typeof settings.$inferInsert;
