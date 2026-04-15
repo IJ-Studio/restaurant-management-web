@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
-import { useInventory, type Supplier, type PurchaseOrder, type OrderStatus, type OrderItem } from "@/hooks/useInventory";
+import { useInventory, type Supplier, type PurchaseOrder, type OrderStatus, type OrderItem, type Product } from "@/hooks/useInventory";
 
 
 import {
@@ -589,21 +589,24 @@ function SupplierModal({
 // ─── Order Modal ──────────────────────────────────────────────────────────────
 function OrderModal({
   suppliers,
+  products,
   order,
   onClose,
   onSave,
+  initialSuppId,
 }: {
   suppliers: Supplier[];
+  products: Product[];
   order: PurchaseOrder | null;
   onClose: () => void;
   onSave: (o: PurchaseOrder) => void;
+  initialSuppId?: number;
 }) {
   const active = suppliers.filter((s) => s.active);
-  const [suppId, setSuppId] = useState(order?.supplierId ?? active[0]?.id ?? 0);
+  const [suppId, setSuppId] = useState(order?.supplierId ?? initialSuppId ?? active[0]?.id ?? 0);
   const [items, setItems] = useState<OrderItem[]>(
     order?.items ?? [{ productName: "", quantity: 1, unit: "kg", unitCost: 0 }],
   );
-  const [expectedAt, setExpectedAt] = useState(order?.expectedAt ?? "");
   const [notes, setNotes] = useState(order?.notes ?? "");
   const [status, setStatus] = useState<OrderStatus>(
     order?.status ?? "borrador",
@@ -623,7 +626,21 @@ function OrderModal({
   }
   function updateItem(i: number, field: keyof OrderItem, val: string | number) {
     setItems((is) =>
-      is.map((item, j) => (j !== i ? item : { ...item, [field]: val })),
+      is.map((item, j) => {
+        if (j !== i) return item;
+        const updated = { ...item, [field]: val };
+        // Auto-calculate unitCost and unit when product name is selected
+        if (field === "productName" && val) {
+          const product = products.find(
+            (p) => p.name.toLowerCase().trim() === String(val).toLowerCase().trim(),
+          );
+          if (product) {
+            updated.unitCost = product.costPerUnit;
+            updated.unit = product.unit || "pza";
+          }
+        }
+        return updated;
+      }),
     );
   }
 
@@ -734,15 +751,6 @@ function OrderModal({
                 </p>
               )}
             </div>
-            <div>
-              <label style={lbl}>Fecha esperada de entrega</label>
-              <input
-                type="date"
-                style={inp}
-                value={expectedAt}
-                onChange={(e) => setExpectedAt(e.target.value)}
-              />
-            </div>
           </div>
 
           {order && (
@@ -816,13 +824,13 @@ function OrderModal({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "2fr 80px 70px 90px 30px",
-                gap: 6,
+                gridTemplateColumns: "2fr 70px 100px 30px",
+                gap: 8,
                 marginBottom: 6,
                 padding: "0 4px",
               }}
             >
-              {["Producto", "Cant.", "Unidad", "Costo/u", ""].map((h) => (
+              {["Producto", "Cant.", "Precio unitario", ""].map((h) => (
                 <span
                   key={h}
                   style={{
@@ -844,19 +852,29 @@ function OrderModal({
                   key={i}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "2fr 80px 70px 90px 30px",
-                    gap: 6,
-                    alignItems: "center",
+                    gridTemplateColumns: "2fr 70px 100px 30px",
+                    gap: 8,
+                    alignItems: "start",
                   }}
                 >
-                  <input
+                  <select
                     style={inp}
                     value={item.productName}
                     onChange={(e) =>
                       updateItem(i, "productName", e.target.value)
                     }
-                    placeholder="Nombre del producto"
-                  />
+                  >
+                    <option value="">Seleccionar producto</option>
+                    {products
+                      .filter((p) =>
+                        supp ? supp.products.some(sp => sp.toLowerCase().trim() === p.name.toLowerCase().trim()) : false,
+                      )
+                      .map((p) => (
+                        <option key={p.id} value={p.name}>
+                          {p.name}
+                        </option>
+                      ))}
+                  </select>
                   <input
                     type="number"
                     min={1}
@@ -866,27 +884,24 @@ function OrderModal({
                       updateItem(i, "quantity", Number(e.target.value))
                     }
                   />
-                  <select
-                    style={inp}
-                    value={item.unit}
-                    onChange={(e) => updateItem(i, "unit", e.target.value)}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                      padding: "8px 12px",
+                      background: T.elevated,
+                      borderRadius: 10,
+                      border: `1px solid ${T.border}`,
+                    }}
                   >
-                    {["kg", "g", "l", "ml", "pza", "caja", "bolsa"].map((u) => (
-                      <option key={u} value={u}>
-                        {u}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    min={0}
-                    style={inp}
-                    value={item.unitCost}
-                    onChange={(e) =>
-                      updateItem(i, "unitCost", Number(e.target.value))
-                    }
-                    placeholder="$0"
-                  />
+                    <span style={{ fontSize: 14, fontWeight: 700, color: T.brand }}>
+                      ${item.unitCost.toFixed(2)}
+                    </span>
+                    <span style={{ fontSize: 10, color: T.textMut, fontWeight: 500 }}>
+                      por {item.unit || "pza"}
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeItem(i)}
@@ -898,6 +913,7 @@ function OrderModal({
                       cursor: "pointer",
                       color: items.length === 1 ? T.border : T.danger,
                       display: "flex",
+                      alignSelf: "center",
                     }}
                   >
                     <X size={14} />
@@ -935,13 +951,13 @@ function OrderModal({
           </div>
 
           <div>
-            <label style={lbl}>Notas</label>
+            <label style={lbl}>Notas (opcional)</label>
             <textarea
               style={{ ...inp, resize: "none" }}
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Instrucciones especiales de entrega, urgencias, etc."
+              placeholder="Instrucciones especiales, urgencias, etc."
             />
           </div>
         </div>
@@ -988,7 +1004,6 @@ function OrderModal({
                 total,
                 createdAt:
                   order?.createdAt ?? new Date().toISOString().split("T")[0],
-                expectedAt,
                 notes,
               });
               onClose();
@@ -1318,6 +1333,7 @@ function SupplierCard({
 export default function SuppliersPage() {
   const router = useRouter();
   const {
+    products,
     suppliers,
     orders,
     loading,
@@ -2094,12 +2110,14 @@ export default function SuppliersPage() {
       {orderModal !== null && (
         <OrderModal
           suppliers={suppliers}
+          products={products}
           order={orderModal === "new" ? null : orderModal}
           onClose={() => {
             setOrderModal(null);
             setPreselSupp(null);
           }}
           onSave={handleSaveOrder}
+          initialSuppId={orderModal === "new" ? preselSupp : undefined}
         />
       )}
     </div>

@@ -1720,7 +1720,7 @@ export default function InventoryPage() {
                       const st = stockStatus(p);
                       const sc = STATUS_CFG[st];
                       const pct = Math.min(100, (p.stock / p.maxStock) * 100);
-                      const cat = CATEGORIES[p.category];
+                      const cat = CATEGORIES[p.category] ?? { label: "Otro", icon: "📦", color: "#6b7280", bg: "#f3f4f6" };
                       return (
                         <tr
                           key={p.id}

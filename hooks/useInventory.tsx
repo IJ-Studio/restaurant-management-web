@@ -13,6 +13,7 @@ export interface Product {
   maxStock: number;
   costPerUnit: number;
   supplier: string;
+  supplierId?: number;
   lastUpdated: string;
   active: boolean;
 }
@@ -70,7 +71,7 @@ export interface PurchaseOrder {
   total: number;
   status: OrderStatus;
   createdAt: string;
-  expectedAt: string;
+  expectedAt?: string;
   receivedAt?: string;
   notes?: string;
 }
@@ -111,7 +112,11 @@ export function useInventory() {
         stock: Number(p.stock),
         minStock: Number(p.minStock),
         maxStock: Number(p.maxStock),
-        costPerUnit: Number(p.costPerUnit)
+        costPerUnit: Number(p.costPerUnit),
+        supplierId:
+          p.supplierId != null && p.supplierId !== ""
+            ? Number(p.supplierId)
+            : undefined,
       })));
       setMermas(dataM.map((m: any) => ({
         ...m,
