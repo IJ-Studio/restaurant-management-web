@@ -23,7 +23,7 @@ interface FooterData {
 export default function Footer() {
   const pathname = usePathname();
 
-  if (pathname?.startsWith("/dashboard/admin")) {
+  if (pathname?.startsWith("/dashboard/admin")||pathname?.startsWith("/(auth)/login")) {
     return null;
   }
   // Obtener datos del footer desde el backend

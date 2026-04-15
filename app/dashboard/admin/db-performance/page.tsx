@@ -973,7 +973,12 @@ function SectionHotTables({ data }: { data: DBHotTable[] | null }) {
 function SectionLatency({ data }: { data: DBLatencyMetrics | null }) {
   const OPS  = ["SELECT", "INSERT", "UPDATE", "DELETE"] as const;
   const COLORS = { SELECT: T.info, INSERT: T.ok, UPDATE: T.warn, DELETE: T.danger };
-
+const OPS_MAP: Record<string, string> = {
+  SELECT: "Lectura",
+  INSERT: "Inserción",
+  UPDATE: "Actualización",
+  DELETE: "Eliminación",
+};
   const histData = data?.history ?? [];
   const maxMs = data
     ? Math.max(

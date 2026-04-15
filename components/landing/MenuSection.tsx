@@ -1,5 +1,5 @@
 import { Star, Clock, Plus } from "lucide-react";
-import Image from "next/image";
+// import Image from "next/image";  ← eliminado
 import { SkeletonCard } from "./SkeletonCard";
 
 interface MenuItem {
@@ -8,7 +8,7 @@ interface MenuItem {
   category: string;
   description: string;
   price: number;
-  image: string;
+  image: string; // ya no se usará
   tag?: string;
   rating: number;
   prepTime: string;
@@ -86,18 +86,18 @@ export default function MenuSection({
             className="menu-card group"
             onClick={() => onSelectItem(item)}
           >
+            {/* ───── Sección de imagen reemplazada por placeholder ───── */}
             <div className="menu-card-image">
-              <Image
-                src={item.image}
-                alt={item.name}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-              />
+              {/* Placeholder con gradiente en lugar de Image */}
+              <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                <span className="text-4xl">🍽️</span>
+              </div>
               {item.tag && <span className="menu-card-tag">{item.tag}</span>}
               <div className="menu-card-price">
                 ${item.price.toLocaleString()}
               </div>
             </div>
+            {/* ─────────────────────────────────────────────────────────── */}
             <div className="menu-card-content">
               <p className="menu-card-category">{item.category}</p>
               <h3 className="menu-card-title">{item.name}</h3>

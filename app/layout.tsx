@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { AppProviders } from "@/components/providers/AppProviders";
-import ConditionalNavbar from "@/components/ConditionalNavbar";
 import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
-import Footer from "@/components/landing/Footer";
+import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -54,9 +53,7 @@ export default function RootLayout({
       </head>
       <body>
         <AppProviders>
-          <ConditionalNavbar />
-          {children}
-          <Footer />
+          <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
         </AppProviders>
       </body>
     </html>

@@ -364,6 +364,13 @@ export default function AdminSidebar({
 
         <NavBtn
           icon={<Database size={17} />}
+          label="Prediccion"
+          active={is("predictive")}
+          onClick={() => router.push("/dashboard/admin/predictive")}
+        />
+
+        <NavBtn
+          icon={<Database size={17} />}
           label="Base de datos"
           active={is("performance")}
           onClick={() => router.push("/dashboard/admin/db-performance")}
