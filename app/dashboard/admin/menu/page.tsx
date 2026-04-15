@@ -68,6 +68,7 @@ interface MenuItem {
   tags: TagKey[];
   prepTime: number;
   calories: number;
+  img?: string;
 }
 interface Category {
   id: number;
@@ -619,9 +620,24 @@ function MenuCard({
           justifyContent: "center",
           position: "relative",
           flexShrink: 0,
+          overflow: "hidden",
         }}
       >
-        <ImageOff size={26} style={{ color: `${color}50` }} />
+        {item.img ? (
+          <img
+            src={item.img}
+            alt={item.name}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        ) : (
+          <ImageOff size={26} style={{ color: `${color}50` }} />
+        )}
         {/* Hover overlay */}
         <div
           style={{
@@ -1920,6 +1936,9 @@ export default function AdminMenuPage() {
           Math.floor(parseNumber(r?.tiempo_preparacion ?? r?.prepTime, 10)),
         ),
         calories: 0,
+        img: normalizeStr(
+          r?.imagen_url ?? r?.imagenUrl ?? r?.img ?? r?.imagen ?? "",
+        ) || undefined,
       });
     });
 
