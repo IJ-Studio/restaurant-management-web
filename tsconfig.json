@@ -36,7 +36,7 @@
     "**/*.tsx",
     "**/*.mts",
     ".next/dev/types/**/*.ts"
-  ],
+, "middleware.ts.bk"  ],
   "exclude": [
     "node_modules"
   ]

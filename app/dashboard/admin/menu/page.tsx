@@ -232,6 +232,11 @@ export default function AdminMenuPage() {
 
   function deleteItem(catId: string, itemId: string | number) {
     if (!confirm("¿Eliminar este platillo?")) return;
+    const numericItemId = Number(itemId);
+    if (!Number.isFinite(numericItemId) || numericItemId <= 0) {
+      alert("ID de platillo inválido");
+      return;
+    }
     setCategories((cs) =>
       cs.map((c) => (c.id !== catId ? c : { ...c, items: c.items.filter((i) => i.id !== itemId) }))
     );

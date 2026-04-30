@@ -18,6 +18,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'mdygrtdebtmuhmirnbxz.supabase.co',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 
@@ -37,4 +43,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
