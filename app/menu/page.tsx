@@ -23,7 +23,7 @@ const categoriesMock: Category[] = [
   {
     id: "1",
     name: "COCKTAILS",
-    imagePublicId: "cocktails-image",
+    imagePublicId: "https://res.cloudinary.com/dcb1tspbj/image/upload/q_auto/f_auto/v1778826210/Gemini_Generated_Image_hfyqz3hfyqz3hfyq_djzxrr.png",
     products: [
       { id: "c1", name: "TEQUILA SUNRISE", price: 32 },
       { id: "c2", name: "STRAWBERRY DAIQUIRI", price: 25 },
@@ -33,7 +33,7 @@ const categoriesMock: Category[] = [
   {
     id: "2",
     name: "WINE",
-    imagePublicId: "wine-image",
+    imagePublicId: "",
     products: [
       {
         id: "w1",
@@ -90,7 +90,7 @@ export default function MenuPage() {
       {/* Hero image a ancho completo */}
       <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden">
         <CldImage
-          src="menu-hero" // Reemplazar con ID real de Cloudinary
+          src="https://res.cloudinary.com/dcb1tspbj/image/upload/v1778825604/Gemini_Generated_Image_2mv3sr2mv3sr2mv3_uciqpl.png" // Reemplazar con ID real de Cloudinary
           fill
           alt="Restaurant background"
           className="object-cover"

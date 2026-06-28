@@ -27,11 +27,8 @@ export default function Footer() {
     return null;
   }
   // Obtener datos del footer desde el backend
-  const { data, loading } = useFetch<FooterData>("/footer");
+  const { data,  } = useFetch<FooterData>("/footer");
 
-  if (loading) {
-    return <div className="skeleton h-64 w-full" />;
-  }
 
   // Valores por defecto si no hay datos del backend
   const defaultData: FooterData = {

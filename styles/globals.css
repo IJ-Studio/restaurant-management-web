@@ -27,6 +27,7 @@ html.dark {
 body {
   background-color: var(--color-surface);
   color: var(--color-text);
+  font-family: 'Ibarra Real Nova', serif;
   transition:
     background-color 0.3s ease,
     color 0.2s ease;

@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { AuthState, SessionUser } from "@/types/auth";
 
@@ -7,6 +7,31 @@ const initialState: AuthState = {
   loading: false,
   error:   null,
 };
+
+export const hydrateSession = createAsyncThunk(
+  "auth/hydrateSession",
+  async (_, { dispatch }) => {
+    dispatch(setLoading(true));
+    try {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) {
+        throw new Error("No hay sesión activa");
+      }
+      const data = await res.json();
+      if (data.user) {
+        dispatch(setUser(data.user));
+        return data.user;
+      }
+      dispatch(setUser(null));
+      return null;
+    } catch (err: any) {
+      dispatch(setUser(null));
+      // No seteamos error en UI para no mostrar alert en páginas públicas
+      dispatch(setLoading(false));
+      return null;
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: "auth",
@@ -34,3 +59,4 @@ const authSlice = createSlice({
 
 export const { setUser, setLoading, setError, clearAuth } = authSlice.actions;
 export default authSlice.reducer;
+

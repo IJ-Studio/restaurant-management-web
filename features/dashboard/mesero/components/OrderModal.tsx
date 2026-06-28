@@ -6,12 +6,14 @@ interface OrderModalProps {
   table: DiningTable;
   menu: MenuCategory[];
   onClose: () => void;
-  onSendOrder: (tableId: string | number, items: OrderItem[]) => void;
+  onSendOrder: (tableId: string | number, items: OrderItem[], discount: number) => void;
 }
 
 export function OrderModal({ table, menu, onClose, onSendOrder }: OrderModalProps) {
   const [cart, setCart] = useState<{ item: MenuItem; qty: number }[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>(menu[0]?.id || '');
+  const [discountType, setDiscountType] = useState<string>("none");
+  const [discountValue, setDiscountValue] = useState<number>(0);
 
   const addItem = (item: MenuItem) => {
     setCart(prev => {
@@ -30,7 +32,16 @@ export function OrderModal({ table, menu, onClose, onSendOrder }: OrderModalProp
     });
   };
 
-  const total = cart.reduce((acc, curr) => acc + (curr.item.price * curr.qty), 0);
+  const subtotal = cart.reduce((acc, curr) => acc + (curr.item.price * curr.qty), 0);
+  
+  // Calculate discount
+  let discountAmount = 0;
+  if (discountType === "percentage") {
+    discountAmount = subtotal * (Math.min(100, Math.max(0, discountValue)) / 100);
+  } else if (discountType === "fixed") {
+    discountAmount = Math.min(subtotal, Math.max(0, discountValue));
+  }
+  const finalTotal = Math.max(0, subtotal - discountAmount);
 
   const handleSend = () => {
     const orderItems: OrderItem[] = cart.map(c => ({
@@ -38,7 +49,7 @@ export function OrderModal({ table, menu, onClose, onSendOrder }: OrderModalProp
       qty: c.qty,
       notes: ''
     }));
-    onSendOrder(table.id, orderItems);
+    onSendOrder(table.id, orderItems, discountAmount);
     onClose();
   };
 
@@ -138,11 +149,41 @@ export function OrderModal({ table, menu, onClose, onSendOrder }: OrderModalProp
           )}
         </div>
 
-        <div className="p-6 bg-white/2 border-t border-white/10 space-y-5 shadow-2xl">
+        <div className="p-6 bg-white/2 border-t border-white/10 space-y-4 shadow-2xl">
+          {/* Aplicar Descuento */}
+          {cart.length > 0 && (
+            <div className="space-y-2 border-b border-white/10 pb-4">
+              <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest">Aplicar Descuento</label>
+              <div className="flex gap-2">
+                <select
+                  value={discountType}
+                  onChange={(e) => { setDiscountType(e.target.value); setDiscountValue(0); }}
+                  className="flex-1 bg-white/5 border border-white/10 text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-brand"
+                >
+                  <option value="none" className="bg-[#0a0a0e]">Sin Descuento</option>
+                  <option value="percentage" className="bg-[#0a0a0e]">Porcentaje (%)</option>
+                  <option value="fixed" className="bg-[#0a0a0e]">Monto Fijo ($)</option>
+                </select>
+                
+                {discountType !== "none" && (
+                  <input
+                    type="number"
+                    min="0"
+                    max={discountType === "percentage" ? 100 : undefined}
+                    value={discountValue || ""}
+                    onChange={(e) => setDiscountValue(Number(e.target.value))}
+                    className="w-24 bg-white/5 border border-white/10 text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-brand"
+                    placeholder={discountType === "percentage" ? "%" : "$"}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-between items-end">
             <div>
               <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-1">Total Estimado</p>
-              <p className="font-display font-black text-3xl text-brand leading-none">${total.toFixed(2)}</p>
+              <p className="font-display font-black text-3xl text-brand leading-none">${finalTotal.toFixed(2)}</p>
             </div>
             <p className="text-[10px] text-text-muted font-bold">Incluye Iva*</p>
           </div>

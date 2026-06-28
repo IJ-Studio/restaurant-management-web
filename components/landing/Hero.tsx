@@ -16,40 +16,8 @@ export default function Hero({
   ctaText,
   ctaLink,
   stats,
-  loading = false,
 }: HeroProps) {
-  if (loading) {
-    return (
-      <section className="relative min-h-screen flex items-center px-8 lg:px-24 overflow-hidden pt-20">
-        <div className="z-10 max-w-3xl">
-          <div className="skeleton h-8 w-32 rounded-full mb-6" />
-          <div className="skeleton-title h-24 w-full mb-6" />
-          <div className="skeleton-text w-96 h-6 mb-10" />
-          <div className="flex gap-5">
-            <div className="skeleton w-40 h-14 rounded-2xl" />
-            <div className="skeleton w-40 h-14 rounded-2xl" />
-          </div>
-          <div className="flex gap-10 mt-14 pt-10 border-t border-[var(--color-border)]">
-            <div>
-              <div className="skeleton h-8 w-16" />
-              <div className="skeleton h-4 w-12 mt-1" />
-            </div>
-            <div>
-              <div className="skeleton h-8 w-16" />
-              <div className="skeleton h-4 w-12 mt-1" />
-            </div>
-            <div>
-              <div className="skeleton h-8 w-16" />
-              <div className="skeleton h-4 w-12 mt-1" />
-            </div>
-          </div>
-        </div>
-        <div className="absolute right-[-5%] top-1/2 -translate-y-1/2 hidden xl:block w-[680px] h-[680px]">
-          <div className="skeleton w-full h-full rounded-full" />
-        </div>
-      </section>
-    );
-  }
+
 
   return (
     <section className="relative min-h-screen flex items-center px-8 lg:px-24 overflow-hidden pt-20">
@@ -91,7 +59,7 @@ export default function Hero({
       <div className="absolute right-[-5%] top-1/2 -translate-y-1/2 hidden xl:block w-[680px] h-[680px]">
         <div className="relative w-full h-full animate-spin-slow">
           <CldImage
-            src="compressed_51e0590c792c1198acb41d7ed2db4cef_ju0olj" // Solo el public ID de Cloudinary (sin la URL completa)
+            src="https://res.cloudinary.com/dcb1tspbj/image/upload/v1778827570/Gemini_Generated_Image_lbwn93lbwn93lbwn_veznen.png" // Solo el public ID de Cloudinary (sin la URL completa)
             alt="Plato Gourmet"
             width={680}
             height={680}

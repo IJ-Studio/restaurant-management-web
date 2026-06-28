@@ -86,7 +86,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3">   
             <button
               onClick={() => setPreview(true)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border border-border bg-white text-text-sec hover:bg-surface-alt hover:shadow-md transition-all active:scale-95 shadow-sm"

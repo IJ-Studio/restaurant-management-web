@@ -1,12 +1,24 @@
 "use client";
 
-import { Provider as ReduxProvider } from "react-redux";
+import { Provider as ReduxProvider, useDispatch } from "react-redux";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { DesignSystemProvider } from "@/components/providers/DesignSystemProvider";
-import { store } from "@/store/index";
+import { store, type AppDispatch } from "@/store/index";
+import { useEffect } from "react";
+import { hydrateSession } from "@/store/slices/authSlice";
 
 interface AppProvidersProps {
   children: React.ReactNode;
+}
+
+function AuthInitializer({ children }: { children: React.ReactNode }) {
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(hydrateSession());
+  }, [dispatch]);
+
+  return <>{children}</>;
 }
 
 /**
@@ -21,9 +33,12 @@ export function AppProviders({ children }: AppProvidersProps) {
     <ReduxProvider store={store}>
       <ThemeProvider>
         <DesignSystemProvider>      
-          {children}
+          <AuthInitializer>
+            {children}
+          </AuthInitializer>
         </DesignSystemProvider>
       </ThemeProvider>
     </ReduxProvider>
   );
 }
+

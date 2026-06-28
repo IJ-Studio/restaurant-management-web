@@ -13,28 +13,10 @@ interface AboutData {
 
 export default function AboutSection({
   data,
-  loading,
 }: {
   data: AboutData | null;
-  loading: boolean;
 }) {
-  if (loading) {
-    return (
-      <section className="py-24 px-8 lg:px-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          <div className="space-y-4">
-            <div className="skeleton h-72 rounded-[2rem]" />
-            <div className="skeleton h-44 rounded-[1.5rem]" />
-          </div>
-          <div className="space-y-4">
-            <div className="skeleton-title w-48 h-8" />
-            <div className="skeleton-text w-full h-20" />
-            <div className="skeleton-text w-full h-20" />
-          </div>
-        </div>
-      </section>
-    );
-  }
+
 
   if (!data) return null;
 

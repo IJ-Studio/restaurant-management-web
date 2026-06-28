@@ -13,13 +13,48 @@ restaurant-management-platform
 │  │  └─ reset
 │  │     └─ page.tsx
 │  ├─ api
-│  │  └─ auth
-│  │     ├─ login
-│  │     │  └─ route.ts
-│  │     ├─ logout
-│  │     │  └─ route.ts
-│  │     └─ register
-│  │        └─ route.ts
+│  │  ├─ admin
+│  │  │  └─ users
+│  │  │     ├─ route.ts
+│  │  │     └─ [id]
+│  │  │        └─ route.ts
+│  │  ├─ auth
+│  │  │  ├─ login
+│  │  │  │  └─ route.ts
+│  │  │  ├─ logout
+│  │  │  │  └─ route.ts
+│  │  │  └─ register
+│  │  │     └─ route.ts
+│  │  ├─ backups
+│  │  │  └─ route.ts
+│  │  ├─ cron
+│  │  │  └─ backups
+│  │  │     └─ route.ts
+│  │  ├─ inventory
+│  │  │  ├─ mermas
+│  │  │  │  └─ route.ts
+│  │  │  ├─ orders
+│  │  │  │  └─ route.ts
+│  │  │  ├─ products
+│  │  │  │  ├─ adjust
+│  │  │  │  │  └─ route.ts
+│  │  │  │  └─ route.ts
+│  │  │  └─ suppliers
+│  │  │     └─ route.ts
+│  │  ├─ menu
+│  │  │  ├─ categories
+│  │  │  │  └─ route.ts
+│  │  │  ├─ items
+│  │  │  │  └─ [id]
+│  │  │  │     └─ route.ts
+│  │  │  └─ _meta.ts
+│  │  ├─ public
+│  │  │  ├─ combos
+│  │  │  │  └─ route.ts
+│  │  │  └─ cupones
+│  │  │     └─ route.ts
+│  │  └─ settings
+│  │     └─ route.ts
 │  ├─ dashboard
 │  │  ├─ admin
 │  │  │  ├─ about
@@ -37,6 +72,9 @@ restaurant-management-platform
 │  │  │  ├─ menu
 │  │  │  │  └─ page.tsx
 │  │  │  ├─ page.tsx
+│  │  │  ├─ predictive
+│  │  │  │  ├─ page.tsx
+│  │  │  │  └─ predictivo.css
 │  │  │  ├─ reports
 │  │  │  │  └─ page.tsx
 │  │  │  ├─ reservations
@@ -65,6 +103,11 @@ restaurant-management-platform
 │  ├─ maintenance
 │  │  └─ page.tsx
 │  ├─ maintenance.module.css
+│  ├─ menu
+│  │  ├─ categoria
+│  │  │  └─ [slug]
+│  │  │     └─ page.tsx
+│  │  └─ page.tsx
 │  ├─ not-found.module.css
 │  ├─ not-found.tsx
 │  ├─ page.tsx
@@ -73,8 +116,7 @@ restaurant-management-platform
 │  ├─ unauthorized
 │  │  └─ page.tsx
 │  └─ unauthorized.module.css
-├─ cloudinary
-│  └─ page.tsx
+├─ check_backups.ts
 ├─ components
 │  ├─ admin
 │  │  ├─ AdminSidebar.tsx
@@ -83,6 +125,7 @@ restaurant-management-platform
 │  ├─ BackButton.tsx
 │  ├─ Button.tsx
 │  ├─ Checkbox.tsx
+│  ├─ ClientLayoutWrapper.tsx
 │  ├─ ConditionalNavbar.tsx
 │  ├─ dropdown.tsx
 │  ├─ FloatingInput.tsx
@@ -95,11 +138,9 @@ restaurant-management-platform
 │  │  ├─ Hero.tsx
 │  │  ├─ MenuSection.tsx
 │  │  ├─ PromosSection.tsx
-│  │  ├─ ReservationSection.tsx
-│  │  └─ SkeletonCard.tsx
+│  │  └─ ReservationSection.tsx
 │  ├─ layout
 │  │  └─ Sidebar.tsx
-│  ├─ nav.tsx
 │  ├─ Navbar.tsx
 │  ├─ PasswordRequirements.tsx
 │  ├─ PasswordToggleButton.tsx
@@ -108,6 +149,7 @@ restaurant-management-platform
 │  │  ├─ AppProviders.tsx
 │  │  ├─ DesignSystemProvider.tsx
 │  │  └─ ThemeProvider.tsx
+│  ├─ ThemeToggle.tsx
 │  └─ ui
 │     ├─ Button.tsx
 │     └─ index.ts
@@ -118,6 +160,12 @@ restaurant-management-platform
 │  │  └─ cocina.nav.ts
 │  ├─ restaurant.config.ts
 │  └─ roles.config.ts
+├─ delete_cron_date.cjs
+├─ drizzle
+│  ├─ 0002_sturdy_lord_tyger.sql
+│  └─ meta
+│     ├─ 0002_snapshot.json
+│     └─ _journal.json
 ├─ features
 │  ├─ dashboard
 │  │  ├─ admin
@@ -244,20 +292,28 @@ restaurant-management-platform
 │  ├─ useAsyncAction.ts
 │  ├─ useBreakpoint.ts
 │  ├─ useFetch.ts
+│  ├─ useInventory.tsx
 │  ├─ useLockout.ts
 │  ├─ useMediaQuery.ts
 │  ├─ useRedirect.ts
-│  └─ useResponsiveNavbar.ts
+│  ├─ useResponsiveNavbar.ts
+│  └─ useTheme.ts
 ├─ lib
+│  ├─ db.ts
+│  ├─ schema.ts
 │  ├─ session.ts
 │  └─ utils.ts
-├─ middleware.ts
+├─ middleware.ts.bk
 ├─ next.config.js
 ├─ package.json
 ├─ pnpm-lock.yaml
-├─ postcss.config.js
+├─ postcss.config.mjs
+├─ proxy.ts
 ├─ README.md
 ├─ requisitos funcionales.md
+├─ setup_settings.cjs
+├─ setup_settings.js
+├─ setup_settings.ts
 ├─ store
 │  ├─ index.ts
 │  └─ slices
@@ -266,6 +322,7 @@ restaurant-management-platform
 ├─ styles
 │  ├─ globals.css
 │  └─ loading.css
+├─ tailwind.config.js
 ├─ tsconfig.json
 ├─ types
 │  ├─ auth.ts
@@ -273,7 +330,12 @@ restaurant-management-platform
 │  ├─ index.ts
 │  ├─ navigation.ts
 │  └─ ui.ts
-└─ utils
-   └─ validators.tsx
+├─ utils
+│  ├─ supabase
+│  │  ├─ client.ts
+│  │  ├─ middleware.ts
+│  │  └─ server.ts
+│  └─ validators.tsx
+└─ vercel.json
 
 ```

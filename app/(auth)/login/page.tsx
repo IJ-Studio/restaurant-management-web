@@ -11,12 +11,18 @@ import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { emailRegex } from "@/utils/validators";
 import { SettingsService } from "@/features/shared/services/dataService";
 import { type SystemSettings } from "@/features/shared/data/restaurantData";
+import { useDispatch } from "react-redux";
+import { useRouter } from "next/navigation";
+import { setUser } from "@/store/slices/authSlice";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
+
+  const dispatch = useDispatch();
+  const router = useRouter();
 
   const isEmailValid = emailRegex.test(email);
   const isFormReady = isEmailValid && password.length >= 8;
@@ -58,8 +64,32 @@ export default function LoginPage() {
   } = useAsyncAction({
     action: loginAction,
     successMessage: "¡Login exitoso! Redirigiendo...",
-    onSuccess: () => {
-      setTimeout(() => window.location.assign("/dashboard"), 500);
+    onSuccess: (data) => {
+      const roleId = data.user?.roleId;
+      const roleNames: Record<number, string> = {
+        1: "admin",
+        2: "cajero",
+        3: "mesero",
+        4: "cocina",
+        5: "cliente",
+      };
+      const roleName = roleNames[roleId] || "cliente";
+      const sessionUser = {
+        id: String(data.user.id),
+        name: data.user.name || "",
+        lastname: data.user.lastname || "",
+        email: data.user.email,
+        roleName: roleName as any,
+      };
+      dispatch(setUser(sessionUser));
+      setTimeout(() => {
+        if (roleName === "cliente") {
+          router.push("/menu");
+        } else {
+          router.push(`/dashboard/${roleName}`);
+        }
+        router.refresh();
+      }, 100);
     },
     lockout: {
       checkLockout: lockout.checkLockout,
