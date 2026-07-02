@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { ReactNode } from "react";
+import { usePathname } from "next/navigation"; // 👈 Importamos el hook de rutas
 
 const ConditionalNavbar = dynamic(
   () => import("@/components/ConditionalNavbar"),
@@ -17,11 +18,20 @@ export default function ClientLayoutWrapper({
 }: {
   children: ReactNode;
 }) {
+  const pathname = usePathname(); // 👈 Obtenemos la ruta actual
+
+  // Verificamos si estamos dentro del panel de administración
+  const isDashboard = pathname?.startsWith("/dashboard");
+
   return (
     <>
-      <ConditionalNavbar />
+      {/* 🔐 Si es dashboard, no renderizamos la Navbar pública */}
+      {!isDashboard && <ConditionalNavbar />}
+
       {children}
-      <Footer />
+
+      {/* 🔐 Si es dashboard, no renderizamos el Footer público */}
+      {!isDashboard && <Footer />}
     </>
   );
 }

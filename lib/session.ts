@@ -35,6 +35,7 @@ export async function getSession(): Promise<SessionPayload | null> {
   }
 }
 
+// RESTAURADO: Función limpia que extrae los datos del JWT para Server Components rápidos
 export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await getSession();
   if (!session?.id || !session.email || !session.roleId) return null;

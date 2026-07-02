@@ -80,16 +80,16 @@ export default function FinancePage() {
         s.id !== openSession.id
           ? s
           : {
-              ...s,
-              status: "cerrada",
-              closedAt: new Date().toLocaleTimeString("es-MX", {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              countedBalance: counted,
-              difference: counted - s.expectedBalance,
-              closedBy,
-            }
+            ...s,
+            status: "cerrada",
+            closedAt: new Date().toLocaleTimeString("es-MX", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            countedBalance: counted,
+            difference: counted - s.expectedBalance,
+            closedBy,
+          }
       )
     );
   }
@@ -200,15 +200,13 @@ export default function FinancePage() {
             <button
               key={t.k}
               onClick={() => setTab(t.k as any)}
-              className={`flex items-center gap-1.5 px-5 py-2.5 text-[13px] font-bold border-none cursor-pointer bg-transparent border-b-2 mb-[-1px] whitespace-nowrap transition-colors ${
-                active ? "border-brand text-brand" : "border-transparent text-text-muted hover:text-text-sec"
-              }`}
+              className={`flex items-center gap-1.5 px-5 py-2.5 text-[13px] font-bold border-none cursor-pointer bg-transparent border-b-2 mb-[-1px] whitespace-nowrap transition-colors ${active ? "border-brand text-brand" : "border-transparent text-text-muted hover:text-text-sec"
+                }`}
             >
               {t.l}
               <span
-                className={`px-[7px] py-[1px] rounded-full text-[10px] font-extrabold transition-colors ${
-                  active ? "bg-brand/10 text-brand" : "bg-surface-alt text-text-muted"
-                }`}
+                className={`px-[7px] py-[1px] rounded-full text-[10px] font-extrabold transition-colors ${active ? "bg-brand/10 text-brand" : "bg-surface-alt text-text-muted"
+                  }`}
               >
                 {t.count}
               </span>
@@ -252,9 +250,8 @@ export default function FinancePage() {
                   className="bg-surface rounded-2xl border border-border p-3.5 flex flex-col sm:flex-row sm:items-center gap-3.5 shadow-sm hover:shadow-md transition-shadow group"
                 >
                   <div
-                    className={`w-11 h-11 shrink-0 rounded-[14px] flex items-center justify-center ${
-                      isIn ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-                    }`}
+                    className={`w-11 h-11 shrink-0 rounded-[14px] flex items-center justify-center ${isIn ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                      }`}
                   >
                     {isIn ? <TrendingUp size={22} /> : <TrendingDown size={22} />}
                   </div>
@@ -278,9 +275,8 @@ export default function FinancePage() {
                       {pc.label}
                     </div>
                     <span
-                      className={`font-display text-lg font-black w-24 text-right ${
-                        isIn ? "text-emerald-600" : "text-text"
-                      }`}
+                      className={`font-display text-lg font-black w-24 text-right ${isIn ? "text-emerald-600" : "text-text"
+                        }`}
                     >
                       {isIn ? "+" : "-"}${fmt(m.amount)}
                     </span>
@@ -316,11 +312,10 @@ export default function FinancePage() {
                   </div>
                 </div>
                 <div
-                  className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase flex items-center gap-1 border ${
-                    s.status === "abierta"
+                  className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase flex items-center gap-1 border ${s.status === "abierta"
                       ? "bg-emerald-50 text-emerald-600 border-emerald-200"
                       : "bg-surface-alt text-text-sec border-border"
-                  }`}
+                    }`}
                 >
                   {s.status === "abierta" ? <Clock size={11} /> : <CheckCircle2 size={11} />}
                   {s.status}
@@ -363,8 +358,7 @@ export default function FinancePage() {
                         </span>
                       )}
                     </span>
-                    <span className={`font-display text-[22px] font-black leading-none ${
-                        s.difference === 0 ? "text-emerald-600" : s.difference! > 0 ? "text-blue-600" : "text-red-600"
+                    <span className={`font-display text-[22px] font-black leading-none ${s.difference === 0 ? "text-emerald-600" : s.difference! > 0 ? "text-blue-600" : "text-red-600"
                       }`}
                     >
                       {s.difference! > 0 ? "+" : ""}${fmt(s.difference!)}

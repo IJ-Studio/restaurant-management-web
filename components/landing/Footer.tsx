@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
 import { Facebook, Instagram, Phone, MapPin, Clock } from "lucide-react";
 import { useFetch } from "@/hooks/useFetch";
+import { useTheme } from "@/hooks/useTheme"; // <-- 1. Importamos tu hook de tema
 
 interface FooterData {
   name: string;
@@ -22,13 +23,14 @@ interface FooterData {
 
 export default function Footer() {
   const pathname = usePathname();
+  const isDark = useTheme(); // <-- 2. Leemos si estamos en modo oscuro
 
-  if (pathname?.startsWith("/dashboard/admin")||pathname?.startsWith("/(auth)/login")) {
+  if (pathname?.startsWith("/dashboard/admin") || pathname?.startsWith("/(auth)/login")) {
     return null;
   }
-  // Obtener datos del footer desde el backend
-  const { data,  } = useFetch<FooterData>("/footer");
 
+  // Obtener datos del footer desde el backend
+  const { data } = useFetch<FooterData>("/footer");
 
   // Valores por defecto si no hay datos del backend
   const defaultData: FooterData = {
@@ -56,6 +58,14 @@ export default function Footer() {
   const footerData = data || defaultData;
   const links = footerData.links || defaultData.links;
 
+  // 3. Calculamos el logo basándonos en el tema (usamos el claro para fondos oscuros y viceversa)
+  const currentLogo = isDark
+    ? INITIAL_SETTINGS.restaurantLogo_light
+    : INITIAL_SETTINGS.restaurantLogo_dark;
+
+  // Hacemos fallback al logo por defecto si los del settings fallan
+  const finalLogo = currentLogo || footerData.logo;
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -71,9 +81,8 @@ export default function Footer() {
 
       <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface-alt)]">
         <div className="px-8 lg:px-24 py-12">
-          {/* ... resto del código sin cambios ... */}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
-            {/* Columnas igual que antes */}
             <div>
               <h3 className="text-sm font-bold text-[var(--color-text)] mb-4">
                 Conócenos
@@ -156,9 +165,9 @@ export default function Footer() {
           <div className="flex flex-col items-center justify-center pt-8 border-t border-[var(--color-border)]">
             <div className="mb-4">
               <img
-                src={footerData.logo}
+                src={finalLogo} // <-- Usamos la variable que se actualiza con el tema
                 alt="Logo"
-                className="h-10 w-auto object-contain"
+                className="h-10 w-auto object-contain transition-all"
               />
             </div>
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-[var(--color-text-muted)] mb-3">

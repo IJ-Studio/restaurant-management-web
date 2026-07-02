@@ -1,4 +1,4 @@
-import { getSessionUser } from "@/lib/session";
+import { getSession } from "@/lib/session";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ADMIN_NAV_SECTIONS } from "@/config/navigation/admin.nav";
 import { redirect } from "next/navigation";
@@ -6,17 +6,53 @@ import { redirect } from "next/navigation";
 import { CAJERO_NAV_SECTIONS } from "@/config/navigation/cajero.nav";
 import { COCINA_NAV_SECTIONS } from "@/config/navigation/cocina.nav";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const sessionUser = await getSessionUser();
+  // 1. Validamos la sesión criptográfica desde la cookie
+  const session = await getSession();
 
-  // Si no hay sesión válida, lo regresamos al login preventivamente
-  // aunque el middleware ya debería haberse encargado de esto.
-  if (!sessionUser || !sessionUser.roleName) {
+  if (!session || !session.id || !session.roleId) {
     redirect("/login");
+  }
+
+  // Mapeo rápido de id a rol
+  const roleMap: Record<number, string> = {
+    1: "admin",
+    2: "cajero",
+    3: "mesero",
+    4: "cocina",
+    5: "cliente",
+  };
+  const roleName = roleMap[session.roleId] || "cliente";
+
+  // 2. Traer el perfil fresco de NestJS para forzar el Nombre y Apellido reales en la Sidebar
+  let fullUser = {
+    id: session.id,
+    email: session.email,
+    name: "",
+    lastname: "",
+    roleName: roleName,
+  };
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/users/${session.id}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: 0 } // No cachear para cambios inmediatos en el perfil
+    });
+
+    if (res.ok) {
+      const userData = await res.json();
+      fullUser.name = userData.name || "";
+      fullUser.lastname = userData.lastname || "";
+    }
+  } catch (error) {
+    console.error("Error cargando perfil en el layout del dashboard:", error);
   }
 
   // Mapa básico de navegación por rol
@@ -24,17 +60,16 @@ export default async function DashboardLayout({
     admin: ADMIN_NAV_SECTIONS,
     cajero: CAJERO_NAV_SECTIONS,
     cocina: COCINA_NAV_SECTIONS,
-    // mesero: MESERO_NAV_SECTIONS,
   };
 
-  const sections = navMap[sessionUser.roleName] || [];
+  const sections = navMap[roleName] || [];
 
   return (
     <div className="flex min-h-screen bg-bg">
-      {/* Sidebar persistente dictaminado por rol */}
-      <Sidebar sections={sections} user={sessionUser} />
+      {/* Sidebar persistente dictaminado por rol pasándole el usuario con su nombre real */}
+      <Sidebar sections={sections} user={fullUser} />
 
-      {/* Contenedor principal que se ajusta dejando espacio al Sidebar fijo */}
+      {/* Contenedor principal */}
       <div className="flex-1 ml-[var(--sidebar-width)] min-w-0">
         {children}
       </div>

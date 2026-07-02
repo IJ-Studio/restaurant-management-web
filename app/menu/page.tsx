@@ -4,93 +4,73 @@ import { useEffect, useState } from "react";
 import { CldImage } from "next-cloudinary";
 import Link from "next/link";
 
+// 1. Ajustamos las interfaces para que coincidan EXACTAMENTE con lo que devuelve tu Nest.js
 interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
+  id: number; // Nest/Drizzle maneja IDs numéricos secuenciales habitualmente
+  platilloId?: number;
+  nombre: string; // Tu backend usa 'nombre' o 'name', ajustado a la estructura típica en español de tu BD
+  descripcion?: string;
+  precio: string | number; // Drizzle/Postgres suele retornar los precios numéricos como string para no perder precisión
+  imagenUrl?: string;
 }
 
 interface Category {
-  id: string;
-  name: string;
-  imagePublicId: string;
-  products: Product[];
+  id: number;
+  nombre: string;
+  imagenUrl?: string;
+  platillos: Product[]; // 👈 Tu backend de Nest.js retorna 'platillos', no 'products'
 }
-
-// Mock de datos (reemplazar con API real)
-const categoriesMock: Category[] = [
-  {
-    id: "1",
-    name: "COCKTAILS",
-    imagePublicId: "https://res.cloudinary.com/dcb1tspbj/image/upload/q_auto/f_auto/v1778826210/Gemini_Generated_Image_hfyqz3hfyqz3hfyq_djzxrr.png",
-    products: [
-      { id: "c1", name: "TEQUILA SUNRISE", price: 32 },
-      { id: "c2", name: "STRAWBERRY DAIQUIRI", price: 25 },
-      { id: "c3", name: "CUBA LIBRE", price: 38 },
-    ],
-  },
-  {
-    id: "2",
-    name: "WINE",
-    imagePublicId: "",
-    products: [
-      {
-        id: "w1",
-        name: "CHARDONNAY HAND OF TIME",
-        description: "Alexander Valley",
-        price: 199,
-      },
-      { id: "w2", name: "MOSCATO CAVIT", description: "Chile", price: 225 },
-      {
-        id: "w3",
-        name: "RIESLING MICHELLE",
-        description: "Santa Lucia Highlands",
-        price: 382,
-      },
-      {
-        id: "w4",
-        name: "MALBEC DONNA PAULA",
-        description: "France",
-        price: 124,
-      },
-    ],
-  },
-  {
-    id: "3",
-    name: "APPETIZERS",
-    imagePublicId: "appetizers-image",
-    products: [
-      {
-        id: "a1",
-        name: "FOUR CHEESE GARLIC BREAD",
-        description: "Toasted French bread topped with romona, cheddar",
-        price: 32,
-      },
-      {
-        id: "a2",
-        name: "SHRIMP SCAMPI",
-        description: "Jumbo shrimp sautéed in white wine, butter and garlic",
-        price: 25,
-      },
-      { id: "a3", name: "FRIED CALAMARI", price: 18 },
-    ],
-  },
-];
 
 export default function MenuPage() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setCategories(categoriesMock);
+    const fetchCategories = async () => {
+      try {
+        // 2. CAMBIO CLAVE: Llamamos a la ruta interna de Next.js.
+        // Esto evita errores de CORS y protege la URL real de tu backend.
+        const res = await fetch("/api/menu/categories");
+
+        if (!res.ok) {
+          throw new Error("Error al cargar los datos del servidor");
+        }
+        const data = await res.json();
+        setCategories(data);
+      } catch (err) {
+        console.error("Error en Fetch Menu:", err);
+        setError("No se pudo cargar el menú. Intenta más tarde.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-surface min-h-screen flex items-center justify-center">
+        <p className="text-text-sec text-lg">Cargando menú...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-surface min-h-screen flex items-center justify-center">
+        <p className="text-red-500 text-lg">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface min-h-screen">
       {/* Hero image a ancho completo */}
       <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden">
         <CldImage
-          src="https://res.cloudinary.com/dcb1tspbj/image/upload/v1778825604/Gemini_Generated_Image_2mv3sr2mv3sr2mv3_uciqpl.png" // Reemplazar con ID real de Cloudinary
+          src="https://res.cloudinary.com/dcb1tspbj/image/upload/v1778825604/Gemini_Generated_Image_2mv3sr2mv3sr2mv3_uciqpl.png"
           fill
           alt="Restaurant background"
           className="object-cover"
@@ -98,7 +78,7 @@ export default function MenuPage() {
         />
       </div>
 
-      {/* Encabezado de texto después de la imagen */}
+      {/* Encabezado de texto */}
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-4xl md:text-6xl font-light tracking-wide text-text">
           MAIN MENU
@@ -108,6 +88,19 @@ export default function MenuPage() {
           Poetry editors, adventurous eaters, whichever your tastes, we have
           something for you.
         </p>
+
+        {/* Lista de enlaces a las categorías */}
+        <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 mt-8">
+          {categories.map((category) => (
+            <a
+              key={`link-${category.id}`}
+              href={`#category-${category.id}`}
+              className="text-text font-medium underline underline-offset-4 decoration-border hover:decoration-brand hover:text-brand transition-all duration-300"
+            >
+              {category.nombre}
+            </a>
+          ))}
+        </div>
       </div>
 
       {/* Categorías con diseño alternado */}
@@ -115,18 +108,28 @@ export default function MenuPage() {
         {categories.map((category, idx) => {
           const isEven = idx % 2 === 0;
           return (
-            <div key={category.id} className="mb-20 last:mb-0">
+            <div
+              key={category.id}
+              id={`category-${category.id}`}
+              className="mb-20 last:mb-0 scroll-mt-32"
+            >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 {isEven ? (
                   <>
                     <div className="order-1 lg:order-1">
                       <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-lg">
-                        <CldImage
-                          src={category.imagePublicId}
-                          fill
-                          alt={category.name}
-                          className="object-cover"
-                        />
+                        {category.imagenUrl ? (
+                          <CldImage
+                            src={category.imagenUrl}
+                            fill
+                            alt={category.nombre}
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full bg-surface-hover/50 text-text/50">
+                            Sin imagen
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="order-2 lg:order-2">
@@ -140,12 +143,18 @@ export default function MenuPage() {
                     </div>
                     <div className="order-1 lg:order-2">
                       <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-lg">
-                        <CldImage
-                          src={category.imagePublicId}
-                          fill
-                          alt={category.name}
-                          className="object-cover"
-                        />
+                        {category.imagenUrl ? (
+                          <CldImage
+                            src={category.imagenUrl}
+                            fill
+                            alt={category.nombre}
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full bg-surface-hover/50 text-text/50">
+                            Sin imagen
+                          </div>
+                        )}
                       </div>
                     </div>
                   </>
@@ -159,38 +168,49 @@ export default function MenuPage() {
   );
 }
 
-// Componente para el menú de cada categoría
-// Componente para el menú de cada categoría
 function CategoryMenu({ category }: { category: Category }) {
+  // 3. Ajustamos el renderizado interno utilizando las propiedades en español que envía NestJS
+  const displayedProducts = category.platillos ? category.platillos.slice(0, 5) : [];
+  const hasMoreThanFive = category.platillos && category.platillos.length > 5;
+
   return (
     <div>
       <h2 className="text-2xl md:text-3xl font-semibold text-text border-b border-border pb-2 block text-center">
-        {category.name}
+        {category.nombre}
       </h2>
-      <div className="mt-6 space-y-4">
-        {category.products.map((product) => (
+
+      <div
+        className="mt-6 space-y-4 relative"
+        style={
+          hasMoreThanFive
+            ? {
+                maskImage: "linear-gradient(to bottom, black 65%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to bottom, black 65%, transparent 100%)",
+              }
+            : undefined
+        }
+      >
+        {displayedProducts.map((product) => (
           <div key={product.id} className="border-b border-border/40 pb-2">
-            {/* Fila principal: nombre + línea punteada + precio */}
             <div className="flex items-baseline">
-              <span className="text-text font-medium">{product.name}</span>
+              <span className="text-text font-medium">{product.nombre}</span>
               <span className="flex-1 mx-2 border-b border-dotted border-text-sec/40"></span>
               <span className="text-brand font-semibold whitespace-nowrap">
-                ${product.price}
+                ${product.precio}
               </span>
             </div>
-            {/* Descripción debajo (opcional) */}
-            {product.description && (
+            {product.descripcion && (
               <p className="text-text-sec text-sm mt-0.5">
-                {product.description}
+                {product.descripcion}
               </p>
             )}
           </div>
         ))}
       </div>
-      {/* Botón Ver todos centrado */}
+
       <div className="mt-6 text-center">
         <Link
-          href={`/menu/categoria/${category.id}`}
+          href={`/menu/categoria/${category.id}?bg=${encodeURIComponent(category.imagenUrl || "")}`}
           className="inline-flex items-center gap-1 text-brand hover:text-brand/80 font-medium text-sm transition-colors"
         >
           Ver todos
@@ -209,4 +229,3 @@ function CategoryMenu({ category }: { category: Category }) {
     </div>
   );
 }
-

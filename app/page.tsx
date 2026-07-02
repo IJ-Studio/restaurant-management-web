@@ -2,12 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Hero from "@/components/landing/Hero";
-import CategoriesSection from "@/components/landing/CategoriesSection";
-import PromosSection from "@/components/landing/PromosSection";
-import MenuSection from "@/components/landing/MenuSection";
-import AboutSection from "@/components/landing/AboutSection";
-import ReservationSection from "@/components/landing/ReservationSection";
-import Footer from "@/components/landing/Footer";
 import { useFetch } from "@/hooks/useFetch";
 
 // Tipos (deben coincidir con lo que devuelve el backend)
@@ -139,7 +133,7 @@ export default function HomePage() {
             "Cocina mexicana de alta gama. Ingredientes de temporada, técnica contemporánea, sabor de siempre."
           }
           ctaText={settings?.heroCtaText || "Ver Menú"}
-          ctaLink={settings?.heroCtaLink || "#menu"}
+          ctaLink={settings?.heroCtaLink || "/menu"}
           stats={
             settings?.stats || [
               // { value: "16+", label: "Años" },
@@ -149,14 +143,14 @@ export default function HomePage() {
           }
         />
 
-        <CategoriesSection
+        {/* <CategoriesSection
           categories={categories || []}
           onSelectCategory={setActiveCategory}
           activeCategory={activeCategory}
           loading={categoriesLoading}
-        />
+        /> */}
 
-        <PromosSection promos={promos || []} loading={promosLoading} />
+        {/* <PromosSection promos={promos || []} loading={promosLoading} />
 
         <MenuSection
           items={filteredMenu}
@@ -170,9 +164,7 @@ export default function HomePage() {
 
         <AboutSection data={about} loading={aboutLoading} />
 
-        <ReservationSection />
-
-        {/* <Footer data={footer} loading={footerLoading} /> */}
+        <ReservationSection /> */}
       </main>
     </>
   );

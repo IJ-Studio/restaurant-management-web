@@ -12,6 +12,9 @@ restaurant-management-platform
 │  │  │  └─ page.tsx
 │  │  └─ reset
 │  │     └─ page.tsx
+│  ├─ (public)
+│  │  └─ reservations
+│  │     └─ page.tsx
 │  ├─ api
 │  │  ├─ admin
 │  │  │  └─ users
@@ -22,6 +25,8 @@ restaurant-management-platform
 │  │  │  ├─ login
 │  │  │  │  └─ route.ts
 │  │  │  ├─ logout
+│  │  │  │  └─ route.ts
+│  │  │  ├─ me
 │  │  │  │  └─ route.ts
 │  │  │  └─ register
 │  │  │     └─ route.ts
@@ -44,15 +49,14 @@ restaurant-management-platform
 │  │  ├─ menu
 │  │  │  ├─ categories
 │  │  │  │  └─ route.ts
-│  │  │  ├─ items
-│  │  │  │  └─ [id]
-│  │  │  │     └─ route.ts
 │  │  │  └─ _meta.ts
 │  │  ├─ public
 │  │  │  ├─ combos
 │  │  │  │  └─ route.ts
 │  │  │  └─ cupones
 │  │  │     └─ route.ts
+│  │  ├─ reservations
+│  │  │  └─ route.ts
 │  │  └─ settings
 │  │     └─ route.ts
 │  ├─ dashboard
@@ -107,7 +111,12 @@ restaurant-management-platform
 │  │  ├─ categoria
 │  │  │  └─ [slug]
 │  │  │     └─ page.tsx
-│  │  └─ page.tsx
+│  │  ├─ page.tsx
+│  │  ├─ pedido
+│  │  │  └─ page.tsx
+│  │  └─ producto
+│  │     └─ [id]
+│  │        └─ page.tsx
 │  ├─ not-found.module.css
 │  ├─ not-found.tsx
 │  ├─ page.tsx
@@ -137,6 +146,7 @@ restaurant-management-platform
 │  │  ├─ Footer.tsx
 │  │  ├─ Hero.tsx
 │  │  ├─ MenuSection.tsx
+│  │  ├─ MolinoAnimado.jsx
 │  │  ├─ PromosSection.tsx
 │  │  └─ ReservationSection.tsx
 │  ├─ layout
@@ -149,6 +159,9 @@ restaurant-management-platform
 │  │  ├─ AppProviders.tsx
 │  │  ├─ DesignSystemProvider.tsx
 │  │  └─ ThemeProvider.tsx
+│  ├─ reservations
+│  │  ├─ ReservationSidebar.tsx
+│  │  └─ TableMap.tsx
 │  ├─ ThemeToggle.tsx
 │  └─ ui
 │     ├─ Button.tsx
@@ -161,6 +174,8 @@ restaurant-management-platform
 │  ├─ restaurant.config.ts
 │  └─ roles.config.ts
 ├─ delete_cron_date.cjs
+├─ docs
+│  └─ diagnostico-frontend.md
 ├─ drizzle
 │  ├─ 0002_sturdy_lord_tyger.sql
 │  └─ meta
@@ -296,9 +311,11 @@ restaurant-management-platform
 │  ├─ useLockout.ts
 │  ├─ useMediaQuery.ts
 │  ├─ useRedirect.ts
+│  ├─ useReservationAvailability.ts
 │  ├─ useResponsiveNavbar.ts
 │  └─ useTheme.ts
 ├─ lib
+│  ├─ api.ts
 │  ├─ db.ts
 │  ├─ schema.ts
 │  ├─ session.ts
@@ -308,6 +325,8 @@ restaurant-management-platform
 ├─ package.json
 ├─ pnpm-lock.yaml
 ├─ postcss.config.mjs
+├─ providers
+│  └─ AuthProvider.tsx
 ├─ proxy.ts
 ├─ README.md
 ├─ requisitos funcionales.md
@@ -336,6 +355,7 @@ restaurant-management-platform
 │  │  ├─ middleware.ts
 │  │  └─ server.ts
 │  └─ validators.tsx
-└─ vercel.json
+├─ vercel.json
+└─ workplan.md
 
 ```
