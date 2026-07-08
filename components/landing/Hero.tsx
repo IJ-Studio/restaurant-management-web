@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Utensils, Calendar } from "lucide-react";
-import MolinoAnimado from "@/components/landing/MolinoAnimado";
+import PlatoBocetoUltraDetallado from "@/components/landing/Plato";
 import { useTheme } from "@/hooks/useTheme";
 // Importamos el servicio que ya lee la configuración (horarios) del backend
 import { SettingsService } from "@/features/shared/services/dataService";
@@ -127,7 +127,7 @@ export default function Hero({
         </div>
 
         <div className="hidden lg:flex lg:w-[50%] w-full items-start justify-end aspect-square">
-          <MolinoAnimado
+          <PlatoBocetoUltraDetallado
             colorClassName="text-[var(--color-brand)]"
             bgColorClassName="bg-transparent"
             fillColor={molinoFillColor}

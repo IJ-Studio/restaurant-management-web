@@ -8,11 +8,15 @@ restaurant-management-platform
 │  │  ├─ layout.tsx
 │  │  ├─ login
 │  │  │  └─ page.tsx
+│  │  ├─ profile
+│  │  │  └─ page.tsx
 │  │  ├─ register
 │  │  │  └─ page.tsx
 │  │  └─ reset
 │  │     └─ page.tsx
 │  ├─ (public)
+│  │  ├─ about
+│  │  │  └─ page.tsx
 │  │  └─ reservations
 │  │     └─ page.tsx
 │  ├─ api
@@ -147,6 +151,7 @@ restaurant-management-platform
 │  │  ├─ Hero.tsx
 │  │  ├─ MenuSection.tsx
 │  │  ├─ MolinoAnimado.jsx
+│  │  ├─ Plato.jsx
 │  │  ├─ PromosSection.tsx
 │  │  └─ ReservationSection.tsx
 │  ├─ layout

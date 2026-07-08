@@ -81,12 +81,12 @@ export default function MenuPage() {
       {/* Encabezado de texto */}
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-4xl md:text-6xl font-light tracking-wide text-text">
-          MAIN MENU
+          MENÚ
         </h1>
         <div className="w-16 h-0.5 bg-brand mx-auto my-4"></div>
         <p className="max-w-2xl mx-auto text-text-sec text-sm md:text-base">
-          Poetry editors, adventurous eaters, whichever your tastes, we have
-          something for you.
+Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemos algo especial para ti.
+
         </p>
 
         {/* Lista de enlaces a las categorías */}

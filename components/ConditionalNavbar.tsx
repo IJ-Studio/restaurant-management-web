@@ -12,8 +12,6 @@ export default function ConditionalNavbar() {
 
   const [user, setUser] = useState<any>(null);
   const [cartCount, setCartCount] = useState<number>(3);
-
-  // Estado del tema (basado en tu ThemeToggle original)
   const [isDark, setIsDark] = useState(false);
 
   // Sincronización inicial del tema
@@ -34,10 +32,8 @@ export default function ConditionalNavbar() {
     }
   }, []);
 
-  // 🚨 SALVAGUARDA ANTI-BUCLE: Solo hace fetch si no hay datos de sesión en memoria
+  // CONSULTA DE SESIÓN CONTINUA AL CAMBIAR DE RUTA
   useEffect(() => {
-    if (user) return;
-
     const checkSession = async () => {
       try {
         const res = await fetch("/api/auth/me");
@@ -52,7 +48,7 @@ export default function ConditionalNavbar() {
       }
     };
     checkSession();
-  }, [pathname, user]);
+  }, [pathname]);
 
   if (pathname?.startsWith("/dashboard/admin")) {
     return null;
@@ -70,7 +66,7 @@ export default function ConditionalNavbar() {
     pathname?.startsWith("/profile") ||
     pathname?.startsWith("/settings")
   ) {
-    return <Navbar />;
+    return <Navbar cartCount={cartCount} showThemeToggle={false} />;
   }
 
   const isMenuRoute = pathname?.startsWith("/menu");
@@ -78,17 +74,36 @@ export default function ConditionalNavbar() {
   const isPedidoRoute = pathname === "/menu/pedido";
   const applyOverlay = isMenuRoute && !isProductDetailRoute && !isPedidoRoute;
 
+  // ─── LÓGICA INTELIGENTE DE CERRAR SESIÓN ────────────────────────
   const handleLogout = async () => {
     try {
+      // 1. Llamamos a tu endpoint para limpiar las cookies HTTP-Only de sesión en el servidor
       await fetch("/api/auth/logout", { method: "POST" });
     } catch (error) {
       console.error("Error al cerrar sesión mediante API:", error);
     }
 
+    // 2. Limpieza de almacenamiento local y cookies del cliente
     document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     localStorage.removeItem("authToken");
-    setUser(null);
-    router.push("/login");
+    setUser(null); // Reseteamos el estado para que el Navbar reaccione de inmediato
+
+    // 3. Evaluar la ruta actual para decidir la redirección
+    const rutaActual = pathname || "/";
+
+    // Definimos qué prefijos o rutas son estrictamente privadas/requieren autorización
+    const esRutaProtegida =
+      rutaActual.startsWith("/dashboard") ||
+      rutaActual.startsWith("/profile") ||
+      rutaActual.startsWith("/settings");
+
+    if (esRutaProtegida) {
+      // Si está en una ruta privada, lo mandamos al landing page principal del sitio
+      router.push("/");
+    } else {
+      // Si está en una ruta pública (como /menu o /about), simplemente refrescamos la página actual
+      window.location.reload();
+    }
   };
 
   const toggleTheme = () => {
@@ -104,7 +119,6 @@ export default function ConditionalNavbar() {
   };
 
   // ─── ICONOS SVGS ─────────────────────────────────────────────────
-
   const iconUserGeneric = (
     <svg className="w-4 h-4" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
       <path fill="currentColor" d="m1.5 13v1a.5.5 0 0 0 .3379.4731 18.9718 18.9718 0 0 0 6.1621 1.0269 18.9629 18.9629 0 0 0 6.1621-1.0269.5.5 0 0 0 .3379-.4731v-1a6.5083 6.5083 0 0 0 -4.461-6.1676 3.5 3.5 0 1 0 -4.078 0 6.5083 6.5083 0 0 0 -4.461 6.1676zm4-9a2.5 2.5 0 1 1 2.5 2.5 2.5026 2.5026 0 0 1 -2.5-2.5zm2.5 3.5a5.5066 5.5066 0 0 1 5.5 5.5v.6392a18.08 18.08 0 0 1 -11 0v-.6392a5.5066 5.5066 0 0 1 5.5-5.5z"/>
@@ -113,8 +127,7 @@ export default function ConditionalNavbar() {
 
   const iconDashboard = (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
   );
 
@@ -153,9 +166,11 @@ export default function ConditionalNavbar() {
   const themeLabel = `Tema: ${isDark ? "Oscuro" : "Claro"}`;
   let dropdownItems: DropdownMenuItem[] = [];
 
-  if (user && user.user) {
+  const activeUser = user?.user || user;
+
+  if (activeUser) {
     dropdownItems = [
-      { label: "Mi Cuenta", href: "/dashboard", icon: iconDashboard },
+      { label: "Mi Cuenta", href: "/profile", icon: iconDashboard },
       { label: themeLabel, action: toggleTheme, icon: iconTheme },
       { label: "Cerrar sesión", action: handleLogout, isDestructive: true, icon: iconLogout },
     ];
@@ -169,7 +184,7 @@ export default function ConditionalNavbar() {
 
   const profileTrigger = (
     <div className={cn(
-      "flex items-center gap-2.5 p-1 rounded-xl transition duration-150",
+      "flex items-center gap-2.5 p-1 rounded-xl transition duration-150 cursor-pointer",
       applyOverlay ? "text-white hover:text-white/80" : "text-[var(--color-text)]"
     )}>
       <div className={cn(
@@ -178,16 +193,16 @@ export default function ConditionalNavbar() {
       )}>
         {iconUserGeneric}
       </div>
-      {user && user.user && (
+      {activeUser && (
         <div className="flex flex-col text-left max-w-[130px]">
           <span className="text-sm font-bold truncate tracking-tight">
-            {`${user.user.name || ""} ${user.user.lastname || ""}`.trim() || "Usuario"}
+            {`${activeUser.name || ""} ${activeUser.lastname || ""}`.trim() || "Usuario"}
           </span>
           <span className={cn(
             "text-xs font-normal truncate opacity-75",
             applyOverlay ? "text-white/80" : "text-[var(--color-text-sec)]"
           )}>
-            {user.user.email}
+            {activeUser.email}
           </span>
         </div>
       )}
@@ -197,7 +212,7 @@ export default function ConditionalNavbar() {
   const publicLinks = [
     { label: "Promociones", href: "/Promociones" },
     { label: "Menú", href: "/menu" },
-    { label: "Nosotros", href: "/nosotros" },
+    { label: "Nosotros", href: "/about" },
     { label: "Reservas", href: "/reservations" },
     {
       label: <Dropdown toggleContent={profileTrigger} menuItems={dropdownItems} />,

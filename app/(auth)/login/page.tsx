@@ -12,7 +12,7 @@ import { emailRegex } from "@/utils/validators";
 import { SettingsService } from "@/features/shared/services/dataService";
 import { type SystemSettings } from "@/features/shared/data/restaurantData";
 import { useDispatch } from "react-redux";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { setUser } from "@/store/slices/authSlice";
 
 export default function LoginPage() {
@@ -23,6 +23,11 @@ export default function LoginPage() {
 
   const dispatch = useDispatch();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const callbackUrl = searchParams.get("callbackUrl");
+  const pendingAction = searchParams.get("action");
+  const pendingCantidad = searchParams.get("cantidad");
 
   const isEmailValid = emailRegex.test(email);
   const isFormReady = isEmailValid && password.length >= 8;
@@ -31,7 +36,6 @@ export default function LoginPage() {
     setSettings(SettingsService.getSettings());
   }, []);
 
-  // Lockout configurado para errores de bloqueo
   const lockout = useLockout({
     lockoutPatterns: ["Debes esperar", "Demasiados intentos"],
     extractSeconds: (msg) => {
@@ -40,7 +44,6 @@ export default function LoginPage() {
     },
   });
 
-  // Acción asíncrona: login
   const loginAction = async () => {
     const res = await fetch("/api/auth/login", {
       method: "POST",
@@ -74,6 +77,7 @@ export default function LoginPage() {
         5: "cliente",
       };
       const roleName = roleNames[roleId] || "cliente";
+
       const sessionUser = {
         id: String(data.user.id),
         name: data.user.name || "",
@@ -81,10 +85,20 @@ export default function LoginPage() {
         email: data.user.email,
         roleName: roleName as any,
       };
+
+      // Guardamos en LocalStorage por compatibilidad local
+      localStorage.setItem("user", JSON.stringify(sessionUser));
+      // Inyectamos inmediatamente al Store de Redux para que los hooks del producto reaccionen al instante
       dispatch(setUser(sessionUser));
+
       setTimeout(() => {
         if (roleName === "cliente") {
-          router.push("/menu");
+          if (callbackUrl) {
+            const nextDestination = `${callbackUrl}?autoExecute=${pendingAction || ""}&qty=${pendingCantidad || 1}`;
+            router.push(nextDestination);
+          } else {
+            router.push("/menu");
+          }
         } else {
           router.push(`/dashboard/${roleName}`);
         }
@@ -97,7 +111,6 @@ export default function LoginPage() {
     },
   });
 
-  // El error del hook solo se muestra si no hay bloqueo activo
   const displayError = error && lockout.waitSeconds === null ? error : null;
 
   return (
@@ -113,8 +126,7 @@ export default function LoginPage() {
           {displayError && <div className="alert-error">{displayError}</div>}
           {lockout.waitSeconds !== null && (
             <div className="alert-warning">
-              Debes esperar {lockout.waitSeconds} segundos antes de intentar
-              nuevamente.
+              Debes esperar {lockout.waitSeconds} segundos antes de intentar nuevamente.
             </div>
           )}
 
@@ -175,7 +187,7 @@ export default function LoginPage() {
             <Button
               type="button"
               label="Registrarse"
-              url="/register"
+              url={`/register?callbackUrl=${encodeURIComponent(callbackUrl || "")}&action=${pendingAction || ""}&cantidad=${pendingCantidad || ""}`}
               className="link-secondary"
             />
           </p>
