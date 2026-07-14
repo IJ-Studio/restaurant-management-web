@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { ShoppingBag, XCircle, RefreshCw, Clock, Truck, MapPin, CreditCard, CheckCircle2 } from "lucide-react";
+import { ShoppingBag, XCircle, RefreshCw, Clock, Truck, Send } from "lucide-react";
 import { CldImage } from "next-cloudinary";
 import Link from "next/link";
 
@@ -34,9 +34,6 @@ export default function ResumenPedidoPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // FIX: cuando el usuario agrega un producto "Para Domicilio" desde la
-  // página del producto, ahora lo mandamos aquí con ?tab=domicilio para
-  // que la pestaña correcta quede seleccionada automáticamente.
   useEffect(() => {
     const tabParam = searchParams?.get("tab");
     if (tabParam === "domicilio" || tabParam === "mesa") {
@@ -44,88 +41,106 @@ export default function ResumenPedidoPage() {
     }
   }, [searchParams]);
 
-  // 1. OBTENER COMANDAS DE LA MESA
-  const fetchOrdersFromDB = async (targetMesa: string) => {
+  // 1. OBTENER COMANDAS DE LA MESA (carrito 'pendiente' + ya enviadas)
+  // FIX: ahora requiere usuarioId también. Antes solo se filtraba por
+  // mesaId, así que cualquiera que tuviera esa mesa guardada en
+  // localStorage veía las órdenes de cualquier cliente, incluso después
+  // de cerrar sesión.
+  const fetchOrdersFromDB = async (targetMesa: string, userId: string) => {
     setLoadingDb(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/pedidos/usuario?mesaId=${targetMesa}`);
-      if (res.ok) {
-        const data = await res.json();
-        setDbOrders(data);
+      const res = await fetch(`${apiUrl}/pedidos/usuario?mesaId=${targetMesa}&usuarioId=${userId}`);
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        console.error(`Error ${res.status} al consultar comandas de mesa:`, errBody);
+        return;
       }
+
+      const data = await res.json();
+      setDbOrders(data);
     } catch (error) {
-      console.error("Error consultando comandas activas:", error);
+      console.error("Error de red consultando comandas activas:", error);
     } finally {
       setLoadingDb(false);
     }
   };
 
   // 2. OBTENER PEDIDOS A DOMICILIO
-const fetchDeliveryOrders = async (userId: string) => {
-  setLoadingDelivery(true);
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const token = localStorage.getItem("authToken");
+  const fetchDeliveryOrders = async (userId: string) => {
+    setLoadingDelivery(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const token = localStorage.getItem("authToken");
 
-    const url = `${apiUrl}/pedidos/usuario?usuarioId=${userId}&tipo=domicilio`;
-    console.log("Consultando pedidos a domicilio con URL:", url, "| userId recibido:", userId, typeof userId);
+      const url = `${apiUrl}/pedidos/usuario?usuarioId=${userId}&tipo=domicilio`;
 
-    const res = await fetch(url, {
-      headers: {
-        ...(token ? { "Authorization": `Bearer ${token}` } : {})
+      const res = await fetch(url, {
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        }
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        console.error(`Error ${res.status} al consultar pedidos a domicilio:`, errBody);
+        return;
       }
-    });
 
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => "");
-      console.error(`Error ${res.status} al consultar pedidos a domicilio:`, errBody);
-      return;
+      const data = await res.json();
+      setDeliveryOrders(data);
+    } catch (error) {
+      console.error("Error de red consultando órdenes a domicilio:", error);
+    } finally {
+      setLoadingDelivery(false);
     }
-
-    const data = await res.json();
-    console.log("Pedidos a domicilio recibidos:", data);
-    setDeliveryOrders(data);
-  } catch (error) {
-    console.error("Error de red consultando órdenes a domicilio:", error);
-  } finally {
-    setLoadingDelivery(false);
-  }
-};
+  };
 
   // Sincronización de Mesa e Identidad del Cliente
-  useEffect(() => {
-    const urlMesa = searchParams?.get("mesaQuery");
-    const savedMesa = urlMesa || localStorage.getItem("num_mesa");
+  // FIX: antes fetchOrdersFromDB(savedMesa) se disparaba de inmediato, sin
+  // esperar a saber quién es el usuario. Ahora primero se resuelve la
+  // sesión y, con ese usuarioId en mano, se piden tanto las comandas de
+  // mesa como los pedidos a domicilio — ambos ligados a la cuenta real,
+  // no a lo que haya quedado guardado en localStorage.
+useEffect(() => {
+  const urlMesa = searchParams?.get("mesaQuery");
 
-    if (savedMesa) {
-      setMesaId(savedMesa);
-      if (urlMesa && !localStorage.getItem("num_mesa")) {
-        localStorage.setItem("num_mesa", urlMesa);
-      }
-      fetchOrdersFromDB(savedMesa);
-    }
+  // La URL siempre manda: si el cliente viene de agregar un producto en
+  // una mesa distinta a la que tenía cacheada, actualizamos el localStorage
+  // en vez de dejarlo pegado al primer valor que se guardó alguna vez.
+  if (urlMesa) {
+    localStorage.setItem("num_mesa", urlMesa);
+  }
 
-    // Obtener sesión para los pedidos a domicilio si está logueado
-    const verificarUsuario = async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const sessionData = await res.json();
-          const activeUser = sessionData?.user || sessionData;
-          if (activeUser?.id) {
-            setUsuarioId(activeUser.id);
-            fetchDeliveryOrders(activeUser.id);
+  const savedMesa = urlMesa || localStorage.getItem("num_mesa");
+
+  if (savedMesa) {
+    setMesaId(savedMesa);
+  }
+
+  const verificarUsuario = async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.ok) {
+        const sessionData = await res.json();
+        const activeUser = sessionData?.user || sessionData;
+        if (activeUser?.id) {
+          setUsuarioId(activeUser.id);
+          fetchDeliveryOrders(activeUser.id);
+          if (savedMesa) {
+            fetchOrdersFromDB(savedMesa, activeUser.id);
           }
         }
-      } catch (e) {
-        console.error("Error validando cuenta para domicilios:", e);
       }
-    };
-    verificarUsuario();
-  }, [searchParams]);
+    } catch (e) {
+      console.error("Error validando cuenta para pedidos:", e);
+    }
+  };
+  verificarUsuario();
+}, [searchParams]);
 
-  // Manejo de Cancelación de Comandas en Mesa
+  // Cancelación de una comanda YA enviada a cocina (sin cambios, ventana de 2 min)
   const handleCancelarOrden = async (ordenId: string) => {
     const confirmar = confirm("¿Estás seguro de que deseas cancelar este pedido? Se notificará a la cocina.");
     if (!confirmar) return;
@@ -139,14 +154,68 @@ const fetchDeliveryOrders = async (userId: string) => {
 
       if (!res.ok) throw new Error("No se pudo cancelar el pedido.");
       alert("Pedido cancelado exitosamente.");
-      if (mesaId) fetchOrdersFromDB(mesaId);
+      if (mesaId && usuarioId) fetchOrdersFromDB(mesaId, usuarioId);
     } catch (error: any) {
       alert(error.message || "Error al intentar cancelar.");
     }
   };
 
-  const handleProcederAlPagoDomicilio = (pedidoId: number) => {
-    router.push(`/menu/pedido/checkout?orderId=${pedidoId}`);
+  // FIX (nuevo): quita un producto individual mientras su pedido siga en
+  // 'pendiente' (carrito). Sirve tanto para mesa como para domicilio.
+  const handleDescartarItem = async (itemId: number, tipo: "mesa" | "domicilio") => {
+    const confirmar = confirm("¿Quitar este producto de tu pedido?");
+    if (!confirmar) return;
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/pedidos/item/${itemId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "No se pudo quitar el producto.");
+      }
+
+      if (tipo === "mesa" && mesaId && usuarioId) {
+        fetchOrdersFromDB(mesaId, usuarioId);
+      } else if (tipo === "domicilio" && usuarioId) {
+        fetchDeliveryOrders(usuarioId);
+      }
+    } catch (error: any) {
+      alert(error.message || "Ocurrió un error al quitar el producto.");
+    }
+  };
+
+  // FIX (nuevo): manda a cocina el carrito de mesa que estaba 'pendiente'.
+  const handleConfirmarMesa = async (ordenId: string) => {
+    const confirmar = confirm("¿Enviar este pedido a cocina? Ya no podrás quitar productos después de confirmarlo.");
+    if (!confirmar) return;
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/pedidos/confirmar/${ordenId}`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "No se pudo confirmar el pedido.");
+      }
+
+      alert("¡Tu pedido fue enviado a cocina!");
+      if (mesaId && usuarioId) fetchOrdersFromDB(mesaId, usuarioId);
+    } catch (error: any) {
+      alert(error.message || "Ocurrió un error al confirmar el pedido.");
+    }
+  };
+
+  // FIX (sin cambios de lógica): sigue llevando al checkout, que es donde
+  // se pedirá la dirección y se mostrará el total real antes de pagar.
+  const handleConfirmarDomicilio = () => {
+    if (!deliveryOrders.length) return;
+    const ordenPendiente = deliveryOrders.find((o: any) => o.estatus === "pendiente") || deliveryOrders[0];
+    router.push(`/menu/pedido/checkout?orderId=${ordenPendiente.id}`);
   };
 
   const handleClearMesaCache = () => {
@@ -173,6 +242,11 @@ const fetchDeliveryOrders = async (userId: string) => {
     }
   };
 
+  // FIX (nuevo): separamos el carrito de mesa (aún editable) de las
+  // comandas que ya se mandaron a cocina, ambos vienen en dbOrders.
+  const carritoMesa = dbOrders.find((o: any) => o.estatus === "pendiente");
+  const comandasEnviadas = dbOrders.filter((o: any) => o.estatus !== "pendiente");
+
   return (
     <div className="bg-background min-h-screen text-text pb-12">
       <div className="container mx-auto px-4 max-w-xl pt-32">
@@ -190,7 +264,7 @@ const fetchDeliveryOrders = async (userId: string) => {
             )}
             {activeTab === "domicilio" && (
               <p className="text-xs text-text-sec mt-1">
-                Historial de compras con envío a tu residencia.
+                Estos son los productos que llevas hasta ahora. Aún no se ha confirmado el pedido.
               </p>
             )}
           </div>
@@ -228,19 +302,68 @@ const fetchDeliveryOrders = async (userId: string) => {
           </button>
         </div>
 
-        {/* ─── VISTA 1: COMANDAS EN MESA ─── */}
+        {/* ─── VISTA 1: MESA (carrito pendiente + comandas ya enviadas) ─── */}
         {activeTab === "mesa" && (
           <>
-            {dbOrders.length > 0 ? (
+            {(carritoMesa || comandasEnviadas.length > 0) ? (
               <div className="space-y-6">
                 <div className="bg-brand/5 border border-brand/20 p-4 rounded-2xl flex items-center justify-between">
-                  <span className="text-xs font-bold text-brand uppercase tracking-wider">Comandas en Cocina</span>
-                  <button onClick={() => mesaId && fetchOrdersFromDB(mesaId)} className="text-brand p-1">
+                  <span className="text-xs font-bold text-brand uppercase tracking-wider">Tu mesa</span>
+                  <button onClick={() => mesaId && usuarioId && fetchOrdersFromDB(mesaId, usuarioId)} className="text-brand p-1">
                     <RefreshCw size={14} className={loadingDb ? "animate-spin" : ""} />
                   </button>
                 </div>
 
-                {dbOrders.map((orden: any) => {
+                {/* CARRITO PENDIENTE: aún se puede editar, todavía no está en cocina */}
+                {carritoMesa && (
+                  <>
+                    <div className="bg-surface border border-border rounded-2xl p-4 shadow-sm space-y-4">
+                      <div className="flex justify-between items-center pb-3 border-b border-border/50">
+                        <span className="text-xs font-bold text-text/60 uppercase tracking-wider">Productos por confirmar</span>
+                        <span className="text-xs px-2.5 py-1 rounded-full border font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border-amber-500/20">
+                          pendiente
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        {carritoMesa.ordenItems?.map((item: any) => (
+                          <div key={item.id} className="flex gap-3 items-center bg-background/40 p-2 rounded-xl border border-border/40">
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
+                              {item.platillo?.imagenUrl ? (
+                                <CldImage src={item.platillo.imagenUrl} fill alt="Platillo" className="object-cover" sizes="48px" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-[10px] text-text/30">S/I</div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-semibold truncate text-text">{item.platillo?.nombre}</h4>
+                              <p className="text-xs text-text-sec">{item.cantidad} u. × ${parseFloat(item.precioUnitario).toFixed(2)}</p>
+                            </div>
+                            <button
+                              onClick={() => handleDescartarItem(item.id, "mesa")}
+                              title="Quitar producto"
+                              className="text-red-400 hover:text-red-500 p-1.5 rounded-lg transition-colors"
+                            >
+                              <XCircle size={18} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* BOTÓN CONFIRMAR: fuera del contenedor de productos */}
+                    <button
+                      onClick={() => handleConfirmarMesa(carritoMesa.id)}
+                      className="w-full bg-brand hover:bg-brand/90 text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-xs"
+                    >
+                      <Send size={16} />
+                      Confirmar y Enviar a Cocina
+                    </button>
+                  </>
+                )}
+
+                {/* COMANDAS YA ENVIADAS A COCINA: mismo diseño que ya tenías */}
+                {comandasEnviadas.map((orden: any) => {
                   const cancelable = esCancelable(orden.tiempoApertura) && orden.estatus === "abierta";
 
                   return (
@@ -310,77 +433,64 @@ const fetchDeliveryOrders = async (userId: string) => {
         {activeTab === "domicilio" && (
           <div className="space-y-4">
             <div className="bg-surface border border-border p-4 rounded-2xl flex items-center justify-between shadow-sm">
-              <span className="text-xs font-bold text-text/60 uppercase tracking-wider">Repartos en curso</span>
+              <span className="text-xs font-bold text-text/60 uppercase tracking-wider">Tus productos</span>
               <button onClick={() => usuarioId && fetchDeliveryOrders(usuarioId)} className="text-text/60 p-1">
                 <RefreshCw size={14} className={loadingDelivery ? "animate-spin" : ""} />
               </button>
             </div>
 
             {deliveryOrders.length > 0 ? (
-              deliveryOrders.map((pedido: any) => (
-                <div key={pedido.id} className="bg-surface border border-border rounded-2xl p-4 shadow-sm space-y-4">
+              <>
+                {deliveryOrders.map((pedido: any) => (
+                  <div key={pedido.id} className="bg-surface border border-border rounded-2xl p-4 shadow-sm space-y-4">
 
-                  {/* Header Domicilio */}
-                  <div className="flex justify-between items-center pb-3 border-b border-border/50">
-                    <div>
-                      <span className="text-xs font-bold text-text/40 block">ORDEN REPARTO #{pedido.id.toString().slice(0,8).toUpperCase()}</span>
-                      <span className="text-xs text-text-sec flex items-center gap-1 mt-0.5">
-                        <Clock size={12} /> {new Date(pedido.creadoEn).toLocaleDateString()}
+                    <div className="flex justify-between items-center pb-3 border-b border-border/50">
+                      <div>
+                        <span className="text-xs font-bold text-text/40 block">PEDIDO #{pedido.id.toString().slice(0,8).toUpperCase()}</span>
+                        <span className="text-xs text-text-sec flex items-center gap-1 mt-0.5">
+                          <Clock size={12} /> {new Date(pedido.creadoEn).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <span className={`text-xs px-2.5 py-1 rounded-full border font-bold uppercase tracking-wider ${getEstatusDeliveryEstilo(pedido.estatus)}`}>
+                        {pedido.estatus}
                       </span>
                     </div>
-                    <span className={`text-xs px-2.5 py-1 rounded-full border font-bold uppercase tracking-wider ${getEstatusDeliveryEstilo(pedido.estatus)}`}>
-                      {pedido.estatus}
-                    </span>
-                  </div>
 
-                  {/* Items Domicilio */}
-                  <div className="space-y-2">
-                    {pedido.items?.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center text-sm">
-                        <span className="text-text/80 text-xs">
-                          <strong className="text-brand font-bold">{item.cantidad || 1}x</strong> {item.nombre || "Platillo"}
-                        </span>
-                        <span className="font-semibold text-text/60 text-xs">${parseFloat(item.precio || item.precioUnitario).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Dirección Física */}
-<div className="bg-background/50 border border-border/40 rounded-xl p-3 flex items-start gap-2 text-xs text-text-sec">
-  <MapPin className="text-brand shrink-0 mt-0.5" size={14} />
-  <div>
-    <p className="font-bold text-text/80">Entrega en:</p>
-    <p className="text-[11px] mt-0.5">{pedido.direccion?.calle} #{pedido.direccion?.numero}, Col. {pedido.direccion?.colonia}</p>
-  </div>
-</div>
-
-                  {/* Footer con Importe Total y Pasarela */}
-                  <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                    <div>
-                      <span className="text-xs text-text-sec block">Total del envío:</span>
-                      <span className="text-lg font-black text-brand">${parseFloat(pedido.total).toFixed(2)}</span>
+                    <div className="space-y-2">
+                      {pedido.items?.map((item: any) => (
+                        <div key={item.id} className="flex gap-3 items-center bg-background/40 p-2 rounded-xl border border-border/40">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-semibold truncate text-text">{item.nombre || "Platillo"}</h4>
+                            <p className="text-xs text-text-sec">
+                              {item.cantidad || 1} u. × ${parseFloat(item.precio || item.precioUnitario).toFixed(2)}
+                            </p>
+                          </div>
+                          {pedido.estatus === "pendiente" && (
+                            <button
+                              onClick={() => handleDescartarItem(item.id, "domicilio")}
+                              title="Quitar producto"
+                              className="text-red-400 hover:text-red-500 p-1.5 rounded-lg transition-colors"
+                            >
+                              <XCircle size={18} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
-
-                    {pedido.estatus === "pendiente" ? (
-                      <button
-                        onClick={() => handleProcederAlPagoDomicilio(pedido.id)}
-                        className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer animate-pulse"
-                      >
-                        <CreditCard size={14} />
-                        Pagar Orden
-                      </button>
-                    ) : (
-                      <div className="text-xs font-bold text-green-500 flex items-center gap-1 bg-green-500/10 px-3 py-2 rounded-xl border border-green-500/20">
-                        <CheckCircle2 size={14} /> Liquidado
-                      </div>
-                    )}
                   </div>
+                ))}
 
-                </div>
-              ))
+                <button
+                  onClick={handleConfirmarDomicilio}
+                  className="w-full bg-brand hover:bg-brand/90 text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-xs"
+                >
+                  <Send size={16} />
+                  Confirmar
+                </button>
+              </>
             ) : (
               <div className="bg-surface p-8 border border-border rounded-2xl text-center space-y-4">
-                <p className="text-text/60 text-sm">No cuentas con pedidos registrados para reparto a domicilio.</p>
+                <p className="text-text/60 text-sm">No cuentas con productos agregados para reparto a domicilio.</p>
                 <Link href="/menu" className="bg-brand text-white text-xs font-bold px-4 py-3 rounded-xl inline-block uppercase tracking-wider">Ir a comprar al Menú</Link>
               </div>
             )}

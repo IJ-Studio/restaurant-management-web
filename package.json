@@ -3,6 +3,8 @@
 	"dependencies": {
 		"@radix-ui/react-popover": "^1.1.15",
 		"@reduxjs/toolkit": "^2.11.2",
+		"@stripe/react-stripe-js": "^6.7.0",
+		"@stripe/stripe-js": "^9.9.0",
 		"@supabase/ssr": "^0.10.2",
 		"@supabase/supabase-js": "^2.103.0",
 		"@types/grecaptcha": "^3.0.9",

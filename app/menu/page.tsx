@@ -170,8 +170,8 @@ Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemo
 
 function CategoryMenu({ category }: { category: Category }) {
   // 3. Ajustamos el renderizado interno utilizando las propiedades en español que envía NestJS
-  const displayedProducts = category.platillos ? category.platillos.slice(0, 5) : [];
-  const hasMoreThanFive = category.platillos && category.platillos.length > 5;
+  const displayedProducts = category.platillos ? category.platillos.slice(0, 4) : [];
+  const hasMoreThanFive = category.platillos && category.platillos.length > 4;
 
   return (
     <div>

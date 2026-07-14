@@ -79,28 +79,26 @@ export default function ProductDetailPage() {
   // Cargar las mesas de la base de datos cuando se abre el modal
   useEffect(() => {
     if (isModalOpen) {
-const fetchMesasDeBD = async () => {
-  setLoadingMesas(true);
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const res = await fetch(`${apiUrl}/mesas`);
+      const fetchMesasDeBD = async () => {
+        setLoadingMesas(true);
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+          const res = await fetch(`${apiUrl}/mesas`);
 
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => "");
-      console.error(`Error ${res.status} al consultar mesas:`, errBody);
-      return;
-    }
+          if (!res.ok) {
+            const errBody = await res.text().catch(() => "");
+            console.error(`Error ${res.status} al consultar mesas:`, errBody);
+            return;
+          }
 
-    const data = await res.json();
-    console.log("Mesas recibidas:", data); // temporal, para debug
-    setMesas(data);
-  } catch (error) {
-    console.error("Error de red consultando mesas:", error);
-  } finally {
-    setLoadingMesas(false);
-  }
-};
-
+          const data = await res.json();
+          setMesas(data);
+        } catch (error) {
+          console.error("Error de red consultando mesas:", error);
+        } finally {
+          setLoadingMesas(false);
+        }
+      };
       fetchMesasDeBD();
     }
   }, [isModalOpen]);
@@ -168,7 +166,10 @@ const fetchMesasDeBD = async () => {
 
       const data = await res.json();
 
-      alert(`¡Marchando! Tu pedido de ${cantidad}x ${platillo?.nombre} ha sido enviado a la cocina para la mesa ${data.mesaId || mesaFinal}.`);
+      // FIX: el producto ya NO se manda a cocina de inmediato, solo se
+      // agrega al carrito de la mesa. El envío real a cocina ahora pasa
+      // en /menu/pedido cuando el cliente presiona "Confirmar".
+      alert(`Agregado a tu pedido: ${cantidad}x ${platillo?.nombre}. Revísalo en "Mis Pedidos" y confírmalo cuando estés listo.`);
       setIsModalOpen(false);
 
       // Redirigimos pasando el número de mesa en la URL de forma limpia
@@ -289,21 +290,6 @@ const fetchMesasDeBD = async () => {
                 </div>
               )}
             </div>
-
-            {/* <div className="p-6 grid grid-cols-3 gap-4 border-t border-border bg-surface text-center">
-              <div>
-                <span className="text-text/40 text-xs block font-medium uppercase mb-1">Calorías</span>
-                <span className="text-text font-semibold text-sm">{platillo.calorias ? `${platillo.calorias} Kcal` : "—"}</span>
-              </div>
-              <div>
-                <span className="text-text/40 text-xs block font-medium uppercase mb-1">Porciones</span>
-                <span className="text-text font-semibold text-sm">{platillo.porciones ? platillo.porciones : "—"}</span>
-              </div>
-              <div>
-                <span className="text-text/40 text-xs block font-medium uppercase mb-1">SKU / Ref</span>
-                <span className="text-text font-mono text-xs block truncate mt-1">{platillo.sku ? platillo.sku : "—"}</span>
-              </div>
-            </div> */}
           </div>
 
           {/* Detalles del Platillo */}
