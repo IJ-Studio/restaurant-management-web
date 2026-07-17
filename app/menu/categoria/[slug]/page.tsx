@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
-import { CldImage } from "next-cloudinary";
+import SmartImage from "@/components/SmartImage";
 import BackButton from "@/components/BackButton";
 
 interface Product {
@@ -102,7 +102,7 @@ export default function CategoryPage() {
 
         {category.imageUrl && (
           <div className="relative w-full h-56 md:h-72 lg:h-96 mb-8 rounded-2xl overflow-hidden shadow-sm border border-border">
-            <CldImage
+            <SmartImage
               src={category.imageUrl}
               fill
               alt={categoryName}
@@ -149,7 +149,7 @@ export default function CategoryPage() {
                 <div className="bg-surface rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border">
                   <div className="relative h-56 w-full bg-surface-hover/50">
                     {prodImg ? (
-                      <CldImage
+                      <SmartImage
                         src={prodImg}
                         fill
                         alt={prodName}

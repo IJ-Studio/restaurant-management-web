@@ -29,6 +29,7 @@ import {
   csvEscape,
   parseCsv,
   downloadAsFile,
+  authHeaders,
 } from "@/features/dashboard/admin/utils/menuUtils";
 
 import { CategorySection } from "@/features/dashboard/admin/components/CategorySection";
@@ -84,7 +85,7 @@ export default function AdminMenuPage() {
 
   async function loadFromDb() {
     try {
-      const res = await fetch(`${API}/platillos/export.json`);
+      const res = await fetch(`${API}/platillos/export.json`, { headers: authHeaders() });
       if (!res.ok) return;
       const data = await res.json().catch(() => null);
       const rows: Record<string, unknown>[] = Array.isArray(data)
@@ -195,7 +196,7 @@ export default function AdminMenuPage() {
       let dbRows: Array<Record<string, unknown>> = [];
       if (IS_EXTERNAL_API) {
         try {
-          const res = await fetch(`${API}/platillos/export.json`);
+          const res = await fetch(`${API}/platillos/export.json`, { headers: authHeaders() });
           if (res.ok) {
             const data = await res.json().catch(() => null);
             dbRows = Array.isArray(data) ? data : Array.isArray(data?.rows) ? data.rows : [];

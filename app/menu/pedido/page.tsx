@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { ShoppingBag, XCircle, RefreshCw, Clock, Truck, Send } from "lucide-react";
-import { CldImage } from "next-cloudinary";
+import SmartImage from "@/components/SmartImage";
 import Link from "next/link";
 
 export default function ResumenPedidoPage() {
@@ -330,7 +330,7 @@ useEffect(() => {
                           <div key={item.id} className="flex gap-3 items-center bg-background/40 p-2 rounded-xl border border-border/40">
                             <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
                               {item.platillo?.imagenUrl ? (
-                                <CldImage src={item.platillo.imagenUrl} fill alt="Platillo" className="object-cover" sizes="48px" />
+                                <SmartImage src={item.platillo.imagenUrl} fill alt="Platillo" className="object-cover" sizes="48px" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-[10px] text-text/30">S/I</div>
                               )}
@@ -383,7 +383,7 @@ useEffect(() => {
                           <div key={item.id} className="flex gap-3 items-center bg-background/40 p-2 rounded-xl border border-border/40">
                             <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-surface">
                               {item.platillo?.imagenUrl ? (
-                                <CldImage src={item.platillo.imagenUrl} fill alt="Platillo" className="object-cover" sizes="48px" />
+                                <SmartImage src={item.platillo.imagenUrl} fill alt="Platillo" className="object-cover" sizes="48px" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-[10px] text-text/30">S/I</div>
                               )}
