@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
+import { api, APIError } from "@/lib/api";
 import {
   LineChart,
   Line,
@@ -90,6 +91,44 @@ interface RankingData {
   platillo_mayor_decrecimiento: ResultadoPredictivo | null;
   periodo: { fecha_inicio: string; fecha_fin: string; granularidad: string };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Modelo de Regresión (lags + estacionalidad semanal) — fuente adicional,
+// consume /inventory/predictive/* del backend real (no es mock).
+// ─────────────────────────────────────────────────────────────────────────────
+interface RegresionPlatillo {
+  platilloId: number;
+  nombre: string;
+  categoria: string;
+  unidadesUltimos7: number;
+  unidadesPredichas7: number;
+  variacionPct: number;
+  clasificacion: Clasificacion;
+}
+
+type RegresionRankingResponse =
+  | {
+      disponible: true;
+      horizonteDias: number;
+      wapeModelo: number;
+      wapeBaseline: number;
+      mejoraPct: number;
+      platilloMayorCrecimiento: RegresionPlatillo | null;
+      platilloMayorDecrecimiento: RegresionPlatillo | null;
+      platillos: RegresionPlatillo[];
+    }
+  | { disponible: false; motivo: string };
+
+type RegresionDetalleResponse =
+  | {
+      disponible: true;
+      platillo: { id: number; nombre: string; categoria: string; precio: number };
+      wapeModelo: number;
+      wapeBaseline: number;
+      serieHistorica: { fecha: string; unidades: number }[];
+      pronostico: { fecha: string; unidadesPredichas: number }[];
+    }
+  | { disponible: false; motivo: string };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -807,6 +846,7 @@ function calcularCrecimientoMock(
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ModeloPredictivoPage() {
   const user = useSelector((state: RootState) => state.auth.user);
+  const [vista, setVista] = useState<"exponencial" | "regresion">("exponencial");
   const [platillos, setPlatillos] = useState<Platillo[]>([]);
   const [rankingData, setRankingData] = useState<RankingData | null>(null);
   const [detalle, setDetalle] = useState<ResultadoPredictivo | null>(null);
@@ -817,6 +857,56 @@ export default function ModeloPredictivoPage() {
   const [loadingRanking, setLoadingRanking] = useState(false);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Modelo de regresión (real, backend Nest)
+  const [regresion, setRegresion] = useState<RegresionRankingResponse | null>(null);
+  const [regresionLoading, setRegresionLoading] = useState(false);
+  const [regresionError, setRegresionError] = useState<string | null>(null);
+  const [regresionSelId, setRegresionSelId] = useState<number | null>(null);
+  const [regresionDetalle, setRegresionDetalle] = useState<RegresionDetalleResponse | null>(null);
+  const [regresionDetalleLoading, setRegresionDetalleLoading] = useState(false);
+
+  useEffect(() => {
+    setRegresionLoading(true);
+    setRegresionError(null);
+    api
+      .get<RegresionRankingResponse>("/inventory/predictive/ranking?dias=7")
+      .then(setRegresion)
+      .catch((err: unknown) => {
+        const message =
+          err instanceof APIError ? err.message : "No se pudo cargar el modelo de regresión.";
+        setRegresionError(message);
+      })
+      .finally(() => setRegresionLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!regresionSelId) {
+      setRegresionDetalle(null);
+      return;
+    }
+    setRegresionDetalleLoading(true);
+    api
+      .get<RegresionDetalleResponse>(`/inventory/predictive/${regresionSelId}?dias=7`)
+      .then(setRegresionDetalle)
+      .catch(() => setRegresionDetalle(null))
+      .finally(() => setRegresionDetalleLoading(false));
+  }, [regresionSelId]);
+
+  const regresionChartData = useMemo(() => {
+    if (!regresionDetalle || !regresionDetalle.disponible) return [];
+    const historico = regresionDetalle.serieHistorica.map((h) => ({
+      label: h.fecha.slice(5),
+      real: h.unidades,
+      pronostico: null as number | null,
+    }));
+    const futuro = regresionDetalle.pronostico.map((p) => ({
+      label: p.fecha.slice(5),
+      real: null as number | null,
+      pronostico: p.unidadesPredichas,
+    }));
+    return [...historico, ...futuro];
+  }, [regresionDetalle]);
 
   useEffect(() => {
     if (USE_MOCK) {
@@ -993,6 +1083,31 @@ export default function ModeloPredictivoPage() {
         </div>
 
         <div className="predictive-container">
+          {/* Selector de modelo */}
+          <div className="predictive-filters" style={{ display: "inline-flex", padding: 6, marginBottom: 28 }}>
+            {(
+              [
+                { k: "exponencial" as const, l: "Modelo Exponencial" },
+                { k: "regresion" as const, l: "Modelo de Regresión" },
+              ]
+            ).map((t) => (
+              <button
+                key={t.k}
+                onClick={() => setVista(t.k)}
+                className="predictive-button"
+                style={{
+                  background: vista === t.k ? "#f97316" : "transparent",
+                  color: vista === t.k ? "#fff" : "#64748b",
+                  boxShadow: "none",
+                }}
+              >
+                {t.l}
+              </button>
+            ))}
+          </div>
+
+          {vista === "exponencial" && (
+          <>
           {error && (
             <div className="error-banner">
               <AlertCircle size={16} /> {error}
@@ -1420,6 +1535,188 @@ export default function ModeloPredictivoPage() {
           )}
 
           <FormulaBar />
+          </>
+          )}
+
+          {vista === "regresion" && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+              <div className="header-icon" style={{ width: 36, height: 36 }}>
+                <Sigma size={18} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: "#0f172a" }}>
+                  Modelo de Regresión · Lags + Estacionalidad
+                </h2>
+                <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
+                  Fuente de predicción adicional (no reemplaza el modelo exponencial): mínimos
+                  cuadrados sobre día de la semana, ventas de hace 1 y 7 días, media móvil,
+                  popularidad del platillo y tendencia — datos reales de <code>orden_items</code>.
+                </p>
+              </div>
+            </div>
+
+            {regresionLoading && (
+              <div className="predictive-card" style={{ textAlign: "center", padding: 32 }}>
+                Entrenando el modelo con el historial real...
+              </div>
+            )}
+
+            {!regresionLoading && regresionError && (
+              <div className="error-banner">
+                <AlertCircle size={16} /> {regresionError}
+              </div>
+            )}
+
+            {!regresionLoading && !regresionError && regresion && !regresion.disponible && (
+              <div className="predictive-card" style={{ textAlign: "center", padding: 32, color: "#64748b" }}>
+                {regresion.motivo}
+              </div>
+            )}
+
+            {!regresionLoading && !regresionError && regresion?.disponible && (
+              <>
+                <div className="summary-grid">
+                  <div className="predictive-card">
+                    <div className="predictive-card-title">WAPE del modelo</div>
+                    <div className="predictive-card-value" style={{ color: "#3b82f6" }}>
+                      {(regresion.wapeModelo * 100).toFixed(1)}%
+                    </div>
+                    <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                      vs. {(regresion.wapeBaseline * 100).toFixed(1)}% del baseline ingenuo (lag 7 días)
+                    </span>
+                  </div>
+                  <div className="predictive-card">
+                    <div className="predictive-card-title">Mejora sobre el baseline</div>
+                    <div
+                      className="predictive-card-value"
+                      style={{ color: regresion.mejoraPct >= 0 ? "#22c55e" : "#ef4444" }}
+                    >
+                      {fmtPct(regresion.mejoraPct)}
+                    </div>
+                    <span style={{ fontSize: 11, color: "#94a3b8" }}>menos error absoluto ponderado</span>
+                  </div>
+                  {regresion.platilloMayorCrecimiento && (
+                    <div className="predictive-card">
+                      <div className="predictive-card-title">Mayor crecimiento (7 días)</div>
+                      <div className="predictive-card-name">{regresion.platilloMayorCrecimiento.nombre}</div>
+                      <div className="predictive-card-value" style={{ color: "#22c55e", fontSize: 18 }}>
+                        {fmtPct(regresion.platilloMayorCrecimiento.variacionPct)}
+                      </div>
+                    </div>
+                  )}
+                  {regresion.platilloMayorDecrecimiento && (
+                    <div className="predictive-card">
+                      <div className="predictive-card-title">Mayor decrecimiento (7 días)</div>
+                      <div className="predictive-card-name">{regresion.platilloMayorDecrecimiento.nombre}</div>
+                      <div className="predictive-card-value" style={{ color: "#ef4444", fontSize: 18 }}>
+                        {fmtPct(regresion.platilloMayorDecrecimiento.variacionPct)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className={`charts-row ${regresionDetalle ? "two-cols" : ""}`}>
+                  <div className="ranking-table-wrapper" style={{ marginBottom: 0 }}>
+                    <h3>
+                      <Award size={16} /> Pronóstico próximos {regresion.horizonteDias} días · click en un
+                      platillo para ver su curva
+                    </h3>
+                    <div className="table-container">
+                      <table className="ranking-table">
+                        <thead>
+                          <tr>
+                            <th>Platillo</th>
+                            <th>Cat.</th>
+                            <th>Últ. 7 días</th>
+                            <th>Próx. 7 días</th>
+                            <th>Variación</th>
+                            <th>Clasif.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {regresion.platillos.map((p) => (
+                            <tr
+                              key={p.platilloId}
+                              onClick={() => setRegresionSelId(p.platilloId)}
+                              className={regresionSelId === p.platilloId ? "selected" : ""}
+                            >
+                              <Td style={{ fontWeight: 600 }}>{p.nombre}</Td>
+                              <Td>{p.categoria}</Td>
+                              <Td mono>{p.unidadesUltimos7}</Td>
+                              <Td mono>{p.unidadesPredichas7}</Td>
+                              <Td
+                                mono
+                                style={{
+                                  color: p.variacionPct >= 0 ? "#22c55e" : "#ef4444",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {fmtPct(p.variacionPct)}
+                              </Td>
+                              <Td>
+                                <ClasificacionBadge c={p.clasificacion} />
+                              </Td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {regresionDetalle && (
+                    <div className="chart-card">
+                      <h3>
+                        <Activity size={16} />{" "}
+                        {regresionDetalle.disponible
+                          ? `Real vs. pronóstico: ${regresionDetalle.platillo.nombre}`
+                          : "Sin datos suficientes"}
+                      </h3>
+                      {regresionDetalleLoading ? (
+                        <div className="chart-loader">
+                          <Loader2 size={24} className="spinner" />
+                        </div>
+                      ) : regresionDetalle.disponible ? (
+                        <ResponsiveContainer width="100%" height={240}>
+                          <LineChart data={regresionChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                            <XAxis dataKey="label" tick={{ fill: "#64748b" }} />
+                            <YAxis tick={{ fill: "#64748b" }} />
+                            <Tooltip
+                              contentStyle={{ backgroundColor: "#fff", border: "1px solid #e2e8f0", borderRadius: 8 }}
+                            />
+                            <Legend />
+                            <Line
+                              type="monotone"
+                              dataKey="real"
+                              name="Ventas reales"
+                              stroke="#f97316"
+                              strokeWidth={2}
+                              dot={{ r: 2 }}
+                              connectNulls={false}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="pronostico"
+                              name="Pronóstico (regresión)"
+                              stroke="#3b82f6"
+                              strokeWidth={2}
+                              strokeDasharray="5 5"
+                              dot={{ r: 3 }}
+                              connectNulls={false}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <p style={{ fontSize: 12, color: "#64748b" }}>{regresionDetalle.motivo}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+          )}
         </div>
       </main>
     </div>
