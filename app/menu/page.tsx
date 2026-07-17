@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CldImage } from "next-cloudinary";
+import SmartImage from "@/components/SmartImage";
 import Link from "next/link";
 
 // 1. Ajustamos las interfaces para que coincidan EXACTAMENTE con lo que devuelve tu Nest.js
@@ -119,7 +120,7 @@ Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemo
                     <div className="order-1 lg:order-1">
                       <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-lg">
                         {category.imagenUrl ? (
-                          <CldImage
+                          <SmartImage
                             src={category.imagenUrl}
                             fill
                             alt={category.nombre}
@@ -144,7 +145,7 @@ Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemo
                     <div className="order-1 lg:order-2">
                       <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-lg">
                         {category.imagenUrl ? (
-                          <CldImage
+                          <SmartImage
                             src={category.imagenUrl}
                             fill
                             alt={category.nombre}

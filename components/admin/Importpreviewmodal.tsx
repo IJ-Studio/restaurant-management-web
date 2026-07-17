@@ -467,6 +467,12 @@ export default function ImportPreviewModal({
     const isXlsx = lower.endsWith(".xlsx");
     const isJson = lower.endsWith(".json");
 
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+    const authHeader: Record<string, string> = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+
     try {
       let res: Response;
 
@@ -474,7 +480,7 @@ export default function ImportPreviewModal({
         // POST /platillos/import.json — body array
         res = await fetch(`${apiBase}/platillos/import.json?mode=upsert`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeader },
           body: JSON.stringify(selectedRaws),
         });
       } else if (isXlsx) {
@@ -492,6 +498,7 @@ export default function ImportPreviewModal({
         // POST /import/platillos/excel
         res = await fetch(`${apiBase}/import/platillos/excel?mode=upsert`, {
           method: "POST",
+          headers: authHeader,
           body: fd,
         });
       } else {
@@ -513,6 +520,7 @@ export default function ImportPreviewModal({
         // POST /platillos/import.csv
         res = await fetch(`${apiBase}/platillos/import.csv?mode=upsert`, {
           method: "POST",
+          headers: authHeader,
           body: fd,
         });
       }

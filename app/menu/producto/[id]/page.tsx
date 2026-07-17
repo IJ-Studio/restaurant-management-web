@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { notFound, useParams, useRouter, useSearchParams } from "next/navigation";
-import { CldImage } from "next-cloudinary";
+import SmartImage from "@/components/SmartImage";
 import {
-  Minus, Plus, Utensils, Truck, AlertTriangle, X
+  Minus, Plus, Utensils, Truck, AlertTriangle, X, Sparkles
 } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { useSelector } from "react-redux";
@@ -31,6 +31,12 @@ export default function ProductDetailPage() {
   // Leemos la mesa directamente del parámetro de la URL (?mesaQuery=...) en lugar de localStorage
   const urlMesa = searchParams?.get("mesaQuery");
   const [selectedMesa, setSelectedMesa] = useState<string>(urlMesa || "");
+
+  // Recomendación de combo (reglas de asociación calculadas en el backend)
+  const [combo, setCombo] = useState<any>(null);
+  // Items extra (el combo sugerido) que se agregan junto con el platillo base
+  // en la próxima llamada a handleAddToOrderMesa.
+  const pendingComboRef = useRef<{ platilloId: number; cantidad: number }[] | null>(null);
 
   // Fuente de verdad única para validar sesión mediante la API sin tokens locales
   const resolveCurrentUser = async (): Promise<any | null> => {
@@ -75,6 +81,25 @@ export default function ProductDetailPage() {
       fetchPlatillo();
     }
   }, [id]);
+
+  // Cargar la recomendación de combo (reglas de asociación) para este platillo
+  useEffect(() => {
+    if (!platillo?.id) return;
+
+    const fetchCombo = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${apiUrl}/recommendations/combo/${platillo.id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setCombo(data);
+      } catch (err) {
+        console.error("No se pudo cargar la recomendación de combo:", err);
+      }
+    };
+
+    fetchCombo();
+  }, [platillo?.id]);
 
   // Cargar las mesas de la base de datos cuando se abre el modal
   useEffect(() => {
@@ -142,21 +167,34 @@ export default function ProductDetailPage() {
       return;
     }
 
+    const comboItems = pendingComboRef.current;
+
     setIsSubmitting(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+      const body = comboItems?.length
+        ? {
+            usuarioId: Number(currentUser.id),
+            mesa: mesaFinal,
+            items: [
+              { platilloId: Number(platillo?.id), cantidad: Number(cantidad) },
+              ...comboItems,
+            ],
+          }
+        : {
+            platilloId: Number(platillo?.id),
+            cantidad: Number(cantidad),
+            usuarioId: Number(currentUser.id),
+            mesa: mesaFinal,
+          };
 
       const res = await fetch(`${apiUrl}/pedidos/mesa`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          platilloId: Number(platillo?.id),
-          cantidad: Number(cantidad),
-          usuarioId: Number(currentUser.id),
-          mesa: mesaFinal,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -169,7 +207,10 @@ export default function ProductDetailPage() {
       // FIX: el producto ya NO se manda a cocina de inmediato, solo se
       // agrega al carrito de la mesa. El envío real a cocina ahora pasa
       // en /menu/pedido cuando el cliente presiona "Confirmar".
-      alert(`Agregado a tu pedido: ${cantidad}x ${platillo?.nombre}. Revísalo en "Mis Pedidos" y confírmalo cuando estés listo.`);
+      const mensaje = comboItems?.length
+        ? `Agregado a tu pedido: ${cantidad}x ${platillo?.nombre} + ${combo?.sugerido?.nombre}. Revísalo en "Mis Pedidos" y confírmalo cuando estés listo.`
+        : `Agregado a tu pedido: ${cantidad}x ${platillo?.nombre}. Revísalo en "Mis Pedidos" y confírmalo cuando estés listo.`;
+      alert(mensaje);
       setIsModalOpen(false);
 
       // Redirigimos pasando el número de mesa en la URL de forma limpia
@@ -179,7 +220,14 @@ export default function ProductDetailPage() {
       alert(err.message || "Ocurrió un error al enviar el pedido.");
     } finally {
       setIsSubmitting(false);
+      pendingComboRef.current = null;
     }
+  };
+
+  const handleAddCombo = () => {
+    if (!combo?.disponible) return;
+    pendingComboRef.current = [{ platilloId: combo.sugerido.id, cantidad: 1 }];
+    handleAddToOrderMesa();
   };
 
   const handleAddToCartDomicilio = async () => {
@@ -268,7 +316,7 @@ export default function ProductDetailPage() {
           <div className="w-full lg:w-1/2 flex flex-col bg-surface-hover/10">
             <div className="relative w-full h-80 sm:h-96 lg:h-[500px]">
               {platillo.imagenUrl ? (
-                <CldImage
+                <SmartImage
                   src={platillo.imagenUrl}
                   fill
                   alt={platillo.nombre}
@@ -377,6 +425,51 @@ export default function ProductDetailPage() {
                     Para Domicilio
                   </button>
                 </div>
+
+                {/* Recomendación de combo (reglas de asociación) */}
+                {combo?.disponible && (
+                  <div className="bg-brand/5 border border-brand/20 rounded-2xl p-4">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-brand bg-brand/10 px-2.5 py-1 rounded-full mb-3">
+                      <Sparkles size={11} />
+                      Recomendación
+                    </span>
+                    <p className="text-sm font-bold text-text mb-3">Arma tu combo y ahorra</p>
+
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-surface border border-border">
+                        {combo.sugerido.imagenUrl ? (
+                          <SmartImage
+                            src={combo.sugerido.imagenUrl}
+                            fill
+                            alt={combo.sugerido.nombre}
+                            className="object-cover"
+                            sizes="56px"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-text/30 text-[10px]">S/I</div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-text truncate">{combo.sugerido.nombre}</p>
+                        <p className="text-xs text-text-sec leading-snug">
+                          {combo.confianza}% de las órdenes con este platillo también incluyeron{" "}
+                          {combo.sugerido.nombre} — llévalo por{" "}
+                          <span className="font-bold text-brand">${combo.precioCombo}</span> en vez de $
+                          {combo.sugerido.precio}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={handleAddCombo}
+                        disabled={isSubmitting || !platillo.disponible}
+                        className="flex-shrink-0 bg-secondary hover:opacity-90 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Agregar combo
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
             </div>

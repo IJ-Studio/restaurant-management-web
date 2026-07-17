@@ -104,8 +104,14 @@ export function filenameFromCD(v: string | null) {
   }
 }
 
+export function authHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem("authToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function downloadAsFile(url: string, fallback: string) {
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const blob = await res.blob();
   const filename = filenameFromCD(res.headers.get("content-disposition")) ?? fallback;
