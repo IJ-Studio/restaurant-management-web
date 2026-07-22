@@ -31,13 +31,13 @@ export default async function DashboardLayout({
   const roleName = roleMap[session.roleId] || "cliente";
 
   // 2. Traer el perfil fresco de NestJS para forzar el Nombre y Apellido reales en la Sidebar
-  let fullUser = {
-    id: session.id,
-    email: session.email,
-    name: "",
-    lastname: "",
-    roleName: roleName,
-  };
+const fullUser = {
+  id: session.id,
+  email: session.email,
+  name: "",
+  lastname: "",
+  roleName: roleName as "admin" | "cajero" | "mesero" | "cocina" | "cliente",
+};
 
   try {
     const res = await fetch(`${BACKEND_URL}/users/${session.id}`, {

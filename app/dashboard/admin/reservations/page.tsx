@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { getReservations, updateReservation } from '@/app/api/reservations/route';
+import { getReservations, updateReservation } from '@/features/reservations/services/reservations.service';
 
 export default function AdminReservationsPage() {
   const [reservations, setReservations] = useState<any[]>([]);

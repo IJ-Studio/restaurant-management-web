@@ -88,8 +88,7 @@ export default function Footer() {
                 Conócenos
               </h3>
               <ul className="space-y-2 text-sm text-[var(--color-text-sec)]">
-                {links.about?.map((link, idx) => (
-                  <li key={idx}>
+{links?.about?.map((link, idx) => (                  <li key={idx}>
                     <a
                       href={link.href}
                       className="hover:text-[var(--color-brand)] transition-colors"
@@ -105,7 +104,7 @@ export default function Footer() {
                 Podemos ayudarte
               </h3>
               <ul className="space-y-2 text-sm text-[var(--color-text-sec)]">
-                {links.help?.map((link, idx) => (
+                {links?.help?.map((link, idx) => (
                   <li key={idx}>
                     <a
                       href={link.href}

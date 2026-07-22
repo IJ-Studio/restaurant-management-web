@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAvailability } from '@/app/api/reservations/route';
+import { getAvailability } from '@/features/reservations/services/reservations.service';
 
 export function useReservationAvailability(fecha: string, hora: string, numComensales: number) {
   const [loading, setLoading] = useState(false);

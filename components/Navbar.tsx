@@ -49,8 +49,8 @@ export default function Navbar({
     setSettings(SettingsService.getSettings());
   }, []);
 
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-
+const { user } = useSelector((state: RootState) => state.auth);
+const isAuthenticated = !!user;
   const defaultLinks: NavLink[] = isAuthenticated
     ? [
         { label: "Dashboard", href: "/dashboard" },

@@ -1,8 +1,8 @@
 import { db } from "./lib/db";
-import { backupsTable } from "./lib/schema";
+import { backups } from "@/lib/public.schema";
 
 async function run() {
-  const all = await db.select().from(backupsTable);
+  const all = await db.select().from(backups);
   console.log("DB Backups:", all.map(b => ({ id: b.id, name: b.name, createdAt: b.createdAt })));
   process.exit(0);
 }

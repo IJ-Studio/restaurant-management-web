@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, FileDown, Loader2 } from "lucide-react";
 
-export default function CheckoutExitoPage() {
+// 👇 Forzar modo dinámico para evitar prerrenderizado
+export const dynamic = 'force-dynamic';
+
+// Componente interno que usa useSearchParams
+function ExitoContent() {
   const searchParams = useSearchParams();
   const ordenId = searchParams?.get("ordenId");
 
@@ -21,9 +25,6 @@ export default function CheckoutExitoPage() {
     const buscarFactura = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        // La factura puede tardar unos segundos en generarse (se dispara
-        // en segundo plano justo después del pago), así que un 404 aquí
-        // es normal si el cliente no pidió factura o si aún no termina.
         const res = await fetch(`${apiUrl}/facturas/${ordenId}`);
         if (res.ok) {
           setFactura(await res.json());
@@ -82,5 +83,14 @@ export default function CheckoutExitoPage() {
         Ver mis pedidos
       </Link>
     </div>
+  );
+}
+
+// Componente principal envuelto en Suspense
+export default function CheckoutExitoPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
+      <ExitoContent />
+    </Suspense>
   );
 }

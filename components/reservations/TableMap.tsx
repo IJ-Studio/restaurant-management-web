@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getTableMap } from '@/app/api/reservations/route';
+import { getTableMap }  from '@/features/reservations/services/reservations.service';
 
 interface Table {
   id: number;

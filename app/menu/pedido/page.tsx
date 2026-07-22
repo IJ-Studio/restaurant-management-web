@@ -11,8 +11,8 @@ import Link from "next/link";
 export default function ResumenPedidoPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-
+const { user } = useSelector((state: RootState) => state.auth);
+const isAuthenticated = !!user;
   // Selector de Pestaña Principal
   const [activeTab, setActiveTab] = useState<"mesa" | "domicilio">("mesa");
 

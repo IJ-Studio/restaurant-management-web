@@ -5,13 +5,7 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { useInventory, type Product, type Merma } from "@/hooks/useInventory";
-
-import {
-  Plus,
-  TrendingDown,
-  Truck,
-} from "lucide-react";
-
+import { Plus, Trash2, Search, ShoppingCart,Layers,Archive, AlertTriangle, Truck,MoreVertical,TrendingDown, ChevronRight, ArrowLeft, Pencil, X } from "lucide-react";
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 const T = {
   brand: "#e85d04",
@@ -1698,8 +1692,8 @@ export default function InventoryPage() {
                       const st = stockStatus(p);
                       const sc = STATUS_CFG[st];
                       const pct = Math.min(100, (p.stock / p.maxStock) * 100);
-                      const cat = CATEGORIES[p.category] ?? { label: "Otro", icon: "📦", color: "#6b7280", bg: "#f3f4f6" };
-                      return (
+const fallback = { label: "Otro", icon: "📦", color: "#6b7280", bg: "#f3f4f6" };
+const cat = CATEGORIES[p.category as keyof typeof CATEGORIES] ?? fallback;                      return (
                         <tr
                           key={p.id}
                           style={{
