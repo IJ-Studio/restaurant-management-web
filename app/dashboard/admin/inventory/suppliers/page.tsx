@@ -1963,6 +1963,6 @@ export default function SuppliersPage() {
           initialSuppId={orderModal === "new" ? preselSupp : undefined}
         />
       )}
-    </main>
+    </div>
   );
 }

@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 // IMPORTANTE: Ajusta estas rutas de importación según la estructura exacta de tu proyecto
 import { db } from "@/lib/db"; // o "@/db", "@/database/connection", etc.
-import { mesas } from "@/lib/db/public.schema"; // Ajusta a la ruta donde tienes tu public.schema.ts
+import { mesas } from "@/lib/public.schema"; // Ajusta a la ruta donde tienes tu public.schema.ts
 
 export async function GET() {
   try {
