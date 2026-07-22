@@ -221,7 +221,8 @@ function useDBMetrics(intervalMs = 10_000) {
       setState({
         cpu, rwRatio, autovacuum, storage, hotTables, latency,
         connections, waitEvents, lastUpdated: new Date(),
-        error: null, loading: false,
+        error: null, loading: false,  isVacuuming: false, // ⬅️ AGREGA ESTA LÍNEA
+
       });
     } catch (err: any) {
       setState(s => ({

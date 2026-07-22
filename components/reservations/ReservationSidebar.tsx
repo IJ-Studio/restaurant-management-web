@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useReservationAvailability } from '@/hooks/useReservationAvailability';
-import { createReservation } from '@/app/api/reservations/route';
+import { createReservation } from '@/features/reservations/services/reservations.service';
 import TableMap from './TableMap';
 import { cn } from '@/lib/utils';
 

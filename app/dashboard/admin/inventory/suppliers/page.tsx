@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { useInventory, type Supplier, type PurchaseOrder, type OrderStatus, type OrderItem, type Product } from "@/hooks/useInventory";
 
+import { Truck, X,FileText,CheckCircle2,Users,Phone,Mail} from "lucide-react";
 
 import {
   Plus,
@@ -1942,27 +1943,27 @@ export default function SuppliersPage() {
           )}
         </main>
 
-      {/* Modals */}
-      {suppModal !== null && (
-        <SupplierModal
-          supplier={suppModal === "new" ? null : suppModal}
-          onClose={() => setSuppModal(null)}
-          onSave={handleSaveSupplier}
-        />
-      )}
-      {orderModal !== null && (
-        <OrderModal
-          suppliers={suppliers}
-          products={products}
-          order={orderModal === "new" ? null : orderModal}
-          onClose={() => {
-            setOrderModal(null);
-            setPreselSupp(null);
-          }}
-          onSave={handleSaveOrder}
-          initialSuppId={orderModal === "new" ? preselSupp : undefined}
-        />
-      )}
+{/* Modals */}
+{suppModal !== null && (
+  <SupplierModal
+    supplier={suppModal === "new" ? null : suppModal}
+    onClose={() => setSuppModal(null)}
+    onSave={handleSaveSupplier}
+  />
+)}
+{orderModal !== null && (
+  <OrderModal
+    suppliers={suppliers}
+    products={products}
+    order={orderModal === "new" ? null : orderModal}
+    onClose={() => {
+      setOrderModal(null);
+      setPreselSupp(null);
+    }}
+    onSave={handleSaveOrder}
+    initialSuppId={orderModal === "new" ? (preselSupp ?? undefined) : undefined}
+  />
+)}
     </div>
   );
 }

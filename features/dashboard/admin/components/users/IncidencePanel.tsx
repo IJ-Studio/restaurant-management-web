@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  AlertCircle, 
-  MessageSquare, 
-  Plus, 
-  User, 
-  Calendar, 
+import {
+  AlertCircle,
+  MessageSquare,
+  Plus,
+  User,
+  Calendar,
   Clock,
   CheckCircle,
   FileWarning,
@@ -14,6 +14,8 @@ import {
   TrendingUp,
   Search
 } from "lucide-react";
+import { Activity} from 'lucide-react';
+
 import { IncidenceService, StaffService } from "@/features/shared/services/dataService";
 import type { Incidence, StaffMember } from "@/features/shared/data/restaurantData";
 
@@ -35,7 +37,7 @@ export function IncidencePanel() {
 
   const handleAddIncidence = () => {
     if (!newInc.employeeId || !newInc.description) return;
-    
+
     const inc: Incidence = {
       id: `INC-${Date.now()}`,
       employeeId: newInc.employeeId,
@@ -56,14 +58,14 @@ export function IncidencePanel() {
     return e ? `${e.name} ${e.lastname}` : "Desconocido";
   };
 
-  const filtered = incidences.filter(i => 
+  const filtered = incidences.filter(i =>
     getEmpName(i.employeeId).toLowerCase().includes(search.toLowerCase()) ||
     i.description.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface p-8 rounded-[32px] border border-border shadow-sm">
         <div className="flex items-center gap-4">
@@ -75,7 +77,7 @@ export function IncidencePanel() {
               <p className="text-text-muted text-sm font-medium mt-1 uppercase tracking-widest text-[10px]">Control de Desempeño y Observaciones Operativas</p>
            </div>
         </div>
-        <button 
+        <button
           onClick={() => setShowModal(true)}
           className="px-8 py-3 rounded-2xl bg-amber-500 text-white text-xs font-black shadow-xl shadow-amber-500/20 hover:shadow-amber-500/40 hover:-translate-y-0.5 transition-all flex items-center gap-2"
         >
@@ -89,7 +91,7 @@ export function IncidencePanel() {
            {/* Search */}
            <div className="relative group">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand transition-colors" size={18} />
-              <input 
+              <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar por empleado o descripción..."
@@ -111,8 +113,8 @@ export function IncidencePanel() {
                        inc.type === "rendimiento" ? "bg-purple-100 text-purple-600" :
                        inc.type === "asistencia" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600"
                      }`}>
-                        {inc.type === "operativa" ? <Activity size={24} /> : 
-                         inc.type === "rendimiento" ? <TrendingDown size={24} /> : 
+                        {inc.type === "operativa" ? <Activity size={24} /> :
+                         inc.type === "rendimiento" ? <TrendingDown size={24} /> :
                          inc.type === "asistencia" ? <Clock size={24} /> : <FileWarning size={24} />}
                      </div>
                      <div className="flex-1">
@@ -188,11 +190,11 @@ export function IncidencePanel() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-300">
            <div className="bg-surface p-10 rounded-[48px] shadow-2xl border border-white/20 w-full max-w-lg animate-in zoom-in-95 duration-300">
               <h3 className="text-2xl font-black text-text mb-8 tracking-tight">Nueva Observación</h3>
-              
+
               <div className="space-y-6">
                  <div>
                     <label className="text-[10px] font-black text-text-muted uppercase tracking-widest block mb-2 px-1">Colaborador Relacionado</label>
-                    <select 
+                    <select
                       value={newInc.employeeId}
                       onChange={e => setNewInc(s => ({ ...s, employeeId: e.target.value }))}
                       className="w-full px-5 py-4 rounded-2xl border border-border font-black text-sm outline-none focus:border-brand bg-gray-50 shadow-inner appearance-none"
@@ -208,7 +210,7 @@ export function IncidencePanel() {
                     <label className="text-[10px] font-black text-text-muted uppercase tracking-widest block mb-2 px-1">Tipo de Evento</label>
                     <div className="grid grid-cols-2 gap-3">
                        {["operativa", "rendimiento", "asistencia", "otra"].map(t => (
-                         <button 
+                         <button
                            key={t}
                            onClick={() => setNewInc(s => ({ ...s, type: t as any }))}
                            className={`py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
@@ -223,7 +225,7 @@ export function IncidencePanel() {
 
                  <div>
                     <label className="text-[10px] font-black text-text-muted uppercase tracking-widest block mb-2 px-1">Descripción del Hallazgo</label>
-                    <textarea 
+                    <textarea
                       value={newInc.description}
                       onChange={e => setNewInc(s => ({ ...s, description: e.target.value }))}
                       className="w-full px-5 py-4 rounded-2xl border border-border font-black text-sm transition-all focus:border-brand bg-gray-50 shadow-inner outline-none h-32 resize-none"
@@ -232,13 +234,13 @@ export function IncidencePanel() {
                  </div>
 
                  <div className="flex gap-3 pt-4">
-                    <button 
+                    <button
                      onClick={() => setShowModal(false)}
                      className="flex-1 py-4 text-xs font-black text-text-muted uppercase tracking-widest hover:text-text transition-colors"
                     >
                       Cancelar
                     </button>
-                    <button 
+                    <button
                      disabled={!newInc.employeeId || !newInc.description}
                      onClick={handleAddIncidence}
                      className="flex-1 py-4 bg-brand text-white text-xs font-black rounded-2xl shadow-xl shadow-brand/20 hover:shadow-brand/40 hover:-translate-y-1 transition-all uppercase tracking-widest disabled:opacity-30 disabled:grayscale"
