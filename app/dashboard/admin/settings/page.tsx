@@ -20,7 +20,6 @@ import { AppearanceSection } from "@/features/dashboard/admin/components/setting
 import { SettingsService, MenuService } from "@/features/shared/services/dataService";
 import { type SystemSettings, type MenuCategory, type SystemAppearance } from "@/features/shared/data/restaurantData";
 import { Save, CheckCircle2 } from "lucide-react";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 
 // API Base configuration
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL?.trim();
@@ -74,9 +73,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <AdminSidebar activePage="settings" user={user} />
-      <main className="flex-1 ml-[260px] p-8 md:p-10 min-w-0">
+    <main className="p-8 md:p-10 min-w-0">
         {/* Header Section */}
         <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
@@ -154,7 +151,6 @@ export default function SettingsPage() {
             to { transform: rotate(360deg); }
           }
         `}</style>
-      </main>
-    </div>
+    </main>
   );
 }

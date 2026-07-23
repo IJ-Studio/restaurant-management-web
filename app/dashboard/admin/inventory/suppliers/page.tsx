@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { useInventory, type Supplier, type PurchaseOrder, type OrderStatus, type OrderItem, type Product } from "@/hooks/useInventory";
@@ -1395,70 +1394,52 @@ export default function SuppliersPage() {
     setOrderModal("new");
   }
 
-  function handleLogout() {}
-
   // ── Render: loading / error state ─────────────────────────────────────────
   if (loading) {
     return (
-      <div
+      <main
         style={{
-          display: "flex",
           minHeight: "100vh",
           fontFamily: T.fontB,
           background: T.bg,
+          padding: "40px 48px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        <AdminSidebar activePage="suppliers" user={user} onLogout={() => {}} />
-        <main
-          style={{
-            flex: 1,
-            marginLeft: 260,
-            padding: "40px 48px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div style={{ textAlign: "center" }}>
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                border: `4px solid ${T.border}`,
-                borderTopColor: T.brand,
-                borderRadius: "50%",
-                animation: "spin 1s linear infinite",
-                margin: "0 auto 16px",
-              }}
-            />
-            <p style={{ color: T.textMut, fontSize: 14 }}>
-              Cargando proveedores...
-            </p>
-          </div>
-        </main>
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              border: `4px solid ${T.border}`,
+              borderTopColor: T.brand,
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 16px",
+            }}
+          />
+          <p style={{ color: T.textMut, fontSize: 14 }}>
+            Cargando proveedores...
+          </p>
+        </div>
         <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div
+    <main
       style={{
-        display: "flex",
         minHeight: "100vh",
         fontFamily: T.fontB,
         background: T.bg,
         color: T.text,
+        padding: "40px 48px",
       }}
       onClick={() => setOpenMenu(null)}
     >
-        <AdminSidebar
-          activePage="suppliers"
-          user={user}
-          onLogout={handleLogout}
-        />
-
-        <main style={{ flex: 1, marginLeft: 260, padding: "40px 48px" }}>
           {/* Action Error Banner */}
           {actionError && (
             <div
@@ -1941,7 +1922,6 @@ export default function SuppliersPage() {
               </div>
             </>
           )}
-        </main>
 
 {/* Modals */}
 {suppModal !== null && (
@@ -1964,6 +1944,6 @@ export default function SuppliersPage() {
     initialSuppId={orderModal === "new" ? (preselSupp ?? undefined) : undefined}
   />
 )}
-    </div>
+    </main>
   );
 }

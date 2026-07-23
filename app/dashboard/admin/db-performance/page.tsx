@@ -23,7 +23,6 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import {
@@ -1309,8 +1308,6 @@ export default function DBPerformancePage() {
     lastUpdated, error, loading, refetch, runManualVacuum, isVacuuming
   } = useDBMetrics(pollInterval);
 
-  function handleLogout() {}
-
   const lastUpdatedStr = lastUpdated
     ? lastUpdated.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
     : "—";
@@ -1323,20 +1320,7 @@ export default function DBPerformancePage() {
   );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: T.fontB, background: T.bg, color: T.text }}>
-      {/*
-        ──────────────────────────────────────────────────────
-        NOTA: Añade "performance" como activePage en AdminSidebar.
-        En components/admin/AdminSidebar.tsx agrega un NavItem con:
-          key: "performance"
-          label: "Rendimiento BD"
-          icon: <Database size={16} />
-          path: "/dashboard/admin/db-performance"
-        ──────────────────────────────────────────────────────
-      */}
-      <AdminSidebar activePage="performance" user={user} onLogout={handleLogout} />
-
-      <main style={{ flex: 1, marginLeft: 260, padding: "32px 44px", minWidth: 0 }}>
+    <main style={{ minHeight: "100vh", fontFamily: T.fontB, background: T.bg, color: T.text, padding: "32px 44px", minWidth: 0 }}>
 
         {/* ── Header ── */}
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
@@ -1514,11 +1498,10 @@ export default function DBPerformancePage() {
         <p style={{ fontSize: 11, color: T.textMut, marginTop: 24, textAlign: "right" }}>
           Rendimiento BD · El Quijote Admin · Polling cada {pollInterval / 1000}s
         </p>
-      </main>
 
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-      `}</style>
-    </div>
+        <style>{`
+          @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+        `}</style>
+    </main>
   );
 }

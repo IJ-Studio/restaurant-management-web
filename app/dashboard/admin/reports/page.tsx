@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import ExportModal from "@/components/admin/ExportModal";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 import { api, APIError } from "@/lib/api";
 
 import {
@@ -142,9 +141,7 @@ export default function ReportsPage() {
   ];
 
   return (
-    <div className="flex min-h-screen">
-      <AdminSidebar activePage="reports" user={user} />
-      <main className="flex-1 ml-[260px] p-8 md:p-10 min-w-0">
+    <main className="p-8 md:p-10 min-w-0">
         {/* Export modal */}
         {exportModalOpen && (
           <ExportModal onClose={() => setExportModalOpen(false)} />
@@ -541,7 +538,6 @@ export default function ReportsPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </main>
   );
 }

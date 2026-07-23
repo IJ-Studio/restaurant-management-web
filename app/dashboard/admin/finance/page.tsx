@@ -28,7 +28,6 @@ import {
 import { MovementModal } from "@/features/dashboard/admin/components/MovementModal";
 import { CloseSessionModal } from "@/features/dashboard/admin/components/CloseSessionModal";
 import { TipModal } from "@/features/dashboard/admin/components/TipModal";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 
 const fmt = (n: number) =>
   n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

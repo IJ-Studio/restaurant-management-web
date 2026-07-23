@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 import ImportPreviewModal from "@/components/admin/Importpreviewmodal";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
@@ -355,9 +354,7 @@ export default function AdminMenuPage() {
   ];
 
   return (
-    <div className="flex min-h-screen">
-      <AdminSidebar activePage="menu" user={{ name: "Admin" }} />
-      <main className="flex-1 ml-[260px] p-8 md:p-10 min-w-0" onClick={() => setIoOpen(null)}>
+    <main className="p-8 md:p-10 min-w-0" onClick={() => setIoOpen(null)}>
         {/* Preview Modal for Imports */}
         {preview && (
           <ImportPreviewModal
@@ -518,7 +515,6 @@ export default function AdminMenuPage() {
             onSave={saveItem}
           />
         )}
-      </main>
-    </div>
+    </main>
   );
 }

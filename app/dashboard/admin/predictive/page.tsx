@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { api, APIError } from "@/lib/api";
@@ -1064,10 +1063,7 @@ export default function ModeloPredictivoPage() {
   );
 
   return (
-    <div className="predictive-layout">
-      <AdminSidebar activePage="predictive" user={user} />
-
-      <main className="predictive-main">
+    <main className="predictive-main">
         {/* Header */}
         <div className="predictive-header">
           <div className="header-icon">
@@ -1718,7 +1714,6 @@ export default function ModeloPredictivoPage() {
           </div>
           )}
         </div>
-      </main>
-    </div>
+    </main>
   );
 }

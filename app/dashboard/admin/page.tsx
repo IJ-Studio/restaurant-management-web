@@ -10,7 +10,6 @@ import { PaymentSplit } from "@/features/dashboard/admin/components/PaymentSplit
 import { TableStatusGrid } from "@/features/dashboard/admin/components/TableStatusGrid";
 import { StockAlerts } from "@/features/dashboard/admin/components/StockAlerts";
 import { QuickActions } from "@/features/dashboard/admin/components/QuickActions";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 import { AlertTriangle, TrendingUp, Clock, Utensils } from "lucide-react";
 
 import {
@@ -77,9 +76,7 @@ export default function AdminDashboardPage() {
   });
 
   return (
-    <div className="flex min-h-screen">
-      <AdminSidebar activePage="dashboard" user={user} />
-      <main className="flex-1 ml-[260px] p-8 md:p-10 min-w-0 flex flex-col">
+    <main className="p-8 md:p-10 min-w-0 flex flex-col">
         <DashboardTopBar user={user} />
 
         {/* Titulo */}
@@ -163,7 +160,6 @@ export default function AdminDashboardPage() {
           <StockAlerts />
           <QuickActions />
         </div>
-      </main>
-    </div>
+    </main>
   );
 }

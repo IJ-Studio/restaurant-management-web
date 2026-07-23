@@ -12,7 +12,6 @@ import {
 } from "@/features/dashboard/admin/data/invoicesMock";
 import { InvoiceDrawer } from "@/features/dashboard/admin/components/InvoiceDrawer";
 import { InvoiceModal } from "@/features/dashboard/admin/components/InvoiceModal";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 
 const fmt = (n: number) =>
   n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -60,9 +59,7 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <AdminSidebar activePage="invoices" user={{ name: "Admin" }} />
-      <main className="flex-1 ml-[260px] p-8 md:p-10 min-w-0">
+    <main className="p-8 md:p-10 min-w-0">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 mb-5 text-[13px] text-text-muted">
           <button
@@ -224,7 +221,6 @@ export default function InvoicesPage() {
             onStatusChange={changeStatus}
           />
         )}
-      </main>
-    </div>
+    </main>
   );
 }

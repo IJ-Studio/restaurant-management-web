@@ -22,7 +22,6 @@ import { ContactSection } from "@/features/dashboard/admin/components/about/Cont
 import { ScheduleSection } from "@/features/dashboard/admin/components/about/ScheduleSection";
 import { FeaturesSection } from "@/features/dashboard/admin/components/about/FeaturesSection";
 import { GallerySection } from "@/features/dashboard/admin/components/about/GallerySection";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export default function AboutPage() {
   const [info, setInfo] = useState<RestaurantInfo>(INITIAL_ABOUT_INFO);
@@ -72,9 +71,7 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <AdminSidebar activePage="about" user={{ name: "Admin" }} />
-      <main className="flex-1 ml-[260px] p-8 md:p-10 min-w-0 max-w-[1200px]">
+    <main className="p-8 md:p-10 min-w-0 max-w-[1200px]">
         {/* Header */}
         <header className="flex justify-between items-start mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
           <div>
@@ -179,7 +176,6 @@ export default function AboutPage() {
             onClose={() => setPreview(false)}
           />
         )}
-      </main>
-    </div>
+    </main>
   );
 }

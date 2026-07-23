@@ -305,8 +305,6 @@ html.dark { */
   font-family: 'Inter', system-ui, sans-serif;
 }
 .predictive-main {
-  flex: 1;
-  margin-left: 260px;
   min-width: 0;
 }
 

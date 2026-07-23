@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { useInventory, type Product, type Merma } from "@/hooks/useInventory";
@@ -118,8 +117,6 @@ const STATUS_CFG = {
   critical: { label: "Crítico", color: T.danger, bg: "#fef2f2" },
   over: { label: "Exceso", color: T.info, bg: "#eff6ff" },
 };
-
-function handleLogout() { }
 
 // ─── Shared Components ────────────────────────────────────────────────────────
 function NavItem({
@@ -1132,36 +1129,27 @@ export default function InventoryPage() {
   // ── Render: loading / error state ─────────────────────────────────────────
   if (loading) {
     return (
-      <div style={{ display: "flex", minHeight: "100vh", fontFamily: T.fontB, background: T.bg }}>
-        <AdminSidebar activePage="inventory" user={user} onLogout={() => { }} />
-        <main style={{ flex: 1, marginLeft: 260, padding: "40px 48px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ width: 48, height: 48, border: `4px solid ${T.border}`, borderTopColor: T.brand, borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 16px" }} />
-            <p style={{ color: T.textMut, fontSize: 14 }}>Cargando inventario...</p>
-          </div>
-        </main>
+      <main style={{ minHeight: "100vh", fontFamily: T.fontB, background: T.bg, padding: "40px 48px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 48, height: 48, border: `4px solid ${T.border}`, borderTopColor: T.brand, borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 16px" }} />
+          <p style={{ color: T.textMut, fontSize: 14 }}>Cargando inventario...</p>
+        </div>
         <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div
+    <main
       style={{
-        display: "flex",
         minHeight: "100vh",
         fontFamily: T.fontB,
         background: T.bg,
         color: T.text,
+        padding: "40px 48px",
       }}
       onClick={() => setOpenMenu(null)}
     >
-      <AdminSidebar
-        activePage="inventory"
-        user={user}
-        onLogout={handleLogout}
-      />
-      <main style={{ flex: 1, marginLeft: 260, padding: "40px 48px" }}>
         {/* Header */}
         <header
           style={{
@@ -2144,7 +2132,6 @@ const cat = CATEGORIES[p.category as keyof typeof CATEGORIES] ?? fallback;      
             </div>
           </>
         )}
-      </main>
 
       {/* Modals */}
       {productModal !== null && (
@@ -2168,6 +2155,6 @@ const cat = CATEGORIES[p.category as keyof typeof CATEGORIES] ?? fallback;      
           onSave={handleAdjustStock}
         />
       )}
-    </div>
+    </main>
   );
 }

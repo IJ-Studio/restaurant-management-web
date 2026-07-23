@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { Users, Edit2, Plus, Search, Power, X } from "lucide-react";
 import { ROLE_LABELS, CREATABLE_ROLES, ROLE_NAMES } from "@/config/roles.config";
-import AdminSidebar from "@/components/admin/AdminSidebar";
 import { api } from "@/lib/api";
 
 export default function UsersPage() {
@@ -141,10 +140,8 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50/50">
-      <AdminSidebar activePage="users" user={{ name: "Admin" }} />
-      <main className="flex-1 ml-[260px] p-6 md:p-10 min-w-0">
-        
+    <main className="p-6 md:p-10 min-w-0">
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
@@ -412,7 +409,6 @@ export default function UsersPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </main>
   );
 }
