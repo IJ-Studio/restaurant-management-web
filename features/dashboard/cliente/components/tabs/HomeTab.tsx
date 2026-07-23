@@ -2,15 +2,15 @@
 
 import React from "react";
 import { ChevronRight, Tag, Flame, CheckCircle2, Star, Plus } from "lucide-react";
-import { 
-  type MenuItem, 
-  type MenuCategory 
+import {
+  type MenuItem,
+  type MenuCategory
 } from "@/features/shared/data/restaurantData";
-import { 
-  type Promotion, 
-  type ClientOrder, 
-  PROMOCIONES, 
-  HISTORIAL 
+import {
+  type Promotion,
+  type ClientOrder,
+  PROMOCIONES,
+  HISTORIAL
 } from "@/features/dashboard/cliente/data/clienteMock";
 import { SettingsService } from "@/features/shared/services/dataService";
 
@@ -38,14 +38,14 @@ export function HomeTab({ user, menu, onGoToMenu, onAddToCart, onReorder }: Home
         <div className="relative z-10 max-w-lg">
           <p className="text-brand text-[11px] font-black uppercase tracking-[0.3em] mb-3">{settings.heroTitle}</p>
           <h1 className="text-4xl font-display font-black tracking-tight mb-3 text-text">
-            Hola, <span className="text-brand">{user?.name || 'Comensal'}</span> 👋
+            Hola, <span className="text-brand">{user?.name || 'Comensal'}</span> 
           </h1>
           <p className="text-text-muted text-sm mb-8 font-medium">{settings.heroSubtitle}</p>
           <button
             onClick={onGoToMenu}
             className="group/btn bg-brand text-white font-display font-black px-8 py-4 rounded-2xl text-xs uppercase tracking-widest transition-all shadow-xl shadow-brand/20 hover:shadow-brand/30 hover:-translate-y-1 active:translate-y-0 active:scale-95 flex items-center gap-3"
           >
-            {settings.heroButtonText} 
+            {settings.heroButtonText}
             <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
           </button>
         </div>
@@ -61,8 +61,8 @@ export function HomeTab({ user, menu, onGoToMenu, onAddToCart, onReorder }: Home
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {PROMOCIONES.map(promo => (
-            <div 
-              key={promo.id} 
+            <div
+              key={promo.id}
               className={`bg-gradient-to-br ${promo.color} rounded-[32px] p-7 p-6 relative overflow-hidden shadow-lg shadow-black/5 group hover:-translate-y-1 transition-all duration-500`}
             >
               <div className="absolute right-[-10px] top-[-10px] text-7xl opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-700">{promo.emoji}</div>
@@ -84,8 +84,8 @@ export function HomeTab({ user, menu, onGoToMenu, onAddToCart, onReorder }: Home
           <h2 className="font-display font-black text-xl text-text m-0 tracking-tight flex items-center gap-3">
              <Flame size={20} className="text-brand animate-pulse" /> Tendencias
           </h2>
-          <button 
-            onClick={onGoToMenu} 
+          <button
+            onClick={onGoToMenu}
             className="text-[10px] font-black text-brand uppercase tracking-widest hover:translate-x-1 transition-transform"
           >
             Ver Catálogo <ChevronRight size={14} className="inline ml-1" />
@@ -93,8 +93,8 @@ export function HomeTab({ user, menu, onGoToMenu, onAddToCart, onReorder }: Home
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {trending.map(item => (
-            <div 
-              key={item.id} 
+            <div
+              key={item.id}
               className="bg-surface border border-border rounded-[32px] overflow-hidden group hover:border-brand/40 hover:shadow-xl transition-all duration-500"
             >
               <div className="relative h-40 overflow-hidden bg-surface-alt">

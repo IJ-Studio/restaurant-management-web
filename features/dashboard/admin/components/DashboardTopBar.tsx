@@ -24,7 +24,7 @@ export function DashboardTopBar({ user }: DashboardTopBarProps) {
         minute: "2-digit",
       })
     );
-    
+
     // Auto-refresh the clock every minute
     const interval = setInterval(() => {
         setNow(
@@ -58,17 +58,17 @@ export function DashboardTopBar({ user }: DashboardTopBarProps) {
           placeholder="Buscar pedidos, clientes..."
           onFocus={() => setSearchFocus(true)}
           onBlur={() => setSearchFocus(false)}
-          className={`w-full pl-9 pr-3 py-2 rounded-xl text-[13px] font-body text-text bg-surface outline-none border transition-all duration-150 
+          className={`w-full pl-9 pr-3 py-2 rounded-xl text-[13px] font-body text-text bg-surface outline-none border transition-all duration-150
             ${searchFocus ? "border-brand shadow-[0_0_0_3px_rgba(232,93,4,0.1)]" : "border-border"}`}
         />
       </div>
 
       <div className="flex items-center gap-2.5">
         {/* Live status */}
-        <div className="px-3.5 py-1.5 bg-surface border border-border rounded-xl text-xs font-bold text-text-sec flex items-center gap-1.5 shadow-sm">
+        {/* <div className="px-3.5 py-1.5 bg-surface border border-border rounded-xl text-xs font-bold text-text-sec flex items-center gap-1.5 shadow-sm">
           <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
           En línea · {now}
-        </div>
+        </div> */}
 
         {/* Refresh */}
         <button
