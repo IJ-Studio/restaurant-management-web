@@ -118,20 +118,7 @@ Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemo
                 {isEven ? (
                   <>
                     <div className="order-1 lg:order-1">
-                      <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-lg">
-                        {category.imagenUrl ? (
-                          <SmartImage
-                            src={category.imagenUrl}
-                            fill
-                            alt={category.nombre}
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full bg-surface-hover/50 text-text/50">
-                            Sin imagen
-                          </div>
-                        )}
-                      </div>
+                      <CategoryHeroImage category={category} />
                     </div>
                     <div className="order-2 lg:order-2">
                       <CategoryMenu category={category} />
@@ -143,20 +130,7 @@ Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemo
                       <CategoryMenu category={category} />
                     </div>
                     <div className="order-1 lg:order-2">
-                      <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-lg">
-                        {category.imagenUrl ? (
-                          <SmartImage
-                            src={category.imagenUrl}
-                            fill
-                            alt={category.nombre}
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full bg-surface-hover/50 text-text/50">
-                            Sin imagen
-                          </div>
-                        )}
-                      </div>
+                      <CategoryHeroImage category={category} />
                     </div>
                   </>
                 )}
@@ -165,6 +139,27 @@ Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemo
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// Si la categoría no tiene imagen propia, usamos la foto del primer
+// platillo que sí tenga una como imagen referencial — antes de esto,
+// categorías sin imagenUrl mostraban "Sin imagen" aunque sus platillos
+// individuales ya tuvieran fotos reales.
+function CategoryHeroImage({ category }: { category: Category }) {
+  const fallbackImg = category.platillos?.find((p) => p.imagenUrl)?.imagenUrl;
+  const imgSrc = category.imagenUrl || fallbackImg;
+
+  return (
+    <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-lg">
+      {imgSrc ? (
+        <SmartImage src={imgSrc} fill alt={category.nombre} className="object-cover" />
+      ) : (
+        <div className="flex items-center justify-center h-full bg-surface-hover/50 text-text/50">
+          Sin imagen
+        </div>
+      )}
     </div>
   );
 }
