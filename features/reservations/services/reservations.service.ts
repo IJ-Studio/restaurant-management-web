@@ -96,6 +96,18 @@ export async function getReservations(filters?: {
   return res.json();
 }
 
+export async function getNoShowRisk(id: string): Promise<{ probabilidad: number; clasificacion: 'Alto' | 'Medio' | 'Bajo' }> {
+  const res = await fetch(`${API_URL}/reservations/${id}/no-show-risk`, {
+    headers: getHeaders(true),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Error al calcular riesgo de no-show' }));
+    throw new Error(error.message || `Error al calcular riesgo de no-show (${res.status})`);
+  }
+  return res.json();
+}
+
 export async function updateReservation(id: string, data: any) {
   const res = await fetch(`${API_URL}/reservations/${id}`, {
     method: 'PATCH',

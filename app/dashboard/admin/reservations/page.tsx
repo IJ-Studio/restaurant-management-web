@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getReservations, updateReservation } from '@/features/reservations/services/reservations.service';
+import { getReservations, updateReservation, getNoShowRisk } from '@/features/reservations/services/reservations.service';
 
 /* ---------- helpers de autenticación (sin cambios) ---------- */
 function getAuthToken(): string | null {
@@ -37,6 +37,31 @@ const getStatusColor = (status: string) => {
   return colors[status] || 'bg-gray-100 text-gray-800';
 };
 
+type NoShowRisk = { probabilidad: number; clasificacion: 'Alto' | 'Medio' | 'Bajo' };
+
+const getRiskColor = (clasificacion: string) => {
+  const colors: Record<string, string> = {
+    Alto: 'bg-red-100 text-red-800',
+    Medio: 'bg-amber-100 text-amber-800',
+    Bajo: 'bg-green-100 text-green-800',
+  };
+  return colors[clasificacion] || 'bg-gray-100 text-gray-800';
+};
+
+function RiskBadge({ risk }: { risk: NoShowRisk | 'loading' | 'error' | undefined }) {
+  if (!risk) return <span className="text-xs text-text-sec">—</span>;
+  if (risk === 'loading') return <span className="text-xs text-text-sec animate-pulse">Calculando…</span>;
+  if (risk === 'error') return <span className="text-xs text-text-sec">N/D</span>;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${getRiskColor(risk.clasificacion)}`}
+      title="Riesgo de no-show (predicción)"
+    >
+      {risk.clasificacion} · {Math.round(risk.probabilidad * 100)}%
+    </span>
+  );
+}
+
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleString('es-ES', {
     day: '2-digit',
@@ -54,6 +79,7 @@ export default function AdminReservationsPage() {
   const [filters, setFilters] = useState({ fechaDesde: '', fechaHasta: '', estatus: '', clienteNombre: '' });
   const [authChecked, setAuthChecked] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null); // <-- fila seleccionada
+  const [risks, setRisks] = useState<Record<string, NoShowRisk | 'loading' | 'error'>>({});
 
   /* autenticación */
   useEffect(() => {
@@ -77,6 +103,24 @@ export default function AdminReservationsPage() {
   useEffect(() => {
     if (authChecked) fetchReservations();
   }, [filters, authChecked]);
+
+  // Riesgo de no-show: solo aplica a reservas ya confirmadas (el modelo se
+  // dispara al confirmar), y se pide una vez por reserva mientras no cambie
+  // la lista cargada.
+  useEffect(() => {
+    const pendientes = reservations.filter(
+      (r) => r.estatus === 'confirmada' && !(r.id in risks),
+    );
+    if (pendientes.length === 0) return;
+
+    pendientes.forEach((r) => {
+      setRisks((prev) => ({ ...prev, [r.id]: 'loading' }));
+      getNoShowRisk(r.id)
+        .then((data) => setRisks((prev) => ({ ...prev, [r.id]: data })))
+        .catch(() => setRisks((prev) => ({ ...prev, [r.id]: 'error' })));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservations]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
@@ -173,6 +217,7 @@ export default function AdminReservationsPage() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-text-sec uppercase">Peticiones</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-text-sec uppercase">Depósito</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-text-sec uppercase">Estado</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-text-sec uppercase">Riesgo no-show</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -223,6 +268,9 @@ export default function AdminReservationsPage() {
                           </select>
                         </div>
                       </td>
+                      <td className="px-4 py-3">
+                        <RiskBadge risk={res.estatus === 'confirmada' ? risks[res.id] : undefined} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -249,9 +297,12 @@ export default function AdminReservationsPage() {
                     <div className="text-xs text-text-sec">{res.clienteEmail || '—'}</div>
                     <div className="text-xs text-text-sec">{res.clienteTelefono || '—'}</div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(res.estatus)}`}>
-                    {statusOptions.find(o => o.value === res.estatus)?.label || res.estatus}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(res.estatus)}`}>
+                      {statusOptions.find(o => o.value === res.estatus)?.label || res.estatus}
+                    </span>
+                    <RiskBadge risk={res.estatus === 'confirmada' ? risks[res.id] : undefined} />
+                  </div>
                 </div>
 
                 {/* detalles en grid */}
