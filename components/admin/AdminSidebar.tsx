@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useRef, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -16,19 +16,15 @@ import {
   Info,
   ChevronDown,
   Database,
+  CalendarDays,
 } from "lucide-react";
+import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
+import { useTheme } from "@/hooks/useTheme";
 
-const T = {
-  brand: "#e85d04",
-  surface: "#ffffff",
-  elevated: "#f5f3ef",
-  text: "#1a1208",
-  textSec: "#6b5e4e",
-  textMut: "#a89880",
-  border: "#e8e1d8",
-  fontD: "'Fraunces', Georgia, serif",
-  fontB: "'DM Sans', system-ui, sans-serif",
-};
+// Solo la tipografía queda fija — los colores ahora salen de var(--color-*),
+// que ya cambian solos con el tema (mismo mecanismo que Footer.tsx).
+const fontD = "'Fraunces', Georgia, serif";
+const fontB = "'DM Sans', system-ui, sans-serif";
 
 function NavBtn({
   icon,
@@ -43,41 +39,21 @@ function NavBtn({
   indent?: boolean;
   onClick?: () => void;
 }) {
-  const [h, setH] = useState(false);
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => setH(true)}
-      onMouseLeave={() => setH(false)}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: indent ? "8px 14px 8px 30px" : "10px 14px",
-        borderRadius: 14,
-        fontSize: indent ? 13 : 14,
-        fontWeight: 600,
-        border: "none",
-        cursor: "pointer",
-        width: "100%",
-        textAlign: "left",
-        fontFamily: T.fontB,
-        transition: "all .15s",
-        background: active ? T.brand : h ? T.elevated : "transparent",
-        color: active ? "#fff" : h ? T.text : T.textSec,
-        boxShadow: active ? "0 4px 14px rgba(232,93,4,.25)" : "none",
-      }}
+      style={{ fontFamily: fontB }}
+      className={`w-full flex items-center gap-2.5 text-left rounded-2xl font-semibold transition-all
+        ${indent ? "py-2 pl-[30px] pr-3.5 text-[13px]" : "py-2.5 px-3.5 text-sm"}
+        ${
+          active
+            ? "bg-[var(--color-brand)] text-white shadow-[0_4px_14px_rgba(232,93,4,0.25)]"
+            : "text-[var(--color-text-sec)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-text)]"
+        }`}
     >
-      <span style={{ flexShrink: 0, opacity: indent ? 0.7 : 1 }}>{icon}</span>
-      <span
-        style={{
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {label}
-      </span>
+      <span className={`flex-shrink-0 ${indent ? "opacity-70" : ""}`}>{icon}</span>
+      {/* ← Sin overflow-hidden, text-ellipsis ni whitespace-nowrap; ahora el texto puede expandirse en una línea */}
+      <span className="whitespace-nowrap">{label}</span>
     </button>
   );
 }
@@ -94,58 +70,26 @@ function Group({
   childActive?: boolean;
 }) {
   const [open, setOpen] = useState(childActive);
-  const [h, setH] = useState(false);
   return (
     <div>
       <button
         onClick={() => setOpen((o) => !o)}
-        onMouseEnter={() => setH(true)}
-        onMouseLeave={() => setH(false)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 14px",
-          borderRadius: 14,
-          fontSize: 14,
-          fontWeight: 600,
-          border: "none",
-          cursor: "pointer",
-          width: "100%",
-          textAlign: "left",
-          fontFamily: T.fontB,
-          transition: "all .15s",
-          background:
+        style={{ fontFamily: fontB }}
+        className={`w-full flex items-center gap-2.5 py-2.5 px-3.5 rounded-2xl text-sm font-semibold text-left transition-all
+          ${
             childActive && !open
-              ? `${T.brand}12`
-              : h
-                ? T.elevated
-                : "transparent",
-          color: childActive ? T.brand : h ? T.text : T.textSec,
-        }}
+              ? "bg-[var(--color-surface-alt)] text-[var(--color-brand)]"
+              : "text-[var(--color-text-sec)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-text)]"
+          }`}
       >
-        <span style={{ flexShrink: 0 }}>{icon}</span>
-        <span
-          style={{
-            flex: 1,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {label}
-        </span>
+        <span className="flex-shrink-0">{icon}</span>
+        <span className="flex-1 whitespace-nowrap">{label}</span>
         <ChevronDown
           size={13}
-          style={{
-            flexShrink: 0,
-            opacity: 0.5,
-            transition: "transform .2s",
-            transform: open ? "rotate(0deg)" : "rotate(-90deg)",
-          }}
+          className={`flex-shrink-0 opacity-50 transition-transform duration-200 ${open ? "rotate-0" : "-rotate-90"}`}
         />
       </button>
-      {open && <div style={{ paddingBottom: 4 }}>{children}</div>}
+      {open && <div className="pb-1">{children}</div>}
     </div>
   );
 }
@@ -153,16 +97,8 @@ function Group({
 function SectionLabel({ label }: { label: string }) {
   return (
     <p
-      style={{
-        fontSize: 10,
-        fontWeight: 800,
-        letterSpacing: ".15em",
-        textTransform: "uppercase",
-        color: T.textMut,
-        padding: "0 10px",
-        margin: "18px 0 6px",
-        fontFamily: T.fontB,
-      }}
+      style={{ fontFamily: fontB }}
+      className="text-[10px] font-extrabold tracking-[0.15em] uppercase text-[var(--color-text-muted)] px-2.5 mt-[18px] mb-1.5"
     >
       {label}
     </p>
@@ -170,29 +106,24 @@ function SectionLabel({ label }: { label: string }) {
 }
 
 export interface AdminSidebarProps {
-  /** Current page key — used to highlight the active item */
-  activePage?: string;
+  activePage?: string; // opcional, si no se pasa se calcula de la URL
   user?: { name?: string; lastname?: string } | null;
   onLogout?: () => void;
 }
 
-/**
- * AdminSidebar — shared across all admin pages.
- *
- * Usage:
- *   import AdminSidebar from '@/components/admin/AdminSidebar';
- *   ...
- *   <AdminSidebar activePage="dashboard" user={user} onLogout={handleLogout} />
- *
- * Place it as the first child of a flex container that has `marginLeft: 260`.
- */
-export default function AdminSidebar({
-  activePage,
-  user,
-  onLogout,
-}: AdminSidebarProps) {
+export default function AdminSidebar({ activePage, user, onLogout }: AdminSidebarProps) {
   const router = useRouter();
-  const is = (k: string) => activePage === k;
+  const isDark = useTheme();
+  const pathname = usePathname();
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  // Si activePage no se pasó por prop, lo tomamos del último segmento de la URL
+  const page = activePage || pathname?.split('/').pop() || '';
+  const is = (k: string) => page === k;
+
+  const currentLogo = isDark
+    ? INITIAL_SETTINGS.restaurantLogo_light
+    : INITIAL_SETTINGS.restaurantLogo_dark;
 
   const handleLogout = async () => {
     try {
@@ -201,82 +132,46 @@ export default function AdminSidebar({
       /* */
     }
     if (typeof window !== "undefined") localStorage.removeItem("user");
+    if (onLogout) onLogout();
     router.push("/login");
   };
 
+  // Efecto para medir el ancho real del sidebar y pasarlo como variable CSS
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0].contentRect.width;
+      // Sumamos 2px para el borde derecho y un mínimo de 260px como respaldo
+      document.documentElement.style.setProperty('--sidebar-width', `${Math.max(width + 2, 260)}px`);
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <aside
-      style={{
-        width: 260,
-        flexShrink: 0,
-        position: "fixed",
-        top: 0,
-        left: 0,
-        height: "100vh",
-        zIndex: 50,
-        display: "flex",
-        flexDirection: "column",
-        background: T.surface,
-        borderRight: `1px solid ${T.border}`,
-        boxShadow: "2px 0 20px rgba(26,18,8,0.05)",
-        fontFamily: T.fontB,
-      }}
+      ref={sidebarRef}
+      style={{ fontFamily: fontB }}
+      // Quitamos w-[260px] fijo → el ancho lo dicta el contenido
+      className="fixed top-0 left-0 h-screen z-50 flex flex-col
+        bg-[var(--color-surface)] border-r border-[var(--color-border)] shadow-xl"
     >
-      {/* Logo */}
-      <div
-        style={{
-          padding: "22px 20px",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          borderBottom: `1px solid ${T.border}`,
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 12,
-            background: T.brand,
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: T.fontD,
-            fontWeight: 900,
-            fontSize: 20,
-            color: "#fff",
-            boxShadow: "0 4px 14px rgba(232,93,4,.35)",
-          }}
-        >
-          Q
+      {/* Logo — ahora ocupa todo el ancho con padding y se ajusta sin deformarse */}
+      <div className="px-4 py-2 border-b border-[var(--color-border)] flex-shrink-0">
+        <div className="w-full h-20">
+          <img
+            src={currentLogo}
+            alt="El Quijote"
+            className="w-full h-full object-contain"
+          />
         </div>
-        <span
-          style={{
-            fontFamily: T.fontD,
-            fontWeight: 900,
-            fontSize: 18,
-            letterSpacing: "-.03em",
-            color: T.text,
-          }}
-        >
-          Quijote<span style={{ color: T.brand }}>Admin</span>
-        </span>
       </div>
 
       {/* ── Scrollable nav ─────────────────────────────────────────────── */}
-      <nav
-        style={{
-          flex: 1,
-          padding: "14px 12px",
-          overflowY: "auto",
-          overflowX: "hidden",
-          /* Custom scrollbar — light theme */
-          scrollbarWidth: "thin",
-          scrollbarColor: `${T.border} transparent`,
-        }}
-      >
+      <nav className="flex-1 px-3 py-3.5 overflow-y-auto overflow-x-hidden [scrollbar-width:thin]">
         <SectionLabel label="Menú Principal" />
 
         <NavBtn
@@ -286,18 +181,18 @@ export default function AdminSidebar({
           onClick={() => router.push("/dashboard/admin")}
         />
 
-        {/* <NavBtn
-          icon={<ClipboardList size={17} />}
-          label="Pedidos"
-          active={is("orders")}
-          onClick={() => router.push("/dashboard/admin/orders")}
-        /> */}
-
         <NavBtn
           icon={<UtensilsCrossed size={17} />}
           label="Catálogo Menú"
           active={is("menu")}
           onClick={() => router.push("/dashboard/admin/menu")}
+        />
+
+        <NavBtn
+          icon={<CalendarDays size={17} />}
+          label="Reservaciones"
+          active={is("reservations")}
+          onClick={() => router.push("/dashboard/admin/reservations")}
         />
 
         <NavBtn
@@ -360,7 +255,7 @@ export default function AdminSidebar({
 
         <NavBtn
           icon={<Database size={17} />}
-          label="Prediccion"
+          label="Predicción"
           active={is("predictive")}
           onClick={() => router.push("/dashboard/admin/predictive")}
         />
@@ -388,77 +283,27 @@ export default function AdminSidebar({
       </nav>
 
       {/* ── User + logout (always visible) ─────────────────────────────── */}
-      <div
-        style={{
-          padding: "10px 12px",
-          borderTop: `1px solid ${T.border}`,
-          flexShrink: 0,
-        }}
-      >
+      <div className="px-3 py-2.5 border-t border-[var(--color-border)] flex-shrink-0">
         {user && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 12px",
-              marginBottom: 6,
-              background: T.elevated,
-              borderRadius: 12,
-            }}
-          >
+          <div className="flex items-center gap-2.5 px-3 py-2.5 mb-1.5 rounded-xl bg-[var(--color-surface-alt)]">
             <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 10,
-                background: `${T.brand}20`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: 900,
-                color: T.brand,
-                flexShrink: 0,
-              }}
+              style={{ backgroundColor: "color-mix(in srgb, var(--color-brand) 18%, transparent)" }}
+              className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center text-xs font-black text-[var(--color-brand)] flex-shrink-0"
             >
               {user.name?.[0]}
               {user.lastname?.[0]}
             </div>
-            <div style={{ overflow: "hidden", flex: 1 }}>
-              <p
-                style={{
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: T.text,
-                  margin: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
+            <div className="overflow-hidden flex-1">
+              <p className="text-[13px] font-bold text-[var(--color-text)] m-0 whitespace-nowrap">
                 {user.name} {user.lastname}
               </p>
-              <p
-                style={{
-                  fontSize: 9,
-                  fontWeight: 800,
-                  color: T.brand,
-                  textTransform: "uppercase",
-                  letterSpacing: ".1em",
-                  margin: 0,
-                }}
-              >
+              <p className="text-[9px] font-extrabold text-[var(--color-brand)] uppercase tracking-[0.1em] m-0">
                 Administrador
               </p>
             </div>
           </div>
         )}
-        <NavBtn
-          icon={<LogOut size={17} />}
-          label="Cerrar Sesión"
-          onClick={handleLogout}
-        />
+        <NavBtn icon={<LogOut size={17} />} label="Cerrar Sesión" onClick={handleLogout} />
       </div>
     </aside>
   );

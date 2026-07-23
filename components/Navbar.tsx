@@ -27,7 +27,8 @@ interface NavbarProps {
   isTransparent?: boolean;
   cartCount?: number;
   showThemeToggle?: boolean;
-  isForcedDark?: boolean; // 👈 Forzar logo claro sobre fondos oscuros (ej. /menu)
+  isForcedDark?: boolean;
+  // Ya no necesitamos hideLogoutButton porque nunca se mostrará el botón externo
 }
 
 export default function Navbar({
@@ -38,7 +39,7 @@ export default function Navbar({
   logoHeight = 40,
   overlay = false,
   isTransparent = false,
-  isForcedDark = false, // 👈 Valor por defecto
+  isForcedDark = false,
 }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
@@ -49,8 +50,9 @@ export default function Navbar({
     setSettings(SettingsService.getSettings());
   }, []);
 
-const { user } = useSelector((state: RootState) => state.auth);
-const isAuthenticated = !!user;
+  const { user } = useSelector((state: RootState) => state.auth);
+  const isAuthenticated = !!user;
+
   const defaultLinks: NavLink[] = isAuthenticated
     ? [
         { label: "Dashboard", href: "/dashboard" },
@@ -82,6 +84,9 @@ const isAuthenticated = !!user;
   const mainLinks = filteredLinks.filter((link) => !link.isAction);
   const actionLinks = filteredLinks.filter((link) => link.isAction);
 
+  // Esta función ya no se usa desde ningún botón externo,
+  // pero la mantenemos por si se reutiliza desde algún otro lado.
+  // En realidad, el cierre de sesión se maneja en ConditionalNavbar (dropdown).
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -182,17 +187,7 @@ const isAuthenticated = !!user;
                     </Link>
                   );
                 })}
-                {isAuthenticated && (
-                  <button
-                    onClick={handleLogout}
-                    className={cn(
-                      "transition duration-200 font-medium",
-                      isTransparent || overlay ? "text-white/90 hover:text-red-400" : "text-text hover:text-red-600"
-                    )}
-                  >
-                    Cerrar sesión
-                  </button>
-                )}
+                {/* Nunca más se muestra el botón externo de cerrar sesión */}
               </div>
             )}
             {!hideNavLinks && (
@@ -237,17 +232,7 @@ const isAuthenticated = !!user;
                   </Link>
                 );
               })}
-              {isAuthenticated && (
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setIsMenuOpen(false);
-                  }}
-                  className="text-left text-text hover:text-red-600 transition px-2 py-1"
-                >
-                  Cerrar sesión
-                </button>
-              )}
+              {/* Tampoco en el menú móvil se muestra cerrar sesión fuera del dropdown */}
             </div>
           </div>
         )}
@@ -269,7 +254,6 @@ function LogoImage({
   const isDark = useTheme();
   let logoSrc = src;
   if (!logoSrc && settings) {
-    // Si se fuerza el modo oscuro (ej. en las páginas /menu por el gradiente), se usa el logo light (claro)
     logoSrc = (isDark || isForcedDark) ? settings.restaurantLogo_light : settings.restaurantLogo_dark;
   }
   const defaultLogo = "/logo.svg";

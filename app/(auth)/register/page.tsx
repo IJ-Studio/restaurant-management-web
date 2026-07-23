@@ -27,7 +27,7 @@ import {
   number,
   specialChar,
 } from "@/utils/validators";
-
+export const dynamic = 'force-dynamic'
 // ----- Funciones de validación (sin cambios) -----
 const validateNameBlock = (value: string) => {
   if (!value) return false;

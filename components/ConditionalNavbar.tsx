@@ -72,36 +72,32 @@ export default function ConditionalNavbar() {
   const isMenuRoute = pathname?.startsWith("/menu");
   const isProductDetailRoute = pathname?.startsWith("/menu/producto");
   const isPedidoRoute = pathname === "/menu/pedido";
-  const applyOverlay = isMenuRoute && !isProductDetailRoute && !isPedidoRoute;
+  const isCheckoutRoute = pathname === "/menu/pedido/checkout"; // Detecta checkout
+
+  // En checkout NO debe tener overlay (nav sólido)
+  const applyOverlay = isMenuRoute && !isProductDetailRoute && !isPedidoRoute && !isCheckoutRoute;
 
   // ─── LÓGICA INTELIGENTE DE CERRAR SESIÓN ────────────────────────
   const handleLogout = async () => {
     try {
-      // 1. Llamamos a tu endpoint para limpiar las cookies HTTP-Only de sesión en el servidor
       await fetch("/api/auth/logout", { method: "POST" });
     } catch (error) {
       console.error("Error al cerrar sesión mediante API:", error);
     }
 
-    // 2. Limpieza de almacenamiento local y cookies del cliente
     document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     localStorage.removeItem("authToken");
-    setUser(null); // Reseteamos el estado para que el Navbar reaccione de inmediato
+    setUser(null);
 
-    // 3. Evaluar la ruta actual para decidir la redirección
     const rutaActual = pathname || "/";
-
-    // Definimos qué prefijos o rutas son estrictamente privadas/requieren autorización
     const esRutaProtegida =
       rutaActual.startsWith("/dashboard") ||
       rutaActual.startsWith("/profile") ||
       rutaActual.startsWith("/settings");
 
     if (esRutaProtegida) {
-      // Si está en una ruta privada, lo mandamos al landing page principal del sitio
       router.push("/");
     } else {
-      // Si está en una ruta pública (como /menu o /about), simplemente refrescamos la página actual
       window.location.reload();
     }
   };
@@ -169,6 +165,7 @@ export default function ConditionalNavbar() {
   const activeUser = user?.user || user;
 
   if (activeUser) {
+    // Siempre incluye Cerrar sesión en el dropdown (sin importar la ruta)
     dropdownItems = [
       { label: "Mi Cuenta", href: "/profile", icon: iconDashboard },
       { label: themeLabel, action: toggleTheme, icon: iconTheme },
@@ -229,6 +226,7 @@ export default function ConditionalNavbar() {
       cartCount={cartCount}
       showThemeToggle={false}
       isForcedDark={applyOverlay}
+      // Sin hideLogoutButton porque ya no existe esa prop
     />
   );
 }
