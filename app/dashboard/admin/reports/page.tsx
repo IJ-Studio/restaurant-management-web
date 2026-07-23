@@ -5,6 +5,17 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import ExportModal from "@/components/admin/ExportModal";
 import { api, APIError } from "@/lib/api";
+import {
+  ScatterChart,
+  Scatter,
+  XAxis,
+  YAxis,
+  ZAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 import {
   ClipboardList,
@@ -46,6 +57,8 @@ type SegmentClient = {
   ticketPromedio: number;
   tipoDominante: string;
   recenciaDias: number;
+  pcaX: number;
+  pcaY: number;
 };
 
 type SegmentInfo = {
@@ -77,6 +90,25 @@ const SEGMENT_COLOR_CLASSES: Record<string, string> = {
   amber: "bg-amber-500",
   red: "bg-red-500",
 };
+
+const SEGMENT_HEX: Record<string, string> = {
+  brand: "#e85d04",
+  secondary: "#3a4a5c",
+  amber: "#f59e0b",
+  red: "#ef4444",
+};
+
+function ClusterTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0].payload;
+  return (
+    <div className="bg-surface border border-border rounded-xl shadow-lg px-3.5 py-2.5 text-xs">
+      <p className="font-black text-text m-0 mb-1">{p.nombre}</p>
+      <p className="text-text-sec m-0">{p.frecuencia} órdenes · ${p.ticketPromedio} prom.</p>
+      <p className="text-text-muted m-0">{p.tipoDominante} · hace {p.recenciaDias} días</p>
+    </div>
+  );
+}
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState<"semana" | "mes" | "año">("semana");
@@ -437,6 +469,46 @@ export default function ReportsPage() {
                     <p className="font-display text-2xl font-black text-text m-0 leading-none">{segments.indiceSilueta}</p>
                     <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mt-1.5">Índice de silueta</p>
                   </div>
+                </div>
+
+                {/* Gráfica de clustering */}
+                <div className="bg-surface rounded-3xl border border-border p-6 shadow-sm mb-8 min-w-0">
+                  <h3 className="font-display font-black text-[15px] text-text m-0 mb-1">
+                    Clústeres de clientes
+                  </h3>
+                  <p className="text-xs text-text-muted mb-4">
+                    Cada punto es un cliente · proyección PCA del espacio de 4 variables usado por K-Means (frecuencia, ticket, % en mesa, recencia)
+                  </p>
+                  <ResponsiveContainer width="100%" height={360}>
+                    <ScatterChart margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                      <XAxis
+                        type="number"
+                        dataKey="pcaX"
+                        name="Componente 1"
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        label={{ value: "Componente principal 1", position: "insideBottom", offset: -5, fontSize: 11, fill: "#64748b" }}
+                      />
+                      <YAxis
+                        type="number"
+                        dataKey="pcaY"
+                        name="Componente 2"
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        label={{ value: "Componente principal 2", angle: -90, position: "insideLeft", fontSize: 11, fill: "#64748b" }}
+                      />
+                      <ZAxis range={[60, 60]} />
+                      <Tooltip content={<ClusterTooltip />} cursor={{ strokeDasharray: "3 3" }} />
+                      <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
+                      {segments.segmentos.map((s) => (
+                        <Scatter
+                          key={s.nombre}
+                          name={s.nombre}
+                          data={s.clientes}
+                          fill={SEGMENT_HEX[s.color] ?? "#e85d04"}
+                        />
+                      ))}
+                    </ScatterChart>
+                  </ResponsiveContainer>
                 </div>
 
                 {/* Segment cards */}
