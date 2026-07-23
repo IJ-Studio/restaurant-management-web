@@ -18,6 +18,7 @@ import {
   Database,
   CalendarDays,
   Wallet,
+  Tag,
 } from "lucide-react";
 import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
 import { useTheme } from "@/hooks/useTheme";
@@ -194,6 +195,13 @@ export default function AdminSidebar({ activePage, user, onLogout }: AdminSideba
           label="Reservaciones"
           active={is("reservations")}
           onClick={() => router.push("/dashboard/admin/reservations")}
+        />
+
+        <NavBtn
+          icon={<Tag size={17} />}
+          label="Promociones"
+          active={is("promociones")}
+          onClick={() => router.push("/dashboard/admin/promociones")}
         />
 
         <NavBtn

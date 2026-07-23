@@ -5,561 +5,111 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { useInventory, type Supplier, type PurchaseOrder, type OrderStatus, type OrderItem, type Product } from "@/hooks/useInventory";
 
-import { Truck, X,FileText,CheckCircle2,Users,Phone,Mail} from "lucide-react";
-
 import {
-  Plus,
-  Trash2,
-  Search,
-  ShoppingCart,
-  MoreVertical,
-  ChevronRight,
-  ArrowLeft,
-  Pencil,
+  Plus, Trash2, Search, ShoppingCart, MoreVertical,
+  ChevronRight, ArrowLeft, Pencil, Truck, X, FileText,
+  CheckCircle2, Users, Phone, Mail,
 } from "lucide-react";
 
-// ─── Tokens ───────────────────────────────────────────────────────────────────
-const T = {
-  brand: "#e85d04",
-  bg: "#faf9f7",
-  surface: "#ffffff",
-  elevated: "#f5f3ef",
-  subtle: "#ede9e3",
-  text: "#1a1208",
-  textSec: "#6b5e4e",
-  textMut: "#a89880",
-  border: "#e8e1d8",
-  borderMed: "#d4c8bc",
-  shadow: "0 2px 16px rgba(26,18,8,0.07)",
-  shadowHov: "0 8px 32px rgba(26,18,8,0.12)",
-  fontD: "'Fraunces', Georgia, serif",
-  fontB: "'DM Sans', system-ui, sans-serif",
-  ok: "#059669",
-  warn: "#d97706",
-  danger: "#dc2626",
-  info: "#2563eb",
-};
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-
-const ORDER_STATUS: Record<
-  OrderStatus,
-  { label: string; color: string; bg: string; icon: React.ReactNode }
-> = {
-  borrador: {
-    label: "Borrador",
-    color: "#64748b",
-    bg: "#f1f5f9",
-    icon: <FileText size={12} />,
-  },
-  enviada: {
-    label: "Enviada",
-    color: T.info,
-    bg: "#eff6ff",
-    icon: <Truck size={12} />,
-  },
-  confirmada: {
-    label: "Confirmada",
-    color: T.warn,
-    bg: "#fffbeb",
-    icon: <CheckCircle2 size={12} />,
-  },
-  en_camino: {
-    label: "En camino",
-    color: "#7c3aed",
-    bg: "#faf5ff",
-    icon: <Truck size={12} />,
-  },
-  recibida: {
-    label: "Recibida",
-    color: T.ok,
-    bg: "#ecfdf5",
-    icon: <CheckCircle2 size={12} />,
-  },
-  cancelada: {
-    label: "Cancelada",
-    color: T.danger,
-    bg: "#fef2f2",
-    icon: <X size={12} />,
-  },
-};
-
-// ─── Components ───────────────────────────────────────────────────────────────
-
-// ─── Components ───────────────────────────────────────────────────────────────
-function NavItem({
-  icon,
-  label,
-  active = false,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-}) {
-  const [h, setH] = useState(false);
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setH(true)}
-      onMouseLeave={() => setH(false)}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "10px 14px",
-        borderRadius: 14,
-        fontSize: 14,
-        fontWeight: 600,
-        border: "none",
-        cursor: "pointer",
-        width: "100%",
-        textAlign: "left",
-        transition: "all .15s",
-        background: active ? T.brand : h ? T.elevated : "transparent",
-        color: active ? "#fff" : h ? T.text : T.textSec,
-        boxShadow: active ? "0 4px 14px rgba(232,93,4,.25)" : "none",
-      }}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-const inp: React.CSSProperties = {
-  width: "100%",
-  padding: "9px 12px",
-  border: `1px solid ${T.borderMed}`,
-  borderRadius: 10,
-  fontSize: 13,
-  color: T.text,
-  background: T.surface,
-  outline: "none",
-  boxSizing: "border-box",
-};
-const lbl: React.CSSProperties = {
-  display: "block",
-  fontSize: 11,
-  fontWeight: 700,
-  color: T.textSec,
-  marginBottom: 5,
+// ─── Tipos y constantes adaptadas ────────────────────────────────────────────
+const ORDER_STATUS: Record<OrderStatus, { label: string; colorClass: string; bgClass: string; icon: React.ReactNode }> = {
+  borrador:   { label: "Borrador",   colorClass: "text-gray-600 dark:text-gray-400", bgClass: "bg-gray-100 dark:bg-gray-400/10", icon: <FileText size={12} /> },
+  enviada:    { label: "Enviada",    colorClass: "text-blue-600 dark:text-blue-400", bgClass: "bg-blue-50 dark:bg-blue-400/10", icon: <Truck size={12} /> },
+  confirmada: { label: "Confirmada", colorClass: "text-amber-600 dark:text-amber-400", bgClass: "bg-amber-50 dark:bg-amber-400/10", icon: <CheckCircle2 size={12} /> },
+  en_camino:  { label: "En camino",  colorClass: "text-purple-600 dark:text-purple-400", bgClass: "bg-purple-50 dark:bg-purple-400/10", icon: <Truck size={12} /> },
+  recibida:   { label: "Recibida",   colorClass: "text-emerald-600 dark:text-emerald-400", bgClass: "bg-emerald-50 dark:bg-emerald-400/10", icon: <CheckCircle2 size={12} /> },
+  cancelada:  { label: "Cancelada",  colorClass: "text-red-600 dark:text-red-400", bgClass: "bg-red-50 dark:bg-red-400/10", icon: <X size={12} /> },
 };
 
 // ─── Supplier Modal ───────────────────────────────────────────────────────────
-function SupplierModal({
-  supplier,
-  onClose,
-  onSave,
-}: {
-  supplier: Supplier | null;
-  onClose: () => void;
-  onSave: (s: Supplier) => void;
-}) {
-  const blank: Supplier = {
-    id: 0,
-    name: "",
-    contact: "",
-    email: "",
-    phone: "",
-    category: "",
-    products: [],
-    paymentTerms: "Contado",
-    deliveryDays: 1,
-    active: true,
-  };
+function SupplierModal({ supplier, onClose, onSave }: { supplier: Supplier | null; onClose: () => void; onSave: (s: Supplier) => void }) {
+  const blank: Supplier = { id: 0, name: "", contact: "", email: "", phone: "", category: "", products: [], paymentTerms: "Contado", deliveryDays: 1, active: true };
   const [form, setForm] = useState<Supplier>(supplier ?? blank);
   const [prodInput, setProdInput] = useState("");
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 200,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-        background: "rgba(26,18,8,0.45)",
-        backdropFilter: "blur(4px)",
-      }}
-    >
-      <div
-        style={{
-          background: T.surface,
-          borderRadius: 28,
-          boxShadow: "0 24px 64px rgba(26,18,8,0.18)",
-          width: "100%",
-          maxWidth: 580,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            padding: "24px 28px 20px",
-            borderBottom: `1px solid ${T.border}`,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+      <div className="bg-surface rounded-3xl shadow-xl w-full max-w-xl overflow-hidden">
+        <div className="flex justify-between items-start p-6 border-b border-border bg-surface-alt">
           <div>
-            <h2
-              style={{
-                fontFamily: T.fontD,
-                fontWeight: 900,
-                fontSize: 20,
-                color: T.text,
-                margin: "0 0 4px",
-              }}
-            >
-              {supplier ? "Editar proveedor" : "Nuevo proveedor"}
-            </h2>
-            <p style={{ fontSize: 12, color: T.textMut, margin: 0 }}>
-              Datos de contacto y condiciones comerciales
-            </p>
+            <h2 className="text-xl font-black text-text">{supplier ? "Editar proveedor" : "Nuevo proveedor"}</h2>
+            <p className="text-xs text-text-muted mt-1">Datos de contacto y condiciones comerciales</p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              padding: 6,
-              background: T.elevated,
-              border: "none",
-              borderRadius: 8,
-              cursor: "pointer",
-              display: "flex",
-            }}
-          >
-            <X size={16} style={{ color: T.textSec }} />
-          </button>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-muted text-text-muted"><X size={18} /></button>
         </div>
 
-        <div
-          style={{
-            padding: "22px 28px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            maxHeight: "62vh",
-            overflowY: "auto",
-          }}
-        >
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
-            <div>
-              <label style={lbl}>Nombre del proveedor *</label>
-              <input
-                style={inp}
-                value={form.name}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, name: e.target.value }))
-                }
-                placeholder="Empresa o persona"
-              />
-            </div>
-            <div>
-              <label style={lbl}>Persona de contacto</label>
-              <input
-                style={inp}
-                value={form.contact}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, contact: e.target.value }))
-                }
-                placeholder="Nombre completo"
-              />
-            </div>
+        <div className="p-6 space-y-4 max-h-[62vh] overflow-y-auto">
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Nombre *</span>
+              <input className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Empresa o persona" />
+            </label>
+            <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Persona de contacto</span>
+              <input className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={form.contact} onChange={e => setForm(f => ({ ...f, contact: e.target.value }))} placeholder="Nombre completo" />
+            </label>
           </div>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
-            <div>
-              <label style={lbl}>Correo electrónico</label>
-              <input
-                type="email"
-                style={inp}
-                value={form.email}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, email: e.target.value }))
-                }
-                placeholder="ventas@proveedor.mx"
-              />
-            </div>
-            <div>
-              <label style={lbl}>Teléfono</label>
-              <input
-                style={inp}
-                value={form.phone}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, phone: e.target.value }))
-                }
-                placeholder="771-000-0000"
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Correo electrónico</span>
+              <input type="email" className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="ventas@proveedor.mx" />
+            </label>
+            <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Teléfono</span>
+              <input className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="771-000-0000" />
+            </label>
           </div>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
-            <div>
-              <label style={lbl}>Categoría de productos</label>
-              <input
-                style={inp}
-                value={form.category}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, category: e.target.value }))
-                }
-                placeholder="Ej. Carnes y embutidos"
-              />
-            </div>
-            <div>
-              <label style={lbl}>Sitio web</label>
-              <input
-                style={inp}
-                value={form.website ?? ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, website: e.target.value }))
-                }
-                placeholder="www.proveedor.com"
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Categoría</span>
+              <input className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} placeholder="Ej. Carnes y embutidos" />
+            </label>
+            <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Sitio web</span>
+              <input className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={form.website ?? ""} onChange={e => setForm(f => ({ ...f, website: e.target.value }))} placeholder="www.proveedor.com" />
+            </label>
           </div>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
-            <div>
-              <label style={lbl}>Términos de pago</label>
-              <select
-                style={inp}
-                value={form.paymentTerms}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, paymentTerms: e.target.value }))
-                }
-              >
-                {[
-                  "Contado",
-                  "Crédito 7 días",
-                  "Crédito 15 días",
-                  "Crédito 30 días",
-                  "Crédito 60 días",
-                ].map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Términos de pago</span>
+              <select className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={form.paymentTerms} onChange={e => setForm(f => ({ ...f, paymentTerms: e.target.value }))}>
+                {["Contado", "Crédito 7 días", "Crédito 15 días", "Crédito 30 días", "Crédito 60 días"].map(o => <option key={o} value={o}>{o}</option>)}
               </select>
-            </div>
-            <div>
-              <label style={lbl}>Días de entrega estimados</label>
-              <input
-                type="number"
-                min={0}
-                style={inp}
-                value={form.deliveryDays}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    deliveryDays: Number(e.target.value),
-                  }))
-                }
-              />
-            </div>
+            </label>
+            <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Días de entrega estimados</span>
+              <input type="number" min={0} className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={form.deliveryDays} onChange={e => setForm(f => ({ ...f, deliveryDays: Number(e.target.value) }))} />
+            </label>
           </div>
 
           <div>
-            <label style={lbl}>Productos que suministra</label>
-            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-              <input
-                style={{ ...inp, flex: 1 }}
-                value={prodInput}
-                onChange={(e) => setProdInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && prodInput.trim()) {
-                    setForm((f) => ({
-                      ...f,
-                      products: [...f.products, prodInput.trim()],
-                    }));
-                    setProdInput("");
-                  }
-                }}
-                placeholder="Escribe y presiona Enter para agregar"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (prodInput.trim()) {
-                    setForm((f) => ({
-                      ...f,
-                      products: [...f.products, prodInput.trim()],
-                    }));
-                    setProdInput("");
-                  }
-                }}
-                style={{
-                  padding: "9px 14px",
-                  borderRadius: 10,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  border: "none",
-                  cursor: "pointer",
-                  background: T.brand,
-                  color: "#fff",
-                }}
-              >
-                <Plus size={14} />
-              </button>
+            <label className="block text-xs font-bold uppercase text-text-muted mb-1">Productos que suministra</label>
+            <div className="flex gap-2 mb-2">
+              <input className="flex-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={prodInput} onChange={e => setProdInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && prodInput.trim()) { setForm(f => ({ ...f, products: [...f.products, prodInput.trim()] })); setProdInput(""); } }}
+                placeholder="Escribe y presiona Enter para agregar" />
+              <button type="button" onClick={() => { if (prodInput.trim()) { setForm(f => ({ ...f, products: [...f.products, prodInput.trim()] })); setProdInput(""); } }}
+                className="px-3 py-2.5 rounded-xl bg-brand text-white text-sm font-bold"><Plus size={14} /></button>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            <div className="flex flex-wrap gap-1.5">
               {form.products.map((p, i) => (
-                <span
-                  key={i}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
-                    padding: "4px 10px",
-                    borderRadius: 99,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    background: T.elevated,
-                    color: T.textSec,
-                    border: `1px solid ${T.border}`,
-                  }}
-                >
+                <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-alt text-text-sec border border-border">
                   {p}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setForm((f) => ({
-                        ...f,
-                        products: f.products.filter((_, j) => j !== i),
-                      }))
-                    }
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      display: "flex",
-                      padding: 0,
-                      color: T.textMut,
-                    }}
-                  >
-                    <X size={10} />
-                  </button>
+                  <button type="button" onClick={() => setForm(f => ({ ...f, products: f.products.filter((_, j) => j !== i) }))} className="text-text-muted hover:text-red-500"><X size={10} /></button>
                 </span>
               ))}
             </div>
           </div>
 
-          <div>
-            <label style={lbl}>Notas adicionales</label>
-            <textarea
-              style={{ ...inp, resize: "none" }}
-              rows={2}
-              value={form.notes ?? ""}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, notes: e.target.value }))
-              }
-              placeholder="Horarios de entrega, condiciones especiales, etc."
-            />
-          </div>
+          <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Notas adicionales</span>
+            <textarea className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm resize-none" rows={2} value={form.notes ?? ""} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Horarios de entrega, condiciones especiales, etc." />
+          </label>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "12px 14px",
-              background: T.elevated,
-              borderRadius: 12,
-            }}
-          >
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: T.text,
-                margin: 0,
-              }}
-            >
-              Proveedor activo
-            </p>
-            <button
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, active: !f.active }))}
-              style={{
-                width: 44,
-                height: 24,
-                borderRadius: 99,
-                border: "none",
-                cursor: "pointer",
-                transition: "all .2s",
-                position: "relative",
-                background: form.active ? T.brand : T.borderMed,
-              }}
-            >
-              <span
-                style={{
-                  position: "absolute",
-                  top: 2,
-                  borderRadius: "50%",
-                  width: 20,
-                  height: 20,
-                  background: "#fff",
-                  transition: "all .2s",
-                  boxShadow: "0 1px 4px rgba(0,0,0,.2)",
-                  left: form.active ? "calc(100% - 22px)" : 2,
-                }}
-              />
+          <div className="flex items-center justify-between p-4 rounded-xl bg-surface-alt">
+            <p className="text-sm font-bold text-text">Proveedor activo</p>
+            <button type="button" onClick={() => setForm(f => ({ ...f, active: !f.active }))}
+              className={`relative w-11 h-6 rounded-full transition-colors ${form.active ? 'bg-brand' : 'bg-border'}`}>
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${form.active ? 'left-[calc(100%-22px)]' : 'left-0.5'}`} />
             </button>
           </div>
         </div>
 
-        <div
-          style={{
-            padding: "16px 28px",
-            borderTop: `1px solid ${T.border}`,
-            background: T.elevated,
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 10,
-          }}
-        >
-          <button
-            onClick={onClose}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              border: "none",
-              cursor: "pointer",
-              background: T.subtle,
-              color: T.textSec,
-            }}
-          >
-            Cancelar
-          </button>
-          <button
-            disabled={!form.name}
-            onClick={() => {
-              onSave({ ...form, id: form.id || 0 });
-              onClose();
-            }}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              border: "none",
-              cursor: "pointer",
-              color: "#fff",
-              background: form.name ? T.brand : "#ccc",
-              boxShadow: form.name ? "0 4px 12px rgba(232,93,4,.3)" : "none",
-            }}
-          >
+        <div className="flex justify-end gap-3 p-5 border-t border-border bg-surface-alt">
+          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-border text-sm font-bold text-text-sec hover:bg-surface-muted">Cancelar</button>
+          <button disabled={!form.name} onClick={() => { onSave({ ...form, id: form.id || 0 }); onClose(); }}
+            className="px-5 py-2.5 rounded-xl bg-brand text-white text-sm font-bold hover:bg-brand/90 disabled:opacity-40 shadow-md shadow-brand/20">
             {supplier ? "Guardar cambios" : "Agregar proveedor"}
           </button>
         </div>
@@ -569,197 +119,58 @@ function SupplierModal({
 }
 
 // ─── Order Modal ──────────────────────────────────────────────────────────────
-function OrderModal({
-  suppliers,
-  products,
-  order,
-  onClose,
-  onSave,
-  initialSuppId,
-}: {
-  suppliers: Supplier[];
-  products: Product[];
-  order: PurchaseOrder | null;
-  onClose: () => void;
-  onSave: (o: PurchaseOrder) => void;
-  initialSuppId?: number;
-}) {
-  const active = suppliers.filter((s) => s.active);
+function OrderModal({ suppliers, products, order, onClose, onSave, initialSuppId }: { suppliers: Supplier[]; products: Product[]; order: PurchaseOrder | null; onClose: () => void; onSave: (o: PurchaseOrder) => void; initialSuppId?: number }) {
+  const active = suppliers.filter(s => s.active);
   const [suppId, setSuppId] = useState(order?.supplierId ?? initialSuppId ?? active[0]?.id ?? 0);
-  const [items, setItems] = useState<OrderItem[]>(
-    order?.items ?? [{ productName: "", quantity: 1, unit: "kg", unitCost: 0 }],
-  );
+  const [items, setItems] = useState<OrderItem[]>(order?.items ?? [{ productName: "", quantity: 1, unit: "kg", unitCost: 0 }]);
   const [notes, setNotes] = useState(order?.notes ?? "");
-  const [status, setStatus] = useState<OrderStatus>(
-    order?.status ?? "borrador",
-  );
-
+  const [status, setStatus] = useState<OrderStatus>(order?.status ?? "borrador");
   const total = items.reduce((s, i) => s + i.quantity * i.unitCost, 0);
-  const supp = suppliers.find((s) => s.id === suppId);
+  const supp = suppliers.find(s => s.id === suppId);
+  const STATUS_FLOW: OrderStatus[] = ["borrador", "enviada", "confirmada", "en_camino", "recibida"];
 
-  function addItem() {
-    setItems((is) => [
-      ...is,
-      { productName: "", quantity: 1, unit: "kg", unitCost: 0 },
-    ]);
-  }
-  function removeItem(i: number) {
-    setItems((is) => is.filter((_, j) => j !== i));
-  }
+  function addItem() { setItems(is => [...is, { productName: "", quantity: 1, unit: "kg", unitCost: 0 }]); }
+  function removeItem(i: number) { setItems(is => is.filter((_, j) => j !== i)); }
   function updateItem(i: number, field: keyof OrderItem, val: string | number) {
-    setItems((is) =>
-      is.map((item, j) => {
-        if (j !== i) return item;
-        const updated = { ...item, [field]: val };
-        // Auto-calculate unitCost and unit when product name is selected
-        if (field === "productName" && val) {
-          const product = products.find(
-            (p) => p.name.toLowerCase().trim() === String(val).toLowerCase().trim(),
-          );
-          if (product) {
-            updated.unitCost = product.costPerUnit;
-            updated.unit = product.unit || "pza";
-          }
-        }
-        return updated;
-      }),
-    );
+    setItems(is => is.map((item, j) => {
+      if (j !== i) return item;
+      const updated = { ...item, [field]: val };
+      if (field === "productName" && val) {
+        const product = products.find(p => p.name.toLowerCase().trim() === String(val).toLowerCase().trim());
+        if (product) { updated.unitCost = product.costPerUnit; updated.unit = product.unit || "pza"; }
+      }
+      return updated;
+    }));
   }
-
-  const STATUS_FLOW: OrderStatus[] = [
-    "borrador",
-    "enviada",
-    "confirmada",
-    "en_camino",
-    "recibida",
-  ];
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 200,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-        background: "rgba(26,18,8,0.45)",
-        backdropFilter: "blur(4px)",
-      }}
-    >
-      <div
-        style={{
-          background: T.surface,
-          borderRadius: 28,
-          boxShadow: "0 24px 64px rgba(26,18,8,0.18)",
-          width: "100%",
-          maxWidth: 680,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            padding: "24px 28px 20px",
-            borderBottom: `1px solid ${T.border}`,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+      <div className="bg-surface rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden">
+        <div className="flex justify-between items-start p-6 border-b border-border bg-surface-alt">
           <div>
-            <h2
-              style={{
-                fontFamily: T.fontD,
-                fontWeight: 900,
-                fontSize: 20,
-                color: T.text,
-                margin: "0 0 4px",
-              }}
-            >
-              {order ? `Orden ${order.folio}` : "Nueva orden de compra"}
-            </h2>
-            <p style={{ fontSize: 12, color: T.textMut, margin: 0 }}>
-              Reabastecimiento de inventario
-            </p>
+            <h2 className="text-xl font-black text-text">{order ? `Orden ${order.folio}` : "Nueva orden de compra"}</h2>
+            <p className="text-xs text-text-muted mt-1">Reabastecimiento de inventario</p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              padding: 6,
-              background: T.elevated,
-              border: "none",
-              borderRadius: 8,
-              cursor: "pointer",
-              display: "flex",
-            }}
-          >
-            <X size={16} style={{ color: T.textSec }} />
-          </button>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-muted text-text-muted"><X size={18} /></button>
         </div>
 
-        <div
-          style={{
-            padding: "20px 28px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            maxHeight: "62vh",
-            overflowY: "auto",
-          }}
-        >
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
-            <div>
-              <label style={lbl}>Proveedor *</label>
-              <select
-                style={inp}
-                value={suppId}
-                onChange={(e) => setSuppId(Number(e.target.value))}
-              >
-                {active.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-              {supp && (
-                <p
-                  style={{ fontSize: 10, color: T.textMut, margin: "4px 0 0" }}
-                >
-                  Entrega estimada: {supp.deliveryDays} día(s) ·{" "}
-                  {supp.paymentTerms}
-                </p>
-              )}
-            </div>
-          </div>
+        <div className="p-6 space-y-4 max-h-[62vh] overflow-y-auto">
+          <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Proveedor *</span>
+            <select className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={suppId} onChange={e => setSuppId(Number(e.target.value))}>
+              {active.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            {supp && <p className="text-[10px] text-text-muted mt-1">Entrega estimada: {supp.deliveryDays} día(s) · {supp.paymentTerms}</p>}
+          </label>
 
           {order && (
             <div>
-              <label style={lbl}>Estado de la orden</label>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {STATUS_FLOW.map((s) => {
+              <label className="text-xs font-bold uppercase text-text-muted mb-2 block">Estado de la orden</label>
+              <div className="flex flex-wrap gap-2">
+                {STATUS_FLOW.map(s => {
                   const sc = ORDER_STATUS[s];
                   return (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setStatus(s)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5,
-                        padding: "5px 12px",
-                        borderRadius: 99,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        border: `1.5px solid ${status === s ? sc.color : T.border}`,
-                        background: status === s ? sc.bg : T.surface,
-                        color: status === s ? sc.color : T.textMut,
-                      }}
-                    >
+                    <button key={s} type="button" onClick={() => setStatus(s)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition ${status === s ? `${sc.bgClass} ${sc.colorClass} border-current` : 'border-border text-text-muted hover:border-text-muted'}`}>
                       {sc.icon} {sc.label}
                     </button>
                   );
@@ -768,244 +179,49 @@ function OrderModal({
             </div>
           )}
 
-          {/* Items */}
           <div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 10,
-              }}
-            >
-              <label style={{ ...lbl, marginBottom: 0 }}>
-                Productos a ordenar
-              </label>
-              <button
-                type="button"
-                onClick={addItem}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: "4px 10px",
-                  borderRadius: 8,
-                  border: "none",
-                  cursor: "pointer",
-                  background: `${T.brand}15`,
-                  color: T.brand,
-                }}
-              >
-                <Plus size={12} /> Agregar
-              </button>
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-xs font-bold uppercase text-text-muted">Productos a ordenar</span>
+              <button type="button" onClick={addItem} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold bg-brand/10 text-brand hover:bg-brand/20"><Plus size={12} /> Agregar</button>
             </div>
-
-            {/* Header row */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "2fr 70px 100px 30px",
-                gap: 8,
-                marginBottom: 6,
-                padding: "0 4px",
-              }}
-            >
-              {["Producto", "Cant.", "Precio unitario", ""].map((h) => (
-                <span
-                  key={h}
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: T.textMut,
-                    letterSpacing: ".08em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {h}
-                </span>
-              ))}
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="space-y-2">
               {items.map((item, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "2fr 70px 100px 30px",
-                    gap: 8,
-                    alignItems: "start",
-                  }}
-                >
-                  <select
-                    style={inp}
-                    value={item.productName}
-                    onChange={(e) =>
-                      updateItem(i, "productName", e.target.value)
-                    }
-                  >
+                <div key={i} className="grid grid-cols-[2fr_70px_100px_30px] gap-2 items-start">
+                  <select className="px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={item.productName} onChange={e => updateItem(i, "productName", e.target.value)}>
                     <option value="">Seleccionar producto</option>
-                    {products
-                      .filter((p) =>
-                        supp ? supp.products.some(sp => sp.toLowerCase().trim() === p.name.toLowerCase().trim()) : false,
-                      )
-                      .map((p) => (
-                        <option key={p.id} value={p.name}>
-                          {p.name}
-                        </option>
-                      ))}
+                    {products.filter(p => supp ? supp.products.some(sp => sp.toLowerCase().trim() === p.name.toLowerCase().trim()) : false).map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                   </select>
-                  <input
-                    type="number"
-                    min={1}
-                    style={inp}
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateItem(i, "quantity", Number(e.target.value))
-                    }
-                  />
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                      padding: "8px 12px",
-                      background: T.elevated,
-                      borderRadius: 10,
-                      border: `1px solid ${T.border}`,
-                    }}
-                  >
-                    <span style={{ fontSize: 14, fontWeight: 700, color: T.brand }}>
-                      ${item.unitCost.toFixed(2)}
-                    </span>
-                    <span style={{ fontSize: 10, color: T.textMut, fontWeight: 500 }}>
-                      por {item.unit || "pza"}
-                    </span>
+                  <input type="number" min={1} className="px-3 py-2.5 rounded-xl border border-border bg-surface text-sm" value={item.quantity} onChange={e => updateItem(i, "quantity", Number(e.target.value))} />
+                  <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-surface-alt border border-border">
+                    <span className="text-sm font-bold text-brand">${item.unitCost.toFixed(2)}</span>
+                    <span className="text-[10px] text-text-muted">por {item.unit || "pza"}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(i)}
-                    disabled={items.length === 1}
-                    style={{
-                      padding: 4,
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      color: items.length === 1 ? T.border : T.danger,
-                      display: "flex",
-                      alignSelf: "center",
-                    }}
-                  >
-                    <X size={14} />
-                  </button>
+                  <button type="button" onClick={() => removeItem(i)} disabled={items.length === 1} className="p-1.5 text-red-500 disabled:text-border hover:bg-red-50 rounded-lg"><X size={14} /></button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Total */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "12px 16px",
-              background: T.elevated,
-              borderRadius: 12,
-              border: `1px solid ${T.border}`,
-            }}
-          >
-            <span style={{ fontSize: 14, fontWeight: 700, color: T.textSec }}>
-              Total estimado
-            </span>
-            <span
-              style={{
-                fontFamily: T.fontD,
-                fontSize: 22,
-                fontWeight: 900,
-                color: T.brand,
-              }}
-            >
-              ${total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-            </span>
+          <div className="flex justify-between items-center p-4 rounded-xl bg-surface-alt border border-border">
+            <span className="text-sm font-bold text-text-sec">Total estimado</span>
+            <span className="text-2xl font-black text-brand">${total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
           </div>
 
-          <div>
-            <label style={lbl}>Notas (opcional)</label>
-            <textarea
-              style={{ ...inp, resize: "none" }}
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Instrucciones especiales, urgencias, etc."
-            />
-          </div>
+          <label className="block"><span className="text-xs font-bold uppercase text-text-muted">Notas (opcional)</span>
+            <textarea className="w-full mt-1 px-3 py-2.5 rounded-xl border border-border bg-surface text-sm resize-none" rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Instrucciones especiales, urgencias, etc." />
+          </label>
         </div>
 
-        <div
-          style={{
-            padding: "16px 28px",
-            borderTop: `1px solid ${T.border}`,
-            background: T.elevated,
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 10,
-          }}
-        >
-          <button
-            onClick={onClose}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              border: "none",
-              cursor: "pointer",
-              background: T.subtle,
-              color: T.textSec,
-            }}
-          >
-            Cancelar
-          </button>
-          <button
-            disabled={items.some((i) => !i.productName) || !suppId}
+        <div className="flex justify-end gap-3 p-5 border-t border-border bg-surface-alt">
+          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-border text-sm font-bold text-text-sec hover:bg-surface-muted">Cancelar</button>
+          <button disabled={items.some(i => !i.productName) || !suppId}
             onClick={() => {
-              const s = suppliers.find((s) => s.id === suppId);
-              const folio =
-                order?.folio ??
-                `OC-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`;
-              onSave({
-                id: order?.id ?? 0,
-                folio,
-                supplierId: suppId,
-                supplierName: s?.name ?? "",
-                status,
-                items,
-                total,
-                createdAt:
-                  order?.createdAt ?? new Date().toISOString().split("T")[0],
-                notes,
-              });
+              const s = suppliers.find(s => s.id === suppId);
+              const folio = order?.folio ?? `OC-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`;
+              onSave({ id: order?.id ?? 0, folio, supplierId: suppId, supplierName: s?.name ?? "", status, items, total, createdAt: order?.createdAt ?? new Date().toISOString().split("T")[0], notes });
               onClose();
             }}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              border: "none",
-              cursor: "pointer",
-              color: "#fff",
-              background:
-                !items.some((i) => !i.productName) && suppId ? T.brand : "#ccc",
-              boxShadow:
-                !items.some((i) => !i.productName) && suppId
-                  ? "0 4px 12px rgba(232,93,4,.3)"
-                  : "none",
-            }}
-          >
+            className="px-5 py-2.5 rounded-xl bg-brand text-white text-sm font-bold hover:bg-brand/90 disabled:opacity-40 shadow-md shadow-brand/20">
             {order ? "Actualizar orden" : "Crear orden"}
           </button>
         </div>
@@ -1015,317 +231,59 @@ function OrderModal({
 }
 
 // ─── Supplier Card ────────────────────────────────────────────────────────────
-function SupplierCard({
-  supplier,
-  orderCount,
-  onEdit,
-  onOrder,
-}: {
-  supplier: Supplier;
-  orderCount: number;
-  onEdit: () => void;
-  onOrder: () => void;
-}) {
-  const [hover, setHover] = useState(false);
+function SupplierCard({ supplier, orderCount, onEdit, onOrder }: { supplier: Supplier; orderCount: number; onEdit: () => void; onOrder: () => void }) {
   return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        background: T.surface,
-        borderRadius: 20,
-        border: `1px solid ${T.border}`,
-        padding: "20px 22px",
-        boxShadow: hover ? T.shadowHov : T.shadow,
-        transition: "all .2s",
-        opacity: supplier.active ? 1 : 0.65,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 12,
-        }}
-      >
+    <div className={`bg-surface rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-all ${!supplier.active ? 'opacity-65' : ''}`}>
+      <div className="flex justify-between items-start mb-3">
         <div>
-          <p
-            style={{
-              fontSize: 15,
-              fontWeight: 800,
-              color: T.text,
-              margin: "0 0 3px",
-            }}
-          >
-            {supplier.name}
-          </p>
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              padding: "2px 8px",
-              borderRadius: 99,
-              background: T.elevated,
-              color: T.textSec,
-            }}
-          >
-            {supplier.category}
-          </span>
+          <p className="text-base font-extrabold text-text">{supplier.name}</p>
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-surface-alt text-text-sec">{supplier.category}</span>
         </div>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 800,
-            padding: "3px 9px",
-            borderRadius: 99,
-            background: supplier.active ? "#ecfdf5" : "#f1f5f9",
-            color: supplier.active ? T.ok : "#64748b",
-          }}
-        >
+        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${supplier.active ? 'bg-emerald-50 dark:bg-emerald-400/10 text-emerald-600 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-400/10 text-gray-500'}`}>
           {supplier.active ? "Activo" : "Inactivo"}
         </span>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
-          marginBottom: 12,
-        }}
-      >
-        {supplier.contact && (
-          <span
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 12,
-              color: T.textSec,
-            }}
-          >
-            <Users size={11} style={{ color: T.textMut }} />
-            {supplier.contact}
-          </span>
-        )}
-        {supplier.phone && (
-          <span
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 12,
-              color: T.textSec,
-            }}
-          >
-            <Phone size={11} style={{ color: T.textMut }} />
-            {supplier.phone}
-          </span>
-        )}
-        {supplier.email && (
-          <span
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 12,
-              color: T.textSec,
-            }}
-          >
-            <Mail size={11} style={{ color: T.textMut }} />
-            {supplier.email}
-          </span>
-        )}
+      <div className="space-y-1.5 mb-3">
+        {supplier.contact && <span className="flex items-center gap-1.5 text-xs text-text-sec"><Users size={11} className="text-text-muted" />{supplier.contact}</span>}
+        {supplier.phone && <span className="flex items-center gap-1.5 text-xs text-text-sec"><Phone size={11} className="text-text-muted" />{supplier.phone}</span>}
+        {supplier.email && <span className="flex items-center gap-1.5 text-xs text-text-sec"><Mail size={11} className="text-text-muted" />{supplier.email}</span>}
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        <div
-          style={{
-            flex: 1,
-            padding: "8px 10px",
-            background: T.elevated,
-            borderRadius: 10,
-            textAlign: "center",
-          }}
-        >
-          <p
-            style={{ fontSize: 16, fontWeight: 900, color: T.brand, margin: 0 }}
-          >
-            {supplier.deliveryDays}d
-          </p>
-          <p
-            style={{
-              fontSize: 9,
-              color: T.textMut,
-              margin: "2px 0 0",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: ".05em",
-            }}
-          >
-            Entrega
-          </p>
+      <div className="flex gap-2 mb-3">
+        <div className="flex-1 p-2 rounded-xl bg-surface-alt text-center">
+          <p className="text-lg font-black text-brand">{supplier.deliveryDays}d</p>
+          <p className="text-[9px] font-bold uppercase text-text-muted">Entrega</p>
         </div>
-        <div
-          style={{
-            flex: 1,
-            padding: "8px 10px",
-            background: T.elevated,
-            borderRadius: 10,
-            textAlign: "center",
-          }}
-        >
-          <p
-            style={{ fontSize: 16, fontWeight: 900, color: T.text, margin: 0 }}
-          >
-            {orderCount}
-          </p>
-          <p
-            style={{
-              fontSize: 9,
-              color: T.textMut,
-              margin: "2px 0 0",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: ".05em",
-            }}
-          >
-            Órdenes
-          </p>
+        <div className="flex-1 p-2 rounded-xl bg-surface-alt text-center">
+          <p className="text-lg font-black text-text">{orderCount}</p>
+          <p className="text-[9px] font-bold uppercase text-text-muted">Órdenes</p>
         </div>
-        <div
-          style={{
-            flex: 2,
-            padding: "8px 10px",
-            background: T.elevated,
-            borderRadius: 10,
-            textAlign: "center",
-          }}
-        >
-          <p
-            style={{ fontSize: 12, fontWeight: 700, color: T.text, margin: 0 }}
-          >
-            {supplier.paymentTerms}
-          </p>
-          <p
-            style={{
-              fontSize: 9,
-              color: T.textMut,
-              margin: "2px 0 0",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: ".05em",
-            }}
-          >
-            Pago
-          </p>
+        <div className="flex-[2] p-2 rounded-xl bg-surface-alt text-center">
+          <p className="text-sm font-bold text-text">{supplier.paymentTerms}</p>
+          <p className="text-[9px] font-bold uppercase text-text-muted">Pago</p>
         </div>
       </div>
 
-      <div
-        style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 14 }}
-      >
+      <div className="flex flex-wrap gap-1 mb-3.5">
         {supplier.products.slice(0, 3).map((p, i) => (
-          <span
-            key={i}
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              padding: "2px 7px",
-              borderRadius: 99,
-              background: T.elevated,
-              color: T.textSec,
-              border: `1px solid ${T.border}`,
-            }}
-          >
-            {p}
-          </span>
+          <span key={i} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-surface-alt text-text-sec border border-border">{p}</span>
         ))}
-        {supplier.products.length > 3 && (
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              padding: "2px 7px",
-              borderRadius: 99,
-              background: T.elevated,
-              color: T.textMut,
-            }}
-          >
-            +{supplier.products.length - 3}
-          </span>
-        )}
+        {supplier.products.length > 3 && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-surface-alt text-text-muted">+{supplier.products.length - 3}</span>}
       </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button
-          onClick={onEdit}
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 5,
-            padding: "8px",
-            borderRadius: 10,
-            fontSize: 12,
-            fontWeight: 700,
-            cursor: "pointer",
-            border: `1px solid ${T.border}`,
-            background: T.surface,
-            color: T.textSec,
-            transition: "all .15s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = T.elevated)}
-          onMouseLeave={(e) => (e.currentTarget.style.background = T.surface)}
-        >
-          <Pencil size={12} /> Editar
-        </button>
-        <button
-          onClick={onOrder}
-          disabled={!supplier.active}
-          style={{
-            flex: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 5,
-            padding: "8px",
-            borderRadius: 10,
-            fontSize: 12,
-            fontWeight: 700,
-            cursor: "pointer",
-            border: "none",
-            background: supplier.active ? T.brand : "#ccc",
-            color: "#fff",
-            boxShadow: supplier.active
-              ? "0 3px 10px rgba(232,93,4,.25)"
-              : "none",
-          }}
-        >
-          <ShoppingCart size={12} /> Nueva orden
-        </button>
+      <div className="flex gap-2">
+        <button onClick={onEdit} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-border text-xs font-bold text-text-sec hover:bg-surface-muted transition"><Pencil size={12} /> Editar</button>
+        <button onClick={onOrder} disabled={!supplier.active} className="flex-[2] flex items-center justify-center gap-1.5 py-2 rounded-xl bg-brand text-white text-xs font-bold hover:bg-brand/90 disabled:opacity-40 shadow-md shadow-brand/20 transition"><ShoppingCart size={12} /> Nueva orden</button>
       </div>
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Página principal ─────────────────────────────────────────────────────────
 export default function SuppliersPage() {
   const router = useRouter();
-  const {
-    products,
-    suppliers,
-    orders,
-    loading,
-    error,
-    saveSupplier,
-    deleteSupplier,
-    saveOrder,
-    deleteOrder,
-  } = useInventory();
-
+  const { products, suppliers, orders, loading, error, saveSupplier, deleteSupplier, saveOrder, deleteOrder } = useInventory();
   const [tab, setTab] = useState<"proveedores" | "ordenes">("proveedores");
   const [suppModal, setSuppModal] = useState<Supplier | null | "new">(null);
   const [orderModal, setOrderModal] = useState<PurchaseOrder | null | "new">(null);
@@ -1333,617 +291,197 @@ export default function SuppliersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [openMenu, setOpenMenu] = useState<number | null>(null);
-  const [searchFocus, setSearchFocus] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const user = useSelector((state: RootState) => state.auth.user);
 
-  // Stats
-  const pendingOrders = orders.filter(
-    (o) => !["recibida", "cancelada"].includes(o.status),
-  );
-  const totalOrdered = orders
-    .filter((o) => o.status !== "cancelada")
-    .reduce((s, o) => s + o.total, 0);
-
-  // Filter
-  const filteredOrders = orders.filter((o) => {
+  const pendingOrders = orders.filter(o => !["recibida", "cancelada"].includes(o.status));
+  const totalOrdered = orders.filter(o => o.status !== "cancelada").reduce((s, o) => s + o.total, 0);
+  const filteredOrders = orders.filter(o => {
     const ms = [o.folio, o.supplierName].join(" ").toLowerCase().includes(search.toLowerCase());
     const mst = statusFilter === "all" || o.status === statusFilter;
     return ms && mst;
   });
 
-  // ── Handlers con manejo de errores ────────────────────────────────────────
-  async function handleSaveSupplier(s: Supplier) {
-    try {
-      await saveSupplier(s);
-    } catch {
-      setActionError("Error al guardar el proveedor.");
-    }
-  }
+  async function handleSaveSupplier(s: Supplier) { try { await saveSupplier(s); } catch { setActionError("Error al guardar el proveedor."); } }
+  async function handleDeleteSupplier(id: number) { if (!confirm("¿Eliminar proveedor?")) return; try { await deleteSupplier(id); } catch { setActionError("Error al eliminar el proveedor."); } setOpenMenu(null); }
+  async function handleSaveOrder(o: PurchaseOrder) { try { await saveOrder(o); } catch { setActionError("Error al guardar la orden."); } }
+  async function handleDeleteOrder(id: number) { if (!confirm("¿Eliminar esta orden?")) return; try { await deleteOrder(id); } catch { setActionError("Error al eliminar la orden."); } setOpenMenu(null); }
+  function openNewOrder(supplierId?: number) { setPreselSupp(supplierId ?? null); setOrderModal("new"); }
 
-  async function handleDeleteSupplier(id: number) {
-    if (!confirm("¿Eliminar proveedor?")) return;
-    try {
-      await deleteSupplier(id);
-    } catch {
-      setActionError("Error al eliminar el proveedor.");
-    }
-    setOpenMenu(null);
-  }
-
-  async function handleSaveOrder(o: PurchaseOrder) {
-    try {
-      await saveOrder(o);
-    } catch {
-      setActionError("Error al guardar la orden.");
-    }
-  }
-
-  async function handleDeleteOrder(id: number) {
-    if (!confirm("¿Eliminar esta orden?")) return;
-    try {
-      await deleteOrder(id);
-    } catch {
-      setActionError("Error al eliminar la orden.");
-    }
-    setOpenMenu(null);
-  }
-
-  function openNewOrder(supplierId?: number) {
-    setPreselSupp(supplierId ?? null);
-    setOrderModal("new");
-  }
-
-  // ── Render: loading / error state ─────────────────────────────────────────
   if (loading) {
     return (
-      <main
-        style={{
-          minHeight: "100vh",
-          fontFamily: T.fontB,
-          background: T.bg,
-          padding: "40px 48px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              border: `4px solid ${T.border}`,
-              borderTopColor: T.brand,
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 16px",
-            }}
-          />
-          <p style={{ color: T.textMut, fontSize: 14 }}>
-            Cargando proveedores...
-          </p>
+      <div className="min-h-screen flex items-center justify-center bg-surface-muted">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-border border-t-brand rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-text-muted text-sm">Cargando proveedores...</p>
         </div>
-        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
-      </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-muted">
+        <div className="text-center text-red-500">
+          <p className="font-bold">Error al cargar proveedores</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        fontFamily: T.fontB,
-        background: T.bg,
-        color: T.text,
-        padding: "40px 48px",
-      }}
-      onClick={() => setOpenMenu(null)}
-    >
-          {/* Action Error Banner */}
-          {actionError && (
-            <div
-              style={{
-                padding: "12px 18px",
-                background: "#fef2f2",
-                borderRadius: 12,
-                border: "1px solid #fecaca",
-                marginBottom: 20,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span style={{ fontSize: 13, color: T.danger }}>
-                {actionError}
-              </span>
-              <button
-                onClick={() => setActionError(null)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: T.textMut,
-                }}
-              >
-                <X size={14} />
-              </button>
-            </div>
-          )}
-          {/* Breadcrumb */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              marginBottom: 20,
-              fontSize: 13,
-              color: T.textMut,
-            }}
-          >
-            <button
-              onClick={() => router.push("/dashboard/admin/inventory")}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: T.textMut,
-                fontFamily: T.fontB,
-                fontSize: 13,
-              }}
-            >
-              <ArrowLeft size={14} /> Inventario
-            </button>
-            <ChevronRight size={12} />
-            <span style={{ fontWeight: 700, color: T.textSec }}>
-              Proveedores y Órdenes
-            </span>
-          </div>
+    <main className="min-h-screen bg-surface-muted p-6 md:p-10" onClick={() => setOpenMenu(null)}>
+      {actionError && (
+        <div className="flex justify-between items-center p-3 rounded-xl bg-red-50 dark:bg-red-400/10 border border-red-200 dark:border-red-400/30 mb-5">
+          <span className="text-sm text-red-600 dark:text-red-400">{actionError}</span>
+          <button onClick={() => setActionError(null)} className="text-text-muted"><X size={14} /></button>
+        </div>
+      )}
 
-          {/* Header */}
-          <header
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              marginBottom: 32,
-            }}
-          >
-            <div>
-              <h1
-                style={{
-                  fontFamily: T.fontD,
-                  fontWeight: 900,
-                  fontSize: 32,
-                  letterSpacing: "-.03em",
-                  lineHeight: 1.1,
-                  margin: "0 0 6px",
-                  color: T.text,
-                }}
-              >
-                Proveedores
-              </h1>
-              <p style={{ fontSize: 14, color: T.textMut, margin: 0 }}>
-                Gestión de proveedores y órdenes de reabastecimiento
-              </p>
-            </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                onClick={() => openNewOrder()}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                  padding: "10px 16px",
-                  borderRadius: 12,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  border: `1px solid ${T.border}`,
-                  background: T.surface,
-                  color: T.textSec,
-                }}
-              >
-                <ShoppingCart size={15} /> Nueva orden
-              </button>
-              <button
-                onClick={() => setSuppModal("new")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 7,
-                  padding: "10px 18px",
-                  borderRadius: 12,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#fff",
-                  background: T.brand,
-                  boxShadow: "0 4px 12px rgba(232,93,4,.28)",
-                }}
-              >
-                <Plus size={15} /> Nuevo proveedor
-              </button>
-            </div>
-          </header>
+      <div className="flex items-center gap-1.5 mb-5 text-sm text-text-muted">
+        <button onClick={() => router.push("/dashboard/admin/inventory")} className="flex items-center gap-1.5 hover:text-text"><ArrowLeft size={14} /> Inventario</button>
+        <ChevronRight size={12} />
+        <span className="font-bold text-text-sec">Proveedores y Órdenes</span>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-text">Proveedores</h1>
+          <p className="text-sm text-text-muted mt-1">Gestión de proveedores y órdenes de reabastecimiento</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button onClick={() => openNewOrder()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-surface text-sm font-bold text-text-sec hover:bg-surface-muted"><ShoppingCart size={16} /> Nueva orden</button>
+          <button onClick={() => setSuppModal("new")} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand text-white text-sm font-bold hover:bg-brand/90 shadow-md shadow-brand/20"><Plus size={16} /> Nuevo proveedor</button>
+        </div>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-7">
         {[
-          { label: "Proveedores activos", value: suppliers.filter((s) => s.active).length, colorClass: "bg-brand text-brand", sub: "en lista" },
-          { label: "Órdenes pendientes", value: pendingOrders.length, colorClass: "bg-amber-600 text-amber-600", sub: "en proceso" },
-          { label: "En camino", value: orders.filter((o) => o.status === "en_camino").length, colorClass: "bg-purple-600 text-purple-600", sub: "por recibir" },
-          { label: "Total comprado", value: `$${totalOrdered.toLocaleString()}`, colorClass: "bg-emerald-600 text-emerald-600", sub: "este período" },
-        ].map((s) => {
-          const [bg, textColor] = s.colorClass.split(" ");
-          return (
-            <div key={s.label} className="bg-surface rounded-[20px] border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
-              <div className={`w-6 h-1 rounded-full mb-3.5 opacity-90 ${bg}`} />
-              <p className={`font-display text-[26px] font-black m-0 mb-1 leading-none ${textColor}`}>
-                {s.value}
-              </p>
-              <p className="text-xs font-bold text-text m-0 mb-0.5">{s.label}</p>
-              <p className="text-[11px] text-text-muted m-0">{s.sub}</p>
-            </div>
-          );
-        })}
+          { label: "Proveedores activos", value: suppliers.filter(s => s.active).length, color: "bg-brand", textColor: "text-brand" },
+          { label: "Órdenes pendientes", value: pendingOrders.length, color: "bg-amber-500", textColor: "text-amber-600 dark:text-amber-400" },
+          { label: "En camino", value: orders.filter(o => o.status === "en_camino").length, color: "bg-purple-500", textColor: "text-purple-600 dark:text-purple-400" },
+          { label: "Total comprado", value: `$${totalOrdered.toLocaleString()}`, color: "bg-emerald-500", textColor: "text-emerald-600 dark:text-emerald-400" },
+        ].map(s => (
+          <div key={s.label} className="bg-surface rounded-2xl border border-border p-5 shadow-sm">
+            <div className={`w-6 h-1 rounded-full ${s.color} mb-3`} />
+            <p className={`text-2xl font-black ${s.textColor}`}>{s.value}</p>
+            <p className="text-xs font-bold text-text mt-1">{s.label}</p>
+            <p className="text-[11px] text-text-muted">{s.label.includes("activos") ? "en lista" : s.label.includes("pendientes") ? "en proceso" : s.label.includes("camino") ? "por recibir" : "este período"}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Tabs Menu */}
-      <div className="flex border-b border-border mb-6 overflow-x-auto no-scrollbar">
+      {/* Tabs */}
+      <div className="flex border-b border-border mb-6 overflow-x-auto">
         {[
-          { k: "proveedores", l: "🏭 Proveedores", count: suppliers.filter((s) => s.active).length },
+          { k: "proveedores", l: "🏭 Proveedores", count: suppliers.filter(s => s.active).length },
           { k: "ordenes", l: "📋 Órdenes de compra", count: orders.length },
-        ].map((t) => {
-          const active = tab === t.k;
-          return (
-            <button
-              key={t.k}
-              onClick={() => setTab(t.k as any)}
-              className={`flex items-center gap-1.5 px-5 py-2.5 text-[13px] font-bold border-none cursor-pointer bg-transparent border-b-2 mb-[-1px] whitespace-nowrap transition-colors ${
-                active ? "border-brand text-brand" : "border-transparent text-text-muted hover:text-text-sec"
-              }`}
-            >
-              {t.l}
-              <span
-                className={`px-[7px] py-[1px] rounded-full text-[10px] font-extrabold transition-colors ${
-                  active ? "bg-brand/10 text-brand" : "bg-surface-alt text-text-muted"
-                }`}
-              >
-                {t.count}
-              </span>
-            </button>
-          );
-        })}
+        ].map(t => (
+          <button key={t.k} onClick={() => setTab(t.k as any)}
+            className={`flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold border-b-2 -mb-[1px] whitespace-nowrap transition ${tab === t.k ? 'border-brand text-brand' : 'border-transparent text-text-muted hover:text-text-sec'}`}>
+            {t.l}
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${tab === t.k ? 'bg-brand/10 text-brand' : 'bg-surface-alt text-text-muted'}`}>{t.count}</span>
+          </button>
+        ))}
       </div>
 
-      {/* ── PROVEEDORES TAB ── */}
+      {/* PROVEEDORES */}
       {tab === "proveedores" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xl:gap-5">
-          {suppliers.map((s) => (
-            <SupplierCard
-              key={s.id}
-              supplier={s}
-              orderCount={orders.filter((o) => o.supplierId === s.id).length}
-              onEdit={() => setSuppModal(s)}
-              onOrder={() => openNewOrder(s.id)}
-            />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {suppliers.map(s => (
+            <SupplierCard key={s.id} supplier={s} orderCount={orders.filter(o => o.supplierId === s.id).length} onEdit={() => setSuppModal(s)} onOrder={() => openNewOrder(s.id)} />
           ))}
+          {suppliers.length === 0 && <p className="col-span-full text-center py-12 text-text-muted">No hay proveedores registrados</p>}
         </div>
       )}
 
-      {/* ── ÓRDENES TAB ── */}
+      {/* ÓRDENES */}
       {tab === "ordenes" && (
         <>
           <div className="flex flex-col sm:flex-row gap-3 mb-5">
-            <div className="relative flex-1 max-w-[300px] group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none group-focus-within:text-brand transition-colors" size={14} />
-              <input
-                placeholder="Buscar folio, proveedor..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-surface border border-border rounded-xl text-[13px] font-body text-text outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition-all placeholder:text-text-muted"
-              />
+            <div className="relative flex-1 max-w-xs">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input placeholder="Buscar folio, proveedor..." value={search} onChange={e => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-brand/20" />
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3.5 py-2 bg-surface text-text-sec border border-border rounded-xl text-[13px] font-bold outline-none cursor-pointer hover:bg-surface-alt transition-colors focus:border-brand"
-            >
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+              className="px-4 py-2.5 rounded-xl border border-border bg-surface text-sm font-semibold text-text-sec">
               <option value="all">Todos los estados</option>
-              {Object.entries(ORDER_STATUS).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v.label}
-                </option>
-              ))}
+              {Object.entries(ORDER_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
           </div>
 
-              <div
-                style={{
-                  background: T.surface,
-                  borderRadius: 24,
-                  border: `1px solid ${T.border}`,
-                  boxShadow: T.shadow,
-                  overflow: "hidden",
-                }}
-              >
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr
-                      style={{
-                        background: T.elevated,
-                        borderBottom: `1px solid ${T.border}`,
-                      }}
-                    >
-                      {[
-                        "Folio",
-                        "Proveedor",
-                        "Productos",
-                        "Estado",
-                        "Fecha esperada",
-                        "Total",
-                        "",
-                      ].map((h) => (
-                        <th
-                          key={h}
-                          style={{
-                            padding: "11px 16px",
-                            fontSize: 10,
-                            fontWeight: 800,
-                            letterSpacing: ".13em",
-                            textTransform: "uppercase",
-                            color: T.textMut,
-                            textAlign: "left",
-                          }}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredOrders.map((o) => {
+          <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-alt border-b border-border">
+                    {["Folio", "Proveedor", "Productos", "Estado", "Fecha esperada", "Total", ""].map(h => (
+                      <th key={h} className="px-4 py-3 text-[10px] font-extrabold uppercase tracking-wider text-text-muted">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredOrders.length === 0 ? (
+                    <tr><td colSpan={7} className="py-10 text-center text-text-muted text-sm">No se encontraron órdenes</td></tr>
+                  ) : (
+                    filteredOrders.map(o => {
                       const sc = ORDER_STATUS[o.status];
                       return (
-                        <tr
-                          key={o.id}
-                          style={{
-                            borderBottom: `1px solid ${T.border}`,
-                            transition: "background .1s",
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.background = T.elevated)
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = "transparent")
-                          }
-                        >
-                          <td style={{ padding: "12px 16px" }}>
-                            <p
-                              style={{
-                                fontSize: 12,
-                                fontWeight: 800,
-                                color: T.text,
-                                margin: 0,
-                                fontFamily: "monospace",
-                              }}
-                            >
-                              {o.folio}
-                            </p>
-                            <p
-                              style={{
-                                fontSize: 10,
-                                color: T.textMut,
-                                margin: "2px 0 0",
-                              }}
-                            >
-                              {o.createdAt}
-                            </p>
+                        <tr key={o.id} className="hover:bg-surface-muted/50 transition">
+                          <td className="px-4 py-3">
+                            <p className="text-xs font-bold text-text font-mono">{o.folio}</p>
+                            <p className="text-[10px] text-text-muted">{o.createdAt}</p>
                           </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <p
-                              style={{
-                                fontSize: 13,
-                                fontWeight: 700,
-                                color: T.text,
-                                margin: 0,
-                              }}
-                            >
-                              {o.supplierName}
-                            </p>
+                          <td className="px-4 py-3"><p className="text-sm font-bold text-text">{o.supplierName}</p></td>
+                          <td className="px-4 py-3">
+                            <p className="text-xs text-text-sec">{o.items.length} {o.items.length === 1 ? "producto" : "productos"}</p>
+                            <p className="text-[10px] text-text-muted">{o.items.slice(0, 2).map(i => i.productName).join(", ")}{o.items.length > 2 ? "…" : ""}</p>
                           </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <p
-                              style={{
-                                fontSize: 12,
-                                color: T.textSec,
-                                margin: 0,
-                              }}
-                            >
-                              {o.items.length}{" "}
-                              {o.items.length === 1 ? "producto" : "productos"}
-                            </p>
-                            <p
-                              style={{
-                                fontSize: 10,
-                                color: T.textMut,
-                                margin: "2px 0 0",
-                              }}
-                            >
-                              {o.items
-                                .slice(0, 2)
-                                .map((i) => i.productName)
-                                .join(", ")}
-                              {o.items.length > 2 ? "…" : ""}
-                            </p>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${sc.bgClass} ${sc.colorClass}`}>{sc.icon} {sc.label}</span>
                           </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 5,
-                                padding: "4px 10px",
-                                borderRadius: 99,
-                                fontSize: 11,
-                                fontWeight: 800,
-                                color: sc.color,
-                                background: sc.bg,
-                              }}
-                            >
-                              {sc.icon} {sc.label}
-                            </span>
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-text-sec">{o.expectedAt || "—"}</span>
+                            {o.receivedAt && <p className="text-[10px] text-emerald-600">Recibida: {o.receivedAt}</p>}
                           </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <span style={{ fontSize: 13, color: T.textSec }}>
-                              {o.expectedAt || "—"}
-                            </span>
-                            {o.receivedAt && (
-                              <p
-                                style={{
-                                  fontSize: 10,
-                                  color: T.ok,
-                                  margin: "2px 0 0",
-                                }}
-                              >
-                                Recibida: {o.receivedAt}
-                              </p>
+                          <td className="px-4 py-3"><span className="text-sm font-black text-brand">${o.total.toLocaleString()}</span></td>
+                          <td className="px-4 py-3 relative" onClick={e => e.stopPropagation()}>
+                            <button onClick={() => setOpenMenu(openMenu === o.id ? null : o.id)} className="p-1.5 rounded-lg hover:bg-surface-muted text-text-muted"><MoreVertical size={15} /></button>
+                            {openMenu === o.id && (
+                              <div className="absolute right-0 top-full z-10 bg-surface rounded-xl border border-border shadow-lg min-w-[160px] overflow-hidden">
+                                {[
+                                  { icon: <Pencil size={13} />, l: "Editar orden", fn: () => { setOrderModal(o); setOpenMenu(null); } },
+                                  { icon: <Trash2 size={13} />, l: "Eliminar", fn: () => handleDeleteOrder(o.id), danger: true },
+                                ].map((item, i) => (
+                                  <button key={i} onClick={item.fn}
+                                    className={`flex items-center gap-2 w-full px-4 py-2.5 text-sm font-semibold hover:bg-surface-muted transition text-left ${(item as any).danger ? 'text-red-500' : 'text-text-sec'}`}>
+                                    {item.icon} {item.l}
+                                  </button>
+                                ))}
+                              </div>
                             )}
-                          </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <span
-                              style={{
-                                fontSize: 14,
-                                fontWeight: 900,
-                                color: T.brand,
-                              }}
-                            >
-                              ${o.total.toLocaleString()}
-                            </span>
-                          </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <div
-                              style={{ position: "relative" }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <button
-                                onClick={() =>
-                                  setOpenMenu(openMenu === o.id ? null : o.id)
-                                }
-                                style={{
-                                  padding: 6,
-                                  background: "none",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  borderRadius: 8,
-                                  display: "flex",
-                                  color: T.textMut,
-                                }}
-                              >
-                                <MoreVertical size={15} />
-                              </button>
-                              {openMenu === o.id && (
-                                <div
-                                  style={{
-                                    position: "absolute",
-                                    right: 0,
-                                    top: "100%",
-                                    zIndex: 10,
-                                    background: T.surface,
-                                    borderRadius: 12,
-                                    border: `1px solid ${T.border}`,
-                                    boxShadow: T.shadowHov,
-                                    minWidth: 160,
-                                    overflow: "hidden",
-                                  }}
-                                >
-                                  {[
-                                    {
-                                      icon: <Pencil size={13} />,
-                                      l: "Editar orden",
-                                      fn: () => {
-                                        setOrderModal(o);
-                                        setOpenMenu(null);
-                                      },
-                                    },
-                                    {
-                                      icon: <Trash2 size={13} />,
-                                      l: "Eliminar",
-                                      fn: () => handleDeleteOrder(o.id),
-                                      danger: true,
-                                    },
-                                  ].map((item, i) => (
-                                    <button
-                                      key={i}
-                                      onClick={item.fn}
-                                      style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 8,
-                                        width: "100%",
-                                        padding: "10px 14px",
-                                        fontSize: 13,
-                                        fontWeight: 600,
-                                        border: "none",
-                                        cursor: "pointer",
-                                        background: "none",
-                                        color: (item as any).danger
-                                          ? T.danger
-                                          : T.textSec,
-                                        textAlign: "left",
-                                      }}
-                                      onMouseEnter={(e) =>
-                                        (e.currentTarget.style.background =
-                                          T.elevated)
-                                      }
-                                      onMouseLeave={(e) =>
-                                        (e.currentTarget.style.background =
-                                          "none")
-                                      }
-                                    >
-                                      {item.icon}
-                                      {item.l}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
                           </td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
-{/* Modals */}
-{suppModal !== null && (
-  <SupplierModal
-    supplier={suppModal === "new" ? null : suppModal}
-    onClose={() => setSuppModal(null)}
-    onSave={handleSaveSupplier}
-  />
-)}
-{orderModal !== null && (
-  <OrderModal
-    suppliers={suppliers}
-    products={products}
-    order={orderModal === "new" ? null : orderModal}
-    onClose={() => {
-      setOrderModal(null);
-      setPreselSupp(null);
-    }}
-    onSave={handleSaveOrder}
-    initialSuppId={orderModal === "new" ? (preselSupp ?? undefined) : undefined}
-  />
-)}
+      {/* Modales */}
+      {suppModal !== null && <SupplierModal supplier={suppModal === "new" ? null : suppModal} onClose={() => setSuppModal(null)} onSave={handleSaveSupplier} />}
+      {orderModal !== null && (
+        <OrderModal suppliers={suppliers} products={products} order={orderModal === "new" ? null : orderModal}
+          onClose={() => { setOrderModal(null); setPreselSupp(null); }} onSave={handleSaveOrder}
+          initialSuppId={orderModal === "new" ? (preselSupp ?? undefined) : undefined} />
+      )}
     </main>
   );
 }

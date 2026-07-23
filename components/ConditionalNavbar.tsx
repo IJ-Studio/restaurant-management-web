@@ -207,7 +207,7 @@ export default function ConditionalNavbar() {
   );
 
   const publicLinks = [
-    { label: "Promociones", href: "/Promociones" },
+    { label: "Promociones", href: "/promociones" },
     { label: "Menú", href: "/menu" },
     { label: "Nosotros", href: "/about" },
     { label: "Reservas", href: "/reservations" },

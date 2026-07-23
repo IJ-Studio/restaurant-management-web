@@ -2,18 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Tag } from "lucide-react";
+import { type Promotion } from "@/features/shared/data/promotions";
 
-interface Promo {
-  id: string;
-  badge: string;
-  title: string;
-  description: string;
-  originalPrice: number;
-  discountedPrice: number;
-  color: string;
-}
-
-export default function PromosSection({ promos }: { promos: Promo[] }) {
+export default function PromosSection({
+  promos,
+  loading,
+}: {
+  promos: Promotion[];
+  loading?: boolean;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
 
@@ -41,6 +38,8 @@ export default function PromosSection({ promos }: { promos: Promo[] }) {
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, [promos]);
+
+  if (!loading && promos.length === 0) return null;
 
   return (
     <section
@@ -84,21 +83,58 @@ export default function PromosSection({ promos }: { promos: Promo[] }) {
           scrollSnapType: "x mandatory",
         }}
       >
-        {promos.map((promo) => (
-          <div
-            key={promo.id}
-            style={{ minWidth: "min(360px, 85vw)", scrollSnapAlign: "start" }}
-            className={`promo-card bg-gradient-to-br ${promo.color} flex-shrink-0`}
-          >
-            <span className="promo-badge">{promo.badge}</span>
-            <h3 className="promo-title">{promo.title}</h3>
-            <p className="promo-desc">{promo.description}</p>
-            <div className="promo-price">
-              <span className="promo-price-new">${promo.discountedPrice.toLocaleString()}</span>
-              <span className="promo-price-old">${promo.originalPrice.toLocaleString()}</span>
-            </div>
-          </div>
-        ))}
+        {loading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                style={{ minWidth: "min(360px, 85vw)", scrollSnapAlign: "start" }}
+                className="promo-card bg-[var(--color-border)]/30 animate-pulse flex-shrink-0"
+              />
+            ))
+          : promos.map((promo) => (
+              <div
+                key={promo.id}
+                style={{ minWidth: "min(360px, 85vw)", scrollSnapAlign: "start" }}
+                className={`promo-card relative overflow-hidden bg-gradient-to-br ${promo.color} flex-shrink-0`}
+              >
+                {promo.imageUrl && (
+                  <img
+                    src={promo.imageUrl}
+                    alt={promo.title}
+                    className="absolute inset-0 w-full h-full object-cover opacity-30"
+                  />
+                )}
+                {!promo.imageUrl && promo.emoji && (
+                  <span className="absolute right-2 top-2 text-7xl opacity-20 rotate-12">
+                    {promo.emoji}
+                  </span>
+                )}
+                <div className="relative z-10">
+                  {promo.badge && <span className="promo-badge">{promo.badge}</span>}
+                  <h3 className="promo-title">{promo.title}</h3>
+                  <p className="promo-desc">{promo.description}</p>
+                  {(promo.discountedPrice != null || promo.originalPrice != null) && (
+                    <div className="promo-price">
+                      {promo.discountedPrice != null && (
+                        <span className="promo-price-new">
+                          ${promo.discountedPrice.toLocaleString()}
+                        </span>
+                      )}
+                      {promo.originalPrice != null && (
+                        <span className="promo-price-old">
+                          ${promo.originalPrice.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {promo.endDate && (
+                    <p className="text-xs text-[var(--color-text-sec)] mt-3 font-semibold">
+                      Válido hasta {promo.endDate}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
       </div>
 
       {/* Dots */}

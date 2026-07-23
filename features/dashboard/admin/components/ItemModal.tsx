@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  X, 
-  ToggleLeft, 
-  ToggleRight, 
-  ChefHat 
+import {
+  X,
+  ToggleLeft,
+  ToggleRight,
+  ChefHat,
+  Upload,
+  ImageIcon,
 } from "lucide-react";
+import { CldUploadButton } from "next-cloudinary";
 import { type MenuItem, type MenuCategory } from "@/features/shared/data/restaurantData";
 import { type TagKey, TAG_CONFIG } from "../data/menuMock";
 
@@ -36,11 +39,34 @@ export function ItemModal({
       tags: [],
       prepTime: 10,
       calories: 0,
+      imageUrl: "",
+      imagePublicId: "",
     }
   );
 
   const tagKeys = Object.keys(TAG_CONFIG) as TagKey[];
   const cat = categories.find((c) => c.id === catId);
+
+  const handleImageUpload = (result: any) => {
+    if (result?.info?.secure_url) {
+      setForm((prev) => ({
+        ...prev,
+        imageUrl: result.info.secure_url,
+        // public_id = "el id de la imagen" que se persiste en la BD
+        imagePublicId: result.info.public_id ?? "",
+      }));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setForm((prev) => ({ ...prev, imageUrl: "", imagePublicId: "" }));
+  };
+
+  const handleSubmit = () => {
+    if (!form.name) return;
+    onSave(catId, form);
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#1a1208]/45 backdrop-blur-sm animate-in fade-in duration-300">
@@ -48,9 +74,9 @@ export function ItemModal({
         {/* Header */}
         <div className="px-8 py-7 border-b border-border bg-surface-alt flex justify-between items-start">
           <div className="flex gap-4 items-center">
-            <div 
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-white"
-                style={{ backgroundColor: `${cat?.color}15`, color: cat?.color }}
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-white"
+              style={{ backgroundColor: `${cat?.color}15`, color: cat?.color }}
             >
               {cat?.icon || <ChefHat size={20} />}
             </div>
@@ -127,6 +153,44 @@ export function ItemModal({
             </div>
           </div>
 
+          {/* ─── SECCIÓN DE IMAGEN DEL PLATILLO ─── */}
+          <div>
+            <label className={lblClass}>Imagen del platillo</label>
+            <div className="flex items-start gap-4 mt-2">
+              <div className="w-24 h-24 rounded-2xl border border-border bg-surface-alt flex items-center justify-center overflow-hidden">
+                {form.imageUrl ? (
+                  <img
+                    src={form.imageUrl}
+                    alt="Vista previa"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon size={24} className="text-text-muted" />
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <CldUploadButton
+                  uploadPreset="tu_upload_preset" // ⚠️ Reemplaza con tu preset de Cloudinary (unsigned)
+                  onSuccess={handleImageUpload}
+                  options={{ maxFiles: 1 }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand/10 text-brand text-sm font-bold hover:bg-brand/20 transition"
+                >
+                  <Upload size={14} />
+                  {form.imageUrl ? "Cambiar imagen" : "Subir imagen"}
+                </CldUploadButton>
+                {form.imageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="text-xs text-red-500 hover:underline text-left"
+                  >
+                    Quitar imagen
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className={lblClass}>Etiquetas del menú</label>
             <div className="flex flex-wrap gap-2.5 p-4 bg-surface-alt rounded-[22px] border border-border">
@@ -161,14 +225,18 @@ export function ItemModal({
 
           <div className="flex items-center justify-between p-5 bg-surface-alt rounded-[22px] border border-border shadow-sm">
             <div>
-                <p className="text-[14px] font-black text-text m-0">Disponibilidad inmediata</p>
-                <p className="text-[11px] text-text-muted m-0 font-medium tracking-wide uppercase mt-1">Habilita o deshabilita este platillo en el menú</p>
+              <p className="text-[14px] font-black text-text m-0">Disponibilidad inmediata</p>
+              <p className="text-[11px] text-text-muted m-0 font-medium tracking-wide uppercase mt-1">
+                Habilita o deshabilita este platillo en el menú
+              </p>
             </div>
             <button
               type="button"
               onClick={() => setForm({ ...form, available: !form.available })}
               className={`w-14 h-8 rounded-full border-none cursor-pointer transition-all relative flex items-center p-1 ${
-                form.available ? "bg-emerald-500 shadow-[0_2px_12px_rgba(16,185,129,0.3)]" : "bg-border"
+                form.available
+                  ? "bg-emerald-500 shadow-[0_2px_12px_rgba(16,185,129,0.3)]"
+                  : "bg-border"
               }`}
             >
               <div
@@ -190,10 +258,7 @@ export function ItemModal({
           </button>
           <button
             disabled={!form.name}
-            onClick={() => {
-              onSave(catId, form);
-              onClose();
-            }}
+            onClick={handleSubmit}
             className={`px-8 py-3 rounded-2xl text-[13px] font-black border-none cursor-pointer text-white transition-all tracking-widest uppercase ${
               form.name
                 ? "bg-brand shadow-[0_8px_24px_rgba(232,93,4,0.3)] hover:-translate-y-px active:translate-y-px"

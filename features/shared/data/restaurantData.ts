@@ -15,6 +15,10 @@ export interface MenuItem {
   price: number;
   category: string;
   image?: string;
+  /** URL pública de la imagen (Cloudinary secure_url) */
+  imageUrl?: string;
+  /** ID de la imagen en Cloudinary (public_id) — se persiste en la BD */
+  imagePublicId?: string;
   available: boolean;
   tags?: string[];
   prepTime?: number;
