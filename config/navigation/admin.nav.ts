@@ -19,6 +19,7 @@ import {
   FileText,
   Info,
   Database,
+  Wallet,
 } from "lucide-react";
 import type { SidebarSection } from "@/components/layout/Sidebar";
 
@@ -86,6 +87,12 @@ export const ADMIN_NAV_SECTIONS: SidebarSection[] = [
             label: "Facturas",
             icon:  icon(FileText, 15),
             href:  "/dashboard/admin/finance/invoices",
+          },
+          {
+            key:   "payroll",
+            label: "Nómina",
+            icon:  icon(Wallet, 15),
+            href:  "/dashboard/admin/payroll",
           },
         ],
       },

@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Database,
   CalendarDays,
+  Wallet,
 } from "lucide-react";
 import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
 import { useTheme } from "@/hooks/useTheme";
@@ -226,7 +227,7 @@ export default function AdminSidebar({ activePage, user, onLogout }: AdminSideba
         <Group
           icon={<DollarSign size={17} />}
           label="Finanzas & Caja"
-          childActive={is("finance") || is("invoices")}
+          childActive={is("finance") || is("invoices") || is("payroll")}
         >
           <NavBtn
             icon={<DollarSign size={15} />}
@@ -241,6 +242,13 @@ export default function AdminSidebar({ activePage, user, onLogout }: AdminSideba
             indent
             active={is("invoices")}
             onClick={() => router.push("/dashboard/admin/finance/invoices")}
+          />
+          <NavBtn
+            icon={<Wallet size={15} />}
+            label="Nómina"
+            indent
+            active={is("payroll")}
+            onClick={() => router.push("/dashboard/admin/payroll")}
           />
         </Group>
 
