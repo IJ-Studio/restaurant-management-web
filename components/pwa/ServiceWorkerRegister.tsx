@@ -20,6 +20,11 @@ export default function ServiceWorkerRegister() {
     const register = () => {
       navigator.serviceWorker
         .register("/sw.js", { scope: "/", updateViaCache: "none" })
+        .then(() => navigator.serviceWorker.ready)
+        .then((registration) => {
+          // Con conexión, pide al SW refrescar las páginas guardadas si ya son viejas.
+          if (navigator.onLine) registration.active?.postMessage("REFRESH_PRECACHE");
+        })
         .catch((error) => console.error("Error al registrar el service worker:", error));
     };
 

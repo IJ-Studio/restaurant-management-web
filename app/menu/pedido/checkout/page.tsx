@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { Check, MapPin, FileText, CreditCard, ShoppingBag, Loader2 } from "lucide-react";
+import OnlineOnly from "@/components/pwa/OnlineOnly";
 
 // Se crea UNA sola vez fuera del componente — evita recrear el objeto
 // Stripe en cada render.
@@ -40,7 +41,7 @@ const PASOS = [
   { numero: 5, icono: Check },
 ];
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   return (
     <Elements stripe={stripePromise} options={{ locale: "es" }}>
       <CheckoutWizard />
@@ -783,5 +784,14 @@ function PasoConfirmar({ orden, direccion, requiereFactura, datosFiscales, metod
         </span>
       </div>
     </div>
+  );
+}
+
+// Depende del servidor: sin conexión se muestra un aviso y se carga al reconectar.
+export default function CheckoutPage() {
+  return (
+    <OnlineOnly what="el pago de tu pedido">
+      <CheckoutPageContent />
+    </OnlineOnly>
   );
 }

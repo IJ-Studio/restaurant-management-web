@@ -6,6 +6,7 @@ import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
 import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
+import ConnectionStatus from "@/components/pwa/ConnectionStatus";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -74,6 +75,7 @@ export default function RootLayout({
         </AppProviders>
         <ServiceWorkerRegister />
         <InstallPrompt />
+        <ConnectionStatus />
       </body>
     </html>
   );
