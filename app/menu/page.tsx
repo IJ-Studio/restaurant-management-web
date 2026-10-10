@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CldImage } from "next-cloudinary";
 import SmartImage from "@/components/SmartImage";
 import Link from "next/link";
+import OnlineOnly from "@/components/pwa/OnlineOnly";
+import VoiceSearch from "@/components/pwa/VoiceSearch";
 
 // 1. Ajustamos las interfaces para que coincidan EXACTAMENTE con lo que devuelve tu Nest.js
 interface Product {
@@ -22,10 +24,34 @@ interface Category {
   platillos: Product[]; // 👈 Tu backend de Nest.js retorna 'platillos', no 'products'
 }
 
+// El menú viene del servidor: sin conexión se muestra un aviso y se carga al reconectar.
 export default function MenuPage() {
+  return (
+    <OnlineOnly what="el menú">
+      <MenuContent />
+    </OnlineOnly>
+  );
+}
+
+// Minúsculas y sin acentos, para que "enchilada" encuentre "Enchiladas" y "jamon" a "jamón".
+const normalize = (text: string) =>
+  text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+function MenuContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  const results = useMemo(() => {
+    const q = normalize(query.trim());
+    if (!q) return [];
+    return categories.flatMap((category) =>
+      (category.platillos ?? [])
+        .filter((p) => normalize(`${p.nombre} ${p.descripcion ?? ""} ${category.nombre}`).includes(q))
+        .map((product) => ({ product, category })),
+    );
+  }, [categories, query]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -90,6 +116,11 @@ Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemo
 
         </p>
 
+        {/* Buscador (con dictado por voz) */}
+        <div className="mt-8">
+          <VoiceSearch value={query} onChange={setQuery} placeholder="Busca un platillo o dilo en voz alta…" />
+        </div>
+
         {/* Lista de enlaces a las categorías */}
         <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 mt-8">
           {categories.map((category) => (
@@ -104,7 +135,10 @@ Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemo
         </div>
       </div>
 
-      {/* Categorías con diseño alternado */}
+      {query.trim() ? (
+        <SearchResults query={query} results={results} />
+      ) : (
+      /* Categorías con diseño alternado */
       <div className="container mx-auto px-4 py-12 md:py-16">
         {categories.map((category, idx) => {
           const isEven = idx % 2 === 0;
@@ -138,6 +172,42 @@ Ya seas un amante de la buena comida o alguien con un paladar aventurero, tenemo
             </div>
           );
         })}
+      </div>
+      )}
+    </div>
+  );
+}
+
+function SearchResults({
+  query,
+  results,
+}: {
+  query: string;
+  results: { product: Product; category: Category }[];
+}) {
+  return (
+    <div className="container mx-auto max-w-3xl px-4 pb-16">
+      <p className="mb-6 text-center text-sm text-text-sec">
+        {results.length === 0
+          ? `No encontramos platillos para "${query}".`
+          : `${results.length} resultado${results.length === 1 ? "" : "s"} para "${query}"`}
+      </p>
+      <div className="space-y-4">
+        {results.map(({ product, category }) => (
+          <Link
+            key={`${category.id}-${product.id}`}
+            href={`/menu/producto/${product.id}`}
+            className="block border-b border-border/40 pb-3 transition-colors hover:text-brand"
+          >
+            <div className="flex items-baseline">
+              <span className="font-medium text-text">{product.nombre}</span>
+              <span className="mx-2 flex-1 border-b border-dotted border-text-sec/40"></span>
+              <span className="whitespace-nowrap font-semibold text-brand">${product.precio}</span>
+            </div>
+            <p className="mt-0.5 text-xs uppercase tracking-wide text-text-sec">{category.nombre}</p>
+            {product.descripcion && <p className="mt-0.5 text-sm text-text-sec">{product.descripcion}</p>}
+          </Link>
+        ))}
       </div>
     </div>
   );

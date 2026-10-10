@@ -6,6 +6,7 @@ import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
 import { Facebook, Instagram, Phone, MapPin, Clock } from "lucide-react";
 import { useFetch } from "@/hooks/useFetch";
 import { useTheme } from "@/hooks/useTheme"; // <-- 1. Importamos tu hook de tema
+import DistanceToRestaurant from "@/components/pwa/DistanceToRestaurant";
 
 interface FooterData {
   name: string;
@@ -43,12 +44,12 @@ export default function Footer() {
     instagramUrl: "https://www.instagram.com/elquijotehuejutla/",
     links: {
       about: [
-        { label: "Conócenos", href: "#nosotros" },
+        { label: "Conócenos", href: "/about" },
         { label: "Información corporativa", href: "/corporativo" },
       ],
       help: [
         { label: "Devoluciones y reemplazos", href: "/devoluciones" },
-        { label: "Gestionar reservaciones", href: "/reservaciones" },
+        { label: "Gestionar reservaciones", href: "/reservations" },
         { label: "Alertas de seguridad", href: "/seguridad" },
         { label: "Ayuda", href: "/ayuda" },
       ],
@@ -123,7 +124,10 @@ export default function Footer() {
               <ul className="space-y-3 text-sm text-[var(--color-text-sec)]">
                 <li className="flex items-start gap-2">
                   <MapPin size={16} className="mt-0.5 flex-shrink-0" />
-                  <span>{footerData.address}</span>
+                  <div className="space-y-1.5">
+                    <span>{footerData.address}</span>
+                    <DistanceToRestaurant />
+                  </div>
                 </li>
                 <li className="flex items-center gap-2">
                   <Clock size={16} className="flex-shrink-0" />

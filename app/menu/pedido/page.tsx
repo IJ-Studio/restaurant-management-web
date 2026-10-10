@@ -7,8 +7,9 @@ import { RootState } from "@/store";
 import { ShoppingBag, XCircle, RefreshCw, Clock, Truck, Send } from "lucide-react";
 import SmartImage from "@/components/SmartImage";
 import Link from "next/link";
+import OnlineOnly from "@/components/pwa/OnlineOnly";
 
-export default function ResumenPedidoPage() {
+function ResumenPedidoPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 const { user } = useSelector((state: RootState) => state.auth);
@@ -499,5 +500,14 @@ useEffect(() => {
 
       </div>
     </div>
+  );
+}
+
+// Depende del servidor: sin conexión se muestra un aviso y se carga al reconectar.
+export default function ResumenPedidoPage() {
+  return (
+    <OnlineOnly what="tus pedidos">
+      <ResumenPedidoPageContent />
+    </OnlineOnly>
   );
 }

@@ -8,8 +8,9 @@ import {
 } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { useSelector } from "react-redux";
+import OnlineOnly from "@/components/pwa/OnlineOnly";
 
-export default function ProductDetailPage() {
+function ProductDetailPageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -554,5 +555,14 @@ export default function ProductDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Depende del servidor: sin conexión se muestra un aviso y se carga al reconectar.
+export default function ProductDetailPage() {
+  return (
+    <OnlineOnly what="este platillo">
+      <ProductDetailPageContent />
+    </OnlineOnly>
   );
 }
