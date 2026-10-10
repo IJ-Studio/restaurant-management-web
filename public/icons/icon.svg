@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Ícono base de la PWA: molino de viento (El Quijote) sobre el color de marca. -->
+  <rect width="512" height="512" fill="#e85d04"/>
+  <g fill="#ffffff">
+    <!-- Aspas -->
+    <g transform="translate(256 232) rotate(45)">
+      <g id="aspa">
+        <rect x="-5" y="-150" width="10" height="150" rx="4"/>
+        <rect x="5" y="-146" width="30" height="112" rx="3"/>
+      </g>
+      <use href="#aspa" transform="rotate(90)"/>
+      <use href="#aspa" transform="rotate(180)"/>
+      <use href="#aspa" transform="rotate(270)"/>
+    </g>
+    <!-- Torre -->
+    <path d="M214 402 L232 252 Q256 236 280 252 L298 402 Z"/>
+    <!-- Techo -->
+    <path d="M222 256 Q256 196 290 256 Z"/>
+    <!-- Base -->
+    <rect x="186" y="398" width="140" height="18" rx="6"/>
+  </g>
+  <!-- Detalles en color de marca -->
+  <g fill="#e85d04">
+    <path d="M244 402 L244 362 Q256 348 268 362 L268 402 Z"/>
+    <rect x="248" y="296" width="16" height="22" rx="8"/>
+  </g>
+  <circle cx="256" cy="232" r="14" fill="#ffffff" stroke="#e85d04" stroke-width="6"/>
+</svg>
