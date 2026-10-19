@@ -192,7 +192,9 @@ export default function RegisterPage() {
       // arreglo de textos técnicos en inglés, así que no se muestran tal cual.
       const text = Array.isArray(data.message)
         ? "Revisa los datos del formulario e inténtalo de nuevo."
-        : data.message;
+        : res.status >= 500
+          ? "No pudimos completar el registro. Inténtalo de nuevo en unos minutos."
+          : data.message;
       throw new Error(text || data.error || "Ocurrió un error al registrarse");
     }
     return data;
