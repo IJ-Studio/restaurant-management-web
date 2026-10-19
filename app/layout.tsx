@@ -4,9 +4,13 @@ import { AppProviders } from "@/components/providers/AppProviders";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
 import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
+import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
+import ConnectionStatus from "@/components/pwa/ConnectionStatus";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
+  applicationName: INITIAL_SETTINGS.restaurantName,
   title: {
     default: INITIAL_SETTINGS.restaurantName,
     template: `%s | ${INITIAL_SETTINGS.restaurantName}`,
@@ -24,14 +28,23 @@ export const metadata: Metadata = {
   icons: {
     icon: INITIAL_SETTINGS.restaurantIco,
     shortcut: INITIAL_SETTINGS.restaurantLogo,
-    apple: INITIAL_SETTINGS.restaurantLogo,
+    apple: "/icons/apple-touch-icon.png",
   },
+  appleWebApp: {
+    capable: true,
+    title: INITIAL_SETTINGS.restaurantName,
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#ffffff" }],
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#181a1b" },
+  ],
 };
 
 export default function RootLayout({
@@ -60,6 +73,9 @@ export default function RootLayout({
             <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
           </AuthProvider>
         </AppProviders>
+        <ServiceWorkerRegister />
+        <InstallPrompt />
+        <ConnectionStatus />
       </body>
     </html>
   );

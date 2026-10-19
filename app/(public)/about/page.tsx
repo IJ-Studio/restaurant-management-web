@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Star, MapPin, Clock, ShieldCheck, Award, Heart, Layers, Facebook, Minimize2, Maximize2 } from "lucide-react";
 import MolinoAnimado from "@/components/landing/MolinoAnimado";
 import { useTheme } from "@/hooks/useTheme";
+import DistanceToRestaurant from "@/components/pwa/DistanceToRestaurant";
 
 // Componente vectorial para el logo oficial de Google Reviews
 const GoogleIcon = ({ size = 12 }: { size?: number }) => (
@@ -184,6 +185,7 @@ export default function AboutPage() {
                 <p className="text-xs text-[var(--color-text-sec)] mt-3 italic pl-8">
                   * Referencia de acceso: Frente a la sucursal de BBVA Bancomer, justo a un costado del establecimiento "Modas Elvia".
                 </p>
+                <DistanceToRestaurant className="mt-4 pl-8" />
               </div>
 
               <div className="w-full h-px bg-[var(--color-border)]" />
