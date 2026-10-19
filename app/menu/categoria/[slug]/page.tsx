@@ -5,6 +5,7 @@ import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import SmartImage from "@/components/SmartImage";
 import BackButton from "@/components/BackButton";
+import OnlineOnly from "@/components/pwa/OnlineOnly";
 
 interface Product {
   id: string | number;
@@ -32,7 +33,7 @@ interface Category {
   productos?: Product[];
 }
 
-export default function CategoryPage() {
+function CategoryPageContent() {
   const { slug } = useParams() as { slug: string };
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
@@ -202,5 +203,14 @@ export default function CategoryPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Depende del servidor: sin conexión se muestra un aviso y se carga al reconectar.
+export default function CategoryPage() {
+  return (
+    <OnlineOnly what="esta categoría del menú">
+      <CategoryPageContent />
+    </OnlineOnly>
   );
 }
