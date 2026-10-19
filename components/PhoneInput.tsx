@@ -38,17 +38,20 @@ export default function PhoneInput({
           type="tel"
           required
           inputMode="numeric"
-          pattern="[0-9]{7,15}"
+          pattern="[0-9]{10}"
+          maxLength={10}
           placeholder="Teléfono"
           className={`flex-1 rounded-lg border py-2.5 px-3 text-[var(--color-text)] shadow-sm placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/50 sm:text-sm
             ${telefono && !isPhoneValid ? "border-red-400 focus:ring-red-300" : "border-[var(--color-border)]"}`}
           value={telefono}
-          onChange={(e) => setTelefono(e.target.value.replace(/\D/g, ""))}
+          onChange={(e) =>
+            setTelefono(e.target.value.replace(/\D/g, "").slice(0, 10))
+          }
         />
       </div>
       {showError && telefono && !isPhoneValid && (
         <p className="text-xs text-red-500 mt-1">
-          Debe contener entre 7 y 15 dígitos.
+          Debe contener 10 dígitos.
         </p>
       )}
     </div>

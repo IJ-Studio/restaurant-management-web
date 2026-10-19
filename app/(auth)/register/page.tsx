@@ -13,7 +13,12 @@ import PasswordRequirements from "@/components/PasswordRequirements";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { SettingsService } from "@/features/shared/services/dataService";
 import { type SystemSettings } from "@/features/shared/data/restaurantData";
-import { phoneRegex, emailRegex } from "@/utils/validators";
+import {
+  phoneRegex,
+  isValidEmail,
+  NAME_MAX_LENGTH,
+  PASSWORD_MAX_LENGTH,
+} from "@/utils/validators";
 import {
   letters,
   haveAnVowel,
@@ -29,9 +34,14 @@ import {
 } from "@/utils/validators";
 export const dynamic = 'force-dynamic'
 // ----- Funciones de validación (sin cambios) -----
+// Quita espacios sobrantes; es lo que se valida y lo que se manda al API.
+const cleanName = (value: string) => value.trim().replace(/\s+/g, " ");
+
 const validateNameBlock = (value: string) => {
   if (!value) return false;
-  const cleaned = value.trim().replace(/\s+/g, " ");
+  const cleaned = cleanName(value);
+  // Límite de la columna y del API: 50 en total (dos palabras de 30 podrían sumar 61).
+  if (cleaned.length > NAME_MAX_LENGTH) return false;
   const parts = cleaned.split(" ");
   if (parts.length < 1 || parts.length > 2) return false;
   for (const p of parts) {
@@ -131,7 +141,7 @@ export default function RegisterPage() {
   // Validaciones
   const isNameValid = validateNameBlock(nombre);
   const isLastnameValid = validateNameBlock(apellido);
-  const isEmailValid = emailRegex.test(correo);
+  const isEmailValid = isValidEmail(correo);
   const isPhoneValid = phoneRegex.test(telefono);
   const validations = {
     length: length.test(password),
@@ -161,9 +171,11 @@ export default function RegisterPage() {
 
   // Acción asíncrona de registro
   const registerAction = async () => {
+    // Contrato de POST /auth/sign-up del API (SignUpDto): solo estos campos; cualquier otro
+    // se rechaza con 400.
     const reqData = {
-      name: nombre,
-      lastname: apellido,
+      name: cleanName(nombre),
+      lastname: cleanName(apellido),
       email: correo,
       phone: `${lada}${telefono}`,
       password,
@@ -175,8 +187,14 @@ export default function RegisterPage() {
       body: JSON.stringify(reqData),
     });
     const data = await res.json();
-    if (!res.ok)
-      throw new Error(data.message || "Ocurrió un error al registrarse");
+    if (!res.ok) {
+      // Nest responde { message, error, statusCode }; en errores de validación `message` es un
+      // arreglo de textos técnicos en inglés, así que no se muestran tal cual.
+      const text = Array.isArray(data.message)
+        ? "Revisa los datos del formulario e inténtalo de nuevo."
+        : data.message;
+      throw new Error(text || data.error || "Ocurrió un error al registrarse");
+    }
     return data;
   };
 
@@ -228,7 +246,7 @@ export default function RegisterPage() {
                   required
                   error={
                     nombre && !isNameValid
-                      ? "Solo letras, máximo 30 caracteres."
+                      ? "Solo letras: máximo 30 por palabra y 50 en total."
                       : undefined
                   }
                 />
@@ -244,7 +262,7 @@ export default function RegisterPage() {
                   required
                   error={
                     apellido && !isLastnameValid
-                      ? "Solo letras, máximo 30 caracteres."
+                      ? "Solo letras: máximo 30 por palabra y 50 en total."
                       : undefined
                   }
                 />
@@ -283,6 +301,7 @@ export default function RegisterPage() {
                   required
                   placeholder="Crea una contraseña"
                   autoComplete="new-password"
+                  maxLength={PASSWORD_MAX_LENGTH}
                   className="input-floating pr-28"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
