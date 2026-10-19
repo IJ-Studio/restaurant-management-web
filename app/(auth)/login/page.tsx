@@ -51,7 +51,23 @@ export default function LoginPage() {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Ocurrió un error");
+    if (!res.ok) {
+      // El API (Nest) responde { message, error, statusCode }: `message` trae el texto real y
+      // `error` solo el nombre del estado ("Unauthorized"). `message` puede ser un arreglo
+      // (errores de validación).
+      const apiMessage = Array.isArray(data.message)
+        ? data.message.join(". ")
+        : data.message;
+      const text: string = apiMessage || data.error || "Ocurrió un error";
+      // 429 del límite por IP (ThrottlerException): mensaje claro y sin activar el temporizador
+      // de bloqueo, que solo debe dispararse con el texto "Demasiados intentos... N segundos".
+      if (res.status === 429 && !text.includes("Demasiados intentos")) {
+        throw new Error(
+          "Has hecho muchos intentos seguidos. Espera un minuto e inténtalo de nuevo.",
+        );
+      }
+      throw new Error(text);
+    }
     if (data.accessToken) {
       document.cookie = `session=${data.accessToken}; path=/; max-age=86400; samesite=strict`;
       localStorage.setItem("authToken", data.accessToken);
