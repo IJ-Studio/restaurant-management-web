@@ -53,7 +53,7 @@ export default function PasswordRequirements({
                     validations.length ? "text-gray-700" : "text-gray-500"
                   }
                 >
-                  Al menos 8 caracteres
+                  Entre 8 y 64 caracteres
                 </span>
               </li>
               <li className="flex items-center gap-2">
