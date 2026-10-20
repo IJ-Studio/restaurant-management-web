@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import Dropdown, { DropdownMenuItem } from "@/components/dropdown";
 import { cn } from "@/lib/utils";
 
@@ -32,8 +33,12 @@ export default function ConditionalNavbar() {
     }
   }, []);
 
+  const online = useOnlineStatus();
+
   // CONSULTA DE SESIÓN CONTINUA AL CAMBIAR DE RUTA
+  // (sin conexión se conserva el usuario actual y se vuelve a consultar al reconectar)
   useEffect(() => {
+    if (!online) return;
     const checkSession = async () => {
       try {
         const res = await fetch("/api/auth/me");
@@ -48,7 +53,7 @@ export default function ConditionalNavbar() {
       }
     };
     checkSession();
-  }, [pathname]);
+  }, [pathname, online]);
 
   if (pathname?.startsWith("/dashboard/admin")) {
     return null;

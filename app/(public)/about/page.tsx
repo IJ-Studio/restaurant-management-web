@@ -5,6 +5,7 @@ import { Star, MapPin, Clock, ShieldCheck, Award, Heart, Layers, Facebook, Minim
 import MolinoAnimado from "@/components/landing/MolinoAnimado";
 import { useTheme } from "@/hooks/useTheme";
 import DistanceToRestaurant from "@/components/pwa/DistanceToRestaurant";
+import { useConfirmedOnline, useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 // Componente vectorial para el logo oficial de Google Reviews
 const GoogleIcon = ({ size = 12 }: { size?: number }) => (
@@ -15,6 +16,9 @@ const GoogleIcon = ({ size = 12 }: { size?: number }) => (
 
 export default function AboutPage() {
   const isDark = useTheme();
+  // El mapa de Google necesita internet: sin conexión se muestra un aviso.
+  const mapOnline = useConfirmedOnline();
+  const online = useOnlineStatus();
   const molinoFillColor = isDark ? "#121212" : "#ffffff";
 
   // Estado para controlar si la tarjeta informativa de la fachada está minimizada
@@ -217,14 +221,21 @@ export default function AboutPage() {
           {/* Google Maps Embed con Tarjeta Flotante Adaptada */}
           <div className="lg:col-span-7 h-[500px] lg:h-auto min-h-[520px] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm relative bg-surface">
 
-            <iframe
-              src={googleMapsEmbedUrl}
-              className="absolute inset-0 w-full h-full border-0"
-              allowFullScreen={false}
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              title="Ubicación en Tiempo Real Corregida"
-            />
+            {mapOnline ? (
+              <iframe
+                src={googleMapsEmbedUrl}
+                className="absolute inset-0 w-full h-full border-0"
+                allowFullScreen={false}
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                title="Ubicación en Tiempo Real Corregida"
+              />
+            ) : !online && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-8 text-center text-[var(--color-text-sec)]">
+                <MapPin size={28} className="text-[var(--color-brand)]" />
+                <p className="text-sm">El mapa se mostrará cuando tengas conexión a internet.</p>
+              </div>
+            )}
 
             {/* 📐 CARD FLOTANTE TOTALMENTE ADAPTADO AL CONTENEDOR */}
             <div

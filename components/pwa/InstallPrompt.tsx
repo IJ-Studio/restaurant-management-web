@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, Share, X } from "lucide-react";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const DISMISS_KEY = "pwa-install-dismissed";
 
@@ -42,6 +43,7 @@ function wasDismissed() {
 export default function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
+  const online = useOnlineStatus();
 
   useEffect(() => {
     if (isStandalone() || wasDismissed()) return;
@@ -83,7 +85,8 @@ export default function InstallPrompt() {
     setDeferred(null);
   };
 
-  if (!deferred && !showIosHint) return null;
+  // Sin conexión el aviso de estado ocupa ese lugar.
+  if (!online || (!deferred && !showIosHint)) return null;
 
   return (
     <div

@@ -32,7 +32,7 @@ export default function ConnectionStatus() {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 top-20 z-[70] flex justify-center px-4"
+      className="pointer-events-none fixed inset-x-0 bottom-4 z-[70] flex justify-center px-4"
     >
       <div
         className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold text-white shadow-lg ${

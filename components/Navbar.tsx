@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { SettingsService } from "@/features/shared/services/dataService";
-import { type SystemSettings } from "@/features/shared/data/restaurantData";
+import { type SystemSettings, INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/useTheme";
 import { ShoppingBag } from "lucide-react";
@@ -256,7 +256,9 @@ function LogoImage({
   if (!logoSrc && settings) {
     logoSrc = (isDark || isForcedDark) ? settings.restaurantLogo_light : settings.restaurantLogo_dark;
   }
-  const defaultLogo = "/logo.svg";
+  const defaultLogo = (isDark || isForcedDark)
+    ? INITIAL_SETTINGS.restaurantLogo_light
+    : INITIAL_SETTINGS.restaurantLogo_dark;
   const logoUrl = logoSrc || defaultLogo;
   return (
     <img

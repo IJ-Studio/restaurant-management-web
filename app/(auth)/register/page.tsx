@@ -27,6 +27,7 @@ import {
   number,
   specialChar,
 } from "@/utils/validators";
+import OnlineOnly from "@/components/pwa/OnlineOnly";
 export const dynamic = 'force-dynamic'
 // ----- Funciones de validación (sin cambios) -----
 const validateNameBlock = (value: string) => {
@@ -215,6 +216,8 @@ export default function RegisterPage() {
           {error && <div className="alert-error">{error}</div>}
           {success && <div className="alert-success">{success}</div>}
 
+          {/* Entrar o registrarse requiere el servidor: sin conexión se muestra un aviso. */}
+          <OnlineOnly action="crear tu cuenta" className="py-4">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="flex space-x-2">
               <div className="w-1/2">
@@ -364,6 +367,7 @@ export default function RegisterPage() {
               {loading ? "Registrando..." : "Crear cuenta"}
             </button>
           </form>
+          </OnlineOnly>
         </div>
       </div>
 

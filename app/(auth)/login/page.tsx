@@ -14,6 +14,7 @@ import { type SystemSettings } from "@/features/shared/data/restaurantData";
 import { useDispatch } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setUser } from "@/store/slices/authSlice";
+import OnlineOnly from "@/components/pwa/OnlineOnly";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -130,6 +131,8 @@ export default function LoginPage() {
             </div>
           )}
 
+          {/* Entrar o registrarse requiere el servidor: sin conexión se muestra un aviso. */}
+          <OnlineOnly action="iniciar sesión" className="py-4">
           <form
             className="space-y-6"
             onSubmit={(e) => {
@@ -181,6 +184,7 @@ export default function LoginPage() {
                   : "Iniciar Sesión"}
             </button>
           </form>
+          </OnlineOnly>
 
           <p className="mt-8 text-center text-sm text-[var(--color-text-sec)]">
             ¿Aún no tienes una cuenta?{" "}

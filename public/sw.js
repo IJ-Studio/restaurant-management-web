@@ -8,16 +8,20 @@
  *    aunque nunca se hayan visitado. Se refresca en segundo plano (ver "message").
  *  - Navegación (páginas públicas): network-first → caché → /offline.
  *  - /_next/static/*: cache-first (los archivos llevan hash, son inmutables).
- *  - Imágenes (locales, Cloudinary, Supabase, Unsplash): stale-while-revalidate.
+ *  - Imágenes (locales, Cloudinary, Supabase, Unsplash): stale-while-revalidate;
+ *    sin conexión no se revalida, y si no está guardada se devuelve una imagen
+ *    transparente en lugar de un error.
  *  - Google Fonts: stale-while-revalidate.
- *  - /api/*, /dashboard/*, peticiones RSC y todo lo que no sea GET: siempre a la
- *    red, nunca se cachea (datos sensibles o en tiempo real). El contenido
- *    dinámico se oculta en el cliente hasta que vuelve la conexión.
+ *  - Peticiones RSC (navegación interna de Next): red; sin conexión responde
+ *    vacío para que Next haga una navegación completa, que sirve la caché.
+ *  - /api/*, /dashboard/* y todo lo que no sea GET: siempre a la red, nunca se
+ *    cachea (datos sensibles o en tiempo real). El contenido dinámico se oculta
+ *    en el cliente hasta que vuelve la conexión.
  *
  * Para forzar que todos los clientes descarten la caché anterior, sube CACHE_VERSION.
  */
 
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const PAGES_CACHE = `quijote-pages-${CACHE_VERSION}`;
 const STATIC_CACHE = `quijote-static-${CACHE_VERSION}`;
 const IMAGES_CACHE = `quijote-images-${CACHE_VERSION}`;
@@ -35,6 +39,9 @@ const PRECACHE_PAGES = [
   "/menu",
   "/promociones",
   "/reservations",
+  "/menu/pedido",
+  "/login",
+  "/register",
   "/about",
   "/ayuda",
   "/condiciones",
@@ -49,8 +56,19 @@ const PRECACHE_FILES = [
   "/icons/icon-512.png",
   "/icons/apple-touch-icon.png",
 ];
+// Logos del restaurante (Cloudinary) que usan el navbar y el footer.
+const PRECACHE_EXTERNAL_IMAGES = [
+  "https://res.cloudinary.com/dcb1tspbj/image/upload/q_auto/f_auto/v1775662960/logo_text_white_ktnpgg.png",
+  "https://res.cloudinary.com/dcb1tspbj/image/upload/q_auto/f_auto/v1776056964/logo_dark_fvfcdk.svg",
+  "https://res.cloudinary.com/dcb1tspbj/image/upload/q_auto/f_auto/v1776056964/logo_light_xy8ce1.svg",
+];
 // Estas entradas nunca se eliminan al recortar la caché.
 const PROTECTED_PATHS = new Set([...PRECACHE_PAGES, ...PRECACHE_FILES]);
+const PROTECTED_URLS = new Set(PRECACHE_EXTERNAL_IMAGES);
+
+// Imagen vacía para cuando no hay red ni copia guardada (evita el ícono roto).
+const TRANSPARENT_IMAGE =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1"/>';
 
 // Cada cuánto se vuelve a descargar la precarga (para tomar nuevos despliegues).
 const PRECACHE_REFRESH_MS = 60 * 60 * 1000;
@@ -68,7 +86,7 @@ const IMAGE_HOSTS = [
 const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
 
 // Rutas que nunca deben guardarse en caché (privadas o en tiempo real).
-const NO_CACHE_PREFIXES = ["/api/", "/dashboard", "/profile", "/login", "/register", "/reset", "/frm_reset"];
+const NO_CACHE_PREFIXES = ["/api/", "/dashboard", "/profile", "/reset", "/frm_reset"];
 
 // ─── Precarga ───────────────────────────────────────────────────────────────
 
@@ -106,6 +124,11 @@ async function precacheAll() {
     ...PRECACHE_FILES.filter((path) => path.startsWith("/icons/")).map((path) =>
       precacheFile(images, path),
     ),
+    // Imágenes de otro dominio: se guardan como respuesta "opaque" (no-cors).
+    ...PRECACHE_EXTERNAL_IMAGES.map(async (url) => {
+      const response = await fetch(url, { mode: "no-cors" });
+      await images.put(url, response);
+    }),
     // Los archivos estáticos son inmutables: solo se descargan los que faltan.
     ...[...assets].map(async (asset) => {
       if (!(await statics.match(asset))) await precacheFile(statics, asset);
@@ -177,9 +200,11 @@ self.addEventListener("fetch", (event) => {
       return;
     }
 
-    // Peticiones de React Server Components (navegación del cliente de Next).
-    // Si fallan sin conexión, Next recarga la página completa y entra por "navigate".
-    if (request.headers.get("RSC") === "1" || url.searchParams.has("_rsc")) return;
+    // Peticiones de React Server Components (navegación y prefetch de Next).
+    if (request.headers.get("RSC") === "1" || url.searchParams.has("_rsc")) {
+      event.respondWith(rscRequest(request));
+      return;
+    }
 
     if (request.mode === "navigate") {
       event.respondWith(networkFirstPage(event));
@@ -279,6 +304,16 @@ async function networkFirst(request, cacheName) {
   }
 }
 
+// Sin conexión se responde vacío (sin contenido RSC): Next lo interpreta como
+// "haz una navegación completa", que el SW sirve desde la caché de páginas.
+async function rscRequest(request) {
+  try {
+    return await fetch(request);
+  } catch {
+    return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+  }
+}
+
 async function cacheFirst(request, cacheName) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -295,6 +330,13 @@ async function staleWhileRevalidate(event, cacheName, maxEntries) {
   const { request } = event;
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
+  const isImage = cacheName === IMAGES_CACHE;
+
+  // Sin conexión no tiene caso revalidar.
+  if (!self.navigator.onLine) {
+    if (cached) return cached;
+    if (isImage) return transparentImage();
+  }
 
   const network = fetch(request)
     .then(async (response) => {
@@ -313,13 +355,21 @@ async function staleWhileRevalidate(event, cacheName, maxEntries) {
   }
 
   const response = await network;
-  return response || Response.error();
+  if (response) return response;
+  return isImage ? transparentImage() : Response.error();
+}
+
+function transparentImage() {
+  return new Response(TRANSPARENT_IMAGE, {
+    headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" },
+  });
 }
 
 async function trimCache(cacheName, maxEntries) {
   const cache = await caches.open(cacheName);
   const keys = (await cache.keys()).filter((request) => {
     const url = new URL(request.url);
+    if (PROTECTED_URLS.has(request.url)) return false;
     return !(url.origin === self.location.origin && (PROTECTED_PATHS.has(url.pathname) || url.pathname === PRECACHE_META_KEY));
   });
   const excess = keys.length - maxEntries;

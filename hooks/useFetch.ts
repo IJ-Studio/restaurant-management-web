@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useConfirmedOnline, useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -8,10 +9,17 @@ export function useFetch<T>(url: string | null) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const online = useOnlineStatus();
+  const confirmedOnline = useConfirmedOnline();
 
   useEffect(() => {
     if (!url) {
       setLoading(false);
+      return;
+    }
+    // Sin conexión no se intenta la petición (fallaría); se hace al reconectar.
+    if (!confirmedOnline) {
+      if (!online) setLoading(false);
       return;
     }
 
@@ -37,7 +45,7 @@ export function useFetch<T>(url: string | null) {
     return () => {
       isMounted = false;
     };
-  }, [url]);
+  }, [url, online, confirmedOnline]);
 
   return { data, loading, error };
 }

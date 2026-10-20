@@ -16,6 +16,10 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     dispatch(hydrateSession());
+    // Si la app abrió sin conexión, valida la sesión en cuanto vuelva.
+    const onOnline = () => dispatch(hydrateSession());
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
   }, [dispatch]);
 
   return <>{children}</>;

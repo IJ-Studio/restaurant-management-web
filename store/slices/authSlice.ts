@@ -11,6 +11,11 @@ const initialState: AuthState = {
 export const hydrateSession = createAsyncThunk(
   "auth/hydrateSession",
   async (_, { dispatch }) => {
+    // Sin conexión no se puede validar la sesión; se reintenta al reconectar.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      dispatch(setLoading(false));
+      return null;
+    }
     dispatch(setLoading(true));
     try {
       const res = await fetch("/api/auth/me");
