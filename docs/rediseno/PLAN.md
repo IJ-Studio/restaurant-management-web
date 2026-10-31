@@ -10,12 +10,12 @@
 
 | Campo | Valor |
 |---|---|
-| Etapa | **Planificación cerrada y decisiones resueltas** (2026-10-31). Verificación de Cloudinary hecha (0.8). No se ha modificado código de la aplicación. |
-| Rama activa | `feature/rediseno-web-base` (creada; sin commits propios todavía) |
-| Último paso completado | 0.8 · Verificación de imágenes en Cloudinary (solo lectura) |
-| Bloqueo | **Memoria del equipo agotada (2026-10-31).** `tsc --noEmit` aborta por falta de memoria (exit 134): queda menos de 1 GB de memoria virtual libre, porque el archivo de paginación de `C:` no puede crecer con el disco lleno (≈0,5 GB libres) y el navegador y el editor ocupan unos 17 GB comprometidos. El paso 0.1 se deshizo con `git restore` para no dejarlo sin verificar. **Para continuar:** liberar al menos 10 GB en `C:` (o mover el archivo de paginación a `D:`) y cerrar pestañas o aplicaciones pesadas. Verificar con `npx tsc --noEmit`. |
-| Siguiente paso | **0.1** — Gestor de paquetes y scripts de verificación, en la rama `feature/rediseno-web-base` |
-| Notas | El disco `C:` está casi lleno: los navegadores de Playwright se instalan en `D:` (paso 0.4). Sin `.env.local` de desarrollo, las pruebas usan variables públicas ficticias y la API simulada del paso 0.7. |
+| Etapa | **Fase 0 en curso** (2026-10-31). |
+| Rama activa | `feature/rediseno-web-base` |
+| Último paso completado | 0.1 · Gestor de paquetes y scripts de verificación (`pnpm typecheck` 0 errores; `corepack pnpm -v` → 9.15.9) |
+| Bloqueo | Ninguno. El bloqueo por memoria se levantó (9,6 GB de memoria virtual libre). Queda pendiente, fuera del repositorio, corregir el archivo de paginación: su nombre es `D` y Windows lo crea como `C:\WINDOWS\D` (16 GB en `C:`). Scripts para ejecutar como administrador: `D:\dev-cache\mover-paginacion-a-D.ps1`, reiniciar, y `D:\dev-cache\borrar-paginacion-vieja.ps1`. |
+| Siguiente paso | **0.2** — ESLint con el preset de Next |
+| Notas | El disco `C:` está casi lleno: todo almacenamiento de herramientas va a `D:\dev-cache` (`TEMP`/`TMP`, `COREPACK_HOME`, `npm_config_cache`, `npm_config_store_dir`) y los navegadores de Playwright también a `D:` (paso 0.4). Sin `.env.local` de desarrollo, las pruebas usan variables públicas ficticias y la API simulada del paso 0.7. |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
 
@@ -94,7 +94,7 @@
 
 ## Fase 0 · Línea base y herramientas — `feature/rediseno-web-base`
 
-- [ ] **0.1 · Gestor de paquetes y scripts de verificación**
+- [x] **0.1 · Gestor de paquetes y scripts de verificación**
   - **Archivos:** `package.json`.
   - **Hacer:**
     - Fijar `"packageManager": "pnpm@9.15.9"` (corepack).
