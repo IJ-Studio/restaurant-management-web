@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ImportPreviewModal from "@/components/admin/Importpreviewmodal";
 import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import type { RootState } from "@/store/index";
 
 import {
   Search,

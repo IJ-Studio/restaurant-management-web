@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { RootState } from "@/store";
+import { RootState } from "@/store/index";
 import { api, APIError } from "@/lib/api";
 import {
   LineChart,

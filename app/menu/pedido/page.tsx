@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
-import { RootState } from "@/store";
+import { RootState } from "@/store/index";
 import { ShoppingBag, XCircle, RefreshCw, Clock, Truck, Send } from "lucide-react";
 import SmartImage from "@/components/SmartImage";
 import Link from "next/link";

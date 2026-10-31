@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import { RootState } from "@/store";
+import { RootState } from "@/store/index";
 import { SettingsService } from "@/features/shared/services/dataService";
 import { type SystemSettings } from "@/features/shared/data/restaurantData";
 import { cn } from "@/lib/utils";

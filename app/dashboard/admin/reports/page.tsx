@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import type { RootState } from "@/store/index";
 import ExportModal from "@/components/admin/ExportModal";
 import { api, APIError } from "@/lib/api";
 import {
