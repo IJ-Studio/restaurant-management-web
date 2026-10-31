@@ -12,10 +12,10 @@
 |---|---|
 | Etapa | **Fase 0 en curso** (2026-10-31). |
 | Rama activa | `feature/rediseno-web-base` |
-| Último paso completado | 0.2 · ESLint con el preset de Next (línea base: 233 errores y 135 avisos, igual que el diagnóstico) |
+| Último paso completado | 0.4 · Playwright (5 proyectos en verde; build ≈30 min en este equipo de 5,8 GB de RAM, por eso `webServer.timeout` es de 45 min) |
 | Bloqueo | Ninguno. El bloqueo por memoria se levantó (9,6 GB de memoria virtual libre). Queda pendiente, fuera del repositorio, corregir el archivo de paginación: su nombre es `D` y Windows lo crea como `C:\WINDOWS\D` (16 GB en `C:`). Scripts para ejecutar como administrador: `D:\dev-cache\mover-paginacion-a-D.ps1`, reiniciar, y `D:\dev-cache\borrar-paginacion-vieja.ps1`. |
-| Siguiente paso | **0.4** — Playwright como dependencia de desarrollo (0.3 bloqueado, ver su nota) |
-| Notas | El disco `C:` está casi lleno: todo almacenamiento de herramientas va a `D:\dev-cache` (`TEMP`/`TMP`, `COREPACK_HOME`, `npm_config_cache`, `npm_config_store_dir`) y los navegadores de Playwright también a `D:` (paso 0.4). Sin `.env.local` de desarrollo, las pruebas usan variables públicas ficticias y la API simulada del paso 0.7. |
+| Siguiente paso | **0.5** — Recorrido de páginas (0.3 sigue bloqueado, ver su nota) |
+| Notas | Para el build y las pruebas se inyectan valores ficticios (`DATABASE_URL`, `JWT_SECRET`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`) desde `playwright.config.ts`, sin tocar `.env`. Usar `corepack pnpm` (el pnpm global está roto). El disco `C:` está casi lleno: todo almacenamiento de herramientas va a `D:\dev-cache` (`TEMP`/`TMP`, `COREPACK_HOME`, `npm_config_cache`, `npm_config_store_dir`) y los navegadores de Playwright también a `D:` (paso 0.4). Sin `.env.local` de desarrollo, las pruebas usan variables públicas ficticias y la API simulada del paso 0.7. |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
 
@@ -120,7 +120,7 @@
   - **Aceptación:** el archivo no contiene valores; `git check-ignore .env.local` confirma que sigue ignorado.
   - **Commit:** `docs(entorno): añadir .env.example sin valores`
 
-- [ ] **0.4 · Playwright como dependencia de desarrollo**
+- [x] **0.4 · Playwright como dependencia de desarrollo**
   - **Archivos:** `package.json` (`@playwright/test` y `@axe-core/playwright` en devDependencies), `playwright.config.ts`, `.gitignore` (`test-results/`, `playwright-report/`, `playwright/.auth/`, `tests/e2e/.cache/`).
   - **Justificación:** con una sola herramienta se cubren:
     - los motores **Chromium, Firefox y WebKit** (el de Safari en iOS), con emulación de iPhone y Pixel;
