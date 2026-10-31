@@ -4,9 +4,10 @@ import { ANCHOS, RUTAS_PANEL, RUTAS_PUBLICAS } from "./rutas";
 import { archivoSesion, rolParaRuta } from "./roles";
 import { simularApi } from "./utilidades/api-simulada";
 
-test.describe.configure({ timeout: 120_000 }); // la primera visita en next dev compila la ruta
+test.describe.configure({ timeout: 60_000 }); // la primera visita en next dev compila la ruta
 
-const SALIDA = "test-results/linea-base";
+// LINEA_BASE_DIR permite guardar fuera de test-results/, que Playwright vacía en cada ejecución.
+const SALIDA = process.env.LINEA_BASE_DIR ?? "test-results/linea-base";
 const TABLA = `${SALIDA}/rutas.txt`;
 
 test.beforeAll(() => {
@@ -28,8 +29,9 @@ function grupo(titulo: string, rutas: readonly string[], conSesion: boolean) {
 					await page.setViewportSize({ width: ancho, height: 900 });
 					await page.goto(ruta, { waitUntil: "load" });
 					await page.waitForTimeout(1000);
+					await page.evaluate(() => document.fonts.ready);
 					finalUrl = new URL(page.url()).pathname;
-					await page.screenshot({ path: `${SALIDA}/${info.project.name}/${nombre}-${ancho}.png`, fullPage: true });
+					await page.screenshot({ path: `${SALIDA}/${info.project.name}/${nombre}-${ancho}.png`, fullPage: true, animations: "disabled", caret: "hide" });
 				}
 				appendFileSync(TABLA, `${ruta}\t${rol}\t${finalUrl}\n`);
 				await contexto.close();
