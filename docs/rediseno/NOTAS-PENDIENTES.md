@@ -44,6 +44,10 @@
 | NP-28 | Entorno local: pnpm global roto y disco C: lleno | Entorno | Baja |
 | NP-29 | Pagos con `PaymentElement` (Apple Pay y Google Pay) | Idea | Baja |
 | NP-30 | Ideas de producto para la parte pública | Idea | Baja |
+| NP-31 | Librería `xlsx@0.18.5` con vulnerabilidades conocidas (decisión D-06) | Dependencias / seguridad | Alta |
+| NP-32 | Autorización por rol y por propietario en cada endpoint (complemento de D-15) | Seguridad del servidor | Alta |
+| NP-33 | Calidad y metadatos de las imágenes en Cloudinary | Contenido | Media |
+| NP-34 | Retirar el limpiador de service workers antiguos | Deuda técnica | Baja |
 
 ---
 
@@ -67,7 +71,7 @@
   3. Borrar `app/api/*` con BD, `lib/db.ts`, `lib/schema.ts`, `lib/public.schema.ts`, `drizzle/` y las dependencias `pg`, `drizzle-orm`, `drizzle-kit`, `bcrypt`, `firebase-admin` y `googleapis`.
   4. Quitar `DATABASE_URL` del entorno del front.
 
-  Mientras tanto, el PLAN (paso 2.10) añade en `proxy.ts` un bloqueo optimista por rol de admin para estas rutas, pero no sustituye a la autorización en el servidor.
+  Mientras tanto, el PLAN (paso 2.10, decisión D-15) exige en `proxy.ts` un token válido en todo `/api/*`, salvo una lista documentada de rutas públicas, y rol admin en `/api/admin/**` y `/api/backups/**`. Es una barrera optimista: no sustituye a la autorización dentro de cada handler (NP-32).
 - **Prioridad:** Crítica.
 - **Criterio de aceptación:**
   - `rg "lib/db|drizzle-orm|from \"pg\"" app components features lib` no devuelve resultados.
@@ -187,7 +191,8 @@
 - **Problema:**
   - El front hace volcados de la BD y los sube a Google Drive con credenciales de cuenta de servicio.
   - El log de error puede incluir cabeceras `Authorization`.
-  - `app/api/cron/backups/route.ts` no verifica `CRON_SECRET`: el comentario de la línea 6 lo menciona, pero el código no lo comprueba, así que cualquiera puede invocar el cron.
+  - `app/api/cron/backups/route.ts` no verifica `CRON_SECRET`: el comentario de la línea 6 lo menciona, pero el código no lo comprueba, así que cualquiera puede invocar el cron. Por eso es la única excepción temporal de la lista de rutas públicas de D-15 (PLAN 2.10).
+  - `lib/db.ts:39` llama a `http://localhost:3000/api/cron/backups` desde el propio módulo de base de datos.
 - **Riesgo:** exfiltración de la BD completa y de credenciales.
 - **Solución sugerida:** mover los respaldos a la infraestructura del backend (job programado del API o del proveedor de BD), con las credenciales fuera del proyecto del front. Registrar solo `err.message`.
 - **Prioridad:** Alta.
@@ -389,3 +394,61 @@
   - Lista de espera cuando no hay disponibilidad.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** cada idea se convierte en una historia de usuario antes de ejecutarse.
+
+## NP-31 · Librería `xlsx@0.18.5` con vulnerabilidades conocidas
+
+- **Archivos y rutas afectados:** `package.json`, `components/admin/Importpreviewmodal.tsx:467-488`, `app/dashboard/admin/menu/page.tsx:147-178`.
+- **Problema:** la importación de la carta (CSV, JSON y XLSX) se parsea en el navegador con `xlsx@0.18.5`, la última versión publicada en npm. Tiene **prototype pollution (CVE-2023-30533)** y **ReDoS (CVE-2024-22363)**. El usuario decidió (D-06) no cambiarla durante el rediseño.
+- **Riesgo:** un archivo manipulado podría contaminar prototipos o bloquear la pestaña del administrador.
+- **Solución sugerida:** elegir una opción.
+  - **(a)** Instalar SheetJS 0.20.x desde el tarball oficial (`https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`), fijado con integridad en el lockfile, y cargarlo con `import()` solo al importar.
+  - **(b)** Mover el parseo al API (recomendado a medio plazo): el front solo sube el archivo validado.
+
+  Mientras tanto, el PLAN (paso 5.9) valida tamaño (≤ 2 MB), extensión, tipo MIME y firma de bytes antes de entregar el archivo a `xlsx`.
+- **Prioridad:** Alta.
+- **Criterio de aceptación:** `pnpm audit` no muestra avisos de `xlsx`; la importación de los archivos de ejemplo funciona igual.
+
+## NP-32 · Autorización por rol y por propietario en cada endpoint
+
+- **Archivos y rutas afectados:** todos los route handlers de `app/api` mientras existan (NP-01) y los endpoints del API externo.
+- **Problema:** la decisión D-15 hace que el proxy exija un token válido en `/api/*` (salvo la lista pública documentada) y rol admin en `/api/admin/**` y `/api/backups/**`. Pero el proxy es una comprobación optimista: no decide qué rol puede hacer cada operación (por ejemplo, ¿cocina puede ajustar inventario?) ni comprueba la propiedad de los recursos.
+- **Riesgo:** un usuario autenticado con un rol bajo podría usar operaciones que no le corresponden.
+- **Solución sugerida:**
+  - Una matriz de permisos rol × operación definida en el API.
+  - Comprobación en cada handler o controlador (guards de NestJS).
+  - Pruebas de autorización por endpoint.
+  - Al migrar (NP-01), retirar del proxy las reglas que dupliquen esa lógica.
+- **Prioridad:** Alta.
+- **Criterio de aceptación:** cada endpoint documenta qué roles admite; las pruebas cubren al menos un caso permitido y uno denegado por rol.
+
+## NP-33 · Calidad y metadatos de las imágenes en Cloudinary
+
+- **Archivos y rutas afectados:** la nube `dcb1tspbj` (carpetas `ElQuijote/hero`, `ElQuijote/menu`, `ElQuijote/Logo`, `ElQuijote/Ico`) y `features/shared/data/restaurantData.ts`.
+- **Problema** (verificación de solo lectura del 2026-10-31, ver ESTADO §8.1):
+  1. Las imágenes de portada son **generadas por IA** y la principal (`Gemini_Generated_Image_2mv3…`) conserva la **marca de agua de Gemini**. Además, mide 1584×672, poco para pantallas retina a sangre.
+  2. **`logo_text_white_ktnpgg` no existe** en la nube.
+  3. Las 37 fotos de la carta **no tienen `alt` ni pie** en sus metadatos y tienen encuadres muy distintos (de 696×1507 a 1507×696).
+  4. `hamburguesa_fgqz5m` trae **franjas negras** incrustadas.
+  5. `mystery-box_dwkh0i` muestra **figuras de anime**, fuera del tono de alta gama.
+  6. Varias fotos son de platos ajenos a la propuesta española (tex-mex, molcajete, hamburguesa).
+  7. No hay fotografías de bodega ni de vinos.
+  8. Quedan en la raíz de la nube los recursos de muestra de Cloudinary (`samples/*`, `cld-sample*`, `main-sample`).
+- **Riesgo:** imagen de marca poco creíble para alta gama; accesibilidad dependiente del nombre del plato.
+- **Solución sugerida:**
+  - Sesión de fotografía profesional (sala, platos, bodega) con encuadre 4:5 para platos y 16:9 o 3:2 de al menos 2880 px para portada.
+  - `alt` y pie en los metadatos contextuales de cada recurso.
+  - Retirar las imágenes generadas, las de muestra y las ajenas a la carta (lo decide el negocio; el rediseño no borra nada).
+  - Corregir `restaurantData.ts` para que no apunte a recursos inexistentes.
+
+  Mientras tanto, el rediseño recorta en la entrega la marca de agua (PLAN 4.3), usa recortes uniformes con `g_auto` y toma el `alt` del nombre del plato.
+- **Prioridad:** Media.
+- **Criterio de aceptación:** ninguna imagen pública muestra marcas de agua ni franjas; todas las imágenes de contenido tienen `alt` significativo; la portada mide al menos 2880 px de ancho.
+
+## NP-34 · Retirar el limpiador de service workers antiguos
+
+- **Archivos y rutas afectados:** `components/pwa/RetirarServiceWorker.tsx` (lo crea el PLAN 2.7).
+- **Problema:** al eliminar el service worker (decisión D-11), hay que desregistrar los que ya estén instalados en navegadores de usuarios. El componente de limpieza solo es necesario durante un tiempo.
+- **Riesgo:** bajo: código residual.
+- **Solución sugerida:** retirarlo cuando las métricas o un tiempo prudente (por ejemplo, 90 días tras el despliegue) indiquen que ya no quedan instalaciones.
+- **Prioridad:** Baja.
+- **Criterio de aceptación:** el componente se elimina y la prueba de almacenamiento sigue sin service workers registrados.

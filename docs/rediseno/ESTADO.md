@@ -9,7 +9,7 @@
 - Recorrido del código con búsquedas dirigidas, `pnpm install --frozen-lockfile`, `tsc --noEmit`, ESLint (preset de Next instalado fuera del repo, porque el proyecto no tiene configuración), `next build`, `next start` y Lighthouse 12.8 (Chrome headless) en móvil y escritorio.
 - **No hay `.env` en el checkout.** El build se hizo con valores ficticios solo en el entorno del proceso; por eso la carta, el producto y las reservas se midieron en estado de error o vacío (sin backend ni base de datos).
 - **Los dashboards no se midieron con Lighthouse** porque requieren sesión; se analizaron por código.
-- **El MCP de Cloudinary no estaba autorizado** en esta sesión: las imágenes se verificaron por código y con `curl -I` a las URLs públicas. Queda pendiente la verificación de recursos en la nube (ver PLAN, fase 0).
+- El MCP de Cloudinary se autorizó el 2026-10-31 y se usó **solo para consultar** (§8.1). Antes, las imágenes se habían verificado por código y con `curl -I`.
 - El disco `C:` del equipo está prácticamente lleno (≈0,5 GB libres): varias ejecuciones de Lighthouse fallaron por espacio. Cualquier herramienta pesada (navegadores de Playwright) debe instalarse en `D:`.
 
 ## Resumen ejecutivo
@@ -110,6 +110,31 @@ Tailwind v4 con `@theme` en `styles/globals.css`, pero los tokens se declaran do
 10. La subida de imágenes del admin usa el preset placeholder `tu_upload_preset`, sin límites de tipo ni de tamaño.
 
 Los SVG del logo tienen los nombres invertidos: `logo_dark` es blanco y `logo_light` es negro. Detalle en el anexo B §1.
+
+### 8.1 Verificación en Cloudinary (MCP, solo lectura, 2026-10-31)
+
+No se modificó ni se borró ningún recurso. La nube `dcb1tspbj` tiene **73 imágenes** en 5 carpetas (`ElQuijote`, `ElQuijote/hero`, `ElQuijote/menu`, `ElQuijote/Logo`, `ElQuijote/Ico`) más los recursos de muestra de Cloudinary en la raíz.
+
+| Recurso referenciado en el código | ¿Existe? | Formato · tamaño · peso | Observación |
+|---|---|---|---|
+| `logo_text_white_ktnpgg` (icono `shortcut`, `restaurantData.ts:319`) | **No** | — | Causa el 404 de todas las páginas |
+| `logo_dark_fvfcdk` / `logo_light_xy8ce1` | Sí | SVG · 800×800 · 11 KB | Nombres invertidos (el «dark» es blanco). Con `f_auto` llegan rasterizados. Se sustituyen por el SVG local (D-07). |
+| `logo_wgyijz` (favicon) | Sí | ICO · 256×256 · 9 KB | Se sustituye por `app/icon.svg` local (paso 1.8) |
+| `food-3955317_1280` (fondo de login y registro) | **No con ese ID** | — | El recurso real es `food-3955317_1280_zstvf7` (JPG · 887×1280 · 356 KB). El código usa el ID sin sufijo, de ahí el 404. |
+| `Gemini_Generated_Image_2mv3sr2mv3sr2mv3_uciqpl` (portada de `/menu`) | Sí | PNG · 1584×672 · 2,0 MB | **Imagen generada por IA con la marca de agua de Gemini** en la esquina inferior derecha; resolución corta para retina |
+| Otras de `ElQuijote/hero` | Sí | 2 PNG de Gemini (825×825 y 1005×565), `image_l57jar` (versión desenfocada, 1584×672), `meal-4840665_1280` (JPG 1280×725), `compressed_…` (WebP 1024²) | Material disponible para la portada y «la casa» |
+| `ElQuijote/menu` (37 platos) | Sí | JPG · de 41 a 230 KB · proporciones desde 696×1507 hasta 1507×696 | **Ninguno tiene `alt` ni pie en sus metadatos**. Encuadres muy distintos. `hamburguesa` lleva franjas negras incrustadas, `mystery-box` muestra figuras de anime y hay platos ajenos a la propuesta española (tex-mex, molcajete). Solo `tapas-espanolas` muestra vinos. |
+| `ElQuijote/Ico` | Sí | `molino_z1czet` (PNG 551², 7 KB), `molino_white`/`molino_black` (ICO 256²) | El molino sirve de referencia para el `SelloCasa` local |
+
+**Consecuencias para el rediseño:**
+
+- Las imágenes se entregan con `f_auto,q_auto` y un ancho ajustado al hueco (`w_` según `sizes`).
+- Los platos usan un recorte uniforme 4:5 (`c_fill,g_auto`).
+- El `alt` sale del nombre del plato que envía el API.
+- La marca de agua se recorta en la entrega (PLAN 4.3).
+- El fondo del login usa el ID correcto o un respaldo local.
+
+La calidad del material, el `alt` en los metadatos y los recursos que sobran están en NP-33.
 
 ## 9. Formularios y validaciones
 
