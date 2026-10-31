@@ -11,9 +11,9 @@
 | Campo | Valor |
 |---|---|
 | Etapa | **Planificación cerrada y decisiones resueltas** (2026-10-31). Verificación de Cloudinary hecha (0.8). No se ha modificado código de la aplicación. |
-| Rama activa | `feature/rediseno-web` |
+| Rama activa | `feature/rediseno-web-base` (creada; sin commits propios todavía) |
 | Último paso completado | 0.8 · Verificación de imágenes en Cloudinary (solo lectura) |
-| Bloqueo | Ninguno |
+| Bloqueo | **Memoria del equipo agotada (2026-10-31).** `tsc --noEmit` aborta por falta de memoria (exit 134): queda menos de 1 GB de memoria virtual libre, porque el archivo de paginación de `C:` no puede crecer con el disco lleno (≈0,5 GB libres) y el navegador y el editor ocupan unos 17 GB comprometidos. El paso 0.1 se deshizo con `git restore` para no dejarlo sin verificar. **Para continuar:** liberar al menos 10 GB en `C:` (o mover el archivo de paginación a `D:`) y cerrar pestañas o aplicaciones pesadas. Verificar con `npx tsc --noEmit`. |
 | Siguiente paso | **0.1** — Gestor de paquetes y scripts de verificación, en la rama `feature/rediseno-web-base` |
 | Notas | El disco `C:` está casi lleno: los navegadores de Playwright se instalan en `D:` (paso 0.4). Sin `.env.local` de desarrollo, las pruebas usan variables públicas ficticias y la API simulada del paso 0.7. |
 
