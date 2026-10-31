@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 0 en curso** (2026-10-31). |
 | Rama activa | `feature/rediseno-web-base` |
-| Último paso completado | 0.1 · Gestor de paquetes y scripts de verificación (`pnpm typecheck` 0 errores; `corepack pnpm -v` → 9.15.9) |
+| Último paso completado | 0.2 · ESLint con el preset de Next (línea base: 233 errores y 135 avisos, igual que el diagnóstico) |
 | Bloqueo | Ninguno. El bloqueo por memoria se levantó (9,6 GB de memoria virtual libre). Queda pendiente, fuera del repositorio, corregir el archivo de paginación: su nombre es `D` y Windows lo crea como `C:\WINDOWS\D` (16 GB en `C:`). Scripts para ejecutar como administrador: `D:\dev-cache\mover-paginacion-a-D.ps1`, reiniciar, y `D:\dev-cache\borrar-paginacion-vieja.ps1`. |
-| Siguiente paso | **0.2** — ESLint con el preset de Next |
+| Siguiente paso | **0.3** — Plantilla de variables públicas |
 | Notas | El disco `C:` está casi lleno: todo almacenamiento de herramientas va a `D:\dev-cache` (`TEMP`/`TMP`, `COREPACK_HOME`, `npm_config_cache`, `npm_config_store_dir`) y los navegadores de Playwright también a `D:` (paso 0.4). Sin `.env.local` de desarrollo, las pruebas usan variables públicas ficticias y la API simulada del paso 0.7. |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -102,7 +102,7 @@
   - **Aceptación:** `pnpm typecheck` da 0 errores; `corepack pnpm -v` funciona.
   - **Commit:** `chore(herramientas): fijar pnpm y añadir scripts de verificación`
 
-- [ ] **0.2 · ESLint con el preset de Next**
+- [x] **0.2 · ESLint con el preset de Next**
   - **Archivos:** `package.json` (devDependencies `eslint` y `eslint-config-next` de la misma versión que Next), `eslint.config.mjs`.
   - **Hacer:**
     - Configuración plana `core-web-vitals` + `typescript`.
