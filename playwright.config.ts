@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PUERTO = 3100;
+// E2E_MODO=dev en pasos intermedios (next dev); por defecto build + next start.
+const MODO_DEV = process.env.E2E_MODO === "dev";
 
 export default defineConfig({
 	testDir: "./tests/e2e",
@@ -22,7 +24,9 @@ export default defineConfig({
 			: []),
 	],
 	webServer: {
-		command: `corepack pnpm build && corepack pnpm start -p ${PUERTO}`,
+		command: MODO_DEV
+			? `corepack pnpm dev -p ${PUERTO}`
+			: `corepack pnpm build && corepack pnpm start -p ${PUERTO}`,
 		url: `http://localhost:${PUERTO}`,
 		reuseExistingServer: true,
 		timeout: 2_700_000,

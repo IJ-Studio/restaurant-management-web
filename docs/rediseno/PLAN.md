@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 0 en curso** (2026-10-31). |
 | Rama activa | `feature/rediseno-web-base` |
-| Último paso completado | 0.3 · `.env.example` (solo nombres; `.gitignore` con `!.env.example`) y 0.4 · Playwright (5 proyectos en verde; build ≈30 min en este equipo de 5,8 GB de RAM, por eso `webServer.timeout` es de 45 min) |
+| Último paso completado | 0.5 · Recorrido de páginas (19 rutas públicas × 5 anchos, 95/95 en Chromium contra `next dev`, con 18 excepciones documentadas en `tests/e2e/excepciones.ts`; las rutas de panel se recorren en 0.7 con sesión simulada; se ejecuta con `E2E_MODO=dev`) y 0.3 · `.env.example` (solo nombres; `.gitignore` con `!.env.example`) y 0.4 · Playwright (5 proyectos en verde; build ≈30 min en este equipo de 5,8 GB de RAM, por eso `webServer.timeout` es de 45 min) |
 | Bloqueo | Ninguno. El bloqueo por memoria se levantó (9,6 GB de memoria virtual libre). Queda pendiente, fuera del repositorio, corregir el archivo de paginación: su nombre es `D` y Windows lo crea como `C:\WINDOWS\D` (16 GB en `C:`). Scripts para ejecutar como administrador: `D:\dev-cache\mover-paginacion-a-D.ps1`, reiniciar, y `D:\dev-cache\borrar-paginacion-vieja.ps1`. |
-| Siguiente paso | **0.5** — Recorrido de páginas |
+| Siguiente paso | **0.6** — Almacenamiento, caché y cabeceras |
 | Notas | **Política de verificación (decidida por el usuario):** en pasos intermedios, lint + typecheck + Playwright contra `next dev`. Build completo y pruebas contra `next start` al cerrar cada fase y en cualquier paso que toque `next.config`, cabeceras, imágenes, fuentes, metadatos, `proxy.ts` o rutas de servidor; las comprobaciones de CSP, `no-store` y secretos en el bundle solo contra el build de producción. **Dudas no irreversibles:** elegir la opción más conservadora, anotarla aquí y continuar; preguntar solo si es irreversible, toca el backend o exige decisión de producto. Tiempo de build de referencia: ≈30 min antes de las excepciones de Avast; anotar aquí el próximo. Para el build y las pruebas se inyectan valores ficticios (`DATABASE_URL`, `JWT_SECRET`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`) desde `playwright.config.ts`, sin tocar `.env`. Usar `corepack pnpm` (el pnpm global está roto). El disco `C:` está casi lleno: todo almacenamiento de herramientas va a `D:\dev-cache` (`TEMP`/`TMP`, `COREPACK_HOME`, `npm_config_cache`, `npm_config_store_dir`) y los navegadores de Playwright también a `D:` (paso 0.4). Sin `.env.local` de desarrollo, las pruebas usan variables públicas ficticias y la API simulada del paso 0.7. |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -137,7 +137,7 @@
   - **Aceptación:** `pnpm exec playwright install chromium firefox webkit` termina sin problemas de espacio; una prueba vacía pasa en los cinco proyectos.
   - **Commit:** `test(e2e): instalar Playwright y configurar navegadores y dispositivos`
 
-- [ ] **0.5 · Recorrido de páginas**
+- [x] **0.5 · Recorrido de páginas**
   - **Archivos:** `tests/e2e/rutas.ts` (lista de rutas públicas y de panel), `tests/e2e/utilidades/vigilantes.ts`, `tests/e2e/recorrido.spec.ts`.
   - **Hacer:** para cada ruta y cada ancho (360, 390, 768, 1024 y 1440):
     - recoger `console` (`error` y `warning`), `pageerror`, `requestfailed` y respuestas ≥ 400;
