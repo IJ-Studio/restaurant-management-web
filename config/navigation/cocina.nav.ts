@@ -5,7 +5,7 @@ import {
   Settings, 
   History 
 } from "lucide-react";
-import type { SidebarSection } from "@/components/layout/Sidebar";
+import type { SidebarSection } from "./tipos";
 import React from "react";
 
 const icon = (Icon: React.FC<{ size?: number }>, size = 17) =>

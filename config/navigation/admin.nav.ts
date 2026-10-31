@@ -21,7 +21,7 @@ import {
   Database,
   Wallet,
 } from "lucide-react";
-import type { SidebarSection } from "@/components/layout/Sidebar";
+import type { SidebarSection } from "./tipos";
 
 // React.createElement is used here to keep this file as a plain config
 // (no JSX syntax needed — avoids requiring "use client" on a config file).

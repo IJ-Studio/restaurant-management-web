@@ -452,3 +452,18 @@
 - **Solución sugerida:** retirarlo cuando las métricas o un tiempo prudente (por ejemplo, 90 días tras el despliegue) indiquen que ya no quedan instalaciones.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** el componente se elimina y la prueba de almacenamiento sigue sin service workers registrados.
+
+## NP-35 · Código huérfano que el rediseño no borra todavía
+
+- **Archivos y rutas afectados:**
+  - `components/landing/{AboutSection,CategoriesSection,MenuSection,ReservationSection}.tsx`
+  - `components/ui/{Button.tsx,index.ts}` y `types/ui.ts` (`ButtonProps`)
+  - `config/navigation/{admin,cajero,cocina}.nav.ts` (más `tipos.ts`)
+  - `features/dashboard/admin/data/{usersMock,suppliersMock}.tsx`
+  - `features/dashboard/cliente/*`, `components/IdleLogout.tsx`, `styles/loading.css`, `types/index.ts`
+  - `check_backups.ts` y `setup_settings.ts` (scripts en la raíz)
+- **Problema:** un grafo de importaciones desde `app/` y `proxy.ts` (paso 1.2) los marca sin uso, pero el PLAN no los incluye en el borrado: algunos los reutilizan pasos posteriores (3.2 `Boton`, 3.13 navegación por rol, fase 4 landing, NP-19 y NP-23) y otros son scripts de operación.
+- **Riesgo:** bajo: peso muerto y confusión; `AboutSection` y las secciones de landing contienen código con riesgo XSS (`dangerouslySetInnerHTML`) que el PLAN 2.12 sanea mientras exista.
+- **Solución sugerida:** revisarlos al cerrar cada fase y borrar (están versionados) lo que ningún paso reutilice; `types/ui.ts` se retira cuando el paso 3.2 sustituya `components/ui/Button.tsx`.
+- **Prioridad:** Baja.
+- **Criterio de aceptación:** el grafo de importaciones solo marca como huérfano lo que está documentado como excepción.
