@@ -10,39 +10,37 @@
 
 | Campo | Valor |
 |---|---|
-| Etapa | **Planificación terminada** (diagnóstico, DESIGN.md, PLAN y NOTAS escritos). No se ha modificado código de la aplicación. |
+| Etapa | **Planificación cerrada y decisiones resueltas** (2026-10-31). Verificación de Cloudinary hecha (0.8). No se ha modificado código de la aplicación. |
 | Rama activa | `feature/rediseno-web` |
-| Último paso completado | Etapa 0 de documentación (este archivo) |
-| Bloqueo | **Esperando la aprobación del usuario** de las decisiones D-01 a D-16 (sección siguiente) |
+| Último paso completado | 0.8 · Verificación de imágenes en Cloudinary (solo lectura) |
+| Bloqueo | Ninguno |
 | Siguiente paso | **0.1** — Gestor de paquetes y scripts de verificación, en la rama `feature/rediseno-web-base` |
-| Notas | El MCP de Cloudinary no está autorizado: el paso 0.8 queda bloqueado hasta autorizarlo en los conectores de claude.ai. El disco `C:` está casi lleno: los navegadores de Playwright se instalan en `D:` (paso 0.4). |
+| Notas | El disco `C:` está casi lleno: los navegadores de Playwright se instalan en `D:` (paso 0.4). Sin `.env.local` de desarrollo, las pruebas usan variables públicas ficticias y la API simulada del paso 0.7. |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
 
 ---
 
-## Decisiones que necesitan aprobación
+## Decisiones (resueltas por el usuario el 2026-10-31)
 
-Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la recomendación **solo si el usuario lo autoriza explícitamente**.
-
-| ID | Decisión | Recomendación | Bloquea |
+| ID | Decisión | Resolución | Pasos |
 |---|---|---|---|
-| D-01 | Actualizar Next 16.0.7 (con avisos críticos de RCE y bypass del proxy) a la última 16.x parcheada, junto con React y `eslint-config-next` de la misma versión | Sí, al inicio de la fase 2 y como paso propio | 2.1 |
-| D-02 | CSP **con nonce** generado en `proxy.ts`. Obliga a renderizar todas las páginas de forma dinámica (sin HTML estático), tal como indica la guía de CSP de Next. La alternativa con hashes es menos estricta con los scripts en línea de Next. | Nonce. Durante la transición, `style-src-attr 'unsafe-inline'` para los atributos `style` que generan React, Stripe y Recharts, hasta eliminar los 343 estilos en línea | 2.3–2.5 |
-| D-03 | El JWT en `localStorage` y la cookie escrita por JS **no se tocan en el rediseño** (es sesión, fuera de alcance; ver NP-04). La prueba de almacenamiento los marca como excepción conocida con referencia a NP-04. La alternativa (BFF en Next que fija la cookie HttpOnly) tocaría la sesión. | Mantener la excepción y resolver NP-04 en otra sesión | 0.6, 2.15 |
-| D-04 | Retirar dependencias sin uso en el front: `cloudinary-core`, `cloudinary-react`, `firebase`, `@supabase/ssr`, `@supabase/supabase-js`, `@types/grecaptcha`, `next-themes` y `autoprefixer`. **No** se tocan `pg`, `drizzle-orm`, `bcrypt`, `firebase-admin` ni `googleapis`, que usan los route handlers (NP-01). | Sí | 1.10 |
-| D-05 | Añadir **zod** como única librería de validación del front (hoy no hay ninguna): unos 13 KB gzip, esquemas tipados reutilizables y mensajes en español | Sí | 3.1 |
-| D-06 | Sustituir `xlsx@0.18.5` (prototype pollution y ReDoS) por SheetJS 0.20.x desde el tarball oficial de `cdn.sheetjs.com`, fijado con integridad en el lockfile, y cargarlo con `import()` solo al importar un archivo | Sí | 2.19 |
-| D-07 | El **logo** pasa a ser un SVG local con `currentColor` (`components/marca/Logo.tsx`) en lugar de las URL de Cloudinary de `INITIAL_SETTINGS`. Arregla el 404, el SVG remoto, el cambio de tema y el CLS. | Sí | 1.8 |
-| D-08 | La navegación pública pasa a anclas de la landing. Las rutas existentes `/about` y `/promociones` **se conservan funcionando**, con migas de pan; no se redirigen (redirigirlas sería un cambio de rutas). | Conservar | 4.21 |
-| D-09 | El **acceso del personal** es un enlace discreto «Acceso del personal» en la última fila del pie, que lleva a `/login` (el mismo login). Al personal con sesión le aparece «Panel de trabajo» solo dentro de su menú de cuenta. | Sí | 3.11 |
-| D-10 | Catálogo de componentes: una página **solo de desarrollo** (`app/(dev)/catalogo/page.tsx`, que responde `notFound()` en producción) para revisar todos los estados y probarlos con Playwright. Alternativa: Playwright Component Testing, una dependencia más y más lenta. | Página de desarrollo | 3.0 |
-| D-11 | El service worker se reduce a archivos estáticos versionados (`/_next/static`, iconos) y a la página `/offline`. Deja de guardar páginas, imágenes y fuentes, así que **el modo sin conexión solo mostrará `/offline`**. | Sí | 2.7 |
-| D-12 | En **Ajustes** del admin: retirar la sección «Apariencia» (colores y fuentes en tiempo de ejecución, que chocan con DESIGN.md) y los campos de **claves secretas** de `GatewayModal`, que se sustituyen por un texto que remite a NP-09 | Sí | 5.14 |
-| D-13 | Toda cifra que hoy sale de mocks se muestra con la insignia **«Datos de ejemplo»**, sin ocultarla, hasta que el API la sirva (NP-12) | Sí | 5.x |
-| D-14 | **Nivel de acabado:** indica 2 o 3 sitios de restaurantes que tomes como listón (por haber elegido en parte el estándar de alta cocina) | Pendiente de tu respuesta | 4.x |
-| D-15 | Protección en `proxy.ts` (guía de autenticación de Next): añadir `/profile` y `/menu/pedido/**`; bloquear sin rol admin `/api/admin/**`, `/api/backups/**` y los métodos de escritura de `/api/settings` y `/api/inventory/**`. `/api/cron/backups` queda fuera (su protección es NP-10). | Sí | 2.10 |
-| D-16 | Autorizar el **MCP de Cloudinary** (en los conectores de claude.ai) para verificar los recursos de imagen **en modo solo lectura** | Necesario | 0.8 |
+| D-01 | Actualizar Next 16.0.7 (avisos críticos de RCE y bypass del proxy) a la última 16.x parcheada, junto con React y `eslint-config-next` | **Aprobada** | 2.1 |
+| D-02 | CSP **con nonce** generado en `proxy.ts`; todas las páginas pasan a renderizarse de forma dinámica. Durante la transición, `style-src-attr 'unsafe-inline'` hasta eliminar los estilos en línea. | **Aprobada** | 2.3–2.5 |
+| D-03 | El JWT en `localStorage` y la cookie escrita por JS se mantienen **como excepción hasta que el backend emita una cookie HttpOnly** (NP-04). **Condición:** eliminar todo `dangerouslySetInnerHTML` o sanearlo con una librería justificada (ver paso 2.12). | **Aprobada con condición** | 0.6, 2.12, 2.15 |
+| D-04 | Retirar las dependencias sin uso en el front, **una por commit**, con build y pruebas tras cada una. No se tocan `pg`, `drizzle-orm`, `bcrypt`, `firebase-admin` ni `googleapis`, que usan los route handlers (NP-01). | **Aprobada** | 1.10.1–1.10.8 |
+| D-05 | Añadir **zod** como única librería de validación del front | **Aprobada** | 3.1 |
+| D-06 | Sustitución de `xlsx@0.18.5` | **Pasa a NOTAS-PENDIENTES** (NP-31); no se ejecuta en el rediseño | — |
+| D-07 | Logo como SVG local con `currentColor` | **Aprobada** | 1.8 |
+| D-08 | Conservar `/about` y `/promociones` funcionando, con migas de pan; la navegación usa anclas | **Aprobada** | 4.21 |
+| D-09 | «Acceso del personal» como enlace discreto en el pie hacia `/login` | **Aprobada** | 3.11 |
+| D-10 | Catálogo de componentes solo en desarrollo, **verificando que no entra al build de producción** (ver paso 3.0) | **Aprobada con verificación** | 3.0 |
+| D-11 | Service worker limitado a estáticos | **Rechazada: sin service worker.** Se elimina `public/sw.js` y su registro, y se desregistran los que ya estén instalados (paso 2.7). | 2.7 |
+| D-12 | Ajustes del admin: quitar la sección de colores y fuentes. Los campos de claves de pago solo se retiran si no se usan para nada real. **Comprobado el 2026-10-31:** `GatewayModal` usa inputs no controlados cuyo valor nunca se lee ni se envía, con datos de `settingsMock`, así que **se retiran**. | **Aprobada (verificada)** | 5.14 |
+| D-13 | Insignia «Datos de ejemplo» en las cifras que vienen de mocks | **Aprobada** | 5.x |
+| D-14 | Referencias de nivel de acabado: The Macallan, TimeSpirit Dining Experience, y Restaurant Fontané. Se usan como **listón de acabado**, guiándose por «Bodega de guarda» (ver DESIGN.md §Overview). | **Resuelta** | 4.x |
+| D-15 | **Exigir un token válido en todo `/api/*`**, salvo una lista explícita y documentada de rutas públicas (`config/seguridad/rutas-api-publicas.ts`), y verificar que el login y la parte pública siguen funcionando. La autorización fina (rol y propietario) va a NOTAS-PENDIENTES (NP-32). | **Aprobada** | 2.10 |
+| D-16 | MCP de Cloudinary autorizado. **Verificación solo lectura hecha en esta etapa** (ESTADO §8.1); no se volverá a usar en las fases de implementación. | **Hecha** | 0.8 ✔ |
 
 ---
 
@@ -158,7 +156,7 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
       - las claves de `localStorage` están dentro de `{ "elquijote:preferencias" }` más las excepciones conocidas (`authToken`, `user` y `num_mesa` → D-03 / NP-04 / NP-12; las claves de `dataService` → NP-12);
       - `sessionStorage` está vacío;
       - `indexedDB.databases()` está vacío;
-      - las entradas de `caches` son solo URL de `/_next/static/`, `/icons/` u `/offline`.
+      - Cache Storage (`caches.keys()`) está vacío y no hay ningún service worker registrado (`navigator.serviceWorker.getRegistrations()`). Hasta el paso 2.7 se marca `test.fail()`.
     - Comprobar que las rutas privadas (`/dashboard/**`, `/profile`, `/menu/pedido/**`, `/login`, `/register`) responden con un `Cache-Control` que incluye `no-store`. Hasta el paso 2.6 este test se marca `test.fail()`.
     - Comprobar que `X-Powered-By` no aparece (`test.fail()` hasta el paso 2.2).
   - **Aceptación:** las pruebas reflejan el estado actual; los `test.fail()` quedan enlazados a su paso.
@@ -173,15 +171,15 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
   - **Aceptación:** existen las capturas base de las rutas públicas y de panel, y `rutas.txt`.
   - **Commit:** `test(e2e): sesión simulada por rol y línea base visual`
 
-- [ ] **0.8 · Verificación de imágenes en Cloudinary (solo lectura)** — *bloqueado por D-16*
-  - **Hacer:** con el MCP de Cloudinary **solo consultar**, sin borrar ni modificar nada:
-    - inventario de los recursos usados por la app;
-    - existencia de cada `public_id` referenciado (`food-3955317_1280`, `logo_text_white_ktnpgg`, logos, platos, promociones);
-    - formato, dimensiones y peso.
+- [x] **0.8 · Verificación de imágenes en Cloudinary (solo lectura)** — *hecho el 2026-10-31, en la etapa de planificación*
+  - **Hecho:** con el MCP de Cloudinary **solo se consultó**, sin borrar ni modificar nada:
+    - inventario de las 73 imágenes y 5 carpetas;
+    - existencia de cada `public_id` referenciado;
+    - formato, dimensiones y peso;
+    - revisión visual de la portada y de una muestra de la carta.
 
-    Anotar en `ESTADO.md` §8 qué recursos faltan, cuáles pesan demasiado y qué `alt` necesita cada uno.
-  - **Aceptación:** tabla completa en ESTADO.md; ningún recurso se modificó en Cloudinary.
-  - **Commit:** `docs(estado): verificar recursos de imagen en Cloudinary`
+    El resultado está en `ESTADO.md` §8.1. Las fases de implementación **no** vuelven a usar el MCP.
+  - **Commit:** incluido en `docs(rediseno): registrar decisiones y verificación de Cloudinary`
 
 - [ ] **0.9 · Medición reproducible de Lighthouse**
   - **Archivos:** `scripts/medir-lighthouse.mjs`.
@@ -286,10 +284,22 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
     - 0 imágenes rotas en el recorrido.
   - **Commit:** `feat(imagenes): cargador de Cloudinary, hosts permitidos y respaldo seguro`
 
-- [ ] **1.10 · Retirar dependencias sin uso** — *D-04*
-  - **Archivos:** `package.json` y `pnpm-lock.yaml` (`pnpm remove …`), más los imports que queden de `cloudinary-react`.
-  - **Aceptación:** `pnpm audit` baja de forma visible respecto a 7 críticos y 70 altos (registrar las cifras); el build y el recorrido siguen en verde.
-  - **Commit:** `chore(dependencias): retirar SDKs y paquetes sin uso`
+- [ ] **1.10 · Retirar dependencias sin uso** — *D-04: una dependencia por commit*
+
+  Cada subpaso:
+  1. Comprueba que `rg "<paquete>" app components features hooks lib providers store utils` no devuelve resultados, o sustituye el último import antes de retirarlo.
+  2. Ejecuta `pnpm remove <paquete>`.
+  3. Pasa `pnpm typecheck`, `pnpm build` y `pnpm test:e2e --project=chromium`.
+  4. Registra en el bloque de estado los avisos de `pnpm audit` antes y después.
+
+  - [ ] **1.10.1** `cloudinary-react` (antes, sustituir sus imports por `Imagen`) · Commit: `chore(dependencias): retirar cloudinary-react`
+  - [ ] **1.10.2** `cloudinary-core` · Commit: `chore(dependencias): retirar cloudinary-core`
+  - [ ] **1.10.3** `firebase` · Commit: `chore(dependencias): retirar firebase`
+  - [ ] **1.10.4** `@supabase/ssr` · Commit: `chore(dependencias): retirar @supabase/ssr`
+  - [ ] **1.10.5** `@supabase/supabase-js` · Commit: `chore(dependencias): retirar @supabase/supabase-js`
+  - [ ] **1.10.6** `@types/grecaptcha` · Commit: `chore(dependencias): retirar @types/grecaptcha`
+  - [ ] **1.10.7** `next-themes` (después del paso 1.6) · Commit: `chore(dependencias): retirar next-themes`
+  - [ ] **1.10.8** `autoprefixer` · Commit: `chore(dependencias): retirar autoprefixer`
 
 ---
 
@@ -332,7 +342,7 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
     font-src 'self';
     connect-src 'self' {NEXT_PUBLIC_API_URL} https://api.stripe.com https://api.cloudinary.com;
     frame-src https://js.stripe.com https://hooks.stripe.com;
-    worker-src 'self';
+    worker-src 'none';
     manifest-src 'self';
     object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';
     upgrade-insecure-requests
@@ -359,10 +369,17 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
   - **Aceptación:** `cabeceras.spec.ts` sin `test.fail()` en `no-store`; `rg "revalidate" app lib features` solo muestra `0` o nada.
   - **Commit:** `feat(seguridad): no-store en datos y páginas privadas`
 
-- [ ] **2.7 · Service worker solo para estáticos** — *D-11*
-  - **Archivos:** `public/sw.js` (nueva versión de caché; solo `/_next/static/*`, `/icons/*` y `/offline`; al activarse borra las cachés antiguas; atiende el mensaje `LIMPIAR`), `components/pwa/ServiceWorkerRegister.tsx`.
-  - **Aceptación:** `almacenamiento.spec.ts` confirma que Cache Storage solo tiene URL estáticas tras recorrer las páginas públicas y privadas; `/offline` funciona sin red.
-  - **Commit:** `feat(seguridad): service worker limitado a estáticos versionados`
+- [ ] **2.7 · Sin service worker** — *D-11 rechazada: no habrá service worker*
+  - **Archivos:** se borran `public/sw.js` y `components/pwa/ServiceWorkerRegister.tsx` (y su uso en `app/layout.tsx`); en `next.config.js` se quita la regla de cabeceras de `/sw.js`.
+  - **Hacer:**
+    - Nuevo `components/pwa/RetirarServiceWorker.tsx`, una isla de cliente que no es un service worker. En cada carga desregistra las instalaciones existentes (`navigator.serviceWorker.getRegistrations()` → `unregister()`) y borra las cachés de la aplicación (`caches.keys()` → `caches.delete`). Se mantiene un tiempo para limpiar los navegadores que ya tenían el SW; su retirada queda en NP-34.
+    - Se conserva la ruta `/offline` (no se cambian rutas), aunque ya no se sirve de forma automática.
+    - `InstallPrompt` deja de mostrarse si el navegador no emite `beforeinstallprompt`, sin errores.
+  - **Aceptación:**
+    - `almacenamiento.spec.ts` confirma 0 registros de service worker y Cache Storage vacío, sin `test.fail()`.
+    - Una prueba que registra a mano el SW antiguo y recarga la página comprueba que queda desregistrado y sin cachés.
+    - 0 peticiones a `/sw.js`.
+  - **Commit:** `feat(seguridad): eliminar el service worker y limpiar instalaciones previas`
 
 - [ ] **2.8 · Logger del cliente sin datos sensibles**
   - **Archivos:** `lib/registro/registrar-error.ts`: registra solo el mensaje y el `digest`, ignora `notFound()` y `redirect()` de Next y nunca registra cuerpos de respuesta, tokens ni datos personales. Además, `next.config.js` (`compiler.removeConsole` en producción, excepto `error`).
@@ -376,15 +393,29 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
   - **Commit:** `fix(seguridad): eliminar secretos de respaldo y fallar cerrado`
 
 - [ ] **2.10 · Protección de rutas en el proxy (guía de autenticación de Next)** — *D-15*
-  - **Archivos:** `proxy.ts`, `config/roles.config.ts`.
+  - **Archivos:** `proxy.ts`, `config/seguridad/rutas-api-publicas.ts` (nuevo), `config/roles.config.ts`.
   - **Hacer:**
-    - Comprobaciones **optimistas** en el proxy (leer la cookie y verificar la firma y la caducidad, sin consultar la BD).
-    - `/profile` y `/menu/pedido/**` exigen sesión; si no la hay, redirigen a `/login` con un `callbackUrl` relativo y validado.
-    - `/api/admin/**`, `/api/backups/**` y `POST`/`PUT`/`DELETE` de `/api/settings` y `/api/inventory/**` exigen rol admin; si no lo hay, responden `401`/`403` en JSON genérico.
-    - El `matcher` excluye `_next/static`, `_next/image` e iconos.
-    - `/api/cron/backups` queda fuera (NP-10).
-  - **Aceptación:** pruebas E2E de matriz rol × ruta (anónimo, cliente, cajero, mesero, cocina, admin) con los códigos esperados; los flujos legítimos de cada rol siguen funcionando.
-  - **Commit:** `feat(seguridad): proteger rutas privadas y APIs de administración en el proxy`
+    - Comprobaciones **optimistas** en el proxy: leer la cookie `session` y verificar la firma y la caducidad con `jose`, sin consultar la BD.
+    - **Páginas:** `/profile` y `/menu/pedido/**` exigen sesión; si no la hay, redirigen a `/login` con un `callbackUrl` relativo y validado.
+    - **Todo `/api/*` exige un token válido**, salvo esta lista explícita, documentada con su motivo en `rutas-api-publicas.ts` y verificada en el inventario del 2026-10-31:
+
+      | Ruta | Métodos | Motivo |
+      |---|---|---|
+      | `/api/auth/login` | POST | Iniciar sesión (aún no hay token) |
+      | `/api/auth/register` | POST | Registro de clientes |
+      | `/api/auth/logout` | POST | Cerrar sesión debe funcionar aunque el token haya caducado |
+      | `/api/auth/me` | GET | Lo llama la parte pública para saber si hay sesión; ya responde 401 sin token |
+      | `/api/menu/categories` | GET | Carta pública (`/menu`) |
+      | `/api/cron/backups` | GET | **Excepción temporal:** el cron de Vercel no envía un token de usuario; bloquearla cortaría los respaldos. Su protección con `CRON_SECRET` es NP-10. |
+
+      `/api/public/combos`, `/api/public/cupones` y `/api/mesas` **no se llaman desde el front**, así que pasan a exigir token.
+    - Sin token o con un token inválido, la respuesta es `401` en JSON genérico (`{"error":"No autorizado"}`), con `Cache-Control: no-store`. Además, `/api/admin/**` y `/api/backups/**` exigen rol admin (`403`). La autorización por rol y por propietario del resto de endpoints es NP-32.
+    - El `matcher` excluye `_next/static`, `_next/image`, `icons` e `icon.svg`.
+  - **Aceptación:**
+    - La prueba E2E de matriz rol × ruta (anónimo, cliente, cajero, mesero, cocina, admin) devuelve los códigos esperados.
+    - Una prueba recorre cada ruta de `app/api` sin token y comprueba 401, excepto las de la lista.
+    - **El login, el registro, la carta pública, la landing y el detalle de producto funcionan sin sesión, y con sesión de cliente funcionan el pedido y el perfil.**
+  - **Commit:** `feat(seguridad): exigir token en /api salvo rutas públicas documentadas`
 
 - [ ] **2.11 · Capa de acceso a datos de sesión (DAL)**
   - **Archivos:** `lib/sesion/dal.ts` (`import "server-only"`; `verificarSesion = cache(async () => …)`, que devuelve un DTO mínimo `{ id, nombre, rol }`), `app/dashboard/layout.tsx` y los segmentos de servidor que muestran datos privados.
@@ -392,11 +423,21 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
   - **Aceptación:** el usuario del layout procede del DTO; `rg "server-only" lib/sesion` encuentra el import; ningún componente cliente recibe campos que no use.
   - **Commit:** `feat(seguridad): DAL de sesión con server-only y DTO mínimo`
 
-- [ ] **2.12 · Sin `dangerouslySetInnerHTML`**
-  - **Archivos:** `lib/texto/texto-enriquecido.tsx`, `components/landing/Hero.tsx`, `components/landing/AboutSection.tsx`.
-  - **Hacer:** `texto-enriquecido.tsx` convierte una lista blanca mínima (`<br>`, `<em>`, `<strong>` y `<span>` de resaltado) en elementos de React y escapa todo lo demás como texto, sin librería y sin `innerHTML`. Así el contenido actual se ve igual.
-  - **Aceptación:** `rg dangerouslySetInnerHTML app components features` sin resultados; inyectar `<img src=x onerror=alert(1)>` en el título simulado se muestra como texto.
-  - **Commit:** `fix(seguridad): pintar texto enriquecido sin interpretar HTML`
+- [ ] **2.12 · Eliminar todo `dangerouslySetInnerHTML`** — *condición de D-03*
+  - **Archivos:** `lib/texto/texto-enriquecido.tsx`, `components/landing/Hero.tsx`, `components/landing/AboutSection.tsx`, `app/offline/page.tsx` (ya resuelto en 2.4), `package.json` (`html-react-parser`).
+  - **Hacer:**
+    - Los textos que llegan del API con marcado (`heroTitle`, `about.description`) se convierten en **elementos de React**, nunca en `innerHTML`, con la librería **`html-react-parser`**.
+    - **Por qué esta librería:**
+      - Parsea con `htmlparser2` en el servidor y con `DOMParser` en el cliente, sin `innerHTML`.
+      - Su opción `replace` permite aplicar una **lista blanca**: `<br>`, `<em>`, `<strong>` y `<span>` (que pasa a `<em class="resaltado">`). Cualquier otra etiqueta se reduce a su texto, y **se descartan todos los atributos** (`on*`, `style`, `href`, `src`).
+      - El texto resultante lo escapa React, así que no hay HTML ejecutable.
+      - Es pequeña (≈7 KB gzip), está mantenida y es muy usada.
+    - Se descarta DOMPurify porque exigiría seguir usando `dangerouslySetInnerHTML` (y `jsdom` en el servidor). Escribir un parser propio sería frágil.
+  - **Aceptación:**
+    - `rg dangerouslySetInnerHTML app components features` sin resultados.
+    - Pruebas con cargas maliciosas en el título y la descripción simulados (`<img src=x onerror=alert(1)>`, `<script>`, `<a href="javascript:…">`, `<span onclick>`, `<svg onload>`): se muestran como texto o se descartan, sin ejecutar nada (0 diálogos y 0 errores de consola).
+    - El resaltado actual del título se ve igual.
+  - **Commit:** `fix(seguridad): convertir texto enriquecido a React con lista blanca`
 
 - [ ] **2.13 · URLs seguras**
   - **Archivos:**
@@ -418,7 +459,7 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
     1. `POST /api/auth/logout`.
     2. Borrar `authToken`, `user` y `num_mesa`.
     3. Reiniciar Redux.
-    4. Enviar `LIMPIAR` al service worker y ejecutar `caches.delete` sobre las cachés de la app.
+    4. Ejecutar `caches.delete` sobre cualquier caché que quede, como defensa: ya no hay service worker (D-11).
     5. `router.replace("/login")`.
   - **Aceptación:** tras cerrar sesión desde cada rol, `almacenamiento.spec.ts` confirma que no queda nada de la sesión y que el store está en su estado inicial; volver atrás no muestra datos privados.
   - **Commit:** `fix(sesion): cierre de sesión único que limpia todo el estado`
@@ -456,10 +497,7 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
   - **Aceptación:** el script devuelve 0 coincidencias y 0 `.map`.
   - **Commit:** `chore(seguridad): revisión automática del bundle`
 
-- [ ] **2.19 · Importación de hojas de cálculo segura** — *D-06*
-  - **Archivos:** `package.json` (SheetJS 0.20.x desde el tarball oficial), `components/admin/Importpreviewmodal.tsx` y `app/dashboard/admin/menu/page.tsx` (`import()` dinámico).
-  - **Aceptación:** `pnpm audit` sin avisos de `xlsx`; la importación de un CSV, JSON o XLSX de ejemplo funciona igual que antes.
-  - **Commit:** `fix(seguridad): actualizar SheetJS y cargarlo bajo demanda`
+- ~~**2.19 · Importación de hojas de cálculo segura**~~: *D-06 pasa a NOTAS-PENDIENTES (NP-31)*. El paso 5.9 sí valida tamaño, tipo y firma del archivo antes de entregarlo a `xlsx`.
 
 ---
 
@@ -467,9 +505,15 @@ Cada decisión bloquea los pasos indicados. Hasta aprobarla se trabaja con la re
 
 Cada paso crea el componente en `components/ui/` o `components/marca/` y lo muestra en el catálogo con **todos** sus estados, en los dos temas y con texto al 125 %. Una prueba de Playwright con axe (0 violaciones) y una captura por estado lo verifican. Los componentes todavía **no** se sustituyen en las páginas: eso se hace en las fases 4 y 5.
 
-- [ ] **3.0 · Catálogo de desarrollo** — *D-10*
-  - **Archivos:** `app/(dev)/catalogo/page.tsx` (`notFound()` en producción) y `tests/e2e/catalogo.spec.ts`.
-  - **Aceptación:** `/catalogo` da 404 en `next start` y funciona en `next dev`.
+- [ ] **3.0 · Catálogo de desarrollo** — *D-10, con verificación de que no entra al build de producción*
+  - **Archivos:** `app/(dev)/catalogo/page.dev.tsx`, `next.config.js`, `tests/e2e/catalogo.spec.ts`, `scripts/revisar-bundle.mjs`.
+  - **Hacer:**
+    - La página usa la extensión `.dev.tsx`. `next.config.js` solo la incluye en `pageExtensions` cuando `NODE_ENV === "development"`, así que en `next build` **la ruta no existe** y su código no se compila.
+    - Como segunda barrera, la página llama a `notFound()` si `process.env.NODE_ENV === "production"`.
+  - **Aceptación:**
+    - La tabla de rutas de `pnpm build` no incluye `/catalogo`.
+    - `scripts/revisar-bundle.mjs` comprueba que no hay `catalogo` ni nombres de demo del catálogo en `.next/server/app` ni en `.next/static`.
+    - `/catalogo` da 404 en `next start` y funciona en `next dev`.
   - **Commit:** `test(ui): catálogo de componentes solo en desarrollo`
 
 - [ ] **3.1 · Validación con zod** — *D-05*
@@ -545,7 +589,7 @@ Cada paso conserva textos, endpoints y URL; sustituye los componentes antiguos p
 - [ ] **4.2 · Estructura de la landing.** Componente de servidor con las peticiones existentes en paralelo (`Promise.all`, `no-store`), anclas y resaltado de la sección activa. Retira los `console.log` y los handlers vacíos.
   - **Commit:** `feat(landing): estructura de una sola página con anclas`
 
-- [ ] **4.3 · Portada (`#inicio`).** Fotografía a sangre con `priority`, velo y titular de portada.
+- [ ] **4.3 · Portada (`#inicio`).** Fotografía a sangre con `priority`, velo y titular de portada. La imagen actual (`Gemini_Generated_Image_2mv3…`, 1584×672) muestra en la esquina inferior derecha la **marca de agua de Gemini**: se recorta **en la entrega** con una transformación (`c_crop,w_0.9,h_0.9,g_north_west`) sin modificar el recurso. Como mide 1584 px, se sirve con `sizes="100vw"` y un ancho máximo de 1584 para no ampliarla. Su sustitución es NP-33.
   - **Aceptación:** axe verifica el contraste sobre la imagen real; LCP en móvil < 2,5 s.
   - **Commit:** `feat(landing): portada`
 
@@ -649,7 +693,7 @@ Las pruebas usan la API simulada del paso 0.7. Los endpoints no cambian.
 - [ ] **5.8 · Proveedores**
   - **Commit:** `feat(admin): proveedores`
 
-- [ ] **5.9 · Carta (admin).** `ItemModal` valida tipo, tamaño y firma de la imagen antes de abrir la subida; la importación valida el archivo (paso 3.1).
+- [ ] **5.9 · Carta (admin).** `ItemModal` valida tipo, tamaño y firma de la imagen antes de abrir la subida. La importación valida el archivo (paso 3.1: ≤ 2 MB, extensión, MIME y firma `PK 03 04` para XLSX) **antes** de pasarlo a `xlsx` (la actualización de la librería es NP-31).
   - **Commit:** `feat(admin): gestión de la carta con validación de archivos`
 
 - [ ] **5.10 · Promociones (admin).** Validación de imagen y de que la fecha de inicio sea anterior a la de fin.
@@ -665,6 +709,7 @@ Las pruebas usan la API simulada del paso 0.7. Los endpoints no cambian.
   - **Commit:** `feat(admin): usuarios`
 
 - [ ] **5.14 · Ajustes** — *D-12*
+  - **Hacer:** quitar la sección «Apariencia» (colores y fuentes) y `DesignSystemProvider`. En `GatewayModal`, retirar los campos «API Key» y «Secret Key»; según la verificación del 2026-10-31 son inputs no controlados que nunca se leen ni se envían. Se mantienen el estado (activo o inactivo) y el entorno, con una nota que remite la gestión de claves al backend (NP-09).
   - **Commit:** `feat(admin): ajustes sin apariencia ni claves secretas`
 
 - [ ] **5.15 · Acerca de (admin)**

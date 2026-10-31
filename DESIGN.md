@@ -192,6 +192,18 @@ El resultado debe sentirse como abrir la carta de un restaurante exclusivo de no
 - Cada plato o vino muestra siempre sus datos clave al lado.
 - El foco es lo más luminoso de la pantalla.
 
+**Referencias de nivel de acabado** (decisión D-14 del usuario). Marcan el listón de calidad; no son maquetas que copiar. El mundo lo manda «Bodega de guarda».
+
+- **The Macallan, TimeSpirit Dining Experience** (`themacallan.com`): imagen cinematográfica oscura y cálida, ritmo pausado, pocas palabras por pantalla y una sola invitación clara a reservar. *Su página bloquea las descargas automáticas (403); la referencia se toma del conocimiento general de la marca y debe contrastarla una persona en el navegador.*
+- **Restaurant Fontané** (`restaurantfontane.com`, del grupo El Celler de Can Roca): contención extrema. Un logotipo, una frase de identidad («Honest, noble, with a touch of sophistication»), la carta y la reserva siempre a un clic, y un pie con dirección, teléfono y condiciones.
+
+**Lo que se toma de ellas:**
+
+- **Pocas piezas por pantalla.** Cada sección de la landing dice una sola cosa.
+- **«Reservar» siempre a mano.** Botón compacto persistente en la cabecera, además de la sección `#reservar`.
+- **Transiciones lentas y sobrias** (`--duracion-pausada`), nunca efectos.
+- **Fotografía grande y oscura** con texto mínimo encima.
+
 **Anti-referencias:**
 
 - La paleta naranja `#e85d04` y la slate fría de la versión anterior.
@@ -462,6 +474,7 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 - **`CabeceraSitio`** (componente de servidor con isla de cliente para la cuenta):
   - Fija, alto `--alto-cabecera`, transparente sobre la portada y `--color-fondo` con `--sombra-cabecera` al hacer scroll.
   - El enlace de la sección activa lleva `aria-current="true"` y filete inferior de acento.
+  - Un `BotonEnlace` compacto **«Reservar»** (variante `secundario`, alto mínimo de 44 px) siempre visible, también en móvil junto al botón de menú. Es la única llamada a la acción persistente.
   - En móvil, menú en `PanelLateral` con trampa de foco y cierre con Esc.
 - **`MigasDePan`:** `<nav aria-label="Migas de pan">` con `<ol>` y `aria-current="page"` en la última miga.
 - **`BotonVolver`:** vuelve a la sección de origen.
