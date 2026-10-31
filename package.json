@@ -10,7 +10,6 @@
 		"@types/grecaptcha": "^3.0.9",
 		"bcrypt": "^6.0.0",
 		"cloudinary-core": "^2.14.1",
-		"cloudinary-react": "^1.8.1",
 		"clsx": "^2.1.1",
 		"drizzle-orm": "^0.44.7",
 		"firebase": "^12.5.0",
