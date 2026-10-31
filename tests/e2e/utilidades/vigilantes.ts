@@ -1,0 +1,58 @@
+import type { Page } from "@playwright/test";
+import { EXCEPCIONES } from "../excepciones";
+
+export interface Hallazgo {
+	tipo: "consola" | "pagina" | "red" | "http" | "imagen" | "desborde" | "csp";
+	detalle: string;
+}
+
+/** Engancha los vigilantes a la página y devuelve la lista viva de hallazgos. */
+export function vigilar(page: Page): Hallazgo[] {
+	const hallazgos: Hallazgo[] = [];
+	page.on("console", (m) => {
+		if (m.type() === "error" || m.type() === "warning") {
+			hallazgos.push({ tipo: "consola", detalle: `${m.type()}: ${m.text()}` });
+		}
+	});
+	page.on("pageerror", (e) => hallazgos.push({ tipo: "pagina", detalle: e.message }));
+	page.on("requestfailed", (r) =>
+		hallazgos.push({ tipo: "red", detalle: `${r.url()} ${r.failure()?.errorText ?? ""}` }),
+	);
+	page.on("response", (r) => {
+		if (r.status() >= 400) hallazgos.push({ tipo: "http", detalle: `${r.status()} ${r.url()}` });
+	});
+	return hallazgos;
+}
+
+/** Instala el captador de violaciones de CSP; llamar antes de navegar. */
+export async function vigilarCsp(page: Page) {
+	await page.addInitScript(() => {
+		(window as unknown as { __csp: string[] }).__csp = [];
+		document.addEventListener("securitypolicyviolation", (e) =>
+			(window as unknown as { __csp: string[] }).__csp.push(`${e.violatedDirective} ${e.blockedURI}`),
+		);
+	});
+}
+
+/** Comprobaciones del DOM: imágenes rotas, desborde horizontal y violaciones de CSP. */
+export async function inspeccionarDom(page: Page): Promise<Hallazgo[]> {
+	const r = await page.evaluate(() => ({
+		rotas: [...document.images]
+			.filter((i) => i.complete && i.naturalWidth === 0 && i.currentSrc)
+			.map((i) => i.currentSrc),
+		desborde: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+		csp: (window as unknown as { __csp?: string[] }).__csp ?? [],
+	}));
+	const h: Hallazgo[] = [];
+	r.rotas.forEach((src) => h.push({ tipo: "imagen", detalle: src }));
+	if (r.desborde) h.push({ tipo: "desborde", detalle: "scrollWidth > clientWidth" });
+	r.csp.forEach((c) => h.push({ tipo: "csp", detalle: c }));
+	return h;
+}
+
+/** Quita los hallazgos cubiertos por una excepción documentada. */
+export function sinExcepciones(hallazgos: Hallazgo[]): Hallazgo[] {
+	return hallazgos.filter(
+		(h) => !EXCEPCIONES.some((e) => e.tipo === h.tipo && h.detalle.includes(e.contiene)),
+	);
+}
