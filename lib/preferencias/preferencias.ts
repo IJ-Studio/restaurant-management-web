@@ -25,6 +25,16 @@ export const PREFERENCIAS_POR_DEFECTO: Preferencias = {
   movimiento: "sistema",
 };
 
+/**
+ * --color-fondo de cada tema (styles/tokens.css), en literal porque <meta name="theme-color">
+ * y el manifiesto no aceptan variables CSS. public/preferencias.js repite estos valores:
+ * si cambia el token, cambian aquí y allí.
+ */
+export const COLOR_FONDO_POR_TEMA: Record<Tema, string> = {
+  oscuro: "#14100C",
+  claro: "#F4EEE3",
+};
+
 const TEMAS: readonly Tema[] = ["oscuro", "claro"];
 const TAMANOS: readonly TamanoTexto[] = ["normal", "grande", "muy-grande"];
 const MOVIMIENTOS: readonly Movimiento[] = ["sistema", "reducido"];
@@ -76,11 +86,8 @@ export function aplicarPreferencias(preferencias: Preferencias, raiz: HTMLElemen
   if (preferencias.movimiento === "reducido") raiz.dataset.movimiento = "reducido";
   else delete raiz.dataset.movimiento;
 
-  // La barra del navegador móvil toma el color de fondo calculado del tema activo.
-  const fondo = getComputedStyle(raiz).getPropertyValue("--color-fondo").trim();
-  if (fondo) {
-    document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
-      meta.content = fondo;
-    });
-  }
+  // La barra del navegador móvil toma el color de fondo del tema activo.
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+    meta.content = COLOR_FONDO_POR_TEMA[preferencias.tema];
+  });
 }

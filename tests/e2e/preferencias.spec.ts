@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { simularApi } from "./utilidades/api-simulada";
+import { EXCEPCIONES } from "./excepciones";
 
 const CLAVE = "elquijote:preferencias";
 
@@ -66,6 +67,48 @@ test.describe("preferencias de accesibilidad", () => {
 		const estado = await page.evaluate((c) => ({ nueva: localStorage.getItem(c), vieja: localStorage.getItem("theme") }), CLAVE);
 		expect(estado.vieja).toBeNull();
 		expect(JSON.parse(estado.nueva ?? "{}")).toMatchObject({ v: 1, tema: "claro" });
+	});
+
+	test("la barra del navegador toma el fondo del tema antes de hidratar y sin errores", async ({ page }) => {
+		const errores: string[] = [];
+		// Las peticiones fallidas las vigila recorrido.spec.ts; aquí, solo errores de script.
+		// WebKit rechaza registrar /sw.js en http://localhost: lo resuelve 2.7 (sin service worker).
+		const conocido = (t: string) =>
+			t.startsWith("Failed to load resource") ||
+			t.startsWith("Error al registrar el service worker") ||
+			EXCEPCIONES.some((e) => e.tipo === "consola" && t.includes(e.contiene));
+		page.on("console", (m) => m.type() === "error" && !conocido(m.text()) && errores.push(m.text()));
+		page.on("pageerror", (e) => errores.push(e.message));
+		await simularApi(page);
+		await page.addInitScript(() => {
+			const w = window as unknown as { __barra?: string | null };
+			document.addEventListener("DOMContentLoaded", () => {
+				w.__barra = document.querySelector('meta[name="theme-color"]')?.getAttribute("content");
+			});
+		});
+		// El navegador usa la primera etiqueta theme-color; tras hidratar, todas coinciden.
+		const barra = async () => ({
+			antes: await page.evaluate(() => (window as unknown as { __barra: string }).__barra),
+			despues: await page.locator('meta[name="theme-color"]').evaluateAll((m) => [...new Set(m.map((e) => e.getAttribute("content")))]),
+		});
+
+		await page.goto("/", { waitUntil: "load" });
+		await page.waitForTimeout(500);
+		expect(await barra()).toEqual({ antes: "#14100C", despues: ["#14100C"] });
+		expect(await page.locator('meta[name="theme-color"]').count()).toBe(1);
+
+		await page.evaluate((c) => localStorage.setItem(c, JSON.stringify({ v: 1, tema: "claro" })), CLAVE);
+		await page.reload({ waitUntil: "load" });
+		await page.waitForTimeout(500);
+		expect(await barra()).toEqual({ antes: "#F4EEE3", despues: ["#F4EEE3"] });
+
+		await page.getByRole("button", { name: "Opciones de accesibilidad" }).first().click();
+		await page.getByRole("radio", { name: "Oscuro" }).check();
+		expect((await barra()).despues).toEqual(["#14100C"]);
+		expect(await page.locator('meta[name="viewport"]').getAttribute("content")).toBe(
+			"width=device-width, initial-scale=1, viewport-fit=cover",
+		);
+		expect(errores).toEqual([]);
 	});
 
 	test("el panel cambia el tema y lo recuerda al recargar", async ({ page }) => {
