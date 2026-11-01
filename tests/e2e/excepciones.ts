@@ -24,10 +24,8 @@ export const EXCEPCIONES: Excepcion[] = [
 	{ tipo: "consola", contiene: "No se pudieron cargar las promociones", resuelve: "0.7 (API simulada)" },
 	{ tipo: "consola", contiene: "Error en Fetch Menu", resuelve: "0.7 (API simulada)" },
 	{ tipo: "consola", contiene: "status of 401", resuelve: "0.7 (API simulada); /api/auth/me sin sesión" },
-	{ tipo: "consola", contiene: "status of 404", resuelve: "0.7 (API simulada) y 1.8 (logo)" },
+	{ tipo: "consola", contiene: "status of 404", resuelve: "0.7 (API simulada)" },
 	// Defectos diagnosticados en ESTADO.md.
-	{ tipo: "http", contiene: "/logo.svg", resuelve: "1.8 (logo local)" },
-	{ tipo: "red", contiene: "/logo.svg", resuelve: "1.8 (logo local)" },
 	{ tipo: "http", contiene: "food-3955317_1", resuelve: "ESTADO §8.1 / NP-33 (fondo de login sin el sufijo _zstvf7)" },
 	{ tipo: "consola", contiene: "Image with src", resuelve: "ESTADO §8.1 / NP-33 (fondo de login)" },
 	{ tipo: "red", contiene: "food-3955317_1", resuelve: "ESTADO §8.1 / NP-33 (fondo de login: en producción la petición 404 se aborta)" },

@@ -21,8 +21,7 @@ import {
   Wallet,
   Tag,
 } from "lucide-react";
-import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
-import { useTheme } from "@/hooks/useTheme";
+import { Logo } from "@/components/marca/Logo";
 
 // Solo la tipografía queda fija — los colores ahora salen de var(--color-*),
 // que ya cambian solos con el tema (mismo mecanismo que Footer.tsx).
@@ -116,17 +115,12 @@ export interface AdminSidebarProps {
 
 export default function AdminSidebar({ activePage, user, onLogout }: AdminSidebarProps) {
   const router = useRouter();
-  const isDark = useTheme();
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLElement>(null);
 
   // Si activePage no se pasó por prop, lo tomamos del último segmento de la URL
   const page = activePage || pathname?.split('/').pop() || '';
   const is = (k: string) => page === k;
-
-  const currentLogo = isDark
-    ? INITIAL_SETTINGS.restaurantLogo_light
-    : INITIAL_SETTINGS.restaurantLogo_dark;
 
   const handleLogout = async () => {
     try {
@@ -164,12 +158,11 @@ export default function AdminSidebar({ activePage, user, onLogout }: AdminSideba
     >
       {/* Logo — ahora ocupa todo el ancho con padding y se ajusta sin deformarse */}
       <div className="px-4 py-2 border-b border-[var(--color-border)] flex-shrink-0">
-        <div className="w-full h-20">
-          <img
-            src={currentLogo}
-            alt="El Quijote"
-            className="w-full h-full object-contain"
-          />
+        {/* Misma caja que la imagen cuadrada anterior; la barra nueva llega en 3.13. */}
+        <div className="w-full h-20 flex justify-center text-texto-principal">
+          <div className="size-20 flex items-center justify-center">
+            <Logo className="w-[87%]" />
+          </div>
         </div>
       </div>
 
