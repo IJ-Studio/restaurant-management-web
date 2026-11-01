@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { EXCEPCIONES } from "../excepciones";
+import { EXCEPCIONES, cubre } from "../excepciones";
 
 export interface Hallazgo {
 	tipo: "consola" | "pagina" | "red" | "http" | "imagen" | "desborde" | "csp";
@@ -11,7 +11,10 @@ export function vigilar(page: Page): Hallazgo[] {
 	const hallazgos: Hallazgo[] = [];
 	page.on("console", (m) => {
 		if (m.type() === "error" || m.type() === "warning") {
-			hallazgos.push({ tipo: "consola", detalle: `${m.type()}: ${m.text()}` });
+			// WebKit no pone la URL en el texto de «Failed to load resource»: va en el origen del mensaje.
+			const origen = m.location().url;
+			const texto = origen && !m.text().includes(origen) ? `${m.text()} [${origen}]` : m.text();
+			hallazgos.push({ tipo: "consola", detalle: `${m.type()}: ${texto}` });
 		}
 	});
 	page.on("pageerror", (e) => hallazgos.push({ tipo: "pagina", detalle: e.message }));
@@ -53,6 +56,6 @@ export async function inspeccionarDom(page: Page): Promise<Hallazgo[]> {
 /** Quita los hallazgos cubiertos por una excepción documentada. */
 export function sinExcepciones(hallazgos: Hallazgo[]): Hallazgo[] {
 	return hallazgos.filter(
-		(h) => !EXCEPCIONES.some((e) => e.tipo === h.tipo && h.detalle.includes(e.contiene)),
+		(h) => !EXCEPCIONES.some((e) => cubre(e, h.tipo, h.detalle)),
 	);
 }
