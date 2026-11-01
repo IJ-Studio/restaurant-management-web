@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
+import { COLOR_FONDO_POR_TEMA } from "@/lib/preferencias/preferencias";
 
 /**
  * Web App Manifest — Next.js lo sirve en /manifest.webmanifest y agrega
@@ -20,8 +21,9 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "any",
-    background_color: "#ffffff",
-    theme_color: INITIAL_SETTINGS.appearance.primaryColor,
+    // Colores del tema oscuro (por defecto), tomados de los tokens.
+    background_color: COLOR_FONDO_POR_TEMA.oscuro,
+    theme_color: COLOR_FONDO_POR_TEMA.oscuro,
     categories: ["food", "business", "productivity"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

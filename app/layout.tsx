@@ -9,6 +9,7 @@ import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ConnectionStatus from "@/components/pwa/ConnectionStatus";
 import { fuenteTexto, fuenteTitulos } from "./fuentes";
 import { ScriptPreferencias } from "@/components/marca/ScriptPreferencias";
+import { COLOR_FONDO_POR_TEMA } from "@/lib/preferencias/preferencias";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -35,18 +36,21 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: INITIAL_SETTINGS.restaurantName,
-    statusBarStyle: "default",
+    // "default" pintaba una barra blanca sobre el tema oscuro en la app instalada de iOS.
+    statusBarStyle: "black",
   },
   formatDetection: { telephone: false },
 };
 
+// Sin maximum-scale ni user-scalable: el usuario siempre puede ampliar.
+// El tema no sigue al sistema (oscuro por defecto, claro a elección), así que el HTML sale
+// con el color del oscuro y public/preferencias.js antepone el del claro antes de pintar si toca.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#181a1b" },
-  ],
+  viewportFit: "cover",
+  colorScheme: "dark",
+  themeColor: COLOR_FONDO_POR_TEMA.oscuro,
 };
 
 export default function RootLayout({
