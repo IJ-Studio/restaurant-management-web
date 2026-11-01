@@ -10,11 +10,11 @@
 
 | Campo | Valor |
 |---|---|
-| Etapa | **Fase 1 en curso** (2026-11-01): solo queda el cierre. Adelantados de la fase 3, ya aprobados: 3.0, 3.2 y parte de 3.4. |
+| Etapa | **Fase 1 cerrada** (2026-11-01), pendiente de PR. Adelantados de la fase 3, ya aprobados: 3.0, 3.2 y parte de 3.4. |
 | Rama activa | `feature/rediseno-web-cimientos` |
-| Último paso completado | **1.9 · Imágenes: cargador de Cloudinary y lista de hosts** (2026-11-01): `hosts-permitidos.ts`, cargador, `Imagen` con respaldo local, `next.config.ts` y fondos de login, registro y fachada corregidos. Detalle y verificación en [`BITACORA.md`](BITACORA.md). |
-| Bloqueo | Ninguno. El usuario reconfiguró la memoria virtual; el 2026-11-01, con el servidor parado, quedaban 2,5 GB de memoria física y 3,9 GB de virtual disponibles. |
-| Siguiente paso | **Cierre de la fase 1** con la verificación completa y el PR hacia `feature/rediseno-web`; el trabajo se detiene al abrir ese PR. Solo después, el resto de la fase 3. |
+| Último paso completado | **Cierre de la fase 1** (2026-11-01): verificación completa en los tres motores, Lighthouse, `pnpm audit` y pendientes revisados; script de rendimiento móvil preparado. Detalle en [`BITACORA.md`](BITACORA.md). |
+| Bloqueo | El PR necesita subir `feature/rediseno-web` y `feature/rediseno-web-cimientos` al remoto; lo hace el usuario (el agente no hace `git push`). Texto del PR en `D:\dev-cache\rediseno\pr-fase-1.md`. |
+| Siguiente paso | El usuario sube las ramas y abre el PR, y mide el rendimiento móvil desde una terminal con el editor cerrado (`scripts/comparar-rendimiento.mjs --biseccion`). Después, **el resto de la fase 3** en `feature/rediseno-web-componentes`. |
 | Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden: 1.9 → cierre de la fase 1 → resto de la fase 3; **no adelantar más pasos de fases posteriores sin avisar**.<br>(2) Rendimiento móvil: la medición de `/` en `766855a` (cierre de la fase 0) y en el commit actual, con la mediana de 3 ejecuciones, **no se hace dentro de VS Code**; se prepara un script que guarda fuera de `test-results/` y, al final de la fase 1, se dejan los comandos exactos para que el usuario reabra la sesión desde una terminal con el editor cerrado. Si la diferencia persiste, se localiza el commit responsable.<br>(3) Tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
