@@ -30,6 +30,7 @@ export const EXCEPCIONES: Excepcion[] = [
 	{ tipo: "red", contiene: "/logo.svg", resuelve: "1.8 (logo local)" },
 	{ tipo: "http", contiene: "food-3955317_1", resuelve: "ESTADO §8.1 / NP-33 (fondo de login sin el sufijo _zstvf7)" },
 	{ tipo: "consola", contiene: "Image with src", resuelve: "ESTADO §8.1 / NP-33 (fondo de login)" },
+	{ tipo: "red", contiene: "food-3955317_1", resuelve: "ESTADO §8.1 / NP-33 (fondo de login: en producción la petición 404 se aborta)" },
 	{ tipo: "red", contiene: "lh3.googleusercontent.com", resuelve: "Fase 4 (imagen externa en /about, pasa a Cloudinary/local)" },
 	{ tipo: "imagen", contiene: "lh3.googleusercontent.com", resuelve: "Fase 4 (imagen externa en /about, pasa a Cloudinary/local)" },
 	// Solo ocurre con next dev (precarga de CSS de desarrollo).
