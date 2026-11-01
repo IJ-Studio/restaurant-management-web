@@ -1,5 +1,13 @@
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
+
+// Las páginas *.dev.tsx (catálogo de componentes, PLAN 3.0) solo existen en next dev:
+// en next build no son rutas y su código no se compila.
+const EXTENSIONES = ["tsx", "ts", "jsx", "js"];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  pageExtensions: EXTENSIONES,
+
   // Configuración para permitir imágenes de dominios externos
   images: {
     remotePatterns: [
@@ -51,4 +59,7 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default function configuracion(fase) {
+  if (fase !== PHASE_DEVELOPMENT_SERVER) return nextConfig;
+  return { ...nextConfig, pageExtensions: ["dev.tsx", ...EXTENSIONES] };
+}
