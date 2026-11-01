@@ -109,7 +109,7 @@ function CategoryPageContent() {
               alt={categoryName}
               className="object-cover"
               sizes="100vw"
-              priority
+              preload
             />
           </div>
         )}

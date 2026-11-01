@@ -238,7 +238,7 @@ export default function AdminPromocionesPage() {
             >
               <div className={`h-28 w-full bg-gradient-to-br ${promo.color} relative flex items-center justify-center`}>
                 {promo.imageUrl ? (
-                  <img src={promo.imageUrl} alt={promo.title} className="w-full h-full object-cover" />
+                  <img src={promo.imageUrl} alt={promo.title} width={320} height={112} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-5xl opacity-80">{promo.emoji || <ImageIcon className="text-white/70" size={28} />}</span>
                 )}

@@ -472,6 +472,8 @@ function saveItem(catId: string, data: Partial<MenuItem>) {
             <img
               src={item.imageUrl}
               alt={item.name}
+              width={64}
+              height={64}
               className="w-full h-full object-cover"
             />
           ) : (

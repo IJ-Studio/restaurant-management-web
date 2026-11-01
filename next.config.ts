@@ -1,38 +1,25 @@
+import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
+import { HOSTS_IMAGEN } from "./config/seguridad/hosts-permitidos";
 
 // Las páginas *.dev.tsx (catálogo de componentes, PLAN 3.0) solo existen en next dev:
 // en next build no son rutas y su código no se compila.
 const EXTENSIONES = ["tsx", "ts", "jsx", "js"];
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   pageExtensions: EXTENSIONES,
 
-  // Configuración para permitir imágenes de dominios externos
+  // Solo los orígenes de config/seguridad/hosts-permitidos.ts (PLAN 1.9). Cloudinary va
+  // por su propio cargador; esta lista cubre el resto de next/image.
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.pravatar.cc',
-      },
-      // Añadimos el dominio de Google para las fotos de perfil
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'mdygrtdebtmuhmirnbxz.supabase.co',
-        port: '',
-        pathname: '/**',
-      },
-    ],
+    remotePatterns: HOSTS_IMAGEN.map(({ host, ruta }) => ({
+      protocol: "https" as const,
+      hostname: host,
+      port: "",
+      pathname: `${ruta}**`,
+    })),
+    dangerouslyAllowSVG: false,
+    formats: ["image/avif", "image/webp"],
   },
 
   // Tus cabeceras de seguridad existentes
@@ -59,7 +46,7 @@ const nextConfig = {
   },
 };
 
-export default function configuracion(fase) {
+export default function configuracion(fase: string): NextConfig {
   if (fase !== PHASE_DEVELOPMENT_SERVER) return nextConfig;
   return { ...nextConfig, pageExtensions: ["dev.tsx", ...EXTENSIONES] };
 }

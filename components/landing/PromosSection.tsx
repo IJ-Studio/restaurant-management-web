@@ -101,6 +101,8 @@ export default function PromosSection({
                   <img
                     src={promo.imageUrl}
                     alt={promo.title}
+                    width={360}
+                    height={240}
                     className="absolute inset-0 w-full h-full object-cover opacity-30"
                   />
                 )}

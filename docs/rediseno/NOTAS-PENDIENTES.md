@@ -48,6 +48,7 @@
 | NP-32 | Autorización por rol y por propietario en cada endpoint (complemento de D-15) | Seguridad del servidor | Alta |
 | NP-33 | Calidad y metadatos de las imágenes en Cloudinary | Contenido | Media |
 | NP-34 | Retirar el limpiador de service workers antiguos | Deuda técnica | Baja |
+| NP-36 | Orígenes de imagen y de terceros por confirmar con datos reales | Seguridad / contenido | Media |
 
 ---
 
@@ -458,13 +459,25 @@
 
 - **Archivos y rutas afectados:**
   - `components/landing/{AboutSection,CategoriesSection,MenuSection,ReservationSection}.tsx`
-  - `components/ui/{Button.tsx,index.ts}` y `types/ui.ts` (`ButtonProps`)
   - `config/navigation/{admin,cajero,cocina}.nav.ts` (más `tipos.ts`)
   - `features/dashboard/admin/data/{usersMock,suppliersMock}.tsx`
   - `features/dashboard/cliente/*`, `components/IdleLogout.tsx`, `styles/loading.css`, `types/index.ts`
   - `check_backups.ts` y `setup_settings.ts` (scripts en la raíz)
-- **Problema:** un grafo de importaciones desde `app/` y `proxy.ts` (paso 1.2) los marca sin uso, pero el PLAN no los incluye en el borrado: algunos los reutilizan pasos posteriores (3.2 `Boton`, 3.13 navegación por rol, fase 4 landing, NP-19 y NP-23) y otros son scripts de operación.
+- **Problema:** un grafo de importaciones desde `app/` y `proxy.ts` (paso 1.2) los marca sin uso, pero el PLAN no los incluye en el borrado: algunos los reutilizan pasos posteriores (3.13 navegación por rol, fase 4 landing, NP-19 y NP-23) y otros son scripts de operación.
 - **Riesgo:** bajo: peso muerto y confusión; `AboutSection` y las secciones de landing contienen código con riesgo XSS (`dangerouslySetInnerHTML`) que el PLAN 2.12 sanea mientras exista.
-- **Solución sugerida:** revisarlos al cerrar cada fase y borrar (están versionados) lo que ningún paso reutilice; `types/ui.ts` se retira cuando el paso 3.2 sustituya `components/ui/Button.tsx`.
+- **Solución sugerida:** revisarlos al cerrar cada fase y borrar (están versionados) lo que ningún paso reutilice. `components/ui/Button.tsx` y `types/ui.ts` se borraron en el 3.2 (2026-11-01). Las imágenes de este código muerto (`AboutSection` con `next/image` sin `sizes`, `CategoriesSection`, `features/dashboard/cliente/*` con fotos de Unsplash) no se adaptaron en el 1.9 porque no se pintan en ninguna ruta.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** el grafo de importaciones solo marca como huérfano lo que está documentado como excepción.
+
+## NP-36 · Orígenes de imagen y de terceros por confirmar con datos reales
+
+- **Archivos y rutas afectados:** `config/seguridad/hosts-permitidos.ts` (PLAN 1.9), `components/ui/Imagen.tsx`, y las `<img>` del admin que pintan URL pegadas a mano: `GallerySection.tsx`, `AboutPreviewModal.tsx`, `ItemModal.tsx`, `PromoModal.tsx`, `app/dashboard/admin/{menu,promociones}/page.tsx` y `components/landing/PromosSection.tsx`.
+- **Problema:**
+  1. **Supabase Storage** (`mdygrtdebtmuhmirnbxz.supabase.co`) se conserva como origen de imagen con **toda la ruta** (`/**`), como ya permitía `next.config`, porque según el código de `SmartImage` las fotos de platos y categorías que envía el API viven ahí. **No verificado** con datos reales (sin backend en las pruebas): ni que siga en uso ni bajo qué ruta (`/storage/v1/object/public/…` u otra).
+  2. **Widget de subida de Cloudinary** (`CldUploadButton`): los orígenes `api.cloudinary.com` (conexión) y `upload-widget.cloudinary.com` (marco) se anotaron por la documentación del widget; **no verificados** en el navegador. Se confirman en la fase 2 al activar la CSP (2.3–2.5) con la consola abierta en el admin.
+  3. Las `<img>` del admin y de `PromosSection` siguen siendo `<img>` normales: aceptan cualquier host que pegue el administrador (la galería de «acerca de» usa fotos de Unsplash en los datos de ejemplo y `GallerySection` sustituye las rotas por una de Unsplash, ocultando el error). Cuando las fases 4 y 5 las pasen a `Imagen`, **un host no listado mostrará el respaldo en lugar de la foto**.
+  4. `LandscapeSection.tsx:88` interpola la URL pegada sin escapar dentro de `background-image: url(…)` (ESTADO anexo B).
+- **Riesgo:** una lista corta puede dejar sin foto contenido real; una lista larga amplía lo que la CSP deberá permitir.
+- **Solución sugerida:** decidir si toda imagen de contenido se sube a Cloudinary (la subida del admin ya va allí) y, si es así, retirar Supabase de la lista cuando el API deje de devolver esas URL; validar en el API que las URL de imagen sean de la nube de la casa. Al rehacer el admin (fase 5, 5.14), sustituir la vista previa de `LandscapeSection` por `Imagen`.
+- **Prioridad:** Media.
+- **Criterio de aceptación:** con datos reales, 0 imágenes con respaldo en la carta y la portada, y la lista de `hosts-permitidos.ts` coincide con los orígenes que aparecen en la base de datos.

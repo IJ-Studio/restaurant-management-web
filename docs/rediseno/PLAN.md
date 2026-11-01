@@ -10,11 +10,11 @@
 
 | Campo | Valor |
 |---|---|
-| Etapa | **Fase 1 en curso** (2026-11-01): quedan 1.9 y el cierre de la fase. Adelantados de la fase 3, ya aprobados: 3.0, 3.2 y parte de 3.4. |
+| Etapa | **Fase 1 en curso** (2026-11-01): solo queda el cierre. Adelantados de la fase 3, ya aprobados: 3.0, 3.2 y parte de 3.4. |
 | Rama activa | `feature/rediseno-web-cimientos` |
-| Último paso completado | **Adelantados de la fase 3 · 3.0, 3.2 y parte de 3.4** (2026-11-01): catálogo de desarrollo, `Boton`, `BotonEnlace`, `Insignia` y `Tarjeta`, **aprobados por el usuario** con las decisiones tomadas. Detalle, decisiones y verificación de este y de los pasos anteriores en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **1.9 · Imágenes: cargador de Cloudinary y lista de hosts** (2026-11-01): `hosts-permitidos.ts`, cargador, `Imagen` con respaldo local, `next.config.ts` y fondos de login, registro y fachada corregidos. Detalle y verificación en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. El usuario reconfiguró la memoria virtual; el 2026-11-01, con el servidor parado, quedaban 2,5 GB de memoria física y 3,9 GB de virtual disponibles. |
-| Siguiente paso | **1.9** · imágenes (con build completo: toca `next.config`). Después, **cierre de la fase 1** con la verificación completa y el PR hacia `feature/rediseno-web`; el trabajo se detiene al abrir ese PR. Solo después, el resto de la fase 3. |
+| Siguiente paso | **Cierre de la fase 1** con la verificación completa y el PR hacia `feature/rediseno-web`; el trabajo se detiene al abrir ese PR. Solo después, el resto de la fase 3. |
 | Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden: 1.9 → cierre de la fase 1 → resto de la fase 3; **no adelantar más pasos de fases posteriores sin avisar**.<br>(2) Rendimiento móvil: la medición de `/` en `766855a` (cierre de la fase 0) y en el commit actual, con la mediana de 3 ejecuciones, **no se hace dentro de VS Code**; se prepara un script que guarda fuera de `test-results/` y, al final de la fase 1, se dejan los comandos exactos para que el usuario reabra la sesión desde una terminal con el editor cerrado. Si la diferencia persiste, se localiza el commit responsable.<br>(3) Tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -267,7 +267,7 @@
     - El SVG pesa menos de 6 KB.
   - **Commit:** `feat(marca): logo y sello locales con currentColor`
 
-- [ ] **1.9 · Imágenes: cargador de Cloudinary y lista de hosts**
+- [x] **1.9 · Imágenes: cargador de Cloudinary y lista de hosts**
   - **Archivos:**
     - `config/seguridad/hosts-permitidos.ts`: fuente única de los hosts de imagen, conexión y marco, que también usará la CSP.
     - `lib/imagen/cargador-cloudinary.ts`: transformación `f_auto,q_auto,c_limit,w_<ancho>` sobre `https://res.cloudinary.com/<nube>/image/upload/`.

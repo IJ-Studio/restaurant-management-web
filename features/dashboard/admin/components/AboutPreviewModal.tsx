@@ -102,6 +102,8 @@ export function AboutPreviewModal({
                   <img
                     src={g.url}
                     alt={g.caption}
+                    width={400}
+                    height={300}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";

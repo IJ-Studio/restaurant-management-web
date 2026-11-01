@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import { EXCEPCIONES, cubre } from "../excepciones";
 
 export interface Hallazgo {
-	tipo: "consola" | "pagina" | "red" | "http" | "imagen" | "desborde" | "csp";
+	tipo: "consola" | "pagina" | "red" | "http" | "imagen" | "dimensiones" | "desborde" | "csp";
 	detalle: string;
 }
 
@@ -43,11 +43,18 @@ export async function inspeccionarDom(page: Page): Promise<Hallazgo[]> {
 		rotas: [...document.images]
 			.filter((i) => i.complete && i.naturalWidth === 0 && i.currentSrc)
 			.map((i) => i.currentSrc),
+		// PLAN 1.9: toda <img> reserva su caja (width y height, o fill de next/image con sizes).
+		sinDimensiones: [...document.images]
+			.filter((i) =>
+				i.dataset.nimg === "fill" ? !i.getAttribute("sizes") : !(i.getAttribute("width") && i.getAttribute("height")),
+			)
+			.map((i) => i.getAttribute("src") ?? ""),
 		desborde: document.documentElement.scrollWidth > document.documentElement.clientWidth,
 		csp: (window as unknown as { __csp?: string[] }).__csp ?? [],
 	}));
 	const h: Hallazgo[] = [];
 	r.rotas.forEach((src) => h.push({ tipo: "imagen", detalle: src }));
+	r.sinDimensiones.forEach((src) => h.push({ tipo: "dimensiones", detalle: src }));
 	if (r.desborde) h.push({ tipo: "desborde", detalle: "scrollWidth > clientWidth" });
 	r.csp.forEach((c) => h.push({ tipo: "csp", detalle: c }));
 	return h;
