@@ -187,7 +187,7 @@ export function PromoModal({
             <div className="flex items-start gap-4 mt-2">
               <div className="w-24 h-24 rounded-2xl border border-border bg-surface-alt flex items-center justify-center overflow-hidden">
                 {form.imageUrl ? (
-                  <img src={form.imageUrl} alt="Vista previa" className="w-full h-full object-cover" />
+                  <img src={form.imageUrl} alt="Vista previa" width={96} height={96} className="w-full h-full object-cover" />
                 ) : (
                   <ImageIcon size={24} className="text-text-muted" />
                 )}

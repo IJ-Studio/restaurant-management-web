@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CldImage } from "next-cloudinary";
 import SmartImage from "@/components/SmartImage";
 import Link from "next/link";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
@@ -96,12 +95,13 @@ function MenuContent() {
     <div className="bg-surface min-h-screen">
       {/* Hero image a ancho completo */}
       <div className="relative w-full h-[60vh] md:h-[70vh] overflow-hidden">
-        <CldImage
+        <SmartImage
           src="https://res.cloudinary.com/dcb1tspbj/image/upload/v1778825604/Gemini_Generated_Image_2mv3sr2mv3sr2mv3_uciqpl.png"
           fill
-          alt="Restaurant background"
+          decorativa
           className="object-cover"
-          priority
+          sizes="100vw"
+          preload
         />
       </div>
 
@@ -224,7 +224,7 @@ function CategoryHeroImage({ category }: { category: Category }) {
   return (
     <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-lg">
       {imgSrc ? (
-        <SmartImage src={imgSrc} fill alt={category.nombre} className="object-cover" />
+        <SmartImage src={imgSrc} fill alt={category.nombre} className="object-cover" sizes="(min-width: 1024px) 50vw, 100vw" />
       ) : (
         <div className="flex items-center justify-center h-full bg-surface-hover/50 text-text/50">
           Sin imagen

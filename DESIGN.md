@@ -534,7 +534,7 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 - **`Esqueleto`**: bloques `--color-superficie-elevada` con pulso de opacidad, sin pulso si el movimiento está reducido.
 - **`Insignia`**: `--radio-pastilla`, filete de 1 px y `--texto-etiqueta`. Tonos `neutro` (superficie elevada), `acento` (solo filete y texto: no gasta el «solo oro»), `exito`, `aviso`, `error` e `info`. Los cuatro de estado llevan icono por defecto (`CircleCheck`, `TriangleAlert`, `CircleAlert`, `Info`) y fondo al 12 % de su color sobre `--color-superficie`, como los avisos. Contador con cifras tabulares y una descripción para lectores («3 pedidos nuevos»). No es interactiva. Un texto largo pasa a dos líneas en lugar de cortarse.
 - **`Pestanas`** (el estado seleccionado lleva filete doble inferior) y **`Paginacion`**.
-- **`Imagen`**: envoltorio de `next/image` con el cargador de Cloudinary y un respaldo que sí existe.
+- **`Imagen`**: envoltorio de `next/image` con el cargador de Cloudinary y un respaldo que sí existe. `alt` y `sizes` son obligatorios; `decorativa` deja `alt=""`. Solo acepta rutas locales, la nube de la casa y los hosts de `config/seguridad/hosts-permitidos.ts`, siempre por `https`. **Respaldo:** si el origen no vale o la imagen no carga, la misma caja pasa a `--color-superficie-cafe` con el molino del logo en `--color-borde-control`, centrado y a un tercio del alto (máximo 4rem). Conserva el `alt` como `role="img"`, o queda oculto si la imagen era decorativa. Nunca hay una caja vacía ni el icono de imagen rota del navegador.
 - **`PanelAccesibilidad`**: ver más abajo.
 
 ### Iconos

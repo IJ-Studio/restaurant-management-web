@@ -7,5 +7,6 @@
 
 export { Boton } from "./Boton";
 export { BotonEnlace } from "./BotonEnlace";
+export { Imagen } from "./Imagen";
 export { Insignia } from "./Insignia";
 export { Tarjeta } from "./Tarjeta";

@@ -35,6 +35,8 @@ export function GallerySection({ gallery, onAdd, onRemove }: GallerySectionProps
              <img 
                src={g.url} 
                alt={g.caption} 
+               width={300}
+               height={300}
                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400"; }}
              />

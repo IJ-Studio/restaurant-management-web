@@ -35,16 +35,6 @@ export const EXCEPCIONES: Excepcion[] = [
 	{ tipo: "consola", contiene: "Error en Fetch Menu", resuelve: "0.7 (API simulada)" },
 	{ tipo: "consola", contiene: "status of 401", resuelve: "0.7 (API simulada); /api/auth/me sin sesión" },
 	{ tipo: "consola", contiene: "status of 404", resuelve: "0.7 (API simulada)" },
-	// Defectos diagnosticados en ESTADO.md.
-	{ tipo: "http", contiene: "food-3955317_1", resuelve: "ESTADO §8.1 / NP-33 (fondo de login sin el sufijo _zstvf7)" },
-	{ tipo: "consola", contiene: "Image with src", resuelve: "ESTADO §8.1 / NP-33 (fondo de login)" },
-	{ tipo: "red", contiene: "food-3955317_1", resuelve: "ESTADO §8.1 / NP-33 (fondo de login: en producción la petición 404 se aborta)" },
-	{
-		tipo: ["red", "imagen", "http", "consola"],
-		contiene: "lh3.googleusercontent.com",
-		motores: "red e imagen en los tres; http (403) y consola en Firefox y WebKit",
-		resuelve: "Fase 4 (imagen externa en /about, pasa a Cloudinary/local)",
-	},
 	// Solo ocurre con next dev (precarga de CSS de desarrollo).
 	{ tipo: "consola", contiene: "was preloaded using link preload", resuelve: "solo next dev; se vigila en el build de producción al cerrar la fase" },
 ];

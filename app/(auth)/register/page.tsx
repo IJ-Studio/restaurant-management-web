@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CldImage } from "next-cloudinary";
+import { Imagen } from "@/components/ui/Imagen";
 import BackButton from "@/components/BackButton";
 import Button from "@/components/Button";
 import FloatingInput from "@/components/FloatingInput";
@@ -12,7 +12,7 @@ import PasswordToggleButton from "@/components/PasswordToggleButton";
 import PasswordRequirements from "@/components/PasswordRequirements";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { SettingsService } from "@/features/shared/services/dataService";
-import { type SystemSettings } from "@/features/shared/data/restaurantData";
+import { INITIAL_SETTINGS, type SystemSettings } from "@/features/shared/data/restaurantData";
 import {
   phoneRegex,
   isValidEmail,
@@ -390,12 +390,13 @@ export default function RegisterPage() {
 
       <div className="hidden lg:block h-screen p-10">
         <div className="relative h-full w-full rounded-[3rem] shadow-xl overflow-hidden transition-all duration-1000 animate-in zoom-in-95">
-          <CldImage
-            src={settings?.registerBgImageUrl || "food-3955317_1280"}
+          <Imagen
+            // Mismo valor que los ajustes por defecto: si no, la foto cambia al leerlos tras hidratar.
+            src={settings?.registerBgImageUrl || INITIAL_SETTINGS.registerBgImageUrl}
             fill
-            alt="Register background"
+            decorativa
             className="object-cover"
-            sizes="100vw"
+            sizes="(min-width: 1024px) 50vw, 100vw"
           />
         </div>
       </div>

@@ -323,7 +323,7 @@ function ProductDetailPageContent() {
                   alt={platillo.nombre}
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  priority
+                  preload
                 />
               ) : (
                 <div className="flex items-center justify-center h-full w-full text-text/40 text-lg bg-surface">

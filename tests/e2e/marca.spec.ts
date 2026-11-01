@@ -16,10 +16,13 @@ test.describe("logo y sello locales (D-07)", () => {
 
 		// En /menu la cabecera va sobre la foto: su logo es blanco en los dos temas, como el
 		// resto de esa barra. El del pie sigue al tema.
-		const cabecera = page.getByRole("img", { name: "El Quijote, restaurante" }).first();
+		// La cabecera se monta solo en el cliente: se busca dentro de su <nav> y se espera a que
+		// aparezca, porque con .first() a secas se leía el logo del pie si llegaba antes.
+		const cabecera = page.getByRole("navigation").getByRole("img", { name: "El Quijote, restaurante" }).first();
 		const pie = page.locator("footer").getByRole("img", { name: "El Quijote, restaurante" });
 		const color = (l: typeof pie) => l.evaluate((e) => getComputedStyle(e).color);
 		await expect(pie).toBeVisible();
+		await expect(cabecera).toBeVisible();
 		expect(await pie.evaluate((e) => e.tagName.toLowerCase())).toBe("svg");
 		expect(await color(pie)).toBe("rgb(239, 231, 218)"); // --color-texto-principal, oscuro
 		expect(await color(cabecera)).toBe("rgb(255, 255, 255)");
@@ -27,6 +30,7 @@ test.describe("logo y sello locales (D-07)", () => {
 		await page.evaluate((c) => localStorage.setItem(c, JSON.stringify({ v: 1, tema: "claro" })), CLAVE);
 		await page.reload({ waitUntil: "load" });
 		await expect(pie).toBeVisible();
+		await expect(cabecera).toBeVisible();
 		expect(await color(pie)).toBe("rgb(30, 24, 19)"); // --color-texto-principal, claro
 		expect(await color(cabecera)).toBe("rgb(255, 255, 255)");
 		expect(remotas).toEqual([]);

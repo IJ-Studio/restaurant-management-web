@@ -162,6 +162,8 @@ export function ItemModal({
                   <img
                     src={form.imageUrl}
                     alt="Vista previa"
+                    width={96}
+                    height={96}
                     className="w-full h-full object-cover"
                   />
                 ) : (

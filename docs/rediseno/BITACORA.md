@@ -6,6 +6,81 @@
 
 ## Fase 1 · Cimientos y tokens (y adelantados de la fase 3)
 
+### 1.9 · Imágenes: cargador de Cloudinary y lista de hosts (2026-11-01)
+
+**Archivos nuevos:**
+- `config/seguridad/hosts-permitidos.ts`: fuente única de los orígenes externos.
+  - **Imagen:** `res.cloudinary.com` solo bajo `/dcb1tspbj/image/upload/`, y Supabase Storage.
+  - **Conexión:** `api.cloudinary.com`.
+  - **Marco:** `www.google.com` (mapa de `/about`) y `upload-widget.cloudinary.com`.
+  - Expone `origenApi()` para la CSP de la fase 2.
+- `lib/imagen/cargador-cloudinary.ts`: `f_auto,q_auto,c_limit,w_<ancho>`. Quita las transformaciones que ya traiga la URL y conserva versión, carpetas y extensión.
+- `lib/imagen/origen.ts`: valida el origen. Acepta rutas locales, public IDs y URL `https` de hosts permitidos. Rechaza `http`, `data:`, `javascript:`, `//host`, puertos, credenciales, consultas en Cloudinary y rutas con `..`.
+- `components/ui/Imagen.tsx`: `alt` y `sizes` obligatorios, y `decorativa` para `alt=""`. Si el origen no vale o la imagen no carga, pinta el respaldo descrito en DESIGN.md: panel café con el molino, en la misma caja y conservando el `alt`.
+
+**`next.config.js` → `next.config.ts`,** para importar la lista de hosts sin depender de que el Node del despliegue elimine tipos:
+- `remotePatterns` generado desde la lista: fuera Unsplash, pravatar y `lh3`, que solo usaban maquetas con `<img>` normal o la fachada que daba 403.
+- `dangerouslyAllowSVG: false`.
+- `formats: ["image/avif", "image/webp"]`.
+
+**Usos:**
+- `SmartImage` pasa a ser un alias de `Imagen`.
+- `CldImage` sale del login, el registro y la portada de `/menu`; `next-cloudinary` queda solo para `CldUploadButton`.
+- **Login y registro:**
+  - El valor de reserva del fondo pasa a ser el de `INITIAL_SETTINGS` en lugar de `food-3955317_1280`, que daba 404. Así la foto tampoco cambia al leer los ajustes tras hidratar.
+  - El fondo es decorativo, con `sizes` del 50 %.
+- **`/menu`:** `priority` pasa a `preload`, que es lo mismo en Next 16 (`priority` está obsoleto). `CategoryHeroImage` gana `sizes`.
+- **`/about`:** la fachada usa `Imagen`. Como `lh3` no está permitido, muestra el respaldo sin pedir la foto.
+- **`<img>` del admin y `PromosSection`:** reciben `width` y `height` acordes a su caja, sin cambiar su CSS. No pasan a `Imagen` porque pintan URL pegadas a mano y un host no listado cambiaría el comportamiento (NP-36).
+- **Código muerto:** las imágenes de NP-35 no se tocan.
+
+**Excepciones:** salen 4 de `excepciones.ts`: las dos del fondo de login, su aviso de consola y la de `lh3`. Esta última se cierra antes de la fase 4, como consecuencia del paso.
+
+**Pruebas:**
+- `imagenes.spec.ts`, nueva:
+  - validación del origen (24 entradas, `null` y la URL que genera el cargador);
+  - el fondo del login sale de Cloudinary con el cargador;
+  - login y registro piden una sola foto, sin cambiarla tras hidratar;
+  - con Cloudinary bloqueado aparece el respaldo con su tamaño y color;
+  - la fachada muestra el respaldo con su `alt` y 0 peticiones a Google;
+  - la portada de `/menu` se precarga.
+- El inspector del recorrido añade el tipo `dimensiones`: toda `<img>` necesita `width` y `height`, o `fill` con `sizes`. Se comprueba en las 19 rutas públicas × 5 anchos y en las 42 rutas.
+- `marca.spec.ts` busca el logo de la cabecera dentro de su `<nav>` y espera a que aparezca. Con `.first()` a secas, en Firefox leía a veces el logo del pie, porque la cabecera se monta solo en el cliente.
+
+**Fallos encontrados y corregidos durante la verificación:**
+1. La expresión del public ID no admitía un punto en el primer segmento. Por eso `food-3955317_1280_zstvf7.jpg` salía como respaldo; la prueba lo detectó.
+2. En Firefox, `/register` abortaba la descarga del fondo (`NS_BINDING_ABORTED`) por dos causas:
+   - el valor de reserva no coincidía con el de los ajustes;
+   - con `onError`, `next/image` reasigna `img.src` al montar y cada vez que cambia la función, y `Imagen` pasaba una nueva en cada render.
+
+   `Imagen` ya no usa `onError`: escucha el evento `error` en el propio `<img>` con una ref estable y, al montar, detecta si la imagen ya había fallado antes de hidratar.
+
+**Verificación contra el build de producción** (toca `next.config`):
+- **Build:** correcto en 170 s, con la tabla de rutas idéntica. `revisar-bundle` revisó 890 archivos sin rastro del catálogo.
+- **Chromium:** 164/164, con 13 omitidas del catálogo, que solo existe en dev.
+- **Firefox:** 162/162, con 15 omitidas.
+- **WebKit:** 163/163, con 14 omitidas y sin cierres por memoria.
+- **Lighthouse completo** (30 ejecuciones, con VS Code abierto):
+  - Móvil 60/76/80/76/68 (`/`, `/login`, `/menu`, `/promociones`, `/reservations`).
+  - Escritorio 97/99/99/98/97.
+  - Accesibilidad 90–92, buenas prácticas 96 y SEO 100.
+  - `/login`, `/menu` y `/promociones` suben 3–4 puntos en móvil.
+  - `/` baja de 69 a 60 por la carga del equipo, no por el código: en sus dos primeras ejecuciones el `benchmarkIndex` cayó a ~1.480 (lo normal es 1.920–1.990) y el TBT subió a ~730 ms. La tercera, con el equipo normal, dio 74. FCP (1,21 s) y CLS (0,084) son idénticos, y el paso no toca la portada.
+- **Typecheck:** 0.
+- **Lint de los archivos tocados:** ningún problema nuevo; en total, 1 error y 2 avisos menos (`SmartImage` y `/about`).
+- **Revisión visual del respaldo:** login con Cloudinary bloqueado y fachada de `/about`, en los dos temas.
+
+**No verificado:**
+- Que el API siga sirviendo fotos desde Supabase, y bajo qué ruta.
+- Los hosts del widget de subida.
+
+Los dos quedan en NP-36.
+
+**Entorno:**
+- Antes de que el usuario cerrara su navegador y reiniciara el Explorador, tres builds seguidos abortaron por falta de memoria virtual: quedaban 2,9 GB libres de 16 GB, con `explorer.exe` en 1,7 GB comprometidos. Después había 7,2 GB libres.
+- Dos `tsc` también abortaron (código 134) y pasaron al repetirlos sin cambios.
+- Un monitor con `tail -f` dejó vivos su `tail` y su `grep` al terminar la tanda, y se mataron por PID. Desde entonces, las tandas se vigilan con bucles que terminan solos.
+
 ### Adelantados de la fase 3 · 3.0, 3.2 y parte de 3.4 (2026-11-01)
 
 **Adelantados de la fase 3 (2026-11-01): 3.0 · catálogo de desarrollo, 3.2 · `Boton` y `BotonEnlace`, y `Tarjeta` e `Insignia` del 3.4.** Tres commits, en este orden para que cada uno compile solo: Boton → Tarjeta e Insignia → catálogo. **Componentes** (`components/ui/`): `Boton` (variantes `primario`, `secundario`, `fantasma`, `peligro` y `peligro-confirmar`; tamaños `normal` y `compacto`; `soloIcono`; `anchoCompleto`; deshabilitado con `aria-disabled` y enfocable; cargando con `aria-busy`, «Enviando…» en la misma celda que la etiqueta para que no cambie el ancho y sin atenuar; bloqueo de clics repetidos con una referencia, también antes de que React repinte; si `onClick` devuelve una promesa, carga hasta que termina), `BotonEnlace` (`next/link`, sin `"use client"`), `Insignia` (6 tonos, iconos por defecto en los 4 de estado, fondo al 12 % de su color, contador con descripción para lectores) y `Tarjeta` (con enlace extendido desde el título, no disponible con motivo escrito, cargando con esqueleto y error con Reintentar). Se borran con `git rm` el `components/ui/Button.tsx` huérfano y `types/ui.ts` (solo lo usaba él). **Estados fijados:** variantes `al-pasar` y `al-pulsar` en `globals.css` (hover solo con `@media (hover: hover)`; nada cambia si está deshabilitado u ocupado) que también responden a `data-demo`, igual que el anillo de foco: el catálogo muestra cada estado con la misma CSS que el real, y una prueba comprueba que el hover y el foco reales pintan lo mismo que las muestras. **Catálogo:** `app/(dev)/catalogo/page.dev.tsx`; `next.config.js` añade `dev.tsx` a `pageExtensions` solo en `PHASE_DEVELOPMENT_SERVER`, y la página llama a `notFound()` en producción. Cada muestra lee su contraste medido en vivo; selector de tema, texto y movimiento. **Decisiones conservadoras:** (a) el esqueleto de la tarjeta usa `--color-superficie-cafe`, no `--color-superficie-elevada` (blanco sobre hueso en claro, invisible); anotado en DESIGN.md; (b) el estado cargando no lleva `aria-disabled` ni se atenúa; (c) la tarjeta no disponible no se atenúa, porque su texto no es un control inactivo y debe cumplir AA; (d) los textos de ejemplo del catálogo (platos, cifras) solo existen en `next dev`. **Verificación:** `catalogo.spec.ts` contra `next dev` 13/13 en Chromium, Firefox y WebKit: contraste de **las 67 muestras en los dos temas** con una implementación independiente (color pintado por el navegador, incluido `color-mix`, y fondos compuestos), **mismas cifras en los tres motores**, mínimos 5,74:1 en oscuro y 4,93:1 en claro (insignia de aviso), tabla en DESIGN.md; axe 0 violaciones (WCAG 2.2 AA) en los dos temas al 100 % y al 125 %; hover y foco reales = muestras fijadas; deshabilitado y cargando enfocables y anunciados; ancho igual al cargar; 3 clics síncronos y un doble clic real atendidos una vez; fallo que vuelve a reposo con `role="alert"`; tarjeta en error que reintenta; foco que rodea la tarjeta con enlace; sin desborde a 360 px con texto al 125 %. En WebKit el foco de la tarjeta se comprueba sin Tab, porque WebKit, como Safari, no lleva el Tab a los enlaces por defecto. Capturas por sección, tema y tamaño en `test-results/catalogo/`. **Producción** (por tocar `next.config`): build correcto en **212 s**; tabla de rutas idéntica a la del 1.8, sin `/catalogo`; `scripts/revisar-bundle.mjs`: 889 archivos de `.next/server/app` y `.next/static` sin rastro del catálogo; `/catalogo` responde 404 en `next start`; Chromium recorrido + 42 rutas + marca + preferencias + catálogo **145/145**; Firefox **98/98**; WebKit **98/98** (10 pruebas se repitieron porque el navegador se cerró por falta de memoria, con 1,9 GB físicos libres; al repetirlas pasaron); Lighthouse completo (30 ejecuciones, 33 min): móvil 69/73/76/73/69 y escritorio 97/98/97/98/97, accesibilidad 90–92, buenas prácticas 96 y SEO 100, todo igual al 1.8 ±2 (los componentes aún no se usan en ninguna página). Typecheck 0; lint de los archivos tocados limpio.

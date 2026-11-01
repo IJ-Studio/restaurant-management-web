@@ -5,6 +5,7 @@ import { Star, MapPin, Clock, ShieldCheck, Award, Heart, Layers, Facebook, Minim
 import MolinoAnimado from "@/components/landing/MolinoAnimado";
 import { useTheme } from "@/hooks/useTheme";
 import DistanceToRestaurant from "@/components/pwa/DistanceToRestaurant";
+import { Imagen } from "@/components/ui/Imagen";
 
 // Componente vectorial para el logo oficial de Google Reviews
 const GoogleIcon = ({ size = 12 }: { size?: number }) => (
@@ -251,14 +252,12 @@ export default function AboutPage() {
               {/* Contenedor e imagen completamente adaptada (object-cover + w-full h-full) */}
               {!isMinimized && (
                 <div className="flex-1 w-full relative bg-zinc-100/50 dark:bg-zinc-800/40 rounded-lg overflow-hidden border border-[var(--color-border)]/40 animate-in fade-in duration-200">
-                  <img
+                  <Imagen
                     src={facadeImageUrl}
                     alt="Fachada Adaptada El Quijote"
-                    /* 🔍 object-cover adapta y rellena perfectamente el contenedor sin dejar espacios vacíos */
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
+                    fill
+                    sizes="224px"
+                    className="object-cover"
                   />
                 </div>
               )}
