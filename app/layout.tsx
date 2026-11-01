@@ -28,11 +28,7 @@ export const metadata: Metadata = {
     "Huejutla",
     "comida mexicana",
   ],
-  icons: {
-    icon: INITIAL_SETTINGS.restaurantIco,
-    shortcut: INITIAL_SETTINGS.restaurantLogo,
-    apple: "/icons/apple-touch-icon.png",
-  },
+  // Iconos locales por convención de archivos: app/icon.svg y app/apple-icon.png.
   appleWebApp: {
     capable: true,
     title: INITIAL_SETTINGS.restaurantName,

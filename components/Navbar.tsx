@@ -1,15 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/index";
-import { SettingsService } from "@/features/shared/services/dataService";
-import { type SystemSettings } from "@/features/shared/data/restaurantData";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/hooks/useTheme";
 import { ShoppingBag } from "lucide-react";
 import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
+import { Logo } from "@/components/marca/Logo";
 
 interface NavLink {
   label: React.ReactNode;
@@ -22,8 +20,6 @@ interface NavbarProps {
   customLinks?: NavLink[];
   minimal?: boolean;
   hideNavLinks?: boolean;
-  logoSrc?: string;
-  logoHeight?: number;
   overlay?: boolean;
   isTransparent?: boolean;
   cartCount?: number;
@@ -36,20 +32,13 @@ export default function Navbar({
   customLinks,
   minimal = false,
   hideNavLinks = false,
-  logoSrc: propLogoSrc,
-  logoHeight = 40,
   overlay = false,
   isTransparent = false,
   isForcedDark = false,
 }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [settings, setSettings] = useState<SystemSettings | null>(null);
   const pathname = usePathname();
   const router = useRouter();
-
-  useEffect(() => {
-    setSettings(SettingsService.getSettings());
-  }, []);
 
   const { user } = useSelector((state: RootState) => state.auth);
   const isAuthenticated = !!user;
@@ -116,7 +105,7 @@ export default function Navbar({
         )}
         <div className={cn("container mx-auto relative z-10", overlay ? "px-4" : "flex justify-start")}>
           <Link href="/" className="inline-block w-fit">
-            <LogoImage src={propLogoSrc} height={logoHeight} settings={settings} isForcedDark={isForcedDark} />
+            <LogoMarca sobreFotografia={isForcedDark} />
           </Link>
         </div>
       </nav>
@@ -133,7 +122,7 @@ export default function Navbar({
         <div className="flex items-center py-3">
           <div className="flex-shrink-0">
             <Link href="/" className="inline-block w-fit">
-              <LogoImage src={propLogoSrc} height={logoHeight} settings={settings} isForcedDark={isForcedDark} />
+              <LogoMarca sobreFotografia={isForcedDark} />
             </Link>
           </div>
 
@@ -243,28 +232,18 @@ export default function Navbar({
   );
 }
 
-function LogoImage({
-  src,
-  settings,
-  isForcedDark,
-}: {
-  src?: string;
-  height?: number;
-  settings?: SystemSettings | null;
-  isForcedDark?: boolean;
-}) {
-  const isDark = useTheme();
-  let logoSrc = src;
-  if (!logoSrc && settings) {
-    logoSrc = (isDark || isForcedDark) ? settings.restaurantLogo_light : settings.restaurantLogo_dark;
-  }
-  const defaultLogo = "/logo.svg";
-  const logoUrl = logoSrc || defaultLogo;
+// Misma caja cuadrada que la imagen anterior (el dibujo ocupaba el 87 % de su ancho), para
+// que la barra no cambie de medida; la cabecera nueva llega en 3.11. Sobre fotografía va en
+// blanco, como el resto de esta barra superpuesta.
+function LogoMarca({ sobreFotografia }: { sobreFotografia: boolean }) {
   return (
-    <img
-      src={logoUrl}
-      alt="Restaurante El Quijote"
-      className="h-8 sm:h-9 md:h-10 lg:h-20 w-auto object-contain transition-all duration-300"
-    />
+    <span
+      className={cn(
+        "flex size-8 sm:size-9 md:size-10 lg:size-20 items-center justify-center transition-all duration-300",
+        sobreFotografia ? "text-white" : "text-texto-principal",
+      )}
+    >
+      <Logo className="w-[87%]" />
+    </span>
   );
 }
