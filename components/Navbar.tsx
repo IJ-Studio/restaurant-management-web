@@ -9,6 +9,7 @@ import { type SystemSettings } from "@/features/shared/data/restaurantData";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/useTheme";
 import { ShoppingBag } from "lucide-react";
+import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
 
 interface NavLink {
   label: React.ReactNode;
@@ -155,6 +156,7 @@ export default function Navbar({
           )}
 
           <div className="flex items-center gap-4 ml-auto">
+            <PanelAccesibilidad className={isTransparent || overlay ? "text-white" : "text-texto-principal"} />
             <Link
               href="/menu/pedido"
               className={cn(

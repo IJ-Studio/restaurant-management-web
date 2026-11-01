@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
 import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -319,6 +320,10 @@ export default function AdminSidebar({ activePage, user, onLogout }: AdminSideba
             </div>
           </div>
         )}
+        <div className="flex items-center justify-between px-3 text-texto-secundario">
+          <span className="text-(length:--texto-pequeno)">Accesibilidad</span>
+          <PanelAccesibilidad />
+        </div>
         <NavBtn icon={<LogOut size={17} />} label="Cerrar Sesión" onClick={handleLogout} />
       </div>
     </aside>

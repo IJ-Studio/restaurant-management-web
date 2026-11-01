@@ -8,6 +8,7 @@ import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ConnectionStatus from "@/components/pwa/ConnectionStatus";
 import { fuenteTexto, fuenteTitulos } from "./fuentes";
+import { ScriptPreferencias } from "@/components/marca/ScriptPreferencias";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -59,6 +60,9 @@ export default function RootLayout({
       className={`${fuenteTitulos.variable} ${fuenteTexto.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <ScriptPreferencias />
+      </head>
       <body>
         <AppProviders>
           {/* 👇 2. Colocamos el AuthProvider envolviendo al Layout Wrapper */}
