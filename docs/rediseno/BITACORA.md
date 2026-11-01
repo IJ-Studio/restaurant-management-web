@@ -6,6 +6,54 @@
 
 ## Fase 1 · Cimientos y tokens (y adelantados de la fase 3)
 
+### Cierre de la fase 1 (2026-11-01)
+
+**Verificación completa.** Es la del commit `b94d87d` (1.9). Después no se tocó código: solo la anotación de una excepción, este script y la documentación.
+
+| Comprobación | Resultado |
+|---|---|
+| Build de producción | correcto en 170 s; tabla de rutas igual que en el 1.8 |
+| Catálogo fuera del build (`revisar-bundle`) | 890 archivos sin rastro |
+| Chromium: 19 rutas × 5 anchos, 42 rutas, marca, preferencias, imágenes, almacenamiento, cabeceras | 164/164 (13 omitidas: catálogo, solo en dev) |
+| Firefox | 162/162 |
+| WebKit | 163/163 |
+| Typecheck | 0 |
+| `pnpm audit` | 7 críticas / 66 altas / 53 moderadas / 10 bajas, igual que tras el 1.10 (al empezar la fase: 7 / 70 / 54 / 11). Las críticas de Next 16.0.7 se resuelven con D-01 (fase 2) |
+| Excepciones del recorrido | 18 al empezar la fase → 12 |
+
+**Lighthouse completo** (mediana de 3, con VS Code abierto; no vale para comparar el rendimiento móvil):
+
+| Página | Móvil | Escritorio | CLS móvil / escritorio |
+|---|---|---|---|
+| `/` | 60 | 97 | 0,084 / 0,079 |
+| `/login` | 76 | 99 | 0 / 0,008 |
+| `/menu` | 80 | 99 | 0,005 / 0,002 |
+| `/promociones` | 76 | 98 | 0,084 / 0,074 |
+| `/reservations` | 68 | 97 | 0,117 / 0,079 |
+
+Accesibilidad 90–92, buenas prácticas 96 y SEO 100 en las 10 combinaciones.
+
+**Pendientes «no verificado» de la fase, revisados:**
+- **1.5 · CLS de las fuentes en Lighthouse:** medido. Coincide con el CLS sin fuentes medido en el 1.5. El salto de `/` (0,084) es del hero heredado y el de `/reservations` (0,117) también es previo; se rehacen en las fases 4.3 y 4.x.
+- **1.6 · Rutas de panel en el navegador:** las 42 rutas pasan en los tres motores.
+- **1.10 · Firefox, WebKit, `test:e2e` completo y las 42 rutas:** hecho; ver la tabla.
+- **Excepción «was preloaded using link preload»:** estaba anotada como «solo next dev», pero **también aparece en producción**. Se comprobó en 9 rutas públicas a 390 y 1440 px. Son los CSS de los módulos de `app/error.tsx` y `app/not-found.tsx`, que Next precarga en todas las rutas. Es un aviso del navegador, no un error. Se reanota: la resuelven 2.17 y 4.23, al rehacer esas páginas sin módulo CSS. Corregirlo ahora sería adelantar pasos de fases posteriores.
+- **1.4 · Contraste en las rutas públicas:** sigue sin verificar si los 3 nodos que quedan (`/login` 2, `/reservations` 1) son los de antes; esas pantallas se rehacen en la fase 4.
+- **1.7 · Causa de la bajada de rendimiento móvil:** sin confirmar. Ver «Medición de rendimiento móvil».
+
+**Medición de rendimiento móvil.** Por orden del usuario, no se hace dentro de VS Code. `scripts/comparar-rendimiento.mjs` hace lo siguiente:
+- Mide `/` en móvil en `766855a` (cierre de la fase 0) y en HEAD.
+- Monta cada commit en su propio worktree en `D:\dev-cache\rendimiento\arboles`, con instalación, build y `next start` en 3100.
+- Pasa Lighthouse 12.8.2 tres veces y se queda la mediana. Anota FCP, LCP, TBT, CLS, SI, el `benchmarkIndex` y la RAM libre.
+- Guarda `resumen.md`, `resumen.json`, los JSON y los registros en `D:\dev-cache\rendimiento\<fecha>\`, fuera de `test-results/`.
+- Con `--biseccion`, si la bajada llega a 5 puntos, busca el primer commit responsable por bisección.
+- Se niega a medir si VS Code, un navegador o un servidor de Next o Lighthouse siguen abiertos. Lo comprobó dentro de VS Code: detectó VS Code Insiders.
+- Borra los worktrees al terminar, también si algo falla.
+
+En este cierre, la medición dentro de VS Code dio 60 en `/`. Sus dos primeras ejecuciones tuvieron el `benchmarkIndex` en ~1.480 y la tercera, con el equipo normal, dio 74. Esa dispersión es la razón de medir con el equipo libre.
+
+**PR.** En el remoto no existen `feature/rediseno-web` ni esta rama: la fase 0 se fusionó solo en local (`517a3bb`). Abrir el PR exige subirlas, y el agente no hace `git push`, así que lo hace el usuario. El texto del PR está en `D:\dev-cache\rediseno\pr-fase-1.md`.
+
 ### 1.9 · Imágenes: cargador de Cloudinary y lista de hosts (2026-11-01)
 
 **Archivos nuevos:**
