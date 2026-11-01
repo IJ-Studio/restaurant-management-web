@@ -674,7 +674,7 @@ El movimiento es sobrio: confirma, nunca adorna.
 
 - Los colores definidos en `@theme` generan utilidades con nombre propio: `bg-fondo`, `bg-superficie`, `text-texto-principal`, `border-borde-control`, `text-acento`, `rounded-tarjeta`, `font-titulos`, `font-texto`, `shadow-flotante`, `ease-salida`.
 - El tema claro **solo redefine las variables**, así que las utilidades no cambian. Se elimina la variante `dark:` y no se escriben clases condicionales por tema.
-- En `styles/globals.css` se declara `@custom-variant dark (&:where([data-tema="oscuro"], [data-tema="oscuro"] *));` únicamente como red de seguridad durante la migración.
+- En `styles/globals.css` se declara `@custom-variant dark (&:where(:root:not([data-tema="claro"]), :root:not([data-tema="claro"]) *));` únicamente como red de seguridad durante la migración: las clases `dark:` heredadas se aplican mientras el tema no sea claro, porque el oscuro es el tema por defecto y no lleva atributo. Se retira con los alias temporales (PLAN 5.20).
 
 **Clases explícitas** (en `styles/componentes.css`, capa `@layer components`): `.contenedor-pagina`, `.seccion-landing`, `.etiqueta-seccion`, `.filete-doble`, `.contraetiqueta`, `.texto-cifra-destacada`, `.numeros-tabulares`, `.enlace-subrayado`, `.area-tactil-minima`, `.solo-lectores`, `.salto-al-contenido`, `.titulo-equilibrado`, `.aparece-al-entrar`. Cada nombre dice lo que hace; no se crean clases genéricas tipo `.card2` o `.btn-x`.
 

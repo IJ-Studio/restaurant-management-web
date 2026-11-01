@@ -1,115 +1,88 @@
 @import "tailwindcss";
+@import "./tokens.css";
+@import "./componentes.css";
 
-/* ===== VARIABLES POR DEFECTO (TEMA CLARO) ===== */
-:root {
-  --color-brand: #e85d04;
-  --color-surface: #ffffff;
-  --color-text: #1a1208;
-  --color-text-sec: #6b5e4e;
-  --color-text-muted: #a89880;
-  --color-border: #e8e1d8;
-  --color-secondary: #232f38;
-  color-scheme: light;
-}
+/* Red de seguridad durante la migración: las clases dark: heredadas se aplican
+   mientras el tema no sea claro (el oscuro es el tema por defecto). Se retira
+   junto con los alias temporales (PLAN 5.20). */
+@custom-variant dark (&:where(:root:not([data-tema="claro"]), :root:not([data-tema="claro"]) *));
 
-/* ===== TEMA OSCURO ===== */
-html.dark {
-  --color-surface: #181a1b;
-  --color-text: #e8e6e3;
-  --color-text-sec: #9c9a97;
-  --color-text-muted: #6c6a67;
-  --color-border: #2c2e2f;
-  --color-secondary: #3a4a5c;
-  color-scheme: dark;
-}
-
-/* Aplicación global de las variables */
-body {
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  font-family: 'Ibarra Real Nova', serif;
-  transition:
-    background-color 0.3s ease,
-    color 0.2s ease;
-}
-
-/* Aseguramos que todos los elementos que usen colores fijos de Tailwind
-   no interfieran; pero si algún componente tiene bg-white, deberás
-   cambiarlo manualmente a bg-[var(--color-surface)]. */
-/* .dark,
-:root.dark,
-html.dark { */
-/* Si alguien añade la clase dark, la ignoramos */
-/* color-scheme: light;
-  background-color: var(--color-surface);
-  color: var(--color-text);
-} */
-
-/* html:not(.light) {
-  background-color: var(--color-surface);
-} */
-
+/* ===== ALIAS TEMPORALES (PLAN 1.4 → se retiran en 5.20) =====
+   Tokens antiguos apuntando a los semánticos, para que toda la app adopte
+   la paleta nueva sin romperse. No usar en código nuevo. */
 @theme {
-  --color-brand: #e85d04;
-  --color-surface: #ffffff;
-  --color-text: #1a1208;
-  --color-text-sec: #6b5e4e;
-  --color-text-muted: #a89880;
-  --color-border: #e8e1d8;
-  --color-secondary: #232f38;
+  --color-brand: var(--color-acento);
+  --color-brand-dark: var(--color-acento-intenso);
+  --color-surface: var(--color-superficie);
+  --color-text: var(--color-texto-principal);
+  --color-text-sec: var(--color-texto-secundario);
+  --color-text-muted: var(--color-texto-tenue);
+  --color-border: var(--color-borde-sutil);
+  --color-secondary: var(--color-superficie-cafe);
 }
 
-@layer utilities {
-  .bg-brand {
-    background-color: var(--color-brand);
+/* ===== ESTILOS BASE ===== */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    scrollbar-color: var(--color-borde-control) var(--color-fondo);
   }
-  .text-brand {
-    color: var(--color-brand);
+  @media (prefers-reduced-motion: reduce) {
+    html:not([data-movimiento="completo"]) {
+      scroll-behavior: auto;
+    }
+  }
+  :root[data-movimiento="reducido"] {
+    scroll-behavior: auto;
   }
 
-  .bg-surface {
-    background-color: var(--color-surface);
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--color-fondo);
+    color: var(--color-texto-principal);
+    /* Hasta PLAN 1.5 (next/font) se ve la pila de respaldo de --font-texto. */
+    font-family: var(--font-texto);
+    caret-color: var(--color-acento);
+    accent-color: var(--color-acento);
   }
-  .text-text {
-    color: var(--color-text);
-  }
-  .text-text-sec {
-    color: var(--color-text-sec);
-  }
-  .text-text-muted {
-    color: var(--color-text-muted);
-  }
-  .border-border {
-    border-color: var(--color-border);
-  }
-  .bg-secondary {
-    background-color: var(--color-secondary);
-  }
-    .border-border\/40 { border-color: color-mix(in srgb, var(--color-border) 40%, transparent); }
 
+  :focus-visible {
+    outline: 2px solid var(--color-foco);
+    outline-offset: 3px;
+  }
 
-  /* Utilidades para transparencias (usando color-mix) */
-  .bg-surface\/80 {
-    background-color: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  ::selection {
+    background-color: var(--color-acento);
+    color: var(--color-texto-sobre-acento);
   }
-  .bg-surface\/10 {
-    background-color: color-mix(in srgb, var(--color-surface) 90%, transparent);
+
+  [id] {
+    scroll-margin-top: calc(var(--alto-cabecera) + var(--espacio-md));
   }
-  .hover\:bg-surface\/10:hover {
-    background-color: color-mix(in srgb, var(--color-surface) 90%, transparent);
+
+  :where(a, button, input, select, textarea, label, summary, [role="button"]) {
+    touch-action: manipulation;
   }
-  .backdrop-blur-sm {
-    backdrop-filter: blur(4px);
+
+  :where(h1, h2, h3, h4) {
+    text-wrap: balance;
   }
-  .shadow-sm {
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  :where(p, li, dd, figcaption) {
+    text-wrap: pretty;
   }
 }
 
+/* ===== CLASES HEREDADAS =====
+   Se conservan hasta que sus componentes se sustituyan (fases 3 a 5); aquí solo
+   se cambiaron sus colores a tokens semánticos. */
 @layer components {
   /* Contenedor principal de páginas auth */
   .auth-grid {
-    @apply min-h-screen bg-[var(--color-surface)] lg:grid lg:grid-cols-[1fr_1.3fr] lg:items-center;
+    @apply min-h-screen bg-fondo lg:grid lg:grid-cols-[1fr_1.3fr] lg:items-center;
   }
 
   /* Wrapper del formulario */
@@ -123,24 +96,24 @@ html.dark { */
 
   /* Título de página */
   .auth-title {
-    @apply text-3xl font-bold text-[var(--color-text)];
+    @apply text-3xl font-bold text-texto-principal;
   }
 
   /* Input con etiqueta flotante */
   .input-floating {
-    @apply block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] py-3.5 px-4 text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/50;
+    @apply block w-full rounded-lg border border-borde-control bg-superficie py-3.5 px-4 text-texto-principal placeholder:text-texto-tenue focus:outline-none focus:ring-2 focus:ring-foco/50;
   }
 
   .input-label {
-    @apply absolute left-4 top-0 -translate-y-1/2 bg-[var(--color-surface)] px-1 text-xs text-[var(--color-text-sec)];
+    @apply absolute left-4 top-0 -translate-y-1/2 bg-superficie px-1 text-xs text-texto-secundario;
   }
 
   /* Botón primario */
   .btn-primary {
-    @apply flex w-full justify-center rounded-xl px-3 py-3 text-sm font-semibold leading-6 text-white shadow-lg transition-all duration-300 bg-[var(--color-brand)];
+    @apply flex w-full justify-center rounded-xl px-3 py-3 text-sm font-semibold leading-6 text-texto-sobre-acento shadow-lg transition-all duration-300 bg-acento;
   }
   .btn-primary:enabled:hover {
-    @apply brightness-110 -translate-y-0.5;
+    @apply bg-acento-intenso -translate-y-0.5;
   }
   .btn-primary:enabled:active {
     @apply translate-y-0;
@@ -149,15 +122,15 @@ html.dark { */
     @apply opacity-40 cursor-not-allowed;
   }
   .btn-primary--loading {
-    @apply bg-gray-400 cursor-not-allowed opacity-100;
+    @apply bg-superficie-elevada text-texto-secundario cursor-not-allowed opacity-100;
   }
 
   /* Botón secundario */
   .btn-secondary {
-    @apply flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-lg transition-all duration-300 bg-[var(--color-secondary)];
+    @apply flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold leading-6 text-texto-principal border border-texto-principal shadow-lg transition-all duration-300 bg-transparent;
   }
   .btn-secondary:enabled:hover {
-    @apply brightness-110;
+    @apply bg-superficie-cafe;
   }
   .btn-secondary:disabled {
     @apply opacity-40 cursor-not-allowed;
@@ -171,38 +144,38 @@ html.dark { */
     @apply absolute inset-0 flex items-center;
   }
   .separator-line div {
-    @apply w-full border-t border-[var(--color-border)];
+    @apply w-full border-t border-borde-sutil;
   }
   .separator-text {
     @apply relative flex justify-center text-sm;
   }
   .separator-text span {
-    @apply bg-[var(--color-surface)] px-4 text-[var(--color-text-muted)] font-light;
+    @apply bg-fondo px-4 text-texto-tenue font-light;
   }
 
   /* Alertas */
   .alert-success {
-    @apply mt-4 p-3 rounded-md text-sm font-semibold text-center bg-green-100 text-green-700 border border-green-300;
+    @apply mt-4 p-3 rounded-md text-sm font-semibold text-center bg-superficie-elevada text-exito border border-exito;
   }
   .alert-error {
-    @apply mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm;
+    @apply mt-4 p-3 bg-superficie-elevada text-error border border-error rounded-md text-sm;
   }
   .alert-warning {
-    @apply mt-4 p-3 bg-yellow-100 text-yellow-700 border border-yellow-300 rounded-md text-sm font-semibold text-center;
+    @apply mt-4 p-3 bg-superficie-elevada text-aviso border border-aviso rounded-md text-sm font-semibold text-center;
   }
 
   /* Enlace secundario */
   .link-secondary {
-    @apply font-semibold text-[var(--color-secondary)] hover:underline;
+    @apply font-semibold text-acento hover:underline;
   }
 
   .google-btn {
-    @apply flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors duration-200;
+    @apply flex w-full justify-center rounded-lg border border-borde-control bg-superficie px-4 py-3 text-sm font-medium text-texto-principal shadow-sm hover:bg-superficie-elevada transition-colors duration-200;
   }
 
   /* Tarjeta de menú */
   .menu-card {
-    @apply bg-[var(--color-surface)] rounded-[2.5rem] overflow-hidden border border-[var(--color-border)] hover:border-[var(--color-brand)]/30 hover:shadow-xl transition-all duration-300 cursor-pointer;
+    @apply bg-superficie rounded-[2.5rem] overflow-hidden border border-borde-sutil hover:border-acento/30 hover:shadow-xl transition-all duration-300 cursor-pointer;
   }
   .menu-card-image {
     @apply relative h-52 w-full overflow-hidden;
@@ -211,54 +184,54 @@ html.dark { */
     @apply object-cover group-hover:scale-105 transition-transform duration-500;
   }
   .menu-card-tag {
-    @apply absolute top-4 left-4 bg-[var(--color-brand)] text-white text-xs font-bold px-3 py-1 rounded-full;
+    @apply absolute top-4 left-4 bg-acento text-texto-sobre-acento text-xs font-bold px-3 py-1 rounded-full;
   }
   .menu-card-price {
-    @apply absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full font-black text-[var(--color-brand)] text-sm;
+    @apply absolute top-4 right-4 bg-fondo/80 backdrop-blur-md px-3 py-1.5 rounded-full font-black text-acento text-sm;
   }
   .menu-card-content {
     @apply p-6;
   }
   .menu-card-category {
-    @apply text-xs uppercase tracking-widest text-[var(--color-brand)] font-bold mb-1;
+    @apply text-xs uppercase tracking-widest text-acento font-bold mb-1;
   }
   .menu-card-title {
     @apply text-lg font-black mb-2 leading-tight;
   }
   .menu-card-desc {
-    @apply text-[var(--color-text-sec)] text-xs leading-relaxed mb-4 line-clamp-2;
+    @apply text-texto-secundario text-xs leading-relaxed mb-4 line-clamp-2;
   }
   .menu-card-footer {
     @apply flex items-center justify-between;
   }
   .menu-card-rating {
-    @apply flex items-center gap-1 text-xs text-[var(--color-text-sec)];
+    @apply flex items-center gap-1 text-xs text-texto-secundario;
   }
   .menu-card-add {
-    @apply w-9 h-9 bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-white rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-md shadow-[var(--color-brand)]/30;
+    @apply w-9 h-9 bg-acento hover:bg-acento-intenso text-texto-sobre-acento rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-md;
   }
 
   /* Tarjeta de promoción */
   .promo-card {
-    @apply min-w-[min(360px,85vw)] bg-gradient-to-br border border-[var(--color-border)] rounded-[2.5rem] p-8 flex-shrink-0 hover:-translate-y-1 transition-all cursor-pointer;
+    @apply min-w-[min(360px,85vw)] bg-gradient-to-br border border-borde-sutil rounded-[2.5rem] p-8 flex-shrink-0 hover:-translate-y-1 transition-all cursor-pointer;
   }
   .promo-badge {
-    @apply inline-block bg-[var(--color-brand)] text-white text-xs font-bold px-3 py-1 rounded-full mb-4;
+    @apply inline-block bg-acento text-texto-sobre-acento text-xs font-bold px-3 py-1 rounded-full mb-4;
   }
   .promo-title {
     @apply text-2xl font-black mb-3;
   }
   .promo-desc {
-    @apply text-[var(--color-text-sec)] text-sm leading-relaxed mb-6;
+    @apply text-texto-secundario text-sm leading-relaxed mb-6;
   }
   .promo-price {
     @apply flex items-baseline gap-3;
   }
   .promo-price-new {
-    @apply text-4xl font-black text-[var(--color-brand)];
+    @apply text-4xl font-black text-acento;
   }
   .promo-price-old {
-    @apply text-[var(--color-text-muted)] line-through text-lg;
+    @apply text-texto-tenue line-through text-lg;
   }
 
   @keyframes pulse {
@@ -271,26 +244,34 @@ html.dark { */
     }
   }
 
-  /* Esqueletos estilo HeroUI */
+  /* Esqueletos: superficie elevada con pulso de opacidad (sin pulso si el movimiento está reducido). */
   .skeleton {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    background-color: var(--color-border);
+    animation: pulse 2s var(--ease-estandar) infinite;
+    background-color: var(--color-superficie-elevada);
     border-radius: 0.5rem;
   }
   .skeleton-card {
-    background-color: var(--color-border);
+    background-color: var(--color-superficie-elevada);
     border-radius: 2.5rem;
     height: 24rem;
   }
   .skeleton-title {
     height: 2rem;
-    background-color: var(--color-border);
+    background-color: var(--color-superficie-elevada);
     border-radius: 0.5rem;
     width: 75%;
   }
   .skeleton-text {
     height: 1rem;
-    background-color: var(--color-border);
+    background-color: var(--color-superficie-elevada);
     border-radius: 0.25rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-movimiento="completo"]) .skeleton {
+      animation: none;
+    }
+  }
+  :root[data-movimiento="reducido"] .skeleton {
+    animation: none;
   }
 }
