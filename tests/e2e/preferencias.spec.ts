@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { simularApi } from "./utilidades/api-simulada";
-import { EXCEPCIONES } from "./excepciones";
+import { EXCEPCIONES, cubre } from "./excepciones";
 
 const CLAVE = "elquijote:preferencias";
 
@@ -76,7 +76,7 @@ test.describe("preferencias de accesibilidad", () => {
 		const conocido = (t: string) =>
 			t.startsWith("Failed to load resource") ||
 			t.startsWith("Error al registrar el service worker") ||
-			EXCEPCIONES.some((e) => e.tipo === "consola" && t.includes(e.contiene));
+			EXCEPCIONES.some((e) => cubre(e, "consola", t));
 		page.on("console", (m) => m.type() === "error" && !conocido(m.text()) && errores.push(m.text()));
 		page.on("pageerror", (e) => errores.push(e.message));
 		await simularApi(page);

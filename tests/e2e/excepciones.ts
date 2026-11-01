@@ -3,13 +3,23 @@
  * Cada entrada DEBE llevar el paso del PLAN o la NP que la resuelve.
  * La lista solo puede decrecer.
  */
+type TipoExcepcion = "consola" | "pagina" | "red" | "http" | "imagen";
+
 export interface Excepcion {
 	/** Fragmento del mensaje o de la URL. */
 	contiene: string;
-	/** Tipo de hallazgo al que aplica. */
-	tipo: "consola" | "pagina" | "red" | "http" | "imagen";
+	/** Tipo o tipos de hallazgo a los que aplica (un mismo fallo llega distinto según el motor). */
+	tipo: TipoExcepcion | TipoExcepcion[];
+	/** Motores en los que aparece cada tipo, si no son todos. */
+	motores?: string;
 	/** Paso del PLAN o NP que lo resuelve. */
 	resuelve: string;
+}
+
+/** Indica si la excepción cubre un hallazgo de ese tipo con ese detalle. */
+export function cubre(e: Excepcion, tipo: string, detalle: string): boolean {
+	const tipos: string[] = Array.isArray(e.tipo) ? e.tipo : [e.tipo];
+	return tipos.includes(tipo) && detalle.includes(e.contiene);
 }
 
 export const EXCEPCIONES: Excepcion[] = [
@@ -29,8 +39,12 @@ export const EXCEPCIONES: Excepcion[] = [
 	{ tipo: "http", contiene: "food-3955317_1", resuelve: "ESTADO §8.1 / NP-33 (fondo de login sin el sufijo _zstvf7)" },
 	{ tipo: "consola", contiene: "Image with src", resuelve: "ESTADO §8.1 / NP-33 (fondo de login)" },
 	{ tipo: "red", contiene: "food-3955317_1", resuelve: "ESTADO §8.1 / NP-33 (fondo de login: en producción la petición 404 se aborta)" },
-	{ tipo: "red", contiene: "lh3.googleusercontent.com", resuelve: "Fase 4 (imagen externa en /about, pasa a Cloudinary/local)" },
-	{ tipo: "imagen", contiene: "lh3.googleusercontent.com", resuelve: "Fase 4 (imagen externa en /about, pasa a Cloudinary/local)" },
+	{
+		tipo: ["red", "imagen", "http", "consola"],
+		contiene: "lh3.googleusercontent.com",
+		motores: "red e imagen en los tres; http (403) y consola en Firefox y WebKit",
+		resuelve: "Fase 4 (imagen externa en /about, pasa a Cloudinary/local)",
+	},
 	// Solo ocurre con next dev (precarga de CSS de desarrollo).
 	{ tipo: "consola", contiene: "was preloaded using link preload", resuelve: "solo next dev; se vigila en el build de producción al cerrar la fase" },
 ];
