@@ -19,6 +19,8 @@
   --color-text-muted: var(--color-texto-tenue);
   --color-border: var(--color-borde-sutil);
   --color-secondary: var(--color-superficie-cafe);
+  --font-display: var(--font-titulos);
+  --font-body: var(--font-texto);
 }
 
 /* ===== ESTILOS BASE ===== */
@@ -44,7 +46,6 @@
     min-height: 100dvh;
     background-color: var(--color-fondo);
     color: var(--color-texto-principal);
-    /* Hasta PLAN 1.5 (next/font) se ve la pila de respaldo de --font-texto. */
     font-family: var(--font-texto);
     caret-color: var(--color-acento);
     accent-color: var(--color-acento);
@@ -70,6 +71,10 @@
 
   :where(h1, h2, h3, h4) {
     text-wrap: balance;
+  }
+  /* Título de página y de sección en Fraunces (DESIGN.md § Hierarchy); el resto, DM Sans. */
+  :where(h1, h2) {
+    font-family: var(--font-titulos);
   }
   :where(p, li, dd, figcaption) {
     text-wrap: pretty;

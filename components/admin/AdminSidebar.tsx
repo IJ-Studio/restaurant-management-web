@@ -25,8 +25,8 @@ import { useTheme } from "@/hooks/useTheme";
 
 // Solo la tipografía queda fija — los colores ahora salen de var(--color-*),
 // que ya cambian solos con el tema (mismo mecanismo que Footer.tsx).
-const fontD = "'Fraunces', Georgia, serif";
-const fontB = "'DM Sans', system-ui, sans-serif";
+const fontD = "var(--font-titulos)";
+const fontB = "var(--font-texto)";
 
 function NavBtn({
   icon,

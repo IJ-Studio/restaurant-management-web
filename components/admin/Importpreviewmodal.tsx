@@ -36,8 +36,8 @@ const T = {
   border: "#e8e1d8",
   borderMed: "#d4c8bc",
   shadowLg: "0 24px 64px rgba(26,18,8,0.20)",
-  fontD: "'Fraunces', Georgia, serif",
-  fontB: "'DM Sans', system-ui, sans-serif",
+  fontD: "var(--font-titulos)",
+  fontB: "var(--font-texto)",
   added: {
     bg: "#f0fdf4",
     border: "#86efac",

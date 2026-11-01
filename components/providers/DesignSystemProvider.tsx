@@ -16,22 +16,10 @@ export function DesignSystemProvider({ children }: DesignSystemProviderProps) {
 
       if (!appearance) return;
 
-      // 1. Colors
-      root.style.setProperty("--color-brand", appearance.primaryColor);
+      // Colores y fuentes ya no se personalizan desde los ajustes: salen de
+      // styles/tokens.css (DESIGN.md, decisión D-12; la sección se retira en PLAN 5.14).
 
-      // Calculate variations using color-mix (modern CSS)
-      root.style.setProperty("--color-brand-light", `color-mix(in srgb, ${appearance.primaryColor}, white 20%)`);
-
-      root.style.setProperty("--color-brand-sec", appearance.secondaryColor);
-
-      // 2. Typography
-      // Helper to handle font names (adding quotes if needed)
-      const formatFont = (f: string) => f.includes(" ") ? `"${f}"` : f;
-
-      root.style.setProperty("--font-display", `${formatFont(appearance.fontDisplay)}, Georgia, serif`);
-      root.style.setProperty("--font-body", `${formatFont(appearance.fontBody)}, system-ui, sans-serif`);
-
-      // 3. Border Radius
+      // Border Radius
       const radiusMap = {
         none: "0",
         small: "0.5rem",
