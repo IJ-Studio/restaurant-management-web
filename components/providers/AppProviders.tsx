@@ -1,7 +1,7 @@
 "use client";
 
 import { Provider as ReduxProvider, useDispatch } from "react-redux";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { PreferenciasProvider } from "@/components/providers/PreferenciasProvider";
 import { DesignSystemProvider } from "@/components/providers/DesignSystemProvider";
 import { store, type AppDispatch } from "@/store/index";
 import { useEffect } from "react";
@@ -31,13 +31,13 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ReduxProvider store={store}>
-      <ThemeProvider>
+      <PreferenciasProvider>
         <DesignSystemProvider>      
           <AuthInitializer>
             {children}
           </AuthInitializer>
         </DesignSystemProvider>
-      </ThemeProvider>
+      </PreferenciasProvider>
     </ReduxProvider>
   );
 }

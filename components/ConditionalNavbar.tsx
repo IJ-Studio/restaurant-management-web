@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Dropdown, { DropdownMenuItem } from "@/components/dropdown";
 import { cn } from "@/lib/utils";
+import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 
 export default function ConditionalNavbar() {
   const pathname = usePathname();
@@ -12,25 +13,9 @@ export default function ConditionalNavbar() {
 
   const [user, setUser] = useState<any>(null);
   const [cartCount, setCartCount] = useState<number>(3);
-  const [isDark, setIsDark] = useState(false);
-
-  // Sincronización inicial del tema
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      setIsDark(true);
-    } else if (savedTheme === "light") {
-      document.documentElement.classList.remove("dark");
-      setIsDark(false);
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        document.documentElement.classList.add("dark");
-        setIsDark(true);
-      }
-    }
-  }, []);
+  // El tema vive en las preferencias de accesibilidad (PLAN 1.6).
+  const { preferencias, actualizar } = usePreferencias();
+  const isDark = preferencias.tema === "oscuro";
 
   // CONSULTA DE SESIÓN CONTINUA AL CAMBIAR DE RUTA
   useEffect(() => {
@@ -102,17 +87,7 @@ export default function ConditionalNavbar() {
     }
   };
 
-  const toggleTheme = () => {
-    if (isDark) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setIsDark(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setIsDark(true);
-    }
-  };
+  const toggleTheme = () => actualizar({ tema: isDark ? "claro" : "oscuro" });
 
   // ─── ICONOS SVGS ─────────────────────────────────────────────────
   const iconUserGeneric = (
