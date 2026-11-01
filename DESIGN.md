@@ -303,6 +303,22 @@ Calculado con la fórmula de luminancia relativa de WCAG. Mínimos: 4,5:1 para t
 
 `--color-texto-sobre-acento` sobre `--color-acento`: 5.51 · sobre `--color-acento-intenso`: 7.37.
 
+**Componentes base (medido en el catálogo de desarrollo, PLAN 3.2 y 3.4).** La prueba `tests/e2e/catalogo.spec.ts` resuelve el color que pinta el navegador (también `color-mix`) y compone los fondos semitransparentes; Chromium, Firefox y WebKit dan las mismas cifras. Texto ≥ 4,5:1; filete de control, anillo de foco e iconos ≥ 3:1. Los deshabilitados quedan exentos (WCAG 1.4.3, componentes inactivos).
+
+| Combinación (reposo → hover) | Oscuro | Claro |
+|---|---|---|
+| `primario`: texto sobre acento → acento intenso | 7,98 → 10,15 | 5,51 → 7,37 |
+| `secundario`: texto principal sobre fondo → superficie café | 15,43 → 12,83 | 15,21 → 13,56 |
+| `peligro`: error sobre fondo → mezcla al 12 % | 7,18 → 5,74 | 5,65 → 5,15 |
+| `peligro-confirmar`: texto sobre error → mezcla al 80 % | 7,18 → 8,44 | 6,16 → 7,77 |
+| Anillo de foco sobre fondo | 11,88 | 6,77 |
+| `Insignia` neutro · acento | 13,13 · 7,98 | 17,57 · 5,06 |
+| `Insignia` éxito · aviso · error · info (sobre su mezcla al 12 %) | 7,28 · 7,18 · 5,74 · 6,92 | 5,13 · **4,93** · 5,15 · 6,04 |
+| `Tarjeta`: texto secundario sobre superficie → superficie elevada | 8,35 → 7,56 | 8,47 → 8,98 |
+| `Tarjeta` en error: error sobre superficie | 6,74 | 6,16 |
+
+El margen más estrecho es la insignia de aviso en claro (4,93:1): no se debe aclarar `--color-aviso` del tema claro ni subir la mezcla del fondo por encima del 12 %.
+
 `--color-borde-sutil` (1,22–1,27:1) es **decorativo a propósito**: nunca delimita por sí solo un control ni transmite información. **Texto sobre fotografía:** se coloca siempre sobre el velo `--velo-fotografia` y se comprueba con axe en la imagen real (criterio de aceptación en el PLAN).
 
 ### Named Rules
@@ -439,19 +455,23 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 - `primario`: relleno de acento.
 - `secundario`: filete de 1 px en `--color-texto-principal` y fondo transparente.
 - `fantasma`: solo texto con subrayado al hover.
-- `peligro`: filete y texto en `--color-error`; relleno solo al confirmar.
+- `peligro`: filete y texto en `--color-error`; al pasar, fondo `color-mix(in oklab, var(--color-error) 12%, var(--color-superficie))`.
+- `peligro-confirmar`: el «relleno solo al confirmar»: fondo `--color-error` y texto `--color-texto-sobre-acento`; al pasar, `color-mix(in oklab, var(--color-error) 80%, var(--color-texto-principal))` (se aclara en oscuro y se oscurece en claro, como el acento intenso). Solo en el paso que confirma una acción destructiva.
 
-**Medidas:** alto 2,75rem (44 px); `--texto-etiqueta`.
+**Medidas:** alto mínimo 2,75rem (44 px), en `rem` para que crezca con el texto; `--texto-etiqueta` en una sola línea. Tamaños: `normal` (relleno lateral 1,5rem) y `compacto` (1rem, mismo alto). `soloIcono`: cuadrado de 2,75rem con el icono a 1,25rem y el texto solo para lectores. `anchoCompleto` para móvil y pies de diálogo.
 
 **Estados:**
 
-- **Hover:** el acento pasa a acento intenso; en el secundario, el fondo pasa a `--color-superficie-cafe`.
+- **Hover:** el acento pasa a acento intenso; en el secundario, el fondo pasa a `--color-superficie-cafe`; en el fantasma aparece el subrayado de acento. Solo con `@media (hover: hover)`.
 - **Pulsado:** `translateY(1px)`.
 - **Foco:** `outline: 2px solid var(--color-foco); outline-offset: 3px`.
-- **Deshabilitado:** opacidad 0,5 con `cursor: not-allowed` y `aria-disabled`.
-- **Cargando:** icono `LoaderCircle` girando, texto «Enviando…», `aria-busy="true"` y bloqueo de clics repetidos.
+- **Deshabilitado:** opacidad 0,5 con `cursor: not-allowed` y `aria-disabled`, **no** el atributo `disabled`: sigue siendo enfocable y un lector de pantalla lo encuentra. No cambia al pasar ni al pulsar.
+- **Cargando:** icono `LoaderCircle` girando (quieto con movimiento reducido), texto «Enviando…», `aria-busy="true"` y bloqueo de clics repetidos, también los que llegan antes de que React vuelva a pintar. **No se atenúa:** no está deshabilitado, está trabajando. Las dos etiquetas ocupan la misma celda, así que el ancho no cambia. Si `onClick` devuelve una promesa, el botón queda cargando hasta que termine.
+- **Error:** el botón vuelve a reposo; el mensaje va junto a él (o en el campo o el `Aviso`), con icono y texto.
 
-**Uso:** `BotonEnlace` envuelve `next/link`, para navegar sin `router.push` en botones.
+**Implementación de los estados:** las variantes `al-pasar` y `al-pulsar` (`styles/globals.css`) aplican el estado real y, además, el atributo `data-demo="hover|pulsado|foco"`, con el que el catálogo de desarrollo muestra cada estado fijo con la misma CSS.
+
+**Uso:** `BotonEnlace` envuelve `next/link`, para navegar sin `router.push` en botones. Un enlace no se deshabilita ni carga: si el destino no está disponible, no se pinta.
 
 ### Inputs / Fields — `Campo`, `AreaTexto`, `Selector`, `Casilla`, `Interruptor`
 
@@ -465,7 +485,11 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 
 ### Cards / Containers — `Tarjeta`, `Indicador`
 
-- **`Tarjeta`:** superficie, filete sutil y `--radio-tarjeta`, sin sombra.
+- **`Tarjeta`:** superficie, filete sutil y `--radio-tarjeta`, sin sombra. Relleno 1,5rem. Título en `--texto-titulo-interfaz` o, si es `destacada`, en Fraunces `--texto-titulo-3`.
+  - **Con enlace** (`href`): el enlace es el título y se extiende a toda la tarjeta; las acciones del pie quedan por encima y se pueden pulsar. Al pasar: `--color-superficie-elevada` y filete `--color-borde-control`. Foco: el anillo rodea la tarjeta entera.
+  - **No disponible** (`deshabilitada`): sin enlace, fondo transparente, filete discontinuo `--color-borde-control` y una `Insignia` con el motivo («Agotado»). No se atenúa el texto.
+  - **Cargando:** mismo título y tres barras de esqueleto en `--color-superficie-cafe` con `aria-busy`. **Excepción a `Esqueleto`:** sobre una superficie, `--color-superficie-elevada` es blanco sobre hueso en el tema claro y no se ve.
+  - **Error:** «No se pudo cargar» en `--color-error` con `CircleAlert` y un `Boton` secundario compacto «Reintentar».
 - **`Indicador`:**
   - Rótulo en `--texto-etiqueta`, cifra en `--texto-cifra-destacada` y comparación en `--texto-pequeno` («+8 % frente al martes pasado»), con icono de tendencia y texto.
   - **Estados:** cargando (esqueleto del mismo tamaño), error («No se pudo cargar», con botón Reintentar; nunca «$0»), sin comparación (no se muestra la línea) y **datos de ejemplo** (insignia «Datos de ejemplo» en `--color-aviso`).
@@ -508,7 +532,8 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   - Por debajo: tarjetas con contraetiqueta.
 - **`EstadoVacio`**: ilustración lineal mínima, frase que explica el vacío y una acción.
 - **`Esqueleto`**: bloques `--color-superficie-elevada` con pulso de opacidad, sin pulso si el movimiento está reducido.
-- **`Insignia`**, **`Pestanas`** (el estado seleccionado lleva filete doble inferior) y **`Paginacion`**.
+- **`Insignia`**: `--radio-pastilla`, filete de 1 px y `--texto-etiqueta`. Tonos `neutro` (superficie elevada), `acento` (solo filete y texto: no gasta el «solo oro»), `exito`, `aviso`, `error` e `info`. Los cuatro de estado llevan icono por defecto (`CircleCheck`, `TriangleAlert`, `CircleAlert`, `Info`) y fondo al 12 % de su color sobre `--color-superficie`, como los avisos. Contador con cifras tabulares y una descripción para lectores («3 pedidos nuevos»). No es interactiva. Un texto largo pasa a dos líneas en lugar de cortarse.
+- **`Pestanas`** (el estado seleccionado lleva filete doble inferior) y **`Paginacion`**.
 - **`Imagen`**: envoltorio de `next/image` con el cargador de Cloudinary y un respaldo que sí existe.
 - **`PanelAccesibilidad`**: ver más abajo.
 
