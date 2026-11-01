@@ -25,8 +25,8 @@ const T = {
   borderMed: "#d4c8bc",
   shadow: "0 2px 16px rgba(26,18,8,0.07)",
   shadowHov: "0 8px 32px rgba(26,18,8,0.12)",
-  fontD: "'Fraunces', Georgia, serif",
-  fontB: "'DM Sans', system-ui, sans-serif",
+  fontD: "var(--font-titulos)",
+  fontB: "var(--font-texto)",
   ok: "#059669",
   danger: "#dc2626",
 };
@@ -436,7 +436,7 @@ const inputStyle: React.CSSProperties = {
   fontWeight: 600,
   color: "#1a1208",
   outline: "none",
-  fontFamily: "'DM Sans', system-ui, sans-serif",
+  fontFamily: "var(--font-texto)",
   boxSizing: "border-box",
 };
 

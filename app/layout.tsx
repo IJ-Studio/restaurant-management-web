@@ -7,6 +7,7 @@ import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ConnectionStatus from "@/components/pwa/ConnectionStatus";
+import { fuenteTexto, fuenteTitulos } from "./fuentes";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -53,19 +54,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..900;1,9..40,300..900&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Ibarra+Real+Nova:ital,wght@0,400..700;1,400..700&family=Inter:wght@100..900&family=Roboto:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html
+      lang="es"
+      className={`${fuenteTitulos.variable} ${fuenteTexto.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <AppProviders>
           {/* 👇 2. Colocamos el AuthProvider envolviendo al Layout Wrapper */}

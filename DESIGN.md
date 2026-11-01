@@ -310,10 +310,11 @@ Calculado con la fórmula de luminancia relativa de WCAG. Mínimos: 4,5:1 para t
 - **Un solo oro:** por pantalla, como mucho una superficie rellena de acento.
 - **Logo blanco, siempre `currentColor`:** el logo y el sello heredan el color del texto principal.
 - **Nada de naranja:** el `#e85d04` y sus derivados desaparecen del código.
+- **Texto sobre acento, siempre oscuro de la paleta:** todo texto o icono sobre un relleno de acento usa `--color-texto-sobre-acento` (utilidad `text-texto-sobre-acento`), nunca blanco. Contraste verificado: oscuro `#14100C` sobre `#C9A267` **7,98:1** y sobre el hover `#DBB97F` **10,15:1**; claro `#FBF8F2` sobre `#835E25` **5,51:1** y sobre `#6C4C1B` **7,37:1** (todos AA). El blanco heredado sobre el ocre da 2,37:1 (1,87:1 en hover) y **falla AA**. **Cómo se corrige:** los ~60 sitios heredados con `bg-brand`/`bg-acento` y `text-white` no se arreglan uno a uno; desaparecen al sustituir cada botón, insignia o pastilla por `Boton`, `BotonEnlace` o `Insignia` (que fijan internamente `bg-acento text-texto-sobre-acento`) en las fases 3 a 5. **Criterio de cierre (PLAN 5.20):** `rg -e "bg-(brand|acento)[^\"'\x60]*text-white" -e "text-white[^\"'\x60]*bg-(brand|acento)" app components features` sin resultados.
 
 ## Typography
 
-Dos familias de Google Fonts **autoalojadas con `next/font/google`** (sin peticiones a Google en tiempo de ejecución), `display: "swap"`, subconjunto `latin` (incluye ñ y tildes) y `adjustFontFallback` activo para reducir el salto al cambiar de fuente:
+Dos familias de Google Fonts **autoalojadas con `next/font/local`**: los archivos variables `woff2` del subconjunto `latin` (incluye ñ y tildes) están en `app/_fuentes/` con su licencia OFL, así que no hay peticiones a Google ni en tiempo de ejecución ni en el build (con `next/font/google` el build depende de descargarlas y fallaba en el entorno del proyecto; PLAN 1.5). `display: "swap"` y `adjustFontFallback` (Times New Roman para Fraunces, Arial para DM Sans) para reducir el salto al cambiar de fuente:
 
 | Rol | Familia | Variable CSS | Ejes | Pila de respaldo |
 |---|---|---|---|---|
