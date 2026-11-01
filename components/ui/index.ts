@@ -1,8 +1,8 @@
 /**
  * components/ui/index.ts
  *
- * Barrel export for all UI primitive components.
- * Usage: import { Button } from '@/components/ui'
+ * Primitivas de interfaz del sistema de diseño (DESIGN.md § Components).
  */
 
-export { Button } from "./Button";
+export { Boton } from "./Boton";
+export { BotonEnlace } from "./BotonEnlace";

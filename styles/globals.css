@@ -7,6 +7,28 @@
    junto con los alias temporales (PLAN 5.20). */
 @custom-variant dark (&:where(:root:not([data-tema="claro"]), :root:not([data-tema="claro"]) *));
 
+/* Estados de los componentes de components/ui. Además del estado real, aceptan
+   data-demo para que el catálogo de desarrollo los muestre fijos con la misma CSS.
+   Un control con aria-disabled no cambia al pasar ni al pulsar. */
+@custom-variant al-pasar {
+  @media (hover: hover) {
+    &:hover:not([aria-disabled="true"], [aria-busy="true"]) {
+      @slot;
+    }
+  }
+  &[data-demo="hover"] {
+    @slot;
+  }
+}
+@custom-variant al-pulsar {
+  &:active:not([aria-disabled="true"], [aria-busy="true"]) {
+    @slot;
+  }
+  &[data-demo="pulsado"] {
+    @slot;
+  }
+}
+
 /* ===== ALIAS TEMPORALES (PLAN 1.4 → se retiran en 5.20) =====
    Tokens antiguos apuntando a los semánticos, para que toda la app adopte
    la paleta nueva sin romperse. No usar en código nuevo. */
@@ -51,7 +73,8 @@
     accent-color: var(--color-acento);
   }
 
-  :focus-visible {
+  :focus-visible,
+  [data-demo="foco"] {
     outline: 2px solid var(--color-foco);
     outline-offset: 3px;
   }
