@@ -10,12 +10,12 @@
 
 | Campo | Valor |
 |---|---|
-| Etapa | **Fase 3 cerrada** (2026-11-02). Fases 0, 1 y 3 hechas; fase 2 sin empezar. |
-| Rama activa | `feature/rediseno-web-componentes` (sale de `feature/rediseno-web-cimientos`, `d6407c9`, porque el PR de la fase 1 aún no está fusionado) |
-| Último paso completado | **Cierre de la fase 3** (2026-11-02): build, producción en los tres motores (164/162/163), catálogo en los tres (103/103), auditoría sin cambios. Detalle en [`BITACORA.md`](BITACORA.md). |
-| Bloqueo | **Usuario:** revisar en el catálogo 3.4 y 3.6–3.14, subir la rama y abrir el PR (texto en `D:\dev-cache\rediseno\pr-fase-3.md`; mejor tras fusionar el de la fase 1). |
-| Siguiente paso | Lo que indique el usuario. Por el orden del PLAN, la **fase 2** (seguridad del front), que también desbloquea «Cerrar sesión» (2.14) en la cabecera y los paneles nuevos. |
-| Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Fase 3 cerrada; no empezar otra fase sin que el usuario lo indique. Verificación en la fase: typecheck, lint de los archivos tocados, pruebas del catálogo, axe y contraste numérico de cada estado; build y los tres motores al cerrarla.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
+| Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
+| Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
+| Último paso completado | **2.1 · Actualizar Next** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: queda pendiente de la aprobación del usuario, porque el pago con Stripe no se puede verificar sin claves ni backend. |
+| Siguiente paso | 2.2 · Cabeceras base y opciones de producción. |
+| Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
 
@@ -306,7 +306,7 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front — `feature/rediseno-web-seguridad`
 
-- [ ] **2.1 · Actualizar Next** — *D-01*
+- [x] **2.1 · Actualizar Next** — *D-01* · *Hecho (2026-11-02): Next 16.4.3, React 19.2.9; 0 avisos de next. Críticos restantes por firebase-admin: NP-38.*
   - **Archivos:** `package.json`, `pnpm-lock.yaml` (`next`, `react`, `react-dom`, `eslint-config-next`).
   - **Aceptación:** `pnpm audit` sin avisos críticos de `next`; el recorrido, las pruebas y la tabla de rutas sin cambios.
   - **Commit:** `chore(dependencias): actualizar Next a la versión parcheada`
