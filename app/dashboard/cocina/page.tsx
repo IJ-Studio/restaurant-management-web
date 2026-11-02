@@ -9,18 +9,18 @@ import { KanbanColumn } from "@/features/dashboard/cocina/components/KanbanColum
 import { InventoryModal } from "@/features/dashboard/cocina/components/InventoryModal";
 import { KitchenHeader } from "@/features/dashboard/cocina/components/KitchenHeader";
 import { StockAlertBanner } from "@/features/dashboard/cocina/components/StockAlertBanner";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/index";
 
 export default function CocinaDashboard() {
   const [pedidos, setPedidos] = useState<Order[]>([]);
   const [inventario, setInventario] = useState<InventoryProduct[]>([]);
   const [vistaInv, setVistaInv] = useState(false);
   const [alertaStock, setAlertaStock] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  // El usuario sale del store (PLAN 2.15), no de localStorage.
+  const user = useSelector((estado: RootState) => estado.auth.user);
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-    if (stored) setUser(JSON.parse(stored));
-
     // Load synchronized data from "La Base"
     setPedidos(OrderService.getOrders());
     setInventario(InventoryService.getInventory());

@@ -6,8 +6,8 @@ test.describe.configure({ timeout: 120_000 }); // recorre 19 rutas; la primera v
 
 /** Claves permitidas en localStorage: preferencias de accesibilidad (DESIGN.md). */
 const CLAVES_APROBADAS = ["elquijote:preferencias"];
-/** Excepciones conocidas: authToken/user/num_mesa → D-03, NP-04, NP-12. */
-const CLAVES_EXCEPCION = ["authToken", "user", "num_mesa"];
+/** Excepciones conocidas: authToken → D-03 y NP-04; num_mesa → NP-12. `user` ya no existe (2.15). */
+const CLAVES_EXCEPCION = ["authToken", "num_mesa"];
 
 async function recorrer(page: import("@playwright/test").Page) {
 	for (const ruta of RUTAS_PUBLICAS) {
@@ -20,8 +20,8 @@ test("localStorage solo contiene claves aprobadas o excepciones conocidas", asyn
 	await recorrer(page);
 	const claves = await page.evaluate(() => Object.keys(localStorage));
 	const extra = claves.filter((c) => ![...CLAVES_APROBADAS, ...CLAVES_EXCEPCION].includes(c));
-	// Las claves de dataService (NP-12) se retiran en el paso 2.14; hasta entonces se
-	// listan aquí con claridad para que el fallo muestre exactamente cuáles son.
+	// Las claves de dataService (NP-12) solo las escriben los paneles; si alguna apareciera en
+	// una ruta pública, el fallo la nombra.
 	expect(extra, `claves no aprobadas: ${extra.join(", ")}`).toEqual([]);
 });
 
@@ -141,5 +141,63 @@ test.describe("cierre de sesión", () => {
 		await page.getByRole("menuitem", { name: "Cerrar sesión" }).click();
 		await comprobarLimpio(page, "/profile");
 		await contexto.close();
+	});
+});
+
+// Paso 2.15: los datos del usuario solo viven en memoria y la sesión se lee una vez por carga.
+test.describe("datos del usuario", () => {
+	test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
+
+	test("iniciar sesión no guarda el usuario en localStorage", async ({ page }) => {
+		await page.route("**/api/auth/login", (ruta) =>
+			ruta.fulfill({
+				contentType: "application/json",
+				body: JSON.stringify({ accessToken: "e2e.token.ficticio", user: { id: 9, name: "Prueba", lastname: "Cliente", email: "prueba@correo.mx", roleId: 5 } }),
+			}),
+		);
+		await page.goto("/login", { waitUntil: "load" });
+		// El formulario antiguo no asocia sus etiquetas (se rehace en el 4.17): se usa el id.
+		await page.locator("#email").fill("prueba@correo.mx");
+		await page.locator("#password").fill("contrasena-de-prueba");
+		await page.getByRole("button", { name: "Iniciar Sesión" }).click();
+		await expect(page).toHaveURL(/\/menu(\?|$)/);
+		const claves = await page.evaluate(() => Object.keys(localStorage));
+		expect(claves).not.toContain("user");
+		// authToken sigue como excepción (D-03, NP-04).
+		expect(claves).toContain("authToken");
+	});
+
+	const CARGAS: { ruta: string; rol: "cliente" | "admin" | "cajero" | "mesero" | "cocina" }[] = [
+		{ ruta: "/", rol: "cliente" },
+		{ ruta: "/menu", rol: "cliente" },
+		{ ruta: "/menu/producto/7", rol: "cliente" },
+		{ ruta: "/menu/pedido", rol: "cliente" },
+		{ ruta: "/menu/pedido/checkout", rol: "cliente" },
+		{ ruta: "/reservations", rol: "cliente" },
+		{ ruta: "/profile", rol: "cliente" },
+		{ ruta: "/dashboard/admin", rol: "admin" },
+		{ ruta: "/dashboard/cajero", rol: "cajero" },
+		{ ruta: "/dashboard/mesero", rol: "mesero" },
+		{ ruta: "/dashboard/cocina", rol: "cocina" },
+	];
+
+	test("/api/auth/me se pide como máximo una vez por carga", async ({ browser }) => {
+		test.setTimeout(120_000);
+		const veces: Record<string, number> = {};
+		for (const { ruta, rol } of CARGAS) {
+			const contexto = await browser.newContext({ storageState: archivoSesion(rol), viewport: { width: 1280, height: 900 } });
+			const page = await contexto.newPage();
+			let n = 0;
+			page.on("request", (r) => {
+				if (new URL(r.url()).pathname === "/api/auth/me") n++;
+			});
+			await page.goto(ruta, { waitUntil: "load" });
+			await page.waitForTimeout(1500);
+			veces[ruta] = n;
+			// Nada del usuario en localStorage, tampoco en los paneles.
+			expect(await page.evaluate(() => localStorage.getItem("user")), ruta).toBeNull();
+			await contexto.close();
+		}
+		expect(Object.entries(veces).filter(([, n]) => n > 1)).toEqual([]);
 	});
 });

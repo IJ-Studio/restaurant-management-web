@@ -6,6 +6,45 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.15 · Datos del usuario solo en memoria (2026-11-02)
+
+**Cambios:**
+- **`lib/sesion/sesion-cliente.ts`** (nuevo):
+  - `pedirSesion()` hace **una sola** petición a `/api/auth/me` por carga de página y la comparte con todos los que la piden.
+  - Devuelve `ok`, `status` y `json()`, la misma forma que usaban las páginas, así que su lógica no cambia.
+  - Un fallo de red no se guarda.
+  - `olvidarSesion()` lo descarta. Lo llaman el login y el cierre de sesión.
+- **El usuario sale del store:**
+  - `hydrateSession` usa `pedirSesion()`.
+  - `ConditionalNavbar` ya no pide la sesión en cada cambio de ruta: lee `state.auth.user`. Lo actualizan el login (`setUser`) y el cierre (`sesionCerrada`).
+  - Los paneles de mesero, cocina y cajero leen el usuario del store, no de `localStorage.user`.
+  - `AuthProvider` ya no consulta `/auth/me` del backend con el `authToken`: toma usuario y estado de carga del store. `useAuth` no lo usa nadie, pero se conserva.
+- **Login:** ya no escribe `localStorage.user`. Solo `setUser` en el store, y antes `olvidarSesion()`.
+- **Lectura al cargar compartida:** detalle de producto, pedido, checkout, perfil y `ReservationSidebar` usan `pedirSesion()`.
+  - **Fuera de la lista de archivos del PLAN**, pero sin ellos no se cumple su aceptación («una vez por carga»). El cambio es mecánico: `fetch("/api/auth/me", …)` → `pedirSesion()`.
+  - En el perfil, la lectura de «Guardar» (acción del usuario) sigue preguntando de nuevo.
+- **Aviso de instalación (`InstallPrompt`):** cerrarlo dura lo que la visita (variable en memoria). La clave antigua `pwa-install-dismissed` se borra al cargar.
+- **Pruebas:**
+  - `global-setup` ya no siembra `user`, porque la aplicación no lo escribe.
+  - En `almacenamiento.spec.ts`, las excepciones quedan en `authToken` (D-03, NP-04) y `num_mesa` (NP-12). Las claves de `dataService` (NP-12) solo aparecen en los paneles.
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Lint: ningún archivo sube su cuenta; cajero, cocina, mesero y `ConditionalNavbar` bajan uno cada uno; el nuevo está limpio.
+- `pnpm test:unidad`: 38/38.
+- `almacenamiento.spec.ts`, «datos del usuario» (nuevas):
+  - Iniciar sesión, con `/api/auth/login` simulado, lleva a `/menu` sin `localStorage.user`, y `authToken` sigue como excepción. El formulario antiguo no asocia sus etiquetas (lo rehace el 4.17), así que la prueba usa `#email` y `#password`.
+  - En 11 cargas (inicio, menú, producto, pedido, checkout, reservas, perfil y los cuatro paneles, cada una con su rol), `/api/auth/me` se pide **como máximo una vez** y `localStorage.user` es `null`.
+- Build: correcto.
+- Chromium contra `next start`, en dos tandas: 110 + 95 = **205/205**.
+- Sin procesos abiertos.
+
+**No verificado:**
+- El login de punta a punta con el backend real.
+- Lo que muestran los paneles con un usuario real: sin backend, `/api/auth/me` responde sin usuario y se ven los nombres por defecto («Cajero», «Mesero»).
+
+**Comportamiento a tener en cuenta:** dentro de una misma carga, las páginas comparten la primera respuesta. Si la sesión caduca a mitad de la visita, se nota en la siguiente carga o en la siguiente llamada al API, no al cambiar de ruta en el cliente. Antes, `ConditionalNavbar` volvía a preguntar en cada ruta.
+
 ### 2.14 · Cierre de sesión único (2026-11-02)
 
 **Cambios:**

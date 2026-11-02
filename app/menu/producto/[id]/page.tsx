@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
 import { cantidadSegura } from "@/lib/seguridad/urls";
+import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 
 function ProductDetailPageContent() {
   const params = useParams();
@@ -48,7 +49,7 @@ function ProductDetailPageContent() {
     if (reduxUser?.id) return reduxUser;
 
     try {
-      const res = await fetch("/api/auth/me", { cache: "no-store" });
+      const res = await pedirSesion();
       if (res.ok) {
         const sessionData = await res.json();
         const activeUser = sessionData?.user || sessionData;

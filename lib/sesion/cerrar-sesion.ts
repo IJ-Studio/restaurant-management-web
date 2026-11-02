@@ -4,11 +4,12 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { sesionCerrada } from "@/store/slices/authSlice";
+import { olvidarSesion } from "./sesion-cliente";
 
 /**
- * Cierre de sesión único (PLAN 2.14). Lo usan la barra lateral de los paneles, el menú de la
- * cabecera antigua, `MenuCuenta` y `BarraSuperiorPanel` (como `alCerrarSesion`) y la página de
- * reservas de administración.
+ * Cierre de sesión único (PLAN 2.14). Lo usan la barra lateral de los paneles, el panel de
+ * mesero, el menú de la cabecera antigua y, como `alCerrarSesion`, `MenuCuenta` y
+ * `BarraSuperiorPanel`.
  *
  * 1. `POST /api/auth/logout` (sin caché). Si falla o no hay red, se limpia igual.
  * 2. Caduca las cookies de sesión y borra `authToken`, `user` y `num_mesa`.
@@ -69,6 +70,7 @@ export function useCerrarSesion(): () => Promise<void> {
 	const dispatch = useDispatch();
 	return useCallback(async () => {
 		await limpiarSesionDelNavegador();
+		olvidarSesion();
 		dispatch(sesionCerrada());
 		router.replace("/login");
 	}, [router, dispatch]);

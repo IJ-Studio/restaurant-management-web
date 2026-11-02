@@ -25,11 +25,15 @@ function isIos() {
   );
 }
 
-function wasDismissed() {
+// El aviso cerrado ya no se guarda en localStorage (PLAN 2.15): dura lo que la visita.
+let descartado = false;
+
+/** Retira el valor que guardaban las versiones anteriores. */
+function retirarClaveAntigua() {
   try {
-    return localStorage.getItem(DISMISS_KEY) === "1";
+    localStorage.removeItem(DISMISS_KEY);
   } catch {
-    return false;
+    /* almacenamiento no disponible: no hay nada que retirar */
   }
 }
 
@@ -44,7 +48,8 @@ export default function InstallPrompt() {
   const [showIosHint, setShowIosHint] = useState(false);
 
   useEffect(() => {
-    if (isStandalone() || wasDismissed()) return;
+    retirarClaveAntigua();
+    if (isStandalone() || descartado) return;
 
     if (isIos()) {
       setShowIosHint(true);
@@ -66,11 +71,7 @@ export default function InstallPrompt() {
   }, []);
 
   const dismiss = () => {
-    try {
-      localStorage.setItem(DISMISS_KEY, "1");
-    } catch {
-      /* almacenamiento no disponible: solo se oculta en esta visita */
-    }
+    descartado = true;
     setDeferred(null);
     setShowIosHint(false);
   };
