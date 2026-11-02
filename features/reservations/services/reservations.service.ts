@@ -1,4 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+// Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 /**
  * Obtiene el token JWT desde:

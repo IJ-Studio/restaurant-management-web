@@ -40,6 +40,8 @@ export default defineConfig({
 			JWT_SECRET: SECRETO_E2E,
 			NEXT_PUBLIC_API_URL: `http://localhost:${PUERTO}`,
 			NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: "dcb1tspbj",
+			// Clave publicable ficticia: el build la exige (PLAN 2.16); el pago no se prueba.
+			NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_e2e_ficticia",
 		},
 	},
 });

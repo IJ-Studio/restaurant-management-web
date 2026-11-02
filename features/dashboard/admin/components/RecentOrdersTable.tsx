@@ -74,7 +74,8 @@ export function RecentOrdersTable() {
   const [filter, setFilter] = useState("todas");
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+  // Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
   const fetchOrders = useCallback(async () => {
     try {

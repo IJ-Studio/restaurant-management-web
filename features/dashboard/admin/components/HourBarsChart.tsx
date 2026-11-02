@@ -22,7 +22,8 @@ export function HourBarsChart() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+  // Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
   const fetchHourData = useCallback(async () => {
     try {

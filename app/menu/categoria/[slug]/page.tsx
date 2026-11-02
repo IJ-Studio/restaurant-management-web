@@ -43,7 +43,8 @@ function CategoryPageContent() {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+        // Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
         const res = await fetch(`${apiUrl}/menu/categories/with-products`, { cache: "no-store" });
 
         if (!res.ok) {

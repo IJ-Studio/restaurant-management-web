@@ -6,6 +6,42 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.16 · Variables públicas validadas en el build (2026-11-02)
+
+**Cambios:**
+- **`lib/config/entorno-publico.ts`** (nuevo). `problemasEntornoPublico()` y `validarEntornoPublico()`:
+  - **Exige** `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` y `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+  - **API:** URL válida, sin credenciales y `https:` en producción. **Decisión conservadora:** `http:` solo se acepta con un host local (`localhost`, `127.0.0.1`, `::1`), porque el build de las pruebas sirve la API simulada en el mismo equipo.
+  - **Stripe:** la clave debe empezar por `pk_`.
+  - **Rechaza** cualquier `NEXT_PUBLIC_*` cuyo nombre contenga `SECRET`, `PRIVATE`, `SERVICE_ROLE` o `PASSWORD`.
+  - Los mensajes nombran las variables, **nunca sus valores**.
+- **`next.config.ts`:** valida solo en `PHASE_PRODUCTION_BUILD`. `next dev` y `next start` no cambian.
+- **Sin respaldo `localhost:10000` en el código del cliente:**
+  - `lib/api.ts`, `reservations.service.ts`, `menu/categoria/[slug]`, `dashboard/admin/page.tsx`, `HourBarsChart`, `RecentOrdersTable` y `lib/sesion/dal.ts` usan `process.env.NEXT_PUBLIC_API_URL ?? ""`; el build garantiza que exista.
+  - `ExportModal` tenía `http://localhost:10000` **fijo**, no como respaldo. Ahora usa la misma variable. La ruta (`/export`) no cambia.
+- **Entornos de prueba y medición:** `playwright.config.ts` y `scripts/comparar-rendimiento.mjs` añaden una clave publicable ficticia (`pk_test_…`).
+- **Quedan con respaldo `localhost:10000`** las rutas de `app/api/*` (servidor, NP-01 y NP-17). No llegan a `.next/static`.
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Lint: ningún archivo cambia su cuenta y los nuevos están limpios.
+- `pnpm test:unidad`: 44/44. `entorno-publico.spec.ts` (nueva) comprueba:
+  - entorno completo y `http://localhost`;
+  - variables que faltan;
+  - `http:` remoto en producción, URL inválida, `ftp:` y credenciales;
+  - `sk_`;
+  - cuatro nombres de secreto;
+  - que el mensaje no contenga los valores.
+- **Build sin `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` y con una `NEXT_PUBLIC_SERVICE_ROLE_PRUEBA` ficticia:** falla al cargar `next.config.ts` con «Variables públicas no válidas (PLAN 2.16)» y los dos problemas. El registro no contiene ninguno de los valores (0 coincidencias).
+- Build con el entorno de pruebas: correcto. `localhost:10000` en `.next/static`: **0 archivos**.
+- Chromium contra `next start`, en dos tandas: 110 + 95 = **205/205**.
+- Sin procesos abiertos.
+
+**Decisión pendiente del usuario:**
+- El build de prueba sin la clave de Stripe cargó `.env.local` y `.env` (no se leyeron) y aun así faltaba la clave. Así que **el entorno local no define `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`**, y desde este paso `pnpm build` falla sin ella.
+- Hay que añadirla al `.env.local` y al entorno del despliegue, y comprobar que allí `NEXT_PUBLIC_API_URL` sea `https:`.
+- No verificado: no hay acceso al entorno de despliegue.
+
 ### 2.15 · Datos del usuario solo en memoria (2026-11-02)
 
 **Cambios:**

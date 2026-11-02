@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
-import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
+import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD } from "next/constants.js";
+import { validarEntornoPublico } from "./lib/config/entorno-publico";
 import { HOSTS_IMAGEN } from "./config/seguridad/hosts-permitidos";
 import { CABECERA_SIN_CACHE, CABECERAS_SEGURIDAD, RUTAS_SIN_CACHE } from "./config/seguridad/cabeceras";
 
@@ -45,6 +46,8 @@ const nextConfig: NextConfig = {
 };
 
 export default function configuracion(fase: string): NextConfig {
+  // El build se detiene si faltan variables públicas o alguna parece un secreto (PLAN 2.16).
+  if (fase === PHASE_PRODUCTION_BUILD) validarEntornoPublico();
   if (fase !== PHASE_DEVELOPMENT_SERVER) return nextConfig;
   return { ...nextConfig, pageExtensions: ["dev.tsx", ...EXTENSIONES] };
 }
