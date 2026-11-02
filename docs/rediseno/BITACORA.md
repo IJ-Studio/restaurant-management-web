@@ -6,6 +6,32 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.7 · Sin service worker (2026-11-02) — D-11 rechazada
+
+**Cambios:**
+- **Borrados** (estaban versionados): `public/sw.js` y `components/pwa/ServiceWorkerRegister.tsx`. En `app/layout.tsx`, su uso pasa a `RetirarServiceWorker`.
+- **`components/pwa/RetirarServiceWorker.tsx`** (nuevo): isla de cliente que no es un service worker. En cada carga desregistra las instalaciones que queden y borra las cachés de la aplicación, sin errores si el navegador no tiene esas APIs. Su retirada sigue en NP-34.
+- **`next.config.ts`:** sin la regla de cabeceras de `/sw.js`.
+- **`/offline`:** la ruta se conserva, aunque ya no se sirve de forma automática.
+- **`InstallPrompt`:** no se toca, porque ya devolvía `null` si el navegador no emite `beforeinstallprompt`.
+- **Pruebas:**
+  - `csp.spec.ts` y `excepciones.ts` dejan de tolerar la violación de `worker-src` por `/sw.js`. Solo queda justificada la de Unsplash (NP-36).
+  - `almacenamiento.spec.ts`:
+    - la prueba de Cache Storage y service worker pasa **sin `test.fail()`** y, además, comprueba que ninguna página pide `/sw.js`;
+    - una prueba nueva instala un service worker «antiguo» en `/sw.js` (servido por la propia prueba, porque el archivo ya no existe) y una caché `quijote-v1`, recarga y comprueba que no queda ni el registro ni la caché.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+- Build: correcto.
+- Chromium contra `next start`:
+  - almacenamiento, CSP y cabeceras: 27/27; las rutas públicas sin ninguna violación de CSP, y las de panel solo con las 6 justificadas de Unsplash;
+  - recorrido y línea base: 137/137.
+- Sin procesos abiertos.
+
+**No verificado:**
+- La limpieza en navegadores reales que tuvieran instalado el SW de producción anterior; se simula con uno equivalente.
+- La prueba del SW antiguo solo corre en Chromium, a propósito: la limpieza usa APIs estándar.
+
 ### 2.6 · Política de caché (2026-11-02)
 
 **Cambios:**

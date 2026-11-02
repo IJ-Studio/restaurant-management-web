@@ -5,7 +5,7 @@ import { AppProviders } from "@/components/providers/AppProviders";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
 import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
-import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
+import { RetirarServiceWorker } from "@/components/pwa/RetirarServiceWorker";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ConnectionStatus from "@/components/pwa/ConnectionStatus";
 import { fuenteTexto, fuenteTitulos } from "./fuentes";
@@ -74,7 +74,7 @@ export default async function RootLayout({
             <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
           </AuthProvider>
         </AppProviders>
-        <ServiceWorkerRegister />
+        <RetirarServiceWorker />
         <InstallPrompt />
         <ConnectionStatus />
       </body>

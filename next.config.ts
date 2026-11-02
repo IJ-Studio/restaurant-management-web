@@ -37,14 +37,6 @@ const nextConfig: NextConfig = {
       },
       // Datos privados sin caché (PLAN 2.6).
       ...RUTAS_SIN_CACHE.map((source) => ({ source, headers: [CABECERA_SIN_CACHE] })),
-      {
-        // El service worker siempre debe revalidarse para que las actualizaciones lleguen.
-        source: '/sw.js',
-        headers: [
-          { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
-          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
-        ],
-      },
     ];
   },
 };

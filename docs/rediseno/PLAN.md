@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.6 · Política de caché** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **2.7 · Sin service worker** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | 2.7 · Sin service worker. |
+| Siguiente paso | 2.8 · Logger del cliente sin datos sensibles. |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -370,7 +370,7 @@
   - **Aceptación:** `cabeceras.spec.ts` sin `test.fail()` en `no-store`; `rg "revalidate" app lib features` solo muestra `0` o nada.
   - **Commit:** `feat(seguridad): no-store en datos y páginas privadas`
 
-- [ ] **2.7 · Sin service worker** — *D-11 rechazada: no habrá service worker*
+- [x] **2.7 · Sin service worker** — *D-11 rechazada: no habrá service worker* · *Hecho (2026-11-02): sin sw.js ni su registro; RetirarServiceWorker limpia instalaciones y cachés previas; prueba con un SW antiguo simulado.*
   - **Archivos:** se borran `public/sw.js` y `components/pwa/ServiceWorkerRegister.tsx` (y su uso en `app/layout.tsx`); en `next.config.js` se quita la regla de cabeceras de `/sw.js`.
   - **Hacer:**
     - Nuevo `components/pwa/RetirarServiceWorker.tsx`, una isla de cliente que no es un service worker. En cada carga desregistra las instalaciones existentes (`navigator.serviceWorker.getRegistrations()` → `unregister()`) y borra las cachés de la aplicación (`caches.keys()` → `caches.delete`). Se mantiene un tiempo para limpiar los navegadores que ya tenían el SW; su retirada queda en NP-34.

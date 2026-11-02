@@ -14,7 +14,6 @@ const SALIDA = join("test-results", "csp");
 
 /** Violaciones que se toleran de forma temporal, con el paso del PLAN que las retira. */
 const JUSTIFICADAS = [
-	{ directiva: "worker-src", bloqueado: "/sw.js", resuelve: "2.7 (sin service worker)" },
 	// Fotos de muestra de aboutMock.ts en el editor de «Acerca de». Sustituirlas cambia contenido y
 	// permitir el origen amplía la CSP: decisión del usuario antes del 2.5 (NP-36).
 	{ directiva: "img-src", bloqueado: "https://images.unsplash.com/", resuelve: "NP-36, antes del 2.5" },
