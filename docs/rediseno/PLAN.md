@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 3 en curso** (2026-11-01). Fase 1 cerrada; sus ramas ya están en el remoto y el PR lo gestiona el usuario. Ya hechos de la fase 3: 3.0, 3.2 y parte de 3.4. |
 | Rama activa | `feature/rediseno-web-componentes` (sale de `feature/rediseno-web-cimientos`, `d6407c9`, porque el PR de la fase 1 aún no está fusionado) |
-| Último paso completado | **3.10 · MigasDePan y BotonVolver** (2026-11-01). Detalle en [`BITACORA.md`](BITACORA.md). |
-| Bloqueo | Ninguno. 3.1, 3.5 y 3.3 aprobados por el usuario (2026-11-01), con las decisiones de la revisión aplicadas (BITÁCORA). |
-| Siguiente paso | 3.11, y **parar tras él** para la revisión del usuario en el catálogo. Al cerrar la fase: build, Firefox y WebKit. |
+| Último paso completado | **3.11 · CabeceraSitio y PieSitio** (2026-11-01). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Bloqueo | **Revisión del usuario** de los pasos 3.4 y 3.6–3.11 en el catálogo (`next dev` → `/catalogo`). No empezar el 3.12 ni otro paso hasta que el usuario lo indique. |
+| Siguiente paso | **Revisión del usuario** de los pasos 3.4 y 3.6–3.11 en el catálogo. Después, lo que indique (quedan 3.12–3.14). Al cerrar la fase: build, Firefox, WebKit y `pnpm revisar:invisibles`. |
 | Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.4, 3.6, 3.7, 3.8, 3.9, 3.10 y 3.11, y **parar tras el 3.11**. Verificación en la fase: typecheck, lint de los archivos tocados, pruebas del catálogo, axe y contraste numérico de cada estado; build y los tres motores al cerrarla.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -455,7 +455,7 @@
   - **Commit:** `fix(seguridad): validar redirecciones, enlaces y parámetros`
 
 - [ ] **2.14 · Cierre de sesión único y limpieza de estado**
-  - **Archivos:** `lib/sesion/cerrar-sesion.ts` y `store/slices/authSlice.ts` (acción `sesionCerrada`, que reinicia todo el estado del store). Sustituye las implementaciones de `ConditionalNavbar`, `Navbar`, `AdminSidebar` y `admin/reservations`.
+  - **Archivos:** `lib/sesion/cerrar-sesion.ts` y `store/slices/authSlice.ts` (acción `sesionCerrada`, que reinicia todo el estado del store). Sustituye las implementaciones de `ConditionalNavbar`, `Navbar`, `AdminSidebar` y `admin/reservations`. También se conecta a `MenuCuenta` de la cabecera nueva (3.11), que lo recibe como `alCerrarSesion` y hasta entonces no ofrece «Cerrar sesión».
   - **Hacer:**
     1. `POST /api/auth/logout`.
     2. Borrar `authToken`, `user` y `num_mesa`.
@@ -558,7 +558,7 @@ Cada paso crea el componente en `components/ui/` o `components/marca/` y lo mues
   - **Hacer:** mapa estático `ruta → sección de origen` en `config/navegacion-publica.ts`. El botón usa el historial si el referente es del mismo origen y, si no, vuelve al ancla de la sección.
   - **Commit:** `feat(navegacion): migas de pan y regreso a la sección de origen`
 
-- [ ] **3.11 · `CabeceraSitio` y `PieSitio`** — *D-09*
+- [x] **3.11 · `CabeceraSitio` y `PieSitio`** — *D-09* · *Hecho (2026-11-01): CabeceraSitio (servidor, con islas) y PieSitio (servidor); cierre de sesión pendiente del 2.14 y variante sobre la portada en el 4.3.*
   - **Hacer:** componentes de servidor con islas de cliente para la cuenta, el menú móvil y la sección activa. En el pie, el enlace discreto «Acceso del personal». Los 7 SVG a mano de `ConditionalNavbar` se sustituyen por iconos Lucide.
   - **Commit:** `feat(marca): cabecera y pie del sitio`
 
@@ -590,7 +590,7 @@ Cada paso conserva textos, endpoints y URL; sustituye los componentes antiguos p
 - [ ] **4.2 · Estructura de la landing.** Componente de servidor con las peticiones existentes en paralelo (`Promise.all`, `no-store`), anclas y resaltado de la sección activa. Retira los `console.log` y los handlers vacíos.
   - **Commit:** `feat(landing): estructura de una sola página con anclas`
 
-- [ ] **4.3 · Portada (`#inicio`).** Fotografía a sangre con `priority` (en Next 16, `preload`; ver BITÁCORA 1.9), velo y titular de portada. **LCP:** la medición del cierre de la fase 1 lo subió de 4339 a 5194 ms (FCP y TBT bajaron): la imagen de portada debe precargarse, pedirse con el ancho ajustado a su hueco (`sizes` real) y no debe haber precargas innecesarias que compitan con ella. La imagen actual (`Gemini_Generated_Image_2mv3…`, 1584×672) muestra en la esquina inferior derecha la **marca de agua de Gemini**: se recorta **en la entrega** con una transformación (`c_crop,w_0.9,h_0.9,g_north_west`) sin modificar el recurso. Como mide 1584 px, se sirve con `sizes="100vw"` y un ancho máximo de 1584 para no ampliarla. Su sustitución es NP-33.
+- [ ] **4.3 · Portada (`#inicio`).** **Cabecera transparente sobre la portada** (aplazada del 3.11): texto claro en los dos temas y un velo superior propio (tokens nuevos en DESIGN.md), comprobado con axe sobre la imagen real. Fotografía a sangre con `priority` (en Next 16, `preload`; ver BITÁCORA 1.9), velo y titular de portada. **LCP:** la medición del cierre de la fase 1 lo subió de 4339 a 5194 ms (FCP y TBT bajaron): la imagen de portada debe precargarse, pedirse con el ancho ajustado a su hueco (`sizes` real) y no debe haber precargas innecesarias que compitan con ella. La imagen actual (`Gemini_Generated_Image_2mv3…`, 1584×672) muestra en la esquina inferior derecha la **marca de agua de Gemini**: se recorta **en la entrega** con una transformación (`c_crop,w_0.9,h_0.9,g_north_west`) sin modificar el recurso. Como mide 1584 px, se sirve con `sizes="100vw"` y un ancho máximo de 1584 para no ampliarla. Su sustitución es NP-33.
   - **Aceptación:** axe verifica el contraste sobre la imagen real; LCP en móvil < 2,5 s.
   - **Commit:** `feat(landing): portada`
 
