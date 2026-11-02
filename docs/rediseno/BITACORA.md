@@ -6,6 +6,36 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.9 · `EtiquetaSeccion`, `Contraetiqueta`, `SelloCasa` y `.filete-doble` (2026-11-01)
+
+`SelloCasa` y las clases `.etiqueta-seccion`, `.filete-doble` y `.contraetiqueta` venían de la fase 1; este paso crea los componentes que faltaban y corrige la contraetiqueta.
+
+**Componentes** (`components/marca/`, de servidor):
+- `EtiquetaSeccion.tsx`: lote («Nº 03», oculto a lectores), rótulo, filete doble, título con `id` para el `aria-labelledby` de la sección, y entradilla. Alineada al inicio o centrada; nivel de título configurable.
+- `Contraetiqueta.tsx`: pares rótulo/valor con `tipo` `cifra` (por defecto) o `texto`, a una o dos columnas, y `sinFileteFinal`.
+- Catálogo: sección «Piezas de marca» (`DemosMarca.tsx`): etiqueta sobre el fondo y centrada en una banda café con el sello y el botón de reservar, contraetiquetas a una y dos columnas y el filete doble.
+- DESIGN.md documenta los dos componentes.
+
+**Contraetiqueta corregida** (lo anotado en el 3.5, «Visto de paso»):
+- **Causa:** `dt` tenía `align-self: center` y `dd` no. Con un valor de dos líneas, el rótulo quedaba más bajo y sus filetes, en escalón.
+- **Solución:** los dos ocupan la fila entera (`stretch`) y centran su contenido con flex, así que los filetes coinciden.
+- **Otros cambios:** dos columnas desde 768 px (`data-columnas="2"`); valor de texto en peso normal (`data-tipo="texto"`); sin filete final si se pide.
+- **Tabla:** usaba `!important` para que sus tarjetas mostraran el texto en peso normal; ahora usa `Contraetiqueta`. Con ella, el texto de las tarjetas va al tamaño de las cifras, no en `--texto-pequeno`, para que la contraetiqueta sea igual en toda la aplicación.
+
+**Verificación** (Chromium contra `next dev`):
+- `marca-componentes.spec.ts` (nueva):
+  - orden de la etiqueta (lote oculto, rótulo, filete, título, entradilla); lote en itálica y título sin mayúsculas;
+  - filete doble de 48 × 5 px con dos líneas de 1 px;
+  - filetes de rótulo y valor a la misma altura a 390 y 1024 px;
+  - dos columnas a 1024 px y una a 390;
+  - sello decorativo y con el color del texto;
+  - axe y sin desborde a 360 px con texto al 125 % en los dos temas.
+- `tabla.spec.ts` (con las tarjetas ya sobre `Contraetiqueta`) y `catalogo.spec.ts` con la sección nueva: verde, con el contraste AA de todas las muestras en los dos temas.
+- Captura revisada (oscuro, 360 px, 125 %).
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+
+**No verificado:** Firefox y WebKit.
+
 ### 3.8 · `Indicador` y gráficas base (2026-11-01)
 
 **Guía aplicada:** la skill de visualización de datos.

@@ -535,8 +535,12 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   4. Título (`h2`).
   5. Entradilla opcional.
 
-  Clase: `.etiqueta-seccion`.
-- **`Contraetiqueta`:** lista de definiciones (`<dl>`) con pares rótulo/valor separados por filetes sutiles y cifras tabulares, a una o dos columnas. Se usa en el detalle de plato, la ficha de vino futura, el resumen de pedido, el resumen de reserva y el detalle en paneles. Clase: `.contraetiqueta`.
+  Clase: `.etiqueta-seccion`. Componente `EtiquetaSeccion` (`components/marca/`): el lote se escribe «Nº 03» y va oculto a los lectores (es ornamento); el rótulo, en `--texto-secundario`; el título, en Fraunces `--texto-titulo-2` con `text-wrap: balance` y un máximo de 24ch, lleva `id` para el `aria-labelledby` de su sección. Alineada al inicio o centrada (bandas como `#reservar`).
+- **`Contraetiqueta`:** lista de definiciones (`<dl>`) con pares rótulo/valor separados por filetes sutiles y cifras tabulares, a una o dos columnas. Se usa en el detalle de plato, la ficha de vino futura, el resumen de pedido, el resumen de reserva y el detalle en paneles. Clase: `.contraetiqueta`. Componente `Contraetiqueta` (`components/marca/`):
+  - Valor de tipo `cifra` (`--texto-cifra-tabla`, peso 500, tabular) o `texto` (mismo tamaño, peso normal).
+  - Rótulo y valor ocupan la misma fila de la rejilla y centran su contenido en vertical, así que sus filetes quedan siempre a la misma altura aunque el valor ocupe dos líneas.
+  - `columnas={2}`: dos pares por fila desde 768 px, separados por `--espacio-xl`.
+  - `sinFileteFinal` quita el filete del último par dentro de una tarjeta que ya cierra.
 - **`SelloCasa`:** SVG del molino en un círculo con filete doble, 6rem en escritorio y 4,5rem en móvil. Una vez por página. Decorativo (`aria-hidden`).
 - **`Logo`:** SVG local con `fill="currentColor"`. Sustituye las URL de Cloudinary y elimina el SVG remoto.
 

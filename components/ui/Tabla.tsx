@@ -1,4 +1,5 @@
-import { Fragment, type Key, type ReactNode } from "react";
+import type { Key, ReactNode } from "react";
+import { Contraetiqueta } from "@/components/marca/Contraetiqueta";
 import { cn } from "@/lib/utils";
 import { Esqueleto } from "./Esqueleto";
 import { RegionDesplazable } from "./RegionDesplazable";
@@ -186,15 +187,10 @@ export function Tabla<T>({
 									{marca(fila) && <span className="solo-lectores"> (seleccionada)</span>}
 								</p>
 								{enTarjeta.length > 0 && (
-									<dl className="contraetiqueta [&>dd]:min-w-0 [&>dd:last-of-type]:border-b-0 [&>dt:last-of-type]:border-b-0">
-										{enTarjeta.map((c) => (
-											// Sin envoltorio: `.contraetiqueta > dt/dd` necesita que sean hijos directos.
-											<Fragment key={c.clave}>
-												<dt>{c.titulo}</dt>
-												<dd className={c.numerica ? undefined : "font-texto text-(length:--texto-pequeno)! font-normal!"}>{c.celda(fila)}</dd>
-											</Fragment>
-										))}
-									</dl>
+									<Contraetiqueta
+										sinFileteFinal
+										pares={enTarjeta.map((c) => ({ rotulo: c.titulo, valor: c.celda(fila), tipo: c.numerica ? "cifra" : "texto" }))}
+									/>
 								)}
 								{acciones && <div className="flex flex-wrap gap-2 pt-1">{acciones(fila)}</div>}
 							</li>
