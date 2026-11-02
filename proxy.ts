@@ -3,6 +3,8 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { CABECERA_CSP_INFORME, construirCsp, crearNonce } from "./config/seguridad/csp";
 import { claveJwt } from "./lib/seguridad/secreto-jwt";
+import { esApiPublica, esApiSoloAdmin } from "./config/seguridad/rutas-api-publicas";
+import { ROLES } from "./config/roles.config";
 
 // ─── Rutas públicas (no requieren autenticación) ───────────────────────────
 const PUBLIC_ROUTES = ["/", "/login", "/register", "/reset", "/frm_reset"];
@@ -67,9 +69,44 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   return respuesta;
 }
 
+/** Respuesta JSON genérica, sin caché, para la API (PLAN 2.10). */
+function denegar(estado: 401 | 403): NextResponse {
+  return NextResponse.json(
+    { error: estado === 401 ? "No autorizado" : "Acceso denegado" },
+    { status: estado, headers: { "Cache-Control": "no-store" } },
+  );
+}
+
+/** Páginas del comensal que exigen sesión (PLAN 2.10). */
+const PAGINAS_CON_SESION = ["/profile", "/menu/pedido"];
+
+/** Redirige a /login con la ruta de origen como callbackUrl: siempre una ruta interna relativa. */
+function aLogin(request: NextRequest): NextResponse {
+  const { pathname } = request.nextUrl;
+  const loginUrl = new URL("/login", request.url);
+  if (pathname.startsWith("/") && !pathname.startsWith("//") && !pathname.startsWith("/\\")) {
+    loginUrl.searchParams.set("callbackUrl", pathname);
+  }
+  return NextResponse.redirect(loginUrl);
+}
+
 /** Control de acceso. `continuar` deja pasar la petición con las cabeceras del nonce. */
 async function decidir(request: NextRequest, continuar: () => NextResponse): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
+
+  // ── API: todo exige token salvo la lista pública documentada (PLAN 2.10) ─────
+  if (pathname === "/api" || pathname.startsWith("/api/")) {
+    if (esApiPublica(pathname, request.method)) return continuar();
+    const sesion = await getSessionFromRequest(request);
+    if (!sesion) return denegar(401);
+    if (esApiSoloAdmin(pathname) && sesion.roleId !== ROLES.ADMIN) return denegar(403);
+    return continuar();
+  }
+
+  // ── Páginas del comensal con datos propios: exigen sesión (PLAN 2.10) ────────
+  if (PAGINAS_CON_SESION.some((ruta) => pathname === ruta || pathname.startsWith(ruta + "/"))) {
+    return (await getSessionFromRequest(request)) ? continuar() : aLogin(request);
+  }
 
   // Permitir rutas públicas directamente
   if (
@@ -84,8 +121,7 @@ async function decidir(request: NextRequest, continuar: () => NextResponse): Pro
   if (
     pathname.startsWith("/maintenance") ||
     pathname.startsWith("/forbidden") ||
-    pathname.startsWith("/unauthorized") ||
-    pathname.startsWith("/api/")
+    pathname.startsWith("/unauthorized")
   ) {
     return continuar();
   }
@@ -99,9 +135,7 @@ async function decidir(request: NextRequest, continuar: () => NextResponse): Pro
   const session = await getSessionFromRequest(request);
 
   if (!session) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+    return aLogin(request);
   }
 
   const roleId = session.roleId;
