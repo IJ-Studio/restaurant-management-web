@@ -6,6 +6,27 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.5 · Aplicar la CSP — **pendiente de aprobación del usuario** (2026-11-02)
+
+No se ejecuta, por orden del usuario: el pago con Stripe no se puede verificar sin claves de prueba ni backend.
+
+**Cómo se aplicaría:**
+- En `proxy.ts`, la cabecera pasa de `CABECERA_CSP_INFORME` a `CABECERA_CSP`, con `construirCsp({ aplicada: true })`, que añade `upgrade-insecure-requests`.
+- `csp.spec.ts` pasaría a exigir la cabecera aplicada.
+- Las pruebas no cambian: con la política en modo informe ya fallan ante cualquier violación sin justificar.
+
+**Violaciones que siguen abiertas** (en modo informe, cinco proyectos):
+1. `worker-src` por el registro de `/sw.js` en todas las rutas. **La retira el 2.7**: tras él no debería quedar ninguna.
+2. `img-src https://images.unsplash.com/` en `/dashboard/admin/about`: fotos de muestra de `aboutMock.ts` y la imagen de respaldo de `GallerySection.tsx`. **Decisión del usuario (NP-36):** sustituirlas por fotos de la casa en Cloudinary, o añadir `images.unsplash.com` a `hosts-permitidos.ts`. Con la CSP aplicada y sin decidirlo, esas imágenes no se cargarían.
+
+**Lo que falta por comprobar antes de aplicarla:**
+- El checkout completo con Stripe en modo de prueba (Stripe.js, el iframe de pago, 3-D Secure en ventana emergente y la vuelta a `/menu/pedido/checkout/exito`). Necesita claves de prueba y el backend.
+- La subida de imágenes desde el admin con el widget de Cloudinary (`upload-widget.cloudinary.com` en `frame-src` y `api.cloudinary.com` en `connect-src`). Necesita credenciales.
+- El mapa de `/about` (`google.com/maps/embed` en `frame-src`) con la red real.
+- Las fotos que envía el API desde Supabase Storage (NP-36).
+- El auditor «csp-xss» de Lighthouse sin avisos de severidad alta. Lo lanza el usuario: el agente no ejecuta Lighthouse.
+- El recorrido completo en los cinco proyectos con la cabecera aplicada: 0 violaciones y 0 errores de consola nuevos.
+
 ### 2.4 · Eliminar los scripts y estilos en línea que bloquearía la CSP (2026-11-02)
 
 Se retomó tras la interrupción por falta de memoria, a petición del usuario. Esta vez las tandas se lanzaron en primer plano y de una en una.

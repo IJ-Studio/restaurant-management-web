@@ -357,7 +357,7 @@
   - **Aceptación:** 0 violaciones de CSP en modo informe en el recorrido completo, con los cinco proyectos de Playwright.
   - **Commit:** `fix(seguridad): eliminar scripts en línea incompatibles con la CSP`
 
-- [ ] **2.5 · Aplicar la CSP**
+- [ ] **2.5 · Aplicar la CSP** · **PENDIENTE DE APROBACIÓN DEL USUARIO** (2026-11-02): no se ejecuta porque el pago con Stripe no se puede verificar sin claves ni backend. Qué falta, en la BITÁCORA («2.5 · pendiente»).
   - **Archivos:** `proxy.ts` (la cabecera pasa a `Content-Security-Policy`).
   - **Aceptación:** recorrido completo con 0 violaciones y 0 errores de consola nuevos; el checkout de Stripe completa un pago de prueba; el auditor «csp-xss» de Lighthouse sin avisos de severidad alta.
   - **Commit:** `feat(seguridad): aplicar la CSP estricta`
