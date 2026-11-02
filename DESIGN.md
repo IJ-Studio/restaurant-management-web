@@ -604,6 +604,12 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 - **`Pestanas`**: patrón de pestañas de WAI-ARIA (`tablist`/`tab`/`tabpanel`), un solo tabulador y flechas, Inicio y Fin, con activación al llegar. Rótulos en `--texto-etiqueta`; la seleccionada en `--texto-principal` con el **filete doble de acento** debajo, el resto en `--texto-secundario`. Contador opcional en pastilla con su descripción para lectores. Si no caben, la lista se desplaza en horizontal. Con `parametroUrl`, la pestaña va en la URL con `history.replaceState`.
 - **`Paginacion`**: enlaces (`?pagina=N`, la 1 sin parámetro), así que funciona sin JavaScript y con «atrás». En móvil, flechas y «Página 3 de 12»; desde 640 px, también los números (primera, última, la actual y sus vecinas, con «…»). La actual lleva `aria-current="page"`, relleno `--color-superficie-cafe` y filete inferior de acento. En los extremos, «Anterior» o «Siguiente» conserva su hueco pero sale del árbol de accesibilidad.
 - **`Imagen`**: envoltorio de `next/image` con el cargador de Cloudinary y un respaldo que sí existe. `alt` y `sizes` son obligatorios; `decorativa` deja `alt=""`. Solo acepta rutas locales, la nube de la casa y los hosts de `config/seguridad/hosts-permitidos.ts`, siempre por `https`. **Respaldo:** si el origen no vale o la imagen no carga, la misma caja pasa a `--color-superficie-cafe` con el molino del logo en `--color-borde-control`, centrado y a un tercio del alto (máximo 4rem). Conserva el `alt` como `role="img"`, o queda oculto si la imagen era decorativa. Nunca hay una caja vacía ni el icono de imagen rota del navegador.
+- **`Buscador`**: formulario `role="search"` con etiqueta (visible o solo para lectores) y campo `type="search"` con el estilo de los campos.
+  - La lupa va al inicio y se sustituye por un giro mientras busca. «Borrar búsqueda» (44 px) aparece al final cuando hay texto y devuelve el foco al campo; Esc también borra.
+  - Enter no envía. El resultado se anuncia en una región `aria-live` («10 platillos», «Sin resultados para «…»») sin mover el foco.
+  - Lógica en `hooks/useBusqueda.ts`:
+    - `useFiltroLocal`: lista en memoria con `useDeferredValue`, sin tildes ni mayúsculas, y todas las palabras en cualquier orden.
+    - `useBusquedaRemota`: busca en el API 300 ms después de dejar de escribir, con un mínimo de 2 caracteres. Cancela con `AbortController` la petición anterior, y mantiene los últimos resultados atenuados mientras llegan los nuevos, sin esqueleto ni salto.
 - **`PanelAccesibilidad`**: ver más abajo.
 
 ### Iconos

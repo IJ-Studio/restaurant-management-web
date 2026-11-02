@@ -8,6 +8,7 @@ import type { TonoInsignia } from "@/components/ui/Insignia";
 import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 import type { Preferencias } from "@/lib/preferencias/preferencias";
 import { DemosAvisos } from "./DemosAvisos";
+import { DemosBuscador } from "./DemosBuscador";
 import { DemosCampos } from "./DemosCampos";
 import { DemosDialogo } from "./DemosDialogo";
 import { DemosEstados } from "./DemosEstados";
@@ -253,6 +254,7 @@ export function Catalogo() {
 							["#navegacion", "Navegación"],
 							["#sitio", "Cabecera y pie"],
 							["#paneles", "Paneles"],
+							["#buscador", "Buscador"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -545,6 +547,14 @@ export function Catalogo() {
 				reglas="Las entradas llegan por rol desde config/navigation. La activa lleva aria-current, relleno café y un filete de acento al inicio; los grupos con hijos se despliegan y la que contiene la activa empieza abierta. Desde 1024 px, barra lateral de 16rem; por debajo, un panel lateral desde la barra superior. El encabezado de página da el h1, la descripción y las acciones."
 			>
 				<DemosPaneles />
+			</Seccion>
+
+			<Seccion
+				id="buscador"
+				titulo="Buscador"
+				reglas="Campo de búsqueda con etiqueta, lupa y «Borrar búsqueda»; Esc borra. Sobre una lista en memoria, lo escrito se pinta al momento y el filtrado va detrás (useDeferredValue). Contra el API, busca 300 ms después de dejar de escribir y cancela la petición anterior. El resultado se anuncia sin mover el foco."
+			>
+				<DemosBuscador />
 			</Seccion>
 		</main>
 	);

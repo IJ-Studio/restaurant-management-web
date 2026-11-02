@@ -107,7 +107,8 @@ function Contador({ id, longitud, maximo }: { id: string; longitud: number; maxi
 }
 
 /** Caja común de los controles de texto. El foco pinta el filete en `--color-foco` y el anillo global. */
-const CLASE_CONTROL =
+/** Estilo de los controles de texto; lo comparte `Buscador`. */
+export const CLASE_CONTROL =
 	"w-full min-h-11 rounded-control border border-borde-control bg-superficie px-3.5 font-texto text-(length:--texto-cuerpo) " +
 	"leading-[1.4] text-texto-principal placeholder:text-texto-tenue " +
 	"transition-[border-color] duration-(--duracion-breve) ease-estandar " +
