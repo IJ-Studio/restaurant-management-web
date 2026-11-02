@@ -6,6 +6,31 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.11 · Capa de acceso a datos de sesión (DAL) (2026-11-02)
+
+**Cambios:**
+- **`lib/sesion/dal.ts`** (nuevo):
+  - empieza con `import "server-only"`, que Next ya trae en `next/dist/compiled`, así que no se añade dependencia;
+  - `verificarSesion = cache(async () => …)` verifica la cookie con `getSession` y devuelve un DTO mínimo `{ id, nombre, apellidos, rol }`, nunca el payload del token ni el usuario del API;
+  - un fallo al pedir el nombre no invalida la sesión y se registra con `registrarError` (2.8).
+- **`app/dashboard/layout.tsx`:** usa la DAL. `AdminSidebar` recibe solo `{ name, lastname }`, lo que pinta. Antes recibía también el id, el correo y el rol, que no usaba.
+- **`app/dashboard/page.tsx`:** reparte por rol con el DTO, en lugar del `roleId` del payload.
+- Son los dos únicos segmentos de servidor que leían la sesión.
+
+**Decisión:** el DTO del PLAN es `{ id, nombre, rol }`. Se añade `apellidos` porque la barra lateral muestra las iniciales de nombre y apellido; sin él, pasarían de dos letras a una y cambiaría lo que se ve.
+
+**Verificación:**
+- `rg "server-only" lib/sesion`: lo encuentra.
+- Typecheck: 0 errores.
+- Lint: los archivos tocados no cambian su cuenta y el nuevo está limpio.
+- Build: correcto.
+- Chromium contra `next start`:
+  - protección, línea base (42 rutas de panel con sesión), cabeceras y CSP: 75/75;
+  - `proteccion.spec.ts` con 5 pruebas nuevas, en las que `/dashboard` lleva a cada rol a su panel: 15/15.
+- Sin procesos abiertos.
+
+**Nota:** `/dashboard` responde 200 y redirige en el navegador. Su `redirect()` ocurre durante el render, cuando el layout ya se está enviando, y por eso se prueba con un navegador. El cliente acaba en `/dashboard/cliente`, que no existe (NP-19, sin cambios).
+
 ### 2.10 · Protección de rutas en el proxy (2026-11-02) — D-15
 
 **Cambios:**

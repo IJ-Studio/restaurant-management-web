@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.10 · Protección de rutas en el proxy** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **2.11 · DAL de sesión** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | 2.11 · Capa de acceso a datos de sesión (DAL). |
+| Siguiente paso | 2.12 · Eliminar todo dangerouslySetInnerHTML. |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -418,7 +418,7 @@
     - **El login, el registro, la carta pública, la landing y el detalle de producto funcionan sin sesión, y con sesión de cliente funcionan el pedido y el perfil.**
   - **Commit:** `feat(seguridad): exigir token en /api salvo rutas públicas documentadas`
 
-- [ ] **2.11 · Capa de acceso a datos de sesión (DAL)**
+- [x] **2.11 · Capa de acceso a datos de sesión (DAL)** · *Hecho (2026-11-02): lib/sesion/dal.ts (server-only, cache, DTO { id, nombre, apellidos, rol }); layout y /dashboard lo usan; la barra lateral solo recibe nombre y apellido.*
   - **Archivos:** `lib/sesion/dal.ts` (`import "server-only"`; `verificarSesion = cache(async () => …)`, que devuelve un DTO mínimo `{ id, nombre, rol }`), `app/dashboard/layout.tsx` y los segmentos de servidor que muestran datos privados.
   - **Hacer:** según la guía de Next, la comprobación segura se hace cerca de los datos y no solo en el layout (los layouts no se vuelven a ejecutar al navegar). No se pasan objetos de usuario completos a componentes cliente.
   - **Aceptación:** el usuario del layout procede del DTO; `rg "server-only" lib/sesion` encuentra el import; ningún componente cliente recibe campos que no use.
