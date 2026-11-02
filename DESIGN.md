@@ -483,6 +483,13 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 - **Contador** cuando hay límite de longitud.
 - `Selector` nativo con `background-color` y `color` explícitos, para que respete el tema.
 - **Al enviar con errores,** el foco va al primer campo inválido.
+- **Implementación (PLAN 3.3):**
+  - Etiqueta en `--texto-pequeno` 600 y «(opcional)» en `--texto-secundario`; los obligatorios no llevan asterisco. Ayuda y contador comparten la línea bajo el control y el error va el último.
+  - Caja: `--color-superficie`, filete `--color-borde-control`, alto mínimo 2,75rem, `--texto-cuerpo` (16 px: iOS no amplía al enfocar). En error, filete `--color-error`. Deshabilitado: fondo transparente, filete discontinuo y texto `--color-texto-secundario` (exento de contraste). Solo lectura: fondo transparente.
+  - `Campo` con `codigo` (RFC, CP) o de tipo correo, teléfono, URL, número o contraseña: sin corrector ni mayúsculas automáticas. `revelable` añade a las contraseñas el botón «Mostrar contraseña» con `aria-pressed`.
+  - `Casilla` e `Interruptor` son `<input type="checkbox">` nativos (el interruptor con `role="switch"`), con toda la etiqueta como área táctil de 44 px; el dibujo se alinea con el borde de los demás campos. Formas rectas con `--radio-control`, también en el carril y el pomo del interruptor. La marca de la casilla se dibuja sobre su propio relleno de acento.
+  - `CampoTrampa`: fuera de la vista (no `display: none`), `aria-hidden`, `tabIndex={-1}` y `autoComplete="off"`.
+  - `useEnvioFormulario` (en `hooks/`): bloquea el envío doble, valida con zod, enfoca el primer inválido, anuncia «Revisa N campos: …» en `AnuncioFormulario` (`aria-live`), borra el error al corregir y no envía con el campo trampa relleno ni antes del tiempo mínimo (3 s por defecto; 0 en el inicio de sesión, por el autorrelleno).
 
 ### Cards / Containers — `Tarjeta`, `Indicador`
 

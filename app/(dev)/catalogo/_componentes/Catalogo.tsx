@@ -7,6 +7,7 @@ import type { VarianteBoton } from "@/components/ui/estilos-boton";
 import type { TonoInsignia } from "@/components/ui/Insignia";
 import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 import type { Preferencias } from "@/lib/preferencias/preferencias";
+import { DemosCampos } from "./DemosCampos";
 import { DemosDialogo } from "./DemosDialogo";
 import { Muestra } from "./Muestra";
 
@@ -234,6 +235,7 @@ export function Catalogo() {
 							["#boton-enlace", "BotonEnlace"],
 							["#insignia", "Insignia"],
 							["#tarjeta", "Tarjeta"],
+							["#campos", "Campos"],
 							["#dialogo", "Diálogos"],
 						].map(([href, texto]) => (
 							<li key={href}>
@@ -447,6 +449,14 @@ export function Catalogo() {
 						<DemoReintento />
 					</Muestra>
 				</div>
+			</Seccion>
+
+			<Seccion
+				id="campos"
+				titulo="Campos de formulario"
+				reglas="Etiqueta siempre visible encima del control; ayuda y contador debajo; el error al final, con icono y texto, enlazado con aria-describedby y aria-invalid. Filete de control que pasa a foco con el anillo. Casilla e interruptor son casillas nativas con toda la etiqueta como área táctil. Al enviar con errores, el foco va al primer campo inválido."
+			>
+				<DemosCampos />
 			</Seccion>
 
 			<Seccion

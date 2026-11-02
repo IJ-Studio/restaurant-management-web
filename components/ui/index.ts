@@ -5,6 +5,10 @@
  * Uso: import { Boton, Tarjeta } from "@/components/ui"
  */
 
+export { AnuncioFormulario } from "./AnuncioFormulario";
+export { AreaTexto, Campo, MensajeError, Selector } from "./Campo";
+export { CampoTrampa } from "./CampoTrampa";
+export { Casilla, Interruptor } from "./Casilla";
 export { Boton } from "./Boton";
 export { BotonEnlace } from "./BotonEnlace";
 export { CerrarDialogo, Dialogo, PanelLateral } from "./Dialogo";
