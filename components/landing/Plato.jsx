@@ -8,29 +8,9 @@ export default function PlatoBocetoUltraDetallado({
 }) {
   return (
     <div className={`w-full max-w-4xl mx-auto overflow-hidden ${bgColorClassName} ${colorClassName}`}>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" className="w-full h-full">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" className="plato-boceto w-full h-full" style={{ "--plato-relleno": fillColor }}>
         <defs>
-          <style>{`
-            /* Adaptado al estilo del Molino:
-              - Uso de currentColor.
-              - Trazos principales a 2.5.
-              - Detalles, achurados y sombras a 1.5.
-            */
-            .boceto-guia { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 4 4; opacity: 0.3; }
-            .boceto-principal { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
-            .boceto-medio { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; opacity: 0.7; }
-            .boceto-fino { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; opacity: 0.4; }
-            .boceto-achurado { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.5; stroke-linecap: round; }
-            .boceto-sombra-densa { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.8; stroke-linecap: round; }
-
-            /* Equivalente a ".solido" en el molino: Relleno sólido y contorno de 2.5 */
-            .figura-rellena { fill: ${fillColor}; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
-
-            /* Truco de máscara para tallos */
-            .trazo-fondo { fill: none; stroke: ${fillColor}; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-
-            .punto { fill: currentColor; opacity: 0.9; }
-          `}</style>
+          {/* Estilos en styles/globals.css (.plato-boceto), no en un <style> en línea (PLAN 2.4). */}
         </defs>
 
         {/* CAPA 1: EL PLATO Y GUÍAS */}

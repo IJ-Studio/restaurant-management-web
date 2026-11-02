@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.3 · CSP en modo informe, con nonce** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
-| Bloqueo | **Interrumpida por falta de memoria** (2026-11-02) durante la verificación del 2.4: el sistema paró la tarea y pide no relanzarla sin el usuario. El código del 2.4 está en el árbol de trabajo, sin commit y sin verificar (BITÁCORA, «Interrupción»). 2.5 sigue pendiente de aprobación. |
-| Siguiente paso | Con la indicación del usuario: verificar el 2.4 (build, `csp.spec.ts` en los cinco proyectos, recorrido y línea base), commit, y seguir con el 2.6. |
+| Último paso completado | **2.4 · Eliminar scripts y estilos en línea** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
+| Siguiente paso | 2.5 queda pendiente de aprobación; sigue el 2.6 · Política de caché. |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -352,7 +352,7 @@
   - **Aceptación:** el recorrido completo (incluidos el checkout con Stripe en modo de prueba y los paneles) registra la lista de violaciones; cada una se corrige en 2.4 o se justifica.
   - **Commit:** `feat(seguridad): CSP con nonce en modo informe`
 
-- [ ] **2.4 · Eliminar los scripts y estilos en línea que bloquearía la CSP**
+- [x] **2.4 · Eliminar los scripts y estilos en línea que bloquearía la CSP** · *Hecho (2026-11-02): sin scripts ni <style> en línea; 0 violaciones en los cinco proyectos salvo /sw.js (2.7) y Unsplash del editor «Acerca de» (NP-36).*
   - **Archivos:** `app/offline/page.tsx` (sin `dangerouslySetInnerHTML`; la lógica pasa a un componente cliente) y los que señale el paso 2.3.
   - **Aceptación:** 0 violaciones de CSP en modo informe en el recorrido completo, con los cinco proyectos de Playwright.
   - **Commit:** `fix(seguridad): eliminar scripts en línea incompatibles con la CSP`

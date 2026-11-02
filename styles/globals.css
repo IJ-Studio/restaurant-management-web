@@ -303,3 +303,39 @@
     animation: none;
   }
 }
+
+/* Animaciones de pantallas heredadas que estaban en <style> en línea, que la CSP con nonce
+   bloquearía (PLAN 2.4). Mismo comportamiento que antes; se retiran al rehacer /about (fase 4) y
+   la caja (fase 5). `spin` no hace falta: Tailwind ya define @keyframes spin igual. */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee-elegant {
+  display: flex;
+  width: max-content;
+  animation: marquee 65s linear infinite;
+}
+.animate-marquee-elegant:hover {
+  animation-play-state: paused;
+}
+@keyframes slideRight {
+  from { width: 0%; }
+}
+
+/* Ilustraciones SVG heredadas de la landing (MolinoAnimado, Plato). Sus estilos estaban en un
+   <style> dentro del SVG, que la CSP bloquearía (PLAN 2.4). Mismas reglas, acotadas a cada dibujo;
+   el relleno llega como variable desde la prop fillColor. */
+.molino-animado .tinta { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+.molino-animado .solido { fill: var(--molino-relleno); stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+.molino-animado .sombra { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.6; }
+.molino-animado .viento { fill: none; stroke: currentColor; stroke-width: 2.5; opacity: 0.4; stroke-dasharray: 120 400; stroke-linecap: round; }
+.plato-boceto .boceto-guia { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 4 4; opacity: 0.3; }
+.plato-boceto .boceto-principal { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+.plato-boceto .boceto-medio { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; opacity: 0.7; }
+.plato-boceto .boceto-fino { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; opacity: 0.4; }
+.plato-boceto .boceto-achurado { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.5; stroke-linecap: round; }
+.plato-boceto .boceto-sombra-densa { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.8; stroke-linecap: round; }
+.plato-boceto .figura-rellena { fill: var(--plato-relleno); stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+.plato-boceto .trazo-fondo { fill: none; stroke: var(--plato-relleno); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.plato-boceto .punto { fill: currentColor; opacity: 0.9; }

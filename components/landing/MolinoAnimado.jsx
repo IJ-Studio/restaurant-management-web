@@ -9,19 +9,10 @@ export default function MolinoAnimado({
     // CONTENEDOR PRINCIPAL: Aquí controlamos el color de todo el dibujo y el fondo
     <div className={`w-full max-w-2xl mx-auto overflow-hidden ${bgColorClassName} ${colorClassName}`}>
 
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" className="w-full h-full">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" className="molino-animado w-full h-full" style={{ "--molino-relleno": fillColor }}>
         <defs>
-          {/* ESTILOS INTERNOS DEL SVG:
-            Nota cómo usamos "currentColor" para el trazo.
-            Y para ".solido", inyectamos dinámicamente la variable ${fillColor}
-          */}
-          <style>{`
-            .tinta { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
-            /* Aquí inyectamos el color que le pasemos desde el Hero */
-            .solido { fill: ${fillColor}; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
-            .sombra { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.6; }
-            .viento { fill: none; stroke: currentColor; stroke-width: 2.5; opacity: 0.4; stroke-dasharray: 120 400; stroke-linecap: round; }
-          `}</style>
+          {/* Los estilos del dibujo están en styles/globals.css (.molino-animado): un <style> en
+            línea lo bloquearía la CSP (PLAN 2.4). El relleno llega en --molino-relleno. */}
 
           {/* Componente: Pasto */}
           <g id="pasto">

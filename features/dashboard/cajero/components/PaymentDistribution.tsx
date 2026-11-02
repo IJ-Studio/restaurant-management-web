@@ -53,11 +53,6 @@ export function PaymentDistribution() {
          </div>
       </div>
 
-      <style jsx>{`
-        @keyframes slideRight {
-          from { width: 0%; }
-        }
-      `}</style>
     </div>
   );
 }
