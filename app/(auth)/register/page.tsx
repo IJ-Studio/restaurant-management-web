@@ -181,7 +181,7 @@ export default function RegisterPage() {
       password,
       passwordConfirm: password,
     };
-    const res = await fetch("/api/auth/register", {
+    const res = await fetch("/api/auth/register", { cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(reqData),

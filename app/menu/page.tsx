@@ -57,7 +57,7 @@ function MenuContent() {
       try {
         // 2. CAMBIO CLAVE: Llamamos a la ruta interna de Next.js.
         // Esto evita errores de CORS y protege la URL real de tu backend.
-        const res = await fetch("/api/menu/categories");
+        const res = await fetch("/api/menu/categories", { cache: "no-store" });
 
         if (!res.ok) {
           throw new Error("Error al cargar los datos del servidor");

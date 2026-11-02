@@ -43,14 +43,14 @@ export default function AdminDashboardPage() {
       };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const resStats = await fetch(`${API_URL}/dashboard/admin/stats`, { headers });
+      const resStats = await fetch(`${API_URL}/dashboard/admin/stats`, { cache: "no-store", headers });
       if (resStats.ok) {
         const data = await resStats.json();
         setStats(data);
       }
 
       try {
-        const resStock = await fetch(`${API_URL}/api/inventory/products`, { headers });
+        const resStock = await fetch(`${API_URL}/api/inventory/products`, { cache: "no-store", headers });
         const products = await resStock.json();
         if (resStock.ok && Array.isArray(products)) {
           const low = products.filter((p: any) => p.stock <= p.minStock);

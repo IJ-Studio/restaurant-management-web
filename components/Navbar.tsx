@@ -79,7 +79,7 @@ export default function Navbar({
   // En realidad, el cierre de sesión se maneja en ConditionalNavbar (dropdown).
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", { cache: "no-store", method: "POST" });
     } catch (error) {
       console.error("Error en logout:", error);
     }

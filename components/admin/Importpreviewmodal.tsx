@@ -478,7 +478,7 @@ export default function ImportPreviewModal({
 
       if (isJson) {
         // POST /platillos/import.json — body array
-        res = await fetch(`${apiBase}/platillos/import.json?mode=upsert`, {
+        res = await fetch(`${apiBase}/platillos/import.json?mode=upsert`, { cache: "no-store",
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeader },
           body: JSON.stringify(selectedRaws),
@@ -496,7 +496,7 @@ export default function ImportPreviewModal({
         const fd = new FormData();
         fd.append("file", blob, file.name);
         // POST /import/platillos/excel
-        res = await fetch(`${apiBase}/import/platillos/excel?mode=upsert`, {
+        res = await fetch(`${apiBase}/import/platillos/excel?mode=upsert`, { cache: "no-store",
           method: "POST",
           headers: authHeader,
           body: fd,
@@ -518,7 +518,7 @@ export default function ImportPreviewModal({
         const fd = new FormData();
         fd.append("file", blob, file.name);
         // POST /platillos/import.csv
-        res = await fetch(`${apiBase}/platillos/import.csv?mode=upsert`, {
+        res = await fetch(`${apiBase}/platillos/import.csv?mode=upsert`, { cache: "no-store",
           method: "POST",
           headers: authHeader,
           body: fd,

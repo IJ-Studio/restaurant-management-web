@@ -90,10 +90,10 @@ export function useInventory() {
     // Explicitly don't set loading to true here to avoid flickering on updates
     try {
       const [resP, resM, resS, resO] = await Promise.all([
-        fetch("/api/inventory/products"),
-        fetch("/api/inventory/mermas"),
-        fetch("/api/inventory/suppliers"),
-        fetch("/api/inventory/orders"),
+        fetch("/api/inventory/products", { cache: "no-store" }),
+        fetch("/api/inventory/mermas", { cache: "no-store" }),
+        fetch("/api/inventory/suppliers", { cache: "no-store" }),
+        fetch("/api/inventory/orders", { cache: "no-store" }),
       ]);
 
       if (!resP.ok || !resM.ok || !resS.ok || !resO.ok) {
@@ -150,7 +150,7 @@ export function useInventory() {
   // Mutations
   const saveProduct = async (p: Product) => {
     const method = p.id && p.id !== 0 ? "PUT" : "POST";
-    const res = await fetch("/api/inventory/products", {
+    const res = await fetch("/api/inventory/products", { cache: "no-store",
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(p),
@@ -160,7 +160,7 @@ export function useInventory() {
   };
 
   const deleteProduct = async (id: number) => {
-    const res = await fetch(`/api/inventory/products?id=${id}`, {
+    const res = await fetch(`/api/inventory/products?id=${id}`, { cache: "no-store",
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Could not delete product");
@@ -168,7 +168,7 @@ export function useInventory() {
   };
 
   const adjustStock = async (id: number, stock: number) => {
-    const res = await fetch(`/api/inventory/products/adjust`, {
+    const res = await fetch(`/api/inventory/products/adjust`, { cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, stock }),
@@ -178,7 +178,7 @@ export function useInventory() {
   };
 
   const saveMerma = async (m: Merma) => {
-    const res = await fetch("/api/inventory/mermas", {
+    const res = await fetch("/api/inventory/mermas", { cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(m),
@@ -189,7 +189,7 @@ export function useInventory() {
 
   const saveSupplier = async (s: Supplier) => {
     const method = s.id && s.id !== 0 ? "PUT" : "POST";
-    const res = await fetch("/api/inventory/suppliers", {
+    const res = await fetch("/api/inventory/suppliers", { cache: "no-store",
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(s),
@@ -199,7 +199,7 @@ export function useInventory() {
   };
 
   const deleteSupplier = async (id: number) => {
-    const res = await fetch(`/api/inventory/suppliers?id=${id}`, {
+    const res = await fetch(`/api/inventory/suppliers?id=${id}`, { cache: "no-store",
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Could not delete supplier");
@@ -208,7 +208,7 @@ export function useInventory() {
 
   const saveOrder = async (o: PurchaseOrder) => {
     const method = o.id && o.id !== 0 ? "PUT" : "POST";
-    const res = await fetch("/api/inventory/orders", {
+    const res = await fetch("/api/inventory/orders", { cache: "no-store",
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(o),
@@ -218,7 +218,7 @@ export function useInventory() {
   };
 
   const deleteOrder = async (id: number) => {
-    const res = await fetch(`/api/inventory/orders?id=${id}`, {
+    const res = await fetch(`/api/inventory/orders?id=${id}`, { cache: "no-store",
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Could not delete order");

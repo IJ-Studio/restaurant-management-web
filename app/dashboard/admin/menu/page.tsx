@@ -87,7 +87,7 @@ export default function AdminMenuPage() {
 
   async function loadFromDb() {
     try {
-      const res = await fetch(`${API}/platillos/export.json`, { headers: authHeaders() });
+      const res = await fetch(`${API}/platillos/export.json`, { cache: "no-store", headers: authHeaders() });
       if (!res.ok) return;
       const data = await res.json().catch(() => null);
       const rows: Record<string, unknown>[] = Array.isArray(data)
@@ -200,7 +200,7 @@ export default function AdminMenuPage() {
       let dbRows: Array<Record<string, unknown>> = [];
       if (IS_EXTERNAL_API) {
         try {
-          const res = await fetch(`${API}/platillos/export.json`, { headers: authHeaders() });
+          const res = await fetch(`${API}/platillos/export.json`, { cache: "no-store", headers: authHeaders() });
           if (res.ok) {
             const data = await res.json().catch(() => null);
             dbRows = Array.isArray(data) ? data : Array.isArray(data?.rows) ? data.rows : [];
@@ -261,7 +261,7 @@ async function updatePlatilloOnServer(id: number, updates: Partial<MenuItem>) {
     tags: updates.tags,
   };
   try {
-    await fetch(`${API}/platillos/${id}`, {
+    await fetch(`${API}/platillos/${id}`, { cache: "no-store",
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -292,7 +292,7 @@ async function createPlatilloOnServer(
     tags: data.tags,
   };
   try {
-    const res = await fetch(`${API}/platillos`, {
+    const res = await fetch(`${API}/platillos`, { cache: "no-store",
       method: "POST",
       headers: {
         "Content-Type": "application/json",

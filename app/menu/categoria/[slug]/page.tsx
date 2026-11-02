@@ -44,7 +44,7 @@ function CategoryPageContent() {
     const fetchCategory = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
-        const res = await fetch(`${apiUrl}/menu/categories/with-products`);
+        const res = await fetch(`${apiUrl}/menu/categories/with-products`, { cache: "no-store" });
 
         if (!res.ok) {
           throw new Error("Error al obtener respuesta del servidor");

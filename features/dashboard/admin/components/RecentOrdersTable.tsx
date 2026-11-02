@@ -80,7 +80,7 @@ export function RecentOrdersTable() {
     try {
       setLoading(true);
       const token = getAuthToken();
-      const res = await fetch(`${API_URL}/pedidos/admin/recent`, {
+      const res = await fetch(`${API_URL}/pedidos/admin/recent`, { cache: "no-store",
         headers: {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),

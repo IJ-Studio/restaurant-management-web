@@ -39,7 +39,7 @@ export default function AdminPromocionesPage() {
   async function loadPromos() {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/promociones/admin`, { headers: authHeaders() });
+      const res = await fetch(`${API}/promociones/admin`, { cache: "no-store", headers: authHeaders() });
       if (!res.ok) return;
       const data: PromotionRow[] = await res.json();
       setPromos(
@@ -73,7 +73,7 @@ export default function AdminPromocionesPage() {
   async function savePromo(data: Partial<Promotion>) {
     try {
       if (data.id) {
-        const res = await fetch(`${API}/promociones/${data.id}`, {
+        const res = await fetch(`${API}/promociones/${data.id}`, { cache: "no-store",
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify(toBody(data)),
@@ -83,7 +83,7 @@ export default function AdminPromocionesPage() {
         const updated = mapPromotionRow(row);
         setPromos((ps) => ps.map((p) => (p.id === updated.id ? updated : p)));
       } else {
-        const res = await fetch(`${API}/promociones`, {
+        const res = await fetch(`${API}/promociones`, { cache: "no-store",
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify(toBody(data)),
@@ -102,7 +102,7 @@ export default function AdminPromocionesPage() {
     const next = !promo.active;
     setPromos((ps) => ps.map((p) => (p.id === promo.id ? { ...p, active: next } : p)));
     try {
-      await fetch(`${API}/promociones/${promo.id}`, {
+      await fetch(`${API}/promociones/${promo.id}`, { cache: "no-store",
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ activa: next }),
@@ -118,7 +118,7 @@ export default function AdminPromocionesPage() {
     const prev = promos;
     setPromos((ps) => ps.filter((p) => p.id !== promo.id));
     try {
-      const res = await fetch(`${API}/promociones/${promo.id}`, {
+      const res = await fetch(`${API}/promociones/${promo.id}`, { cache: "no-store",
         method: "DELETE",
         headers: authHeaders(),
       });

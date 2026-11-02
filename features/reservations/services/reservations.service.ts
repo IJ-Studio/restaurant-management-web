@@ -36,8 +36,7 @@ function getHeaders(withAuth: boolean = false): Record<string, string> {
 
 export async function getAvailability(fecha: string, hora: string, numComensales: number) {
   const res = await fetch(
-    `${API_URL}/reservations/availability?fecha=${fecha}&hora=${hora}&numComensales=${numComensales}`
-  );
+    `${API_URL}/reservations/availability?fecha=${fecha}&hora=${hora}&numComensales=${numComensales}`, { cache: "no-store" });
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Error al consultar disponibilidad' }));
     throw new Error(error.message || `Error al consultar disponibilidad (${res.status})`);
@@ -49,7 +48,7 @@ export async function getTableMap(fechaHora?: string) {
   const url = fechaHora
     ? `${API_URL}/reservations/map?fechaHora=${encodeURIComponent(fechaHora)}`
     : `${API_URL}/reservations/map`;
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Error al cargar el mapa de mesas' }));
     throw new Error(error.message || `Error al cargar el mapa de mesas (${res.status})`);
@@ -58,7 +57,7 @@ export async function getTableMap(fechaHora?: string) {
 }
 
 export async function createReservation(data: any) {
-  const res = await fetch(`${API_URL}/reservations`, {
+  const res = await fetch(`${API_URL}/reservations`, { cache: "no-store",
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -85,7 +84,7 @@ export async function getReservations(filters?: {
     });
   }
 
-  const res = await fetch(`${API_URL}/reservations?${params.toString()}`, {
+  const res = await fetch(`${API_URL}/reservations?${params.toString()}`, { cache: "no-store",
     headers: getHeaders(true),
   });
 
@@ -97,7 +96,7 @@ export async function getReservations(filters?: {
 }
 
 export async function getNoShowRisk(id: string): Promise<{ probabilidad: number; clasificacion: 'Alto' | 'Medio' | 'Bajo' }> {
-  const res = await fetch(`${API_URL}/reservations/${id}/no-show-risk`, {
+  const res = await fetch(`${API_URL}/reservations/${id}/no-show-risk`, { cache: "no-store",
     headers: getHeaders(true),
   });
 
@@ -109,7 +108,7 @@ export async function getNoShowRisk(id: string): Promise<{ probabilidad: number;
 }
 
 export async function updateReservation(id: string, data: any) {
-  const res = await fetch(`${API_URL}/reservations/${id}`, {
+  const res = await fetch(`${API_URL}/reservations/${id}`, { cache: "no-store",
     method: 'PATCH',
     headers: getHeaders(true),
     body: JSON.stringify(data),

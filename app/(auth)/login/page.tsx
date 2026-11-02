@@ -45,7 +45,7 @@ export default function LoginPage() {
   });
 
   const loginAction = async () => {
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch("/api/auth/login", { cache: "no-store",
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),

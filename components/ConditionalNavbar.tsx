@@ -21,7 +21,7 @@ export default function ConditionalNavbar() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           setUser(data);
@@ -65,7 +65,7 @@ export default function ConditionalNavbar() {
   // ─── LÓGICA INTELIGENTE DE CERRAR SESIÓN ────────────────────────
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", { cache: "no-store", method: "POST" });
     } catch (error) {
       console.error("Error al cerrar sesión mediante API:", error);
     }

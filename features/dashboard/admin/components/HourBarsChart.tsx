@@ -28,7 +28,7 @@ export function HourBarsChart() {
     try {
       setLoading(true);
       const token = getAuthToken();
-      const res = await fetch(`${API_URL}/dashboard/admin/ventas-por-hora`, {
+      const res = await fetch(`${API_URL}/dashboard/admin/ventas-por-hora`, { cache: "no-store",
         headers: {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),

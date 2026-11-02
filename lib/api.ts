@@ -50,7 +50,7 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
     ...headers,
   };
 
-  const response = await fetch(url, {
+  const response = await fetch(url, { cache: "no-store",
     ...restOptions,
     headers: mergedHeaders,
   });

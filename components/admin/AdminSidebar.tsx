@@ -124,7 +124,7 @@ export default function AdminSidebar({ activePage, user, onLogout }: AdminSideba
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", { cache: "no-store", method: "POST" });
     } catch {
       /* */
     }
