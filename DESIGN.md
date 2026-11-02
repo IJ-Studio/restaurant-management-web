@@ -520,7 +520,11 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   - Un `BotonEnlace` compacto **«Reservar»** (variante `secundario`, alto mínimo de 44 px) siempre visible, también en móvil junto al botón de menú. Es la única llamada a la acción persistente.
   - En móvil, menú en `PanelLateral` con trampa de foco y cierre con Esc.
 - **`MigasDePan`:** `<nav aria-label="Migas de pan">` con `<ol>` y `aria-current="page"` en la última miga.
+  - Empiezan en «Inicio»; las intermedias salen del mapa `config/navegacion-publica.ts` y la última es la página actual, sin enlace, en `--texto-principal`. Las de rutas con parámetros reciben el nombre (la categoría o el plato).
+  - `--texto-pequeno`; enlaces en `--texto-secundario` con subrayado fino y 44 px de alto; separador `ChevronRight` en `--texto-tenue`, oculto a lectores. Pasan de línea si no caben.
 - **`BotonVolver`:** vuelve a la sección de origen.
+  - Es un enlace (`fantasma`, compacto, con `ArrowLeft`) al origen que da el mapa (`/menu` → `/#carta`), así que funciona sin JavaScript. Si se llegó desde el propio sitio (navegación interna registrada o `referrer` del mismo origen), usa el historial y conserva el desplazamiento.
+  - El texto nombra el destino: «Volver a la carta», «Volver a tu pedido», «Volver al inicio».
 - **`NavegacionPanel`:**
   - Usa `<Link>` con `aria-current="page"`, grupos con rótulo `--texto-etiqueta` y entradas **filtradas por rol** desde `config/navigation`.
   - El elemento activo lleva relleno `--color-superficie-cafe` y un filete de acento a la izquierda: cambia el relleno, no solo el tinte.

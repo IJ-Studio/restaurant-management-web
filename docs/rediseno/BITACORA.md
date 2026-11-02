@@ -6,6 +6,40 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.10 · `MigasDePan` y `BotonVolver` (2026-11-01)
+
+**Archivos:**
+- `config/navegacion-publica.ts`: mapa estático de las 20 páginas de acción públicas.
+  - Cada ruta tiene patrón (con `[parametro]`), título, migas intermedias y origen, y cada origen el texto de su «Volver».
+  - Exporta `SECCIONES_LANDING` (las anclas de la landing) y `rutaPublica(ruta)`, que tolera la barra final, la consulta y el ancla.
+  - Los títulos de las páginas del pie son los de cada página («Condiciones de uso», «Devoluciones y reemplazos», «Alertas de seguridad»).
+- `lib/navegacion/historial.ts`: ¿se llegó desde el propio sitio? Cuenta las navegaciones internas, porque Next no cambia `document.referrer`, o mira si el `referrer` es del mismo origen. En memoria, sin guardar nada en el navegador.
+- `components/ui/MigasDePan.tsx` (de servidor) y `components/ui/BotonVolver.tsx` (cliente, con `useRegistroRuta`, que usará también la cabecera del 3.11).
+- Catálogo: sección «Migas de pan y Volver» (`DemosNavegacion.tsx`). DESIGN.md documenta los dos componentes.
+
+**Decisiones conservadoras:**
+- **«Volver» es un enlace al origen:** funciona sin JavaScript, se puede abrir en otra pestaña (con un modificador no se intercepta) y solo usa el historial si se viene del sitio.
+- **Texto del botón:** nombra el destino. Para las secciones de la landing va entre comillas («Volver a «Reservar»») para que no se lea como «reservar otra vez».
+- **Páginas del pie:** vuelven al inicio, porque no hay una sección de origen.
+- **Texto largo:** «Volver» pasa de línea en lugar de desbordar. La primera pasada desbordaba a 360 px con texto al 125 %: el botón no parte el texto por defecto y su destino puede ser largo.
+- **Registro de navegación:** hasta que la cabecera del 3.11 lo monte en todas las páginas, solo cuenta desde la primera página con «Volver». Mientras tanto, lo peor que pasa es que lleve a la sección de origen en lugar de usar el historial.
+
+**Verificación:**
+- `pnpm test:unidad`: 25/25. `navegacion.spec.ts` (nueva, sin navegador) comprueba:
+  - rutas fijas y con parámetros, barra final, consulta y ancla;
+  - que no confunde rutas parecidas ni inventa las que no están;
+  - que cada ruta tiene título, un origen interno con texto de «Volver» y padres internos;
+  - que no hay patrones repetidos.
+- `tests/e2e/navegacion.spec.ts` (nueva, Chromium contra `next dev`):
+  - migas con nombre y lista, la actual como texto con `aria-current`, separadores ocultos y enlaces de 44 px;
+  - sin historial del sitio, «Volver» es un enlace al origen y lleva a él;
+  - llegando desde otra página del sitio, vuelve por el historial;
+  - axe y sin desborde a 360 px con texto al 125 % en los dos temas.
+- `catalogo.spec.ts` con la sección nueva: verde.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+
+**No verificado:** Firefox y WebKit; el comportamiento con la navegación real entre páginas públicas, que llega en la fase 4 al montar los componentes.
+
 ### 3.9 · `EtiquetaSeccion`, `Contraetiqueta`, `SelloCasa` y `.filete-doble` (2026-11-01)
 
 `SelloCasa` y las clases `.etiqueta-seccion`, `.filete-doble` y `.contraetiqueta` venían de la fase 1; este paso crea los componentes que faltaban y corrige la contraetiqueta.
