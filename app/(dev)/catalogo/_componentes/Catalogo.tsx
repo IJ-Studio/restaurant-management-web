@@ -7,6 +7,7 @@ import type { VarianteBoton } from "@/components/ui/estilos-boton";
 import type { TonoInsignia } from "@/components/ui/Insignia";
 import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 import type { Preferencias } from "@/lib/preferencias/preferencias";
+import { DemosAvisos } from "./DemosAvisos";
 import { DemosCampos } from "./DemosCampos";
 import { DemosDialogo } from "./DemosDialogo";
 import { Muestra } from "./Muestra";
@@ -235,6 +236,7 @@ export function Catalogo() {
 							["#boton-enlace", "BotonEnlace"],
 							["#insignia", "Insignia"],
 							["#tarjeta", "Tarjeta"],
+							["#avisos", "Avisos"],
 							["#campos", "Campos"],
 							["#dialogo", "Diálogos"],
 						].map(([href, texto]) => (
@@ -449,6 +451,14 @@ export function Catalogo() {
 						<DemoReintento />
 					</Muestra>
 				</div>
+			</Seccion>
+
+			<Seccion
+				id="avisos"
+				titulo="Avisos y notificaciones"
+				reglas="El aviso va en línea, junto a lo que explica: filete y relleno al 12 % del color del estado, icono y texto en el color principal. Error se anuncia al instante (role=alert); el resto, con role=status. La notificación flota abajo, confirma algo que acaba de pasar y se lee en una región aria-live educada."
+			>
+				<DemosAvisos />
 			</Seccion>
 
 			<Seccion

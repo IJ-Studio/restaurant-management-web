@@ -538,8 +538,17 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   - **`PanelLateral`:** a toda la altura, pegado al lado `fin` (por defecto) o `inicio`, con ancho `min(24rem, 100vw − 3rem)` y relleno que suma `env(safe-area-inset-*)`. El cierre va en la cabecera y las acciones del pie van siempre apiladas a todo el ancho, con la principal arriba.
   - **`DialogoConfirmacion`** (AlertDialog de Radix, `role="alertdialog"`): el foco empieza en «Cancelar»; ni el velo ni un clic fuera lo cierran. `destructiva` usa `peligro-confirmar`. Mientras confirma, el botón carga, «Cancelar» y Esc quedan bloqueados, y si falla se queda abierto con el error (`role="alert"`, `CircleAlert`) junto a los botones. `useConfirmacion()` lo ofrece como promesa (`await confirmar({...})`), para sustituir a `confirm()` sin cambiar el flujo.
   - **Movimiento:** el velo aparece con opacidad; el diálogo, con opacidad y escala 0,98 → 1; el panel, con un desplazamiento desde su lado. `--duracion-media` y `--curva-salida` al abrir, `--duracion-breve` y `--curva-estandar` al cerrar; con movimiento reducido duran 0,01 ms.
-- **`Aviso`**: en línea, con `role="status"` o `role="alert"` según la gravedad.
-- **`Notificacion`**: región con `aria-live="polite"`.
+- **`Aviso`**: en línea, junto a lo que explica.
+  - Tonos `info`, `exito`, `aviso` y `error`, con filete de 1 px y relleno al 12 % del color del estado sobre `--color-superficie`, `--radio-tarjeta` e icono del estado (`Info`, `CircleCheck`, `TriangleAlert`, `CircleAlert`) en su color.
+  - El título (opcional, en negrita) y el texto van en `--color-texto-principal` y `--texto-pequeno`: contrastan más que el color del estado.
+  - Admite una acción en línea y un botón «Descartar aviso» (fantasma, solo icono).
+  - `role="alert"` en error y `role="status"` en el resto; `rol={null}` para un aviso fijo que no debe anunciarse al montarse.
+- **`Notificacion`** (`ProveedorNotificaciones` y `useNotificaciones().notificar({...})`): confirma algo que acaba de pasar sin interrumpir.
+  - Flota abajo, a todo el ancho en móvil y en la esquina final (24rem) desde 40rem, por encima de las zonas seguras. Caja en `--color-superficie-elevada`, filete del color del estado, `--radio-tarjeta` y `--sombra-flotante`. Título en negrita y descripción en `--texto-secundario`.
+  - El texto se lee en una región `aria-live="polite"` aparte, oculta a la vista, para que el lector no repita los nombres de los botones. La pila es un `<section aria-label="Notificaciones">` que solo existe mientras hay alguna.
+  - Información y éxito se cierran solas a los 6 s, y el tiempo se detiene con el puntero o el foco encima (WCAG 2.2.1). Los errores y las que llevan acción («Deshacer») se quedan hasta cerrarlas. Como mucho tres a la vez; al llegar otra, sale la más antigua que puede irse sola.
+  - Entra con opacidad y 0,5rem de desplazamiento (`--duracion-media`, `--curva-salida`) y sale con opacidad (`--duracion-breve`).
+  - Mientras hay un `Dialogo` abierto, Radix oculta a los lectores lo que queda fuera de él, también la pila: lo que se notifique durante un diálogo debe ir en el propio diálogo.
 - **`Tabla`**: `<table>` semántica con `<caption>` oculto para lectores.
   - Por encima de 768 px: scroll horizontal con contenedor enfocable.
   - Por debajo: tarjetas con contraetiqueta.

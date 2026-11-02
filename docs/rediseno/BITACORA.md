@@ -6,6 +6,43 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.4 · `Aviso` y `Notificacion` (2026-11-01)
+
+`Tarjeta` e `Insignia` ya estaban hechas desde la fase 1; este paso completa el 3.4.
+
+**Componentes** (`components/ui/`), sin dependencias nuevas:
+- `Aviso.tsx`: tonos `info`, `exito`, `aviso` y `error`.
+  - Filete y relleno al 12 % del color del estado, e icono del estado en su color. Título y texto en `--color-texto-principal`.
+  - Admite una acción en línea y un botón «Descartar aviso».
+  - `role="alert"` en error y `status` en el resto; `rol={null}` para avisos fijos.
+  - Es de servidor: no lleva `"use client"`. Exporta `ICONOS_ESTADO`, `COLOR_ESTADO` y `TonoEstado` para reutilizarlos.
+- `Notificacion.tsx`: `ProveedorNotificaciones`, `useNotificaciones()` (`notificar` y `descartar`) y `VistaNotificacion`, que es la parte visible y la que muestra fija el catálogo.
+- `styles/componentes.css`: `.pila-notificaciones` (abajo, a todo el ancho en móvil y 24rem en la esquina final desde 40rem, por encima de las zonas seguras) y `.notificacion`, con sus animaciones de entrada y salida, que usan solo opacidad y transform.
+- Catálogo: sección «Avisos y notificaciones» (`DemosAvisos.tsx`).
+- DESIGN.md documenta los dos componentes.
+
+**Decisiones conservadoras:**
+- **Anuncio aparte:** el texto se lee en una región `aria-live="polite"` oculta a la vista, separada de la pila. Si la notificación visible fuera la región viva, el lector leería también «Deshacer» y «Cerrar notificación».
+- **Pila:** `<section aria-label="Notificaciones">` solo existe mientras hay alguna; un punto de referencia vacío confunde.
+- **Tiempo (WCAG 2.2.1):** información y éxito se cierran a los 6 s, con pausa mientras el puntero o el foco están encima. Error y con acción se quedan hasta cerrarlas. Como mucho tres; al llegar otra, sale la más antigua que se puede ir sola.
+- **Filete:** el de la notificación es del color del estado, como en el aviso, para que el estado cambie el filete y no solo el tinte. El relleno es la superficie elevada, porque flota.
+- **Diálogos abiertos:** Radix oculta a los lectores lo que queda fuera del diálogo, también la pila y su anuncio. Anotado en DESIGN.md: lo que se notifique durante un diálogo va en el propio diálogo.
+
+**Verificación** (Chromium contra `next dev`):
+- `avisos.spec.ts` (nueva): **6/6**.
+  - Rol por gravedad, icono oculto a lectores, descartar y restaurar.
+  - Anuncio en la región viva y la pila sin `aria-live`; sin región vacía al empezar.
+  - Pausa de 7 s con el puntero encima y cierre al salir.
+  - Error y con acción siguen a los 7 s; «Deshacer» se atiende y cierra.
+  - Máximo de tres.
+  - axe sin violaciones con dos notificaciones abiertas, a 360 px, texto al 125 % y en los dos temas, sin desborde.
+- `catalogo.spec.ts`, con la sección nueva: verde. Incluye el contraste AA de todas las muestras en los dos temas (avisos y notificaciones fijas de los cuatro tonos), axe en los dos temas al 100 % y al 125 % y la captura de la sección.
+- Captura revisada: notificaciones en claro a 360 px.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+- Primer intento con 3 fallos, de la prueba y no del componente: el nombre «Notificaciones» también coincidía con la sección «Avisos y notificaciones». Se corrigió con `exact: true`.
+
+**No verificado:** Firefox, WebKit y lectores de pantalla reales (al cerrar la fase y en la fase 7).
+
 ### Decisiones de la revisión de 3.1, 3.5 y 3.3 (2026-11-01)
 
 El usuario aprueba los tres pasos y decide:

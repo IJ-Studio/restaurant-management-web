@@ -7,6 +7,7 @@
 
 export { AnuncioFormulario } from "./AnuncioFormulario";
 export { AreaTexto, Campo, MensajeError, Selector } from "./Campo";
+export { Aviso } from "./Aviso";
 export { CampoTrampa } from "./CampoTrampa";
 export { Casilla, Interruptor } from "./Casilla";
 export { Boton } from "./Boton";
@@ -15,4 +16,5 @@ export { CerrarDialogo, Dialogo, PanelLateral } from "./Dialogo";
 export { DialogoConfirmacion, useConfirmacion } from "./DialogoConfirmacion";
 export { Imagen } from "./Imagen";
 export { Insignia } from "./Insignia";
+export { ProveedorNotificaciones, useNotificaciones, VistaNotificacion } from "./Notificacion";
 export { Tarjeta } from "./Tarjeta";
