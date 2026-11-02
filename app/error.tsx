@@ -1,9 +1,15 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useTransition } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './error.module.css';
 import { registrarError } from '@/lib/registro/registrar-error';
 
-export default function ErrorPage({ error, reset }: { error: Error; reset: () => void }) {
+// Límite de error de la raíz (PLAN 2.17): mensaje genérico, «Intentar de nuevo», salida y solo el
+// digest; nunca error.message ni la pila. El diseño nuevo de esta página es del paso 4.23.
+export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+    const router = useRouter();
+    const [, iniciar] = useTransition();
     useEffect(() => {
         // Solo el mensaje y el digest, sin la pila ni datos (PLAN 2.8).
         registrarError(error, 'error de página');
@@ -42,11 +48,21 @@ export default function ErrorPage({ error, reset }: { error: Error; reset: () =>
                     </p>
 
                     <button
-                        onClick={reset}
+                        onClick={() => iniciar(() => { router.refresh(); reset(); })}
                         className="inline-block mt-4 px-8 py-3 bg-[#c0392b] text-white rounded-xl font-semibold hover:bg-[#a93226] transition-all shadow-lg hover:shadow-xl"
                     >
                         Intentar de nuevo
                     </button>
+                    <div>
+                        <Link href="/" className="inline-block mt-2 px-4 py-3 text-gray-800 underline underline-offset-4">
+                            Ir al inicio
+                        </Link>
+                    </div>
+                    {error.digest && (
+                        <p className="text-sm text-gray-600">
+                            Código para soporte: <code className="font-mono [overflow-wrap:anywhere]">{error.digest}</code>
+                        </p>
+                    )}
                 </div>
             </div>
         </div>

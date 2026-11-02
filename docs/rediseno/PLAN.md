@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.16 · Variables públicas validadas en el build** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **2.17 · Límites de error sin trazas** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | 2.17 · Límites de error que no filtran trazas. |
+| Siguiente paso | 2.18 · Revisión del bundle. |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -486,7 +486,7 @@
     - `rg "localhost:10000" .next/static` sin resultados.
   - **Commit:** `feat(seguridad): validar variables públicas en el build`
 
-- [ ] **2.17 · Límites de error que no filtran trazas**
+- [x] **2.17 · Límites de error que no filtran trazas** · *Hecho (2026-11-02): LimiteError y NoEncontrado; error.tsx y not-found.tsx en (auth), (public), menu y dashboard; global-error.tsx; solo el digest visible; páginas de prueba solo en next dev.*
   - **Archivos:** `app/global-error.tsx`, `app/error.tsx`, `error.tsx` y `not-found.tsx` en `app/(auth)`, `app/(public)`, `app/menu` y `app/dashboard`.
   - **Hacer:** mensaje genérico, botón Reintentar, enlace de salida, y solo el `digest` visible para soporte.
   - **Aceptación:** forzar un error en una página simulada muestra el límite sin pila ni mensaje interno; las pruebas comprueban que `pre` y `stack` no aparecen.
