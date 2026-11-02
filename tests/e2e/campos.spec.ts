@@ -4,7 +4,8 @@ import { test, expect, type Page } from "@playwright/test";
 const MODO_DEV = process.env.E2E_MODO === "dev";
 const CLAVE = "elquijote:preferencias";
 // Tiempo mínimo de rellenado del formulario de demostración (useEnvioFormulario).
-const TIEMPO_MINIMO_MS = 3_000;
+const TIEMPO_MINIMO_MS = 1_000;
+const RECHAZADO = "No se pudo enviar el formulario. Inténtalo de nuevo.";
 
 async function abrirCatalogo(page: Page, preferencias: Record<string, string> = {}) {
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);
@@ -124,14 +125,15 @@ test.describe("campos de formulario del catálogo", () => {
 	});
 
 	test("un envío antes del tiempo mínimo no sale; el segundo intento sí, y solo una vez", async ({ page }) => {
-		const cargado = await abrirCatalogo(page);
+		// Date.now() queda fijo (los temporizadores siguen): el primer envío ocurre «a 0 ms» del montaje.
+		const inicio = new Date("2026-11-01T12:00:00Z").getTime();
+		await page.clock.setFixedTime(inicio);
+		await abrirCatalogo(page);
 		await rellenarValido(page);
-		if (Date.now() - cargado < TIEMPO_MINIMO_MS - 300) {
-			await prueba(page, "enviar").click();
-			await expect(prueba(page, "error-general")).toHaveText(/No se pudo enviar. Revisa los datos/);
-			await expect(prueba(page, "envios")).toHaveText("Envíos atendidos: 0");
-		}
-		await esperarTiempoMinimo(page, cargado);
+		await prueba(page, "enviar").click();
+		await expect(prueba(page, "error-general")).toHaveText(RECHAZADO);
+		await expect(prueba(page, "envios")).toHaveText("Envíos atendidos: 0");
+		await page.clock.setFixedTime(inicio + TIEMPO_MINIMO_MS + 500);
 		// Dos Enter seguidos desde un campo: un solo envío.
 		await formulario(page).getByLabel("Nombre").focus();
 		await page.keyboard.press("Enter");
@@ -148,7 +150,7 @@ test.describe("campos de formulario del catálogo", () => {
 		await formulario(page).locator("input[name='sitio_web']").evaluate((e: HTMLInputElement) => (e.value = "https://spam.example"));
 		await esperarTiempoMinimo(page, cargado);
 		await prueba(page, "enviar").click();
-		await expect(prueba(page, "error-general")).toHaveText(/No se pudo enviar. Revisa los datos/);
+		await expect(prueba(page, "error-general")).toHaveText(RECHAZADO);
 		await expect(prueba(page, "envios")).toHaveText("Envíos atendidos: 0");
 	});
 

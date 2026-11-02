@@ -14,8 +14,9 @@ import { NOMBRE_CAMPO_TRAMPA } from "@/components/ui/CampoTrampa";
  * - borra el error de un campo en cuanto se corrige;
  * - no envía si el **campo trampa** llega relleno ni si el formulario se envía antes del
  *   **tiempo mínimo de rellenado** (los robots tardan milisegundos). En los dos casos se muestra
- *   un mensaje neutro y se puede volver a intentar: si una persona fue demasiado rápida, el
- *   segundo intento ya pasa.
+ *   un mensaje neutro que invita a reintentar, sin decir el motivo: si una persona fue demasiado
+ *   rápida, el segundo intento ya pasa. El campo trampa es la defensa principal; el tiempo mínimo
+ *   es corto (1 s por defecto, para registro y reserva) y 0 en el inicio de sesión, por el autorrelleno.
  *
  * Los datos se leen del propio formulario por el `name` de cada control: las casillas dan un
  * booleano, los `type="number"` un número y el resto, el texto. `obtenerDatos` lo sustituye
@@ -33,7 +34,7 @@ export interface OpcionesEnvio<E extends z.ZodType> {
 	mensajeError?: string;
 }
 
-const MENSAJE_NEUTRO = "No se pudo enviar. Revisa los datos e inténtalo de nuevo.";
+export const MENSAJE_ENVIO_RECHAZADO = "No se pudo enviar el formulario. Inténtalo de nuevo.";
 
 type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
@@ -64,7 +65,7 @@ function nombreDe(control: Control): string {
 export function useEnvioFormulario<E extends z.ZodType>({
 	esquema,
 	alEnviar,
-	tiempoMinimoMs = 3_000,
+	tiempoMinimoMs = 1_000,
 	campoTrampa = NOMBRE_CAMPO_TRAMPA,
 	obtenerDatos,
 	mensajeError = "No se pudo enviar. Revisa la conexión e inténtalo de nuevo.",
@@ -97,8 +98,8 @@ export function useEnvioFormulario<E extends z.ZodType>({
 			const conTrampa = trampa instanceof HTMLInputElement && trampa.value !== "";
 			const demasiadoRapido = tiempoMinimoMs > 0 && Date.now() - montado.current < tiempoMinimoMs;
 			if (conTrampa || demasiadoRapido) {
-				setErrorGeneral(MENSAJE_NEUTRO);
-				anunciar(MENSAJE_NEUTRO);
+				setErrorGeneral(MENSAJE_ENVIO_RECHAZADO);
+				anunciar(MENSAJE_ENVIO_RECHAZADO);
 				return;
 			}
 

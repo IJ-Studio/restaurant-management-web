@@ -152,6 +152,7 @@
   - Idealmente, compartir los esquemas front-API en un paquete común.
 
   El front deja de interpretar HTML en el paso 2.12 del PLAN.
+- **Teléfono de la reserva (decisión del usuario, 2026-11-01):** el front lo deja como hoy, que solo exige que no esté vacío (`esquemaReservaContacto`), y no lo endurece. La validación real del formato es del servidor: el endpoint de reservas debe aceptar solo los 10 dígitos de México (con o sin `+52`) y responder 400 con un mensaje claro si no.
 - **Prioridad:** Alta.
 - **Criterio de aceptación:** enviar `<script>` o atributos `on*` en cualquier campo devuelve 400 o se guarda escapado; cada endpoint documenta su esquema.
 

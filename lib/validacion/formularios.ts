@@ -13,7 +13,7 @@ import { z } from "zod";
 import { CREATABLE_ROLES, ROLES } from "@/config/roles.config";
 import {
 	MENSAJES,
-	EMAIL_MAX_LENGTH,
+	RFC_REGEX,
 	codigoPostal,
 	contieneDatosPersonales,
 	contrasenaAcceso,
@@ -22,6 +22,7 @@ import {
 	correoAcceso,
 	correoBasico,
 	correoBasicoOpcional,
+	correoOpcionalValidado,
 	lada,
 	lineaOpcional,
 	lineaRequerida,
@@ -156,8 +157,8 @@ export const esquemaDatosFiscales = z.object({
 	usoCfdi: lineaOpcional(),
 	regimenFiscal: lineaRequerida("Selecciona un régimen fiscal."),
 	codigoPostalFiscal: codigoPostal("El código postal fiscal debe tener 5 dígitos."),
-	// Hoy es un texto libre opcional, sin comprobación de formato.
-	email: lineaOpcional(EMAIL_MAX_LENGTH),
+	// Opcional; si se escribe, se comprueba el formato con la regla del registro (decisión del usuario, 2026-11-01).
+	email: correoOpcionalValidado,
 });
 
 // ─── CRUD del admin ────────────────────────────────────────────────────────────────────────
@@ -231,10 +232,15 @@ const conceptoFactura = z.looseObject({
 	unitPrice: numeroMayorQue(0, "El precio debe ser mayor que 0."),
 });
 
-/** Factura manual (`InvoiceModal`). El RFC hoy solo es obligatorio, en mayúsculas y de hasta 13. */
+/**
+ * Factura manual (`InvoiceModal`). El RFC es obligatorio, en mayúsculas y de hasta 13; una vez
+ * escrito, se comprueba también su formato con `RFC_REGEX` (decisión del usuario, 2026-11-01).
+ */
 export const esquemaFactura = z.looseObject({
 	clientName: lineaRequerida("Escribe el nombre o la razón social."),
-	clientRFC: lineaRequerida("Escribe el RFC.", 13).transform((v) => v.toUpperCase()),
+	clientRFC: lineaRequerida("Escribe el RFC.", 13)
+		.transform((v) => v.toUpperCase())
+		.refine((v) => v === "" || RFC_REGEX.test(v), { error: MENSAJES.rfc }),
 	clientEmail: correoBasicoOpcional.optional(),
 	notes: textoLibre().optional(),
 	items: z.array(conceptoFactura).min(1, { error: "Añade al menos un concepto." }),

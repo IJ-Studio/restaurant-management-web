@@ -13,9 +13,9 @@
 | Etapa | **Fase 3 en curso** (2026-11-01). Fase 1 cerrada; sus ramas ya están en el remoto y el PR lo gestiona el usuario. Ya hechos de la fase 3: 3.0, 3.2 y parte de 3.4. |
 | Rama activa | `feature/rediseno-web-componentes` (sale de `feature/rediseno-web-cimientos`, `d6407c9`, porque el PR de la fase 1 aún no está fusionado) |
 | Último paso completado | **3.3 · Campos de formulario** (2026-11-01): `Campo`, `AreaTexto`, `Selector`, `Casilla`, `Interruptor`, `CampoTrampa` y `useEnvioFormulario`, con su sección en el catálogo. Detalle en [`BITACORA.md`](BITACORA.md). |
-| Bloqueo | **Revisión del usuario** de los pasos 3.1, 3.5 y 3.3 en el catálogo (`next dev` → `/catalogo#campos` y `#dialogo`). |
-| Siguiente paso | Esperar la revisión. Después, el resto de la fase 3 en el orden que indique el usuario (quedan 3.4, de `Aviso` y `Notificacion`, y 3.6–3.14). Al cerrar la fase: Firefox y WebKit para los diálogos y los campos. |
-| Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.1 → 3.5 → 3.3, y parar tras el 3.3; **no empezar el 3.4 ni ningún otro paso hasta que el usuario lo indique**.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
+| Bloqueo | Ninguno. 3.1, 3.5 y 3.3 aprobados por el usuario (2026-11-01), con las decisiones de la revisión aplicadas (BITÁCORA). |
+| Siguiente paso | 3.4 (`Aviso` y `Notificacion`) → 3.6 → 3.7 → 3.8 → 3.9 → 3.10 → 3.11, y **parar tras el 3.11** para la revisión del usuario en el catálogo. Al cerrar la fase: build, Firefox y WebKit. |
+| Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.4, 3.6, 3.7, 3.8, 3.9, 3.10 y 3.11, y **parar tras el 3.11**. Verificación en la fase: typecheck, lint de los archivos tocados, pruebas del catálogo, axe y contraste numérico de cada estado; build y los tres motores al cerrarla.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
 
@@ -630,13 +630,13 @@ Cada paso conserva textos, endpoints y URL; sustituye los componentes antiguos p
 - [ ] **4.15 · `/menu/pedido/checkout/exito`**
   - **Commit:** `feat(pedido): confirmación de pago`
 
-- [ ] **4.16 · `/reservations`.** `ReservationSidebar` y `TableMap` con los campos y la validación del sistema.
+- [ ] **4.16 · `/reservations`.** `ReservationSidebar` y `TableMap` con los campos y la validación del sistema. `useEnvioFormulario` con el campo trampa y el tiempo mínimo por defecto (1 s). El teléfono se queda como hoy; su validación es del servidor (NP-06).
   - **Commit:** `feat(reservas): página de reserva`
 
-- [ ] **4.17 · `/login`.** Errores genéricos, `autocomplete` (`email`, `current-password`) y bloqueo del envío doble.
+- [ ] **4.17 · `/login`.** Errores genéricos, `autocomplete` (`email`, `current-password`) y bloqueo del envío doble. `useEnvioFormulario` con `tiempoMinimoMs={0}`: con autorrelleno, una persona envía en menos de un segundo.
   - **Commit:** `feat(auth): inicio de sesión`
 
-- [ ] **4.18 · `/register`.** Campo trampa, bloqueo del envío doble y errores accesibles. En `next dev` a 1440 px, el fondo decorativo es el LCP y `next/image` avisa de que falta `loading="eager"` (BITÁCORA 3.1): decidir su carga (prioridad o tamaño) como en el 4.3.
+- [ ] **4.18 · `/register`.** Campo trampa (defensa principal), tiempo mínimo por defecto (1 s), bloqueo del envío doble y errores accesibles. En `next dev` a 1440 px, el fondo decorativo es el LCP y `next/image` avisa de que falta `loading="eager"` (BITÁCORA 3.1): decidir su carga (prioridad o tamaño) como en el 4.3.
   - **Commit:** `feat(auth): registro`
 
 - [ ] **4.19 · `/reset` y `/frm_reset`.** Aviso traducido al español con una salida (contacto). La funcionalidad sigue en NP-16.

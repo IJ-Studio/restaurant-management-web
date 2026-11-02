@@ -283,6 +283,10 @@ test.describe("formularios", () => {
 		expect(errorDe(esquemaDatosFiscales, { ...fiscales, codigoPostalFiscal: "1" })).toBe(
 			"El código postal fiscal debe tener 5 dígitos.",
 		);
+		// Correo fiscal: vacío vale; escrito, se comprueba con la regla del registro (isValidEmail).
+		expect(valorDe(esquemaDatosFiscales, { ...fiscales, email: "  facturas@casa.mx " })).toMatchObject({ email: "facturas@casa.mx" });
+		expect(errorDe(esquemaDatosFiscales, { ...fiscales, email: "facturas@casa" })).toBe(MENSAJES.correo);
+		expect(errorDe(esquemaDatosFiscales, { ...fiscales, email: `${"a".repeat(65)}@casa.mx` })).toBe(MENSAJES.correo);
 	});
 
 	test("usuarios del admin: alta y edición", () => {
@@ -329,6 +333,10 @@ test.describe("formularios", () => {
 		};
 		expect(valorDe(esquemaFactura, factura)).toMatchObject({ clientRFC: "XAXX010101000" });
 		expect(errorDe(esquemaFactura, { ...factura, clientRFC: "XAXX0101010000" })).toBe(MENSAJES.demasiadoLargo(13));
+		// RFC: vacío sigue pidiendo que se escriba; escrito, se comprueba su formato (12 o 13).
+		expect(errorDe(esquemaFactura, { ...factura, clientRFC: "" })).toBe("Escribe el RFC.");
+		expect(errorDe(esquemaFactura, { ...factura, clientRFC: "ABC123" })).toBe(MENSAJES.rfc);
+		expect(errorDe(esquemaFactura, { ...factura, clientRFC: "abc010101ab1" })).toBeNull();
 		expect(errorDe(esquemaFactura, { ...factura, items: [{ description: "x", qty: 1, unitPrice: 0 }] })).toBe(
 			"El precio debe ser mayor que 0.",
 		);
