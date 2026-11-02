@@ -6,6 +6,32 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.8 · Logger del cliente sin datos sensibles (2026-11-02)
+
+**Cambios:**
+- **`lib/registro/registrar-error.ts`** (nuevo):
+  - `esControlDeNext` reconoce los errores de control de `notFound()` y `redirect()` por su `digest` (`NEXT_HTTP_ERROR_FALLBACK…`, `NEXT_REDIRECT…`, `NEXT_NOT_FOUND`);
+  - `registrarError` escribe solo el contexto, el mensaje (cortado a 200 caracteres) y el `digest`: nunca el objeto, la pila, cuerpos, tokens ni datos personales.
+- **`app/error.tsx`:** usa `registrarError` en lugar de `console.error(error)`, que volcaba el objeto entero.
+- **`app/page.tsx`:** se quitan los dos `console.log` de los manejadores de prueba de la portada, que registraban el plato completo. Los manejadores siguen vacíos, como estaban en la práctica.
+- **`next.config.ts`:** `compiler.removeConsole` en producción, excepto `error`.
+
+**Alcance:** `rg "console\.log" app components features hooks lib` aún encuentra 2: `app/api/cron/backups/route.ts` y `lib/db.ts`. Son backend (NP-01) y no se tocan; anotado en **NP-40**. Los dos escriben mensajes fijos («CRON: …») sin datos.
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Lint: ningún archivo tocado cambia su cuenta (`app/page.tsx` conserva sus 18 previos) y el nuevo está limpio.
+- `pnpm test:unidad`: 29/29. `registro.spec.ts` (nueva) comprueba:
+  - que reconoce los controles de Next y no los registra;
+  - que, con un error que lleva token y correo, solo se escribe `[prueba] · mensaje · digest=…`.
+- `csp.spec.ts`: un producto inexistente (`/menu/producto/999999`) no deja en la consola ningún error de `notFound()`.
+- Build: correcto.
+- Chromium contra `next start`, en dos tandas: 44 + 137 = **181/181**.
+- Sin procesos abiertos.
+
+**No verificado:**
+- Que `removeConsole` actúe con el compilador de Next 16 (Turbopack). En el código de servidor no lo hace: el texto del `console.log` de `lib/db.ts` sigue en `.next/server`. En el cliente no queda ningún `console` propio salvo `console.error`, que se conserva a propósito, así que no hay nada que comprobar. La protección real es no tener `console.log` en el código del front.
+
 ### 2.7 · Sin service worker (2026-11-02) — D-11 rechazada
 
 **Cambios:**

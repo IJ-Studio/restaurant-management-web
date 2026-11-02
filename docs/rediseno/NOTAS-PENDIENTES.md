@@ -52,6 +52,7 @@
 | NP-37 | El mesero no tiene navegación de panel configurada | Producto / navegación | Baja |
 | NP-38 | Avisos críticos de dependencias transitivas de `firebase-admin` | Dependencias del servidor | Alta |
 | NP-39 | `revisar:invisibles` no detecta otros caracteres de control | Herramientas / idea | Baja |
+| NP-40 | `console.log` en código de servidor (cron de respaldos) | Backend / registro | Baja |
 
 ---
 
@@ -516,3 +517,12 @@
 - **Solución sugerida:** añadir al script los caracteres C0 y U+007F a U+009F, informando solo de archivo y línea, como hoy.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** un archivo con U+0008 hace fallar `pnpm revisar:invisibles`.
+
+## NP-40 · `console.log` en código de servidor (cron de respaldos)
+
+- **Archivos y rutas afectados:** `app/api/cron/backups/route.ts:105` y `lib/db.ts:37`.
+- **Problema:** el paso 2.8 pide que `rg "console\.log" app components features hooks lib` no encuentre nada, pero estos dos están en código de servidor que el rediseño no toca (NP-01). Escriben mensajes fijos («CRON: …»), sin datos personales. `compiler.removeConsole` no los elimina del build de servidor con Turbopack (comprobado en el 2.8).
+- **Riesgo:** bajo; ruido en los registros del servidor.
+- **Solución sugerida:** al revisar el backend (NP-10, cron con `CRON_SECRET`), sustituirlos por el registro del servidor o eliminarlos.
+- **Prioridad:** Baja.
+- **Criterio de aceptación:** `rg "console\.log" app lib` sin resultados.

@@ -10,6 +10,9 @@ const EXTENSIONES = ["tsx", "ts", "jsx", "js"];
 const nextConfig: NextConfig = {
   pageExtensions: EXTENSIONES,
 
+  // En producción se quitan los console.* salvo console.error, que usa lib/registro/registrar-error.ts (PLAN 2.8).
+  compiler: { removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false },
+
   // Sin X-Powered-By ni mapas de código del cliente en producción (PLAN 2.2).
   poweredByHeader: false,
   productionBrowserSourceMaps: false,

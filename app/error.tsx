@@ -1,11 +1,12 @@
 'use client';
 import { useEffect } from 'react';
 import styles from './error.module.css';
+import { registrarError } from '@/lib/registro/registrar-error';
 
 export default function ErrorPage({ error, reset }: { error: Error; reset: () => void }) {
     useEffect(() => {
-        // Aquí podrías loguear el error a un servicio de reporte
-        console.error(error);
+        // Solo el mensaje y el digest, sin la pila ni datos (PLAN 2.8).
+        registrarError(error, 'error de página');
     }, [error]);
 
     return (
