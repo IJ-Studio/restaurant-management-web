@@ -232,6 +232,40 @@
   .cuerpo-dialogo:focus-visible {
     outline-offset: -2px;
   }
+
+  /* Notificaciones (DESIGN.md § Otros componentes base): abajo, a todo el ancho en móvil y en
+     la esquina final desde 40rem, por encima de las zonas seguras. La pila no captura el
+     puntero; cada notificación, sí. */
+  .pila-notificaciones {
+    position: fixed;
+    z-index: 300;
+    inset-inline: calc(var(--margen-pagina) + env(safe-area-inset-left, 0px))
+      calc(var(--margen-pagina) + env(safe-area-inset-right, 0px));
+    inset-block-end: calc(var(--margen-pagina) + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+  }
+  @media (min-width: 40rem) {
+    .pila-notificaciones {
+      inset-inline-start: auto;
+      inline-size: 24rem;
+    }
+  }
+  .notificacion {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--espacio-sm);
+    padding-block: var(--espacio-sm);
+    padding-inline: var(--espacio-md) var(--espacio-xs);
+    background: var(--color-superficie-elevada);
+    border: var(--grosor-filete) solid;
+    border-radius: var(--radius-tarjeta);
+    box-shadow: var(--shadow-flotante);
+    pointer-events: auto;
+    animation: notificacion-entra var(--duracion-media) var(--ease-salida);
+  }
+  .notificacion[data-saliendo] {
+    animation: notificacion-sale var(--duracion-breve) var(--ease-estandar) forwards;
+  }
 }
 
 @keyframes velo-entra { from { opacity: 0; } }
@@ -242,3 +276,5 @@
 @keyframes panel-sale-fin { to { transform: translateX(100%); } }
 @keyframes panel-entra-inicio { from { transform: translateX(-100%); } }
 @keyframes panel-sale-inicio { to { transform: translateX(-100%); } }
+@keyframes notificacion-entra { from { opacity: 0; transform: translateY(0.5rem); } }
+@keyframes notificacion-sale { to { opacity: 0; } }
