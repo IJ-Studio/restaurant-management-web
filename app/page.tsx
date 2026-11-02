@@ -109,14 +109,12 @@ export default function HomePage() {
     : [];
 
   // Handlers
-  const handleAddToCart = (item: MenuItem) => {
+  const handleAddToCart = () => {
     // Lógica de carrito (puedes implementar con contexto o estado local)
-    console.log("Agregar al carrito", item);
   };
 
-  const handleSelectItem = (item: MenuItem) => {
+  const handleSelectItem = () => {
     // Abrir modal con detalles (puedes implementar)
-    console.log("Ver detalle", item);
   };
 
   return (

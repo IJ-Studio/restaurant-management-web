@@ -86,3 +86,15 @@ test("/about: el carrusel de reseñas sigue animado sin <style> en línea", asyn
 	expect(await carrusel.evaluate((e) => getComputedStyle(e).animationName)).toBe("marquee");
 	expect(await page.locator("style:not([nonce])").count()).toBe(0);
 });
+
+// PLAN 2.8: la página de un producto que no existe no registra el notFound() como error.
+test("un producto inexistente no deja un error en la consola", async ({ page }) => {
+	const errores: string[] = [];
+	page.on("console", (m) => {
+		if (m.type() === "error") errores.push(m.text());
+	});
+	await simularApi(page);
+	await page.goto("/menu/producto/999999", { waitUntil: "load" });
+	await page.waitForTimeout(1500);
+	expect(errores.filter((e) => /NEXT_|error de página|notFound/i.test(e))).toEqual([]);
+});
