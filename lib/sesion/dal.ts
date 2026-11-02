@@ -22,7 +22,8 @@ export interface SesionDTO {
 }
 
 const ROLES_POR_ID: Record<number, RolSesion> = { 1: "admin", 2: "cajero", 3: "mesero", 4: "cocina", 5: "cliente" };
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+// Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
+const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export const verificarSesion = cache(async (): Promise<SesionDTO | null> => {
 	const sesion = await getSession();

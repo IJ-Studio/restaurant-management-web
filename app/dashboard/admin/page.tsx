@@ -16,7 +16,8 @@ function getAuthToken(): string | null {
   return localStorage.getItem("authToken");
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+// Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export default function AdminDashboardPage() {
   const router = useRouter();

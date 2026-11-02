@@ -42,6 +42,8 @@ const ENTORNO = {
 	JWT_SECRET: "secreto-ficticio-solo-para-pruebas-e2e",
 	NEXT_PUBLIC_API_URL: BASE,
 	NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: "dcb1tspbj",
+	// Clave publicable ficticia: el build la exige (PLAN 2.16).
+	NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_e2e_ficticia",
 };
 
 const git = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" }).trim();

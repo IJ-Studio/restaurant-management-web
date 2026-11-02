@@ -31,7 +31,8 @@ const T = {
   danger: "#dc2626",
 };
 
-const BASE_URL = "http://localhost:10000";
+// La API configurada en lugar de localhost fijo; el build exige la variable (PLAN 2.16).
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 type ExportType = "dishes" | "daily";
 type ExportFormat = "csv" | "xlsx" | "pdf";

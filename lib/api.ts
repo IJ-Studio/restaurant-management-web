@@ -1,4 +1,5 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+// Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | undefined>;
