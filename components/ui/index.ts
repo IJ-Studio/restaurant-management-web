@@ -13,6 +13,7 @@ export { Casilla, Interruptor } from "./Casilla";
 export { Boton } from "./Boton";
 export { BotonEnlace } from "./BotonEnlace";
 export { BotonVolver } from "./BotonVolver";
+export { Buscador } from "./Buscador";
 export { CerrarDialogo, Dialogo, PanelLateral } from "./Dialogo";
 export { DialogoConfirmacion, useConfirmacion } from "./DialogoConfirmacion";
 export { Esqueleto, EsqueletoLineas, ZonaCargando } from "./Esqueleto";

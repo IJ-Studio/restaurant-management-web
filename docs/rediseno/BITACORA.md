@@ -6,6 +6,30 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.14 · `Buscador` (2026-11-01)
+
+**Archivos**, sin dependencias nuevas:
+- `components/ui/Buscador.tsx`: formulario `role="search"` con etiqueta, campo `type="search"` (sin la «x» nativa de WebKit, que se sustituye por un botón con nombre), lupa o giro según `ocupado`, «Borrar búsqueda», Esc para borrar, ayuda opcional y anuncio `aria-live`.
+- `hooks/useBusqueda.ts`:
+  - `coincide`: sin tildes ni mayúsculas, con `normalizarParaComparar` del 3.1; todas las palabras, en cualquier orden.
+  - `useFiltroLocal`: `useDeferredValue`, con `pendiente` mientras el filtrado va detrás de lo escrito.
+  - `useBusquedaRemota`: espera de 300 ms, mínimo de 2 caracteres y `AbortController` que cancela la anterior. El estado (`inactiva`, `esperando`, `buscando`, `lista`, `error`) se deriva de la consulta actual, así que un resultado viejo nunca se muestra como el de la consulta nueva. Devuelve `anteriores` para no parpadear.
+- `components/ui/Campo.tsx` exporta `CLASE_CONTROL`, para que el buscador tenga el mismo aspecto que los campos.
+- Catálogo: sección «Buscador» (`DemosBuscador.tsx`). Tiene un filtro sobre 120 platillos y una búsqueda contra un API simulado, con latencia variable, contador de peticiones y cancelaciones, y fallo con la palabra «error».
+- DESIGN.md documenta el componente y los hooks.
+
+**Verificación:**
+- `pnpm test:unidad`: 27/27, con `busqueda.spec.ts` (nueva): tildes, mayúsculas, orden de palabras y consulta vacía.
+- `buscador.spec.ts` (nueva, Chromium contra `next dev`):
+  - filtro local con «cafe» → 10, anunciado; Enter no envía; Esc y «Borrar búsqueda» vacían y el foco vuelve al campo; sin resultados, anuncio y estado vacío;
+  - remota: una letra no busca; teclear seguido lanza una sola petición; una consulta nueva cancela la que estaba en curso (`Peticiones: 3 · canceladas: 1`); los resultados son los de la última consulta;
+  - fallo anunciado y con estado de error;
+  - axe y sin desborde a 360 px con texto al 125 % en los dos temas.
+- `campos.spec.ts` (por el cambio en `Campo.tsx`) y `catalogo.spec.ts`: verdes.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+
+**No verificado:** Firefox y WebKit, que se hacen ahora en el cierre de la fase.
+
 ### 3.13 · `NavegacionPanel`, `BarraSuperiorPanel` y `EncabezadoPagina` (2026-11-01)
 
 **Componentes** (`components/paneles/`), sin dependencias nuevas:

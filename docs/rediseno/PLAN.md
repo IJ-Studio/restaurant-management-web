@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 3 en curso** (2026-11-01). Fase 1 cerrada; sus ramas ya están en el remoto y el PR lo gestiona el usuario. Ya hechos de la fase 3: 3.0, 3.2 y parte de 3.4. |
 | Rama activa | `feature/rediseno-web-componentes` (sale de `feature/rediseno-web-cimientos`, `d6407c9`, porque el PR de la fase 1 aún no está fusionado) |
-| Último paso completado | **3.13 · NavegacionPanel, BarraSuperiorPanel y EncabezadoPagina** (2026-11-01). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **3.14 · Buscador** (2026-11-01). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. El usuario pidió seguir el PLAN (2026-11-01): 3.12 → 3.13 → 3.14 → cierre de la fase 3. La revisión de 3.4 y 3.6–3.11 en el catálogo sigue pendiente de su parte. |
-| Siguiente paso | 3.14 → cierre de la fase 3. |
+| Siguiente paso | Cierre de la fase 3: build, revisar-bundle, batería completa en Chromium, Firefox y WebKit, `pnpm revisar:invisibles`, `pnpm audit` y texto del PR (sin Lighthouse ni push). |
 | Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.12 → 3.13 → 3.14 → cierre de la fase (build, revisar-bundle, batería completa en Chromium, Firefox y WebKit, `pnpm revisar:invisibles`, `pnpm audit` y texto del PR para el usuario; sin Lighthouse ni push). Verificación en la fase: typecheck, lint de los archivos tocados, pruebas del catálogo, axe y contraste numérico de cada estado; build y los tres motores al cerrarla.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -568,7 +568,7 @@ Cada paso crea el componente en `components/ui/` o `components/marca/` y lo mues
 - [x] **3.13 · `NavegacionPanel`, `BarraSuperiorPanel` y `EncabezadoPagina`**: entradas por rol desde `config/navigation/*`, `<Link>` con `aria-current` y drawer por debajo de 1024 px. · *Hecho (2026-11-01): navegación por rol (navegacionDeRol), barra superior con drawer y encabezado de página. Mesero sin navegación: NP-37.*
   - **Commit:** `feat(paneles): navegación por rol y encabezado de página`
 
-- [ ] **3.14 · `Buscador`**: `useDeferredValue` para los filtros locales y debounce de 300 ms con `AbortController` para las búsquedas que llamen al API.
+- [x] **3.14 · `Buscador`**: `useDeferredValue` para los filtros locales y debounce de 300 ms con `AbortController` para las búsquedas que llamen al API. · *Hecho (2026-11-01): Buscador y hooks/useBusqueda.ts (useDeferredValue en local; 300 ms y AbortController en remoto).*
   - **Commit:** `feat(ui): buscador con debounce y cancelación`
 
 ---
