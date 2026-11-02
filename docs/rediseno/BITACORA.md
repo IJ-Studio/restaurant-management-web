@@ -6,6 +6,57 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.17 · Límites de error sin trazas (2026-11-02)
+
+**Cambios:**
+- **`components/errores/LimiteError.tsx`** (nuevo), sobre `EstadoError` (3.7):
+  - «Algo salió mal», una frase genérica, «Reintentar» (`router.refresh()` y `reset()` en una transición), un enlace de salida y, si existe, «Código para soporte: `digest`».
+  - **Nunca** muestra `error.message` ni la pila.
+  - Registra con `registrarError` (2.8).
+- **`components/errores/NoEncontrado.tsx`** (nuevo), sobre `EstadoVacio`: «No encontramos esta página», una frase y una salida. No repite la ruta pedida.
+- **`error.tsx` y `not-found.tsx` nuevos en cuatro segmentos:**
+
+  | Segmento | Salida |
+  |---|---|
+  | `app/(auth)` | «Ir al inicio» |
+  | `app/(public)` | «Ir al inicio» |
+  | `app/menu` | «Ver el menú» |
+  | `app/dashboard` | «Ir al panel» |
+
+  El límite queda dentro del layout del segmento: el panel conserva su barra lateral.
+- **`app/global-error.tsx`** (nuevo):
+  - importa los estilos y usa `components/errores/ErrorGlobal.tsx`, que pone su propio `<html lang="es">` y `<body>`;
+  - no depende del router ni de los proveedores, porque es el layout raíz el que falló;
+  - lleva «Reintentar», un enlace normal al inicio (recarga completa) y el `digest`.
+- **`app/error.tsx`** (raíz):
+  - conserva su diseño, que rehace el 4.23;
+  - «Intentar de nuevo» también hace `router.refresh()`;
+  - añade «Ir al inicio» y el `digest`.
+- **Páginas de prueba, solo en `next dev`** (`page.dev.tsx`, fuera del build):
+  - rutas: `/menu/prueba-limites`, `/prueba-limites-publico`, `/prueba-limites-auth` y `/dashboard/admin/prueba-limites`;
+  - la del panel va bajo `admin` porque el proxy manda a `/forbidden` cualquier ruta del panel que no sea de un rol;
+  - fallan en el servidor o en el cliente con mensajes que no deben verse, o llaman a `notFound()`;
+  - el código común está en `app/(dev)/_limites/`.
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Lint: 0 problemas en los archivos nuevos y en `app/error.tsx`.
+- `pnpm test:unidad`: 45/45. `error-global.spec.tsx` (nueva) renderiza `ErrorGlobal` con un error que trae mensaje, pila y `digest`: aparece el `digest` y no aparecen el mensaje, `SELECT`, `<pre` ni la primera línea de la pila.
+- `limites-error.spec.ts` (nueva, Chromium contra `next dev`). En cada segmento:
+  - error de servidor y de cliente: el límite aparece con su encabezado, «Reintentar» y la salida correcta;
+  - en el DOM de la página no hay ningún `<pre>` ni texto de la pila (`at …`), ni el mensaje interno (`detalle-interno`, `SELECT`, `token=`, `/api/privado`, `.tsx:`);
+  - el `digest`, si aparece, es un código corto;
+  - `notFound()` muestra la página «no encontrada» del segmento.
+  - Resultado: 12/12 (9 en la primera tanda y las 3 del panel tras moverlo bajo `admin`).
+- Build: correcto. Las páginas de prueba no están entre las rutas y `detalle-interno` no aparece en `.next/static` ni en `.next/server`.
+- Chromium contra `next start`, en dos tandas: 110 + 95 = **205/205**.
+- Sin procesos abiertos.
+
+**No verificado:**
+- El límite con un error real de producción, donde Next sustituye el mensaje del servidor. Las páginas de prueba solo existen en `next dev`, donde el mensaje llega completo al cliente, y aun así no se muestra.
+- `global-error.tsx` en el navegador: no se puede hacer fallar el layout raíz desde una página. Lo cubre la prueba unitaria.
+- La revisión visual en las cinco anchuras y los dos temas: el límite usa `EstadoError` y `EstadoVacio`, ya revisados en el 3.7.
+
 ### 2.16 · Variables públicas validadas en el build (2026-11-02)
 
 **Cambios:**
