@@ -50,6 +50,7 @@
 | NP-34 | Retirar el limpiador de service workers antiguos | Deuda técnica | Baja |
 | NP-36 | Orígenes de imagen y de terceros por confirmar con datos reales | Seguridad / contenido | Media |
 | NP-37 | El mesero no tiene navegación de panel configurada | Producto / navegación | Baja |
+| NP-38 | Avisos críticos de dependencias transitivas de `firebase-admin` | Dependencias del servidor | Alta |
 
 ---
 
@@ -492,3 +493,16 @@
 - **Solución sugerida:** definir con el usuario qué vistas tiene el mesero (mesas, comandas, llamadas…) y crear `config/navigation/mesero.nav.ts` con el mismo formato; si solo tiene una vista, confirmar que no necesita navegación.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** `navegacionDeRol(ROLES.MESERO)` devuelve sus secciones, o hay una decisión escrita de que no las necesita.
+
+## NP-38 · Avisos críticos de dependencias transitivas de `firebase-admin`
+
+- **Archivos y rutas afectados:** `package.json` (`firebase-admin@13.6.0`), que lo usa el servidor.
+- **Problema:** tras actualizar Next en el paso 2.1, `pnpm audit` sigue dando 3 avisos críticos, todos por dependencias transitivas de `firebase-admin`:
+  - `fast-xml-parser@4.5.3` (corregido en 4.5.4), vía `@google-cloud/storage`;
+  - `protobufjs@7.5.4` (corregido en 7.5.5), vía `@google-cloud/firestore` → `google-gax` → `@grpc/proto-loader`;
+  - `websocket-driver@0.7.4` (corregido en 0.7.5), vía `@firebase/database` → `faye-websocket`.
+- **Por qué no se hace en el rediseño:** `firebase-admin` es una dependencia de servidor. El PLAN no incluye su actualización y el alcance es solo el front.
+- **Riesgo:** ejecución de código y corrupción de mensajes en el servidor si esas rutas de código se alcanzan con datos de un atacante.
+- **Solución sugerida:** actualizar `firebase-admin` a una versión que arrastre las dependencias corregidas, o fijarlas con `pnpm.overrides`, y comprobar el servidor (respaldos, almacenamiento) tras el cambio.
+- **Prioridad:** Alta.
+- **Criterio de aceptación:** `pnpm audit` sin avisos críticos.

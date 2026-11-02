@@ -4,6 +4,35 @@
 
 ---
 
+## Fase 2 · Cabeceras y medidas de seguridad del front
+
+### 2.1 · Actualizar Next (2026-11-02) — D-01
+
+El usuario pidió ejecutar la fase 2 sin supervisión, del 2.1 al 2.18, sin aplicar la CSP (2.5) y cerrando la fase al final. Rama `feature/rediseno-web-seguridad`, creada desde `feature/rediseno-web-componentes` (`2098fa0`), que ya contiene las fases 1 y 3.
+
+**Versiones** (`package.json` y `pnpm-lock.yaml`):
+- `next` de 16.0.7 a **16.4.3**, y `eslint-config-next` de 16.0.7 a 16.4.3.
+- `react` y `react-dom` de 19.2.1 a **19.2.9**, el último parche de la 19.2, sin cambiar de versión menor.
+
+**Por qué 16.4.3:** el último aviso de `next` exige 16.4.1 o posterior. La 16.4.4 se publicó hoy (2026-11-02) y no tiene ningún margen de uso; la 16.4.3 es del 2026-10-23. React no tenía avisos.
+
+**Resultado de `pnpm audit`:**
+- **Antes:** 136 avisos (7 críticos, 66 altos, 53 moderados y 10 bajos), 43 de ellos de `next`.
+- **Después:** 85 (3 críticos, 45 altos, 31 moderados y 6 bajos), ninguno de `next`.
+- Los 3 críticos que quedan llegan por `firebase-admin`, dependencia del servidor: **NP-38**, fuera del alcance.
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Build: correcto en 120 s, sin avisos. Tabla de rutas idéntica (66 rutas, mismo tipo cada una), comparada con el build del cierre de la fase 3.
+- Chromium contra `next start`, batería completa: 164/164 (103 omitidas: el catálogo, solo en `next dev`).
+- `next dev`: `catalogo.spec.ts` y `dialogos.spec.ts`, 26/26.
+- Lint global: de 309 a 310 problemas. El nuevo es un aviso de una regla que trae `eslint-config-next` 16.4 (`@next/next/no-location-assign-relative-destination`) sobre código que ya existía: `window.location.href` en `app/dashboard/mesero/page.tsx`. No se toca, porque esa pantalla se rehace en la fase 5; queda anotado aquí.
+- Sin procesos abiertos.
+
+**No verificado:** Firefox y WebKit con la nueva versión (en el cierre de la fase).
+
+---
+
 ## Fase 3 · Componentes reutilizables
 
 ### Cierre de la fase 3 (2026-11-02)
