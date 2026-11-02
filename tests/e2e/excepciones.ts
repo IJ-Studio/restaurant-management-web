@@ -23,10 +23,10 @@ export function cubre(e: Excepcion, tipo: string, detalle: string): boolean {
 }
 
 export const EXCEPCIONES: Excepcion[] = [
-	// Violaciones de la CSP en modo informe (2.3). Temporales: el paso indicado las retira.
+	// Violación de la CSP en modo informe (2.3), temporal: la retira el paso 2.7.
 	{ tipo: "csp", contiene: "worker-src http://localhost:3100/sw.js", resuelve: "2.7 (sin service worker)" },
-	{ tipo: "csp", contiene: "script-src-elem inline", resuelve: "2.4 (script en línea de /offline)" },
-	{ tipo: "csp", contiene: "style-src-elem inline", resuelve: "2.4 (estilos en línea de /about, ajustes del admin y caja)" },
+	// Fotos de muestra (aboutMock.ts) del editor de «Acerca de»: origen fuera de la CSP.
+	{ tipo: "csp", contiene: "img-src https://images.unsplash.com/", resuelve: "NP-36: decisión del usuario antes del 2.5" },
 	// Sin backend en pruebas: las llamadas a la API caen en el propio servidor de Next.
 	{ tipo: "http", contiene: "/api/auth/me", resuelve: "0.7 (API simulada); el 401 sin sesión es el comportamiento esperado" },
 	{ tipo: "http", contiene: "localhost:3100/footer", resuelve: "0.7 (API simulada)" },

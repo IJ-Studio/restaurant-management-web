@@ -6,6 +6,51 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.4 · Eliminar los scripts y estilos en línea que bloquearía la CSP (2026-11-02)
+
+Se retomó tras la interrupción por falta de memoria, a petición del usuario. Esta vez las tandas se lanzaron en primer plano y de una en una.
+
+**Corrección de la lista del 2.3:** la tabla del 2.3 salió de un resumen recortado del log y estaba **incompleta**. Faltaban `/` (2), `/about` (1 más, la de `MolinoAnimado`), `/dashboard/admin/db-performance` (2) y las fotos de Unsplash de `/dashboard/admin/about`. Abajo va la lista completa y cómo queda cada una.
+
+**Cambios:**
+- **`/offline`:** el script en línea con `dangerouslySetInnerHTML` pasa a `app/offline/RecargarAlConectar.tsx`, un componente cliente que hace lo mismo (recargar al volver la conexión).
+- **`<style>` en línea fuera:**
+  - `about/page.tsx` (carrusel de reseñas);
+  - `admin/settings/page.tsx` y `admin/db-performance/page.tsx` (`@keyframes spin`);
+  - `ExportModal.tsx` e `Importpreviewmodal.tsx` (`spin`, solo visible en sus modales);
+  - `PaymentDistribution.tsx` (`<style jsx>`, que styled-jsx inyectaba al ejecutarse).
+- **Ilustraciones SVG** de la portada (`Plato.jsx`) y de `/about` (`MolinoAnimado.jsx`): llevaban un `<style>` dentro del SVG. Sus reglas pasan a `styles/globals.css`, acotadas con `.plato-boceto` y `.molino-animado`. El relleno, que antes se interpolaba desde la prop `fillColor`, llega como variable CSS en el atributo `style` del SVG, que la CSP permite (`style-src-attr`). Se comprobó que ningún otro elemento usaba esas clases, que antes eran globales.
+- **`styles/globals.css`** recibe las animaciones heredadas (`marquee`, `.animate-marquee-elegant` y `slideRight`) y las clases de las dos ilustraciones, con la retirada prevista al rehacer esas pantallas (fases 4 y 5). `spin` no hace falta: Tailwind ya define `@keyframes spin` igual.
+- **`csp.spec.ts`:**
+  - ahora falla con cualquier violación no justificada;
+  - comprueba que el carrusel de `/about` sigue con su animación y que no queda `<style>` sin nonce.
+- **`excepciones.ts`:** se retiran las dos excepciones de lo que iba en línea.
+
+**Lista completa de violaciones** (Chromium, 42 rutas) y estado:
+
+| Directiva | Qué | Dónde | Estado |
+|---|---|---|---|
+| `script-src-elem` | script en línea | `/offline` | **Corregida** |
+| `style-src-elem` | `<style>` en el SVG de `Plato` | `/` (2) | **Corregida** |
+| `style-src-elem` | carrusel y `<style>` en el SVG de `MolinoAnimado` | `/about` (4) | **Corregida** |
+| `style-src-elem` | `@keyframes spin` | `/dashboard/admin/settings` (2), `/dashboard/admin/db-performance` (2) | **Corregida** |
+| `style-src-elem` | `<style jsx>` | `/dashboard/cajero` | **Corregida** |
+| `worker-src` | registro de `/sw.js` | las 42 rutas | **Justificada:** la retira el 2.7 |
+| `img-src` | fotos de muestra de `images.unsplash.com` (`aboutMock.ts` y el respaldo de `GallerySection.tsx`) | `/dashboard/admin/about` | **Justificada:** decisión del usuario antes del 2.5 (NP-36). Sustituirlas cambia el contenido; permitir el origen amplía la CSP. |
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Lint: ningún archivo tocado sube su cuenta (las pantallas heredadas conservan sus errores previos) y el componente nuevo está limpio.
+- Build: correcto.
+- `csp.spec.ts` en los **cinco proyectos** (Chromium, Firefox, WebKit, iOS y Android): 4/4 en cada uno, sin violaciones salvo las dos justificadas.
+- Chromium, recorrido, línea base y marca: **139/139**.
+- Ilustraciones (prueba temporal, ya borrada): trazo de 2,5 px y relleno aplicados en la portada y en `/about`; captura del plato revisada.
+- Sin procesos abiertos.
+
+**No verificado:**
+- Los modales de exportar e importar, con su icono girando: se abren con datos del admin que el recorrido no simula. La regla `spin` es la misma de Tailwind.
+- El checkout con Stripe (sin claves ni backend).
+
 ### Interrupción: falta de memoria durante la verificación del 2.4 (2026-11-02)
 
 **Qué pasó.** Con el código del 2.4 terminado, se lanzó en segundo plano el build y `csp.spec.ts` en los cinco proyectos. Claude Code paró la tarea porque el equipo se quedó sin memoria. No quedó salida: se cortó durante el build, antes de las pruebas. No quedaron procesos abiertos (0 de `node` y de navegadores; el 3100, libre).

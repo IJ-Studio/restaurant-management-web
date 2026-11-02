@@ -1499,9 +1499,6 @@ export default function DBPerformancePage() {
           Rendimiento BD · El Quijote Admin · Polling cada {pollInterval / 1000}s
         </p>
 
-        <style>{`
-          @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-        `}</style>
     </main>
   );
 }

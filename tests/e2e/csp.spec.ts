@@ -12,6 +12,14 @@ test.describe.configure({ timeout: 120_000 });
 
 const SALIDA = join("test-results", "csp");
 
+/** Violaciones que se toleran de forma temporal, con el paso del PLAN que las retira. */
+const JUSTIFICADAS = [
+	{ directiva: "worker-src", bloqueado: "/sw.js", resuelve: "2.7 (sin service worker)" },
+	// Fotos de muestra de aboutMock.ts en el editor de «Acerca de». Sustituirlas cambia contenido y
+	// permitir el origen amplía la CSP: decisión del usuario antes del 2.5 (NP-36).
+	{ directiva: "img-src", bloqueado: "https://images.unsplash.com/", resuelve: "NP-36, antes del 2.5" },
+];
+
 test("la cabecera de informe lleva un nonce distinto en cada petición y Next lo pone en sus scripts", async ({ request }) => {
 	const politicaDe = async () => (await request.get("/")).headers()["content-security-policy-report-only"] ?? "";
 	const [a, b] = [await politicaDe(), await politicaDe()];
@@ -63,8 +71,19 @@ for (const [grupo, rutas, conSesion] of [
 		}
 		mkdirSync(SALIDA, { recursive: true });
 		writeFileSync(join(SALIDA, `violaciones-${grupo.replace(" ", "-")}-${info.project.name}.json`), JSON.stringify(violaciones, null, 1));
-		// En el 2.3 solo se registran; el 2.4 las corrige o las justifica.
 		console.log(`CSP ${grupo} (${info.project.name}): ${violaciones.length} violaciones`);
 		for (const v of violaciones) console.log(`  ${v.ruta} · ${v.directiva} · ${v.bloqueado} · ${v.origen}`);
+		// Desde el 2.4, 0 violaciones salvo las justificadas, cada una con el paso que la retira.
+		const sinJustificar = violaciones.filter((v) => !JUSTIFICADAS.some((j) => j.directiva === v.directiva && v.bloqueado.includes(j.bloqueado)));
+		expect(sinJustificar, JSON.stringify(sinJustificar, null, 1)).toEqual([]);
 	});
 }
+
+// /about: el carrusel de reseñas conserva su animación, que pasó del <style> en línea al CSS global (2.4).
+test("/about: el carrusel de reseñas sigue animado sin <style> en línea", async ({ page }) => {
+	await page.goto("/about", { waitUntil: "load" });
+	const carrusel = page.locator(".animate-marquee-elegant").first();
+	await expect(carrusel).toBeAttached();
+	expect(await carrusel.evaluate((e) => getComputedStyle(e).animationName)).toBe("marquee");
+	expect(await page.locator("style:not([nonce])").count()).toBe(0);
+});

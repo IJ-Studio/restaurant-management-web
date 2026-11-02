@@ -102,20 +102,6 @@ export default function AboutPage() {
 
       {/* 3. BANNER REFINADO DE RESEÑAS MULTIFUENTE */}
       <section className="w-full bg-[var(--color-brand)] py-12 overflow-hidden relative shadow-inner">
-        <style>{`
-          @keyframes marquee {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
-          }
-          .animate-marquee-elegant {
-            display: flex;
-            width: max-content;
-            animation: marquee 65s linear infinite;
-          }
-          .animate-marquee-elegant:hover {
-            animation-play-state: paused;
-          }
-        `}</style>
 
         <div className="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-[var(--color-brand)] via-[var(--color-brand)]/60 to-transparent z-10" />
         <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-[var(--color-brand)] via-[var(--color-brand)]/60 to-transparent z-10" />

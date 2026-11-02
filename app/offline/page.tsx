@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RecargarAlConectar } from "./RecargarAlConectar";
 
 export const metadata: Metadata = {
   title: "Sin conexión",
@@ -56,11 +57,7 @@ export default function OfflinePage() {
         </button>
       </form>
       {/* Recarga sola en cuanto vuelve la conexión. */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: "window.addEventListener('online',function(){location.reload()});",
-        }}
-      />
+      <RecargarAlConectar />
     </main>
   );
 }
