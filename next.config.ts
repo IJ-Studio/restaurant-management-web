@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
 import { HOSTS_IMAGEN } from "./config/seguridad/hosts-permitidos";
+import { CABECERAS_SEGURIDAD } from "./config/seguridad/cabeceras";
 
 // Las páginas *.dev.tsx (catálogo de componentes, PLAN 3.0) solo existen en next dev:
 // en next build no son rutas y su código no se compila.
@@ -8,6 +9,10 @@ const EXTENSIONES = ["tsx", "ts", "jsx", "js"];
 
 const nextConfig: NextConfig = {
   pageExtensions: EXTENSIONES,
+
+  // Sin X-Powered-By ni mapas de código del cliente en producción (PLAN 2.2).
+  poweredByHeader: false,
+  productionBrowserSourceMaps: false,
 
   // Solo los orígenes de config/seguridad/hosts-permitidos.ts (PLAN 1.9). Cloudinary va
   // por su propio cargador; esta lista cubre el resto de next/image.
@@ -22,17 +27,13 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
 
-  // Tus cabeceras de seguridad existentes
+  // Cabeceras de seguridad para todas las rutas (PLAN 2.2). La CSP la pone proxy.ts (2.3).
+  // Sin Cross-Origin-Embedder-Policy: rompería las imágenes de Cloudinary y Stripe.
   async headers() {
     return [
       {
         source: '/(.*)',
-        headers: [
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
-          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-        ],
+        headers: CABECERAS_SEGURIDAD,
       },
       {
         // El service worker siempre debe revalidarse para que las actualizaciones lleguen.
