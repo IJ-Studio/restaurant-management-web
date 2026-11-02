@@ -33,6 +33,18 @@ export const HOSTS_CONEXION: readonly string[] = [
 	"https://api.cloudinary.com",
 ];
 
+/** Hosts a los que se puede enlazar desde datos del API (redes y mapa), solo por https (PLAN 2.13). */
+export const HOSTS_ENLACE: readonly string[] = [
+	"www.facebook.com",
+	"facebook.com",
+	"www.instagram.com",
+	"instagram.com",
+	"maps.google.com",
+	"www.google.com",
+	"google.com",
+	"maps.app.goo.gl",
+];
+
 /** Orígenes que se pueden incrustar en un marco. */
 export const HOSTS_MARCO: readonly string[] = [
 	// Mapa de /about (google.com/maps/embed).

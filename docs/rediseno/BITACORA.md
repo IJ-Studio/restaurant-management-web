@@ -6,6 +6,49 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.13 · URLs seguras (2026-11-02)
+
+**Cambios:**
+- **`lib/seguridad/urls.ts`** (nuevo):
+  - **`esRutaInternaSegura`:** empieza por `/`, no por `//` ni por `/\`, sin esquema ni caracteres de control, y al resolverse se queda en el mismo origen.
+  - **`urlExternaPermitida`:** solo `https:`, un host de la lista y sin credenciales. Devuelve la URL normalizada o `null`.
+  - **`rutaConParametros`:** usa `URLSearchParams`, suma los parámetros a los que ya tuviera la ruta y omite los vacíos.
+  - **`cantidadSegura`:** entero entre 1 y 20.
+  - **`destinoTrasLogin`:** junta la decisión del login para poder probarla sin backend.
+- **`config/seguridad/hosts-permitidos.ts`:** `HOSTS_ENLACE` (Facebook, Instagram y Google Maps), los destinos a los que se puede enlazar desde datos del API.
+- **Login (`app/(auth)/login/page.tsx`):**
+  - el destino tras iniciar sesión sale de `destinoTrasLogin`;
+  - un `callbackUrl` que no sea interno y seguro lleva al inicio (`/`);
+  - `action` solo acepta `pedir_mesa`, y la cantidad se limita;
+  - el enlace al registro se construye con `rutaConParametros` y solo conserva un `callbackUrl` seguro.
+- **Registro:** no usaba `callbackUrl` ni sus parámetros (tras registrarse va a `/login`). No cambia.
+- **`AboutSection`:** Facebook y el mapa solo se pintan como enlace si `urlExternaPermitida` los acepta.
+- **Página de éxito del pedido:** `encodeURIComponent(ordenId)` en la consulta y en la descarga, y `window.open(…, "_blank", "noopener,noreferrer")`.
+- **Detalle de producto:**
+  - con `autoExecute`, **pide confirmación** con `useConfirmacion` (3.5) antes de crear el pedido: «¿Añadir este platillo a tu pedido?», «20 × Mole de olla, mesa 4.», «Añadir al pedido» o «Ahora no»;
+  - `qty` pasa por `cantidadSegura`;
+  - la llamada al API es la misma.
+
+**Lint:** al aplicar los dos cambios del login, el compilador de React empezó a marcar el `document.cookie = …`, que ya estaba (lo retira el 2.15). Cada cambio por separado no lo provocaba. Se resolvió calculando la URL del registro en una constante antes del JSX, y el archivo vuelve a sus 2 problemas previos.
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Lint: ningún archivo tocado cambia su cuenta y el nuevo está limpio.
+- `pnpm test:unidad`: 37/37. `urls.spec.ts` (nueva) comprueba:
+  - rutas buenas y malas, incluidas `//ejemplo.org`, `/\ejemplo.org`, `https://ejemplo.org`, `javascript:` y un salto de línea;
+  - enlaces `http:`, `javascript:`, de otro host y con credenciales;
+  - parámetros codificados y sumados;
+  - la cantidad;
+  - el destino tras el login: `callbackUrl=https://ejemplo.org` y `//ejemplo.org` llevan a `/`, una acción desconocida se ignora y el personal va a su panel.
+- `urls.spec.ts` (nueva, navegador, sesión de cliente y API simulada): con `autoExecute`, la confirmación aparece con la cantidad limitada a 20 y la URL se limpia. Con «Ahora no», **0 pedidos**. Al confirmar, 1 `POST /pedidos/mesa`.
+- Build: correcto.
+- Chromium contra `next start`, en dos tandas: 103 + 95 = **198/198**.
+- Sin procesos abiertos.
+
+**No verificado:**
+- El inicio de sesión de punta a punta con `callbackUrl` malicioso: necesita el backend. Se cubre la decisión con la prueba unitaria de `destinoTrasLogin`.
+- Los enlaces de `AboutSection` en el navegador: la sección no se monta (ver 2.12).
+
 ### 2.12 · Eliminar todo `dangerouslySetInnerHTML` (2026-11-02) — condición de D-03
 
 **Dependencia:** `html-react-parser@6.1.9` (2026-10-20), la que nombra el PLAN. `pnpm` la fija en versión exacta.

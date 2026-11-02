@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { textoEnriquecido } from "@/lib/texto/texto-enriquecido";
+import { urlExternaPermitida } from "@/lib/seguridad/urls";
 
 interface AboutData {
   description: string;
@@ -98,8 +99,10 @@ export default function AboutSection({
             </div>
           </div>
           <div className="flex gap-3 mt-6">
+            {/* Enlaces del API: solo https y hosts de la lista; si no, no se pinta el enlace (PLAN 2.13). */}
+            {urlExternaPermitida(data.facebookUrl) && (
             <a
-              href={data.facebookUrl}
+              href={urlExternaPermitida(data.facebookUrl)!}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-[#1877F2] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-[#166fe5] transition-colors"
@@ -114,14 +117,17 @@ export default function AboutSection({
               </svg>
               Facebook
             </a>
+            )}
+            {urlExternaPermitida(data.mapsUrl) && (
             <a
-              href={data.mapsUrl}
+              href={urlExternaPermitida(data.mapsUrl)!}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 border border-[var(--color-border)] px-5 py-2.5 rounded-xl text-sm font-bold hover:border-[var(--color-brand)] hover:text-[var(--color-brand)] transition-colors"
             >
               🗺️ Ver en Maps
             </a>
+            )}
           </div>
         </div>
       </div>
