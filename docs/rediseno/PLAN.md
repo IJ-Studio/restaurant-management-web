@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.17 · Límites de error sin trazas** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **2.18 · Revisión del bundle** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | 2.18 · Revisión del bundle. |
+| Siguiente paso | Cierre de la fase 2 (verificación completa). |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -492,7 +492,7 @@
   - **Aceptación:** forzar un error en una página simulada muestra el límite sin pila ni mensaje interno; las pruebas comprueban que `pre` y `stack` no aparecen.
   - **Commit:** `feat(errores): límites de error por segmento sin trazas`
 
-- [ ] **2.18 · Revisión del bundle**
+- [x] **2.18 · Revisión del bundle** · *Hecho (2026-11-02): scripts/revisar-bundle.mjs busca secretos y mapas en .next/static (solo archivo y número); marcador sk_live_ retirado; 0 coincidencias.*
   - **Archivos:** `scripts/revisar-bundle.mjs`.
   - **Hacer:** buscar en `.next/static` patrones de secretos (`sk_live_`, `sk_test_`, `-----BEGIN`, `service_role`, `postgres://`, `eyJhbGci`) y archivos `.map`. Informa solo del archivo y del número de coincidencias, nunca del valor. También elimina del bundle el marcador `sk_live_••••` de `settingsMock.tsx` (texto neutro).
   - **Aceptación:** el script devuelve 0 coincidencias y 0 `.map`.

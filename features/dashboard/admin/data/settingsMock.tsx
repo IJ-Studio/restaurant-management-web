@@ -26,7 +26,7 @@ export const GATEWAYS_DEFAULT: Gateway[] = [
     name: "Stripe",
     logo: "💳",
     status: "activo",
-    apiKey: "sk_live_••••••••••••••2H4k",
+    apiKey: "••••••••••••••2H4k", // Texto neutro: sin prefijo de clave secreta (PLAN 2.18).
     commission: 2.9,
     methods: ["Visa", "Mastercard", "AMEX"],
   },

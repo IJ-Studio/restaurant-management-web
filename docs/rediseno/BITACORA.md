@@ -6,6 +6,23 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.18 · Revisión del bundle (2026-11-02)
+
+**Cambios:**
+- **`scripts/revisar-bundle.mjs`:** existía desde el 3.0 (catálogo fuera del build). Ahora hace las dos revisiones:
+  1. **Contenido de desarrollo** en `.next/server/app` y `.next/static`: el catálogo, como antes, y también las páginas de prueba del 2.17 (`prueba-limites` en nombres de archivo y el texto `detalle-interno`).
+  2. **Secretos en `.next/static`:** `sk_live_`, `sk_test_`, `-----BEGIN`, `service_role`, `postgres://` (y `postgresql://`) y `eyJhbGci`, más cualquier archivo `.map`.
+  - Informa del archivo, el tipo y el número de coincidencias, **nunca del valor**. Sale con código 1 si hay hallazgos y con 2 si falta el build.
+- **`settingsMock.tsx`:** el marcador `sk_live_••••…2H4k` pasa a `••••…2H4k`, texto neutro. La pasarela sigue mostrando la clave enmascarada.
+
+**Verificación:**
+- Con el build anterior, el script detectó **1** coincidencia («clave secreta de Stripe (live) × 1» en un chunk), sin imprimir el valor: era el marcador.
+- Tras el cambio y un build nuevo: «Build limpio: 661 archivos revisados; sin contenido de desarrollo, 0 coincidencias de secretos y 0 mapas de código».
+- Lint de los dos archivos: 0 problemas.
+- Chromium, recorrido de las rutas (incluye `/dashboard/admin/settings`): 95/95.
+- Sin procesos abiertos.
+- Typecheck: 0 errores.
+
 ### 2.17 · Límites de error sin trazas (2026-11-02)
 
 **Cambios:**
