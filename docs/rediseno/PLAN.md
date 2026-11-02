@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.9 · Secreto JWT: fallar cerrado** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **2.10 · Protección de rutas en el proxy** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | 2.10 · Protección de rutas en el proxy. |
+| Siguiente paso | 2.11 · Capa de acceso a datos de sesión (DAL). |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -393,7 +393,7 @@
   - **Aceptación:** `rg "fallback_|JWT_SECRET \|\|" proxy.ts lib` sin resultados; sin la variable, `/dashboard` redirige a `/login`.
   - **Commit:** `fix(seguridad): eliminar secretos de respaldo y fallar cerrado`
 
-- [ ] **2.10 · Protección de rutas en el proxy (guía de autenticación de Next)** — *D-15*
+- [x] **2.10 · Protección de rutas en el proxy (guía de autenticación de Next)** — *D-15* · *Hecho (2026-11-02): token en todo /api salvo la lista documentada (401 JSON sin caché), rol admin en /api/admin y /api/backups (403), sesión en /profile y /menu/pedido; matriz rol × ruta 6×12.*
   - **Archivos:** `proxy.ts`, `config/seguridad/rutas-api-publicas.ts` (nuevo), `config/roles.config.ts`.
   - **Hacer:**
     - Comprobaciones **optimistas** en el proxy: leer la cookie `session` y verificar la firma y la caducidad con `jose`, sin consultar la BD.

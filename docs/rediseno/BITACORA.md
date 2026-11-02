@@ -6,6 +6,33 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.10 · Protección de rutas en el proxy (2026-11-02) — D-15
+
+**Cambios:**
+- **`config/seguridad/rutas-api-publicas.ts`** (nuevo):
+  - `RUTAS_API_PUBLICAS`, con ruta, métodos y motivo de cada una, como la tabla del PLAN: login, registro, logout, `me`, carta pública y la excepción temporal del cron (NP-10);
+  - `esApiPublica(ruta, método)`: ruta exacta y método de la lista; `HEAD` y `OPTIONS` cuentan como `GET`;
+  - `esApiSoloAdmin`: `/api/admin/**` y `/api/backups/**`.
+- **`proxy.ts`:**
+  - **API:** todo `/api/*` exige un token válido (cookie `session` o `Authorization: Bearer`), salvo la lista. Sin token o con uno inválido, responde `401` con `{"error":"No autorizado"}` y `Cache-Control: no-store`. `/api/admin/**` y `/api/backups/**` exigen además el rol de administrador (`403`, `{"error":"Acceso denegado"}`). Comprobación optimista: firma y caducidad con `jose`, sin base de datos.
+  - **Páginas:** `/profile` y `/menu/pedido/**` exigen sesión. Sin ella, redirigen a `/login` con un `callbackUrl` que solo se escribe si es una ruta interna (empieza por `/` y no por `//` ni `/\`). Los paneles usan la misma redirección.
+  - **`matcher`:** sin cambios. Ya excluía `_next/static`, `_next/image`, `icons/` y los archivos de imagen (incluido `icon.svg`).
+- `config/roles.config.ts` no cambia: el proxy usa su `ROLES.ADMIN`.
+- `/api/public/combos`, `/api/public/cupones` y `/api/mesas` no se llaman desde el front y **pasan a exigir token**, como decide el PLAN. La autorización por rol y por propietario del resto de endpoints sigue en NP-32.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+- Build: correcto.
+- `proteccion.spec.ts` (nueva, sin navegador, contra `next start`): **10/10**.
+  - Las 18 rutas de `app/api` con todos sus métodos: sin token, 401 en JSON y `no-store`, salvo las públicas. Ninguna pública responde 401 por culpa del proxy; `/api/auth/me` lo hace por sí misma.
+  - Una ruta pública con otro método exige token, y un token inválido equivale a no tenerlo.
+  - Cliente, caja, mesero y cocina reciben 403 en `/api/admin/users` y `/api/backups`; el administrador pasa el proxy.
+  - Matriz de páginas × 6 sujetos (anónimo, cliente, caja, mesero, cocina y admin). Portada, login, registro, carta y detalle de producto funcionan sin sesión. Perfil y pedido redirigen a `/login?callbackUrl=…` sin sesión y responden con sesión. Cada panel responde a su rol, manda a `/forbidden` al resto y a `/login` al anónimo.
+- Chromium contra `next start`, batería completa en dos tandas: 96 + 95 = **191/191**, incluida la línea base con sesión de cliente en perfil y pedido.
+- Sin procesos abiertos.
+
+**No verificado:** clientes externos que llamaran a `/api/public/*` o `/api/mesas` sin token. El inventario solo cubre el front; si los usa otra aplicación, dejarán de funcionar hasta que envíe token.
+
 ### 2.9 · Secreto JWT: fallar cerrado (2026-11-02)
 
 El usuario pidió, a mitad del 2.8, seguir en automático y avanzar todo lo posible del PLAN sin esperar validaciones, con las mismas reglas.
