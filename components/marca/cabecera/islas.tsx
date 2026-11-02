@@ -129,7 +129,7 @@ export function MenuCuenta({ usuario, alCerrarSesion }: { usuario: UsuarioCabece
 					align="end"
 					sideOffset={8}
 					aria-label="Tu cuenta"
-					className="z-[110] flex w-64 flex-col rounded-dialogo border border-borde-sutil bg-superficie-elevada p-2 text-texto-principal shadow-flotante"
+					className="menu-flotante z-[110] flex w-64 flex-col rounded-dialogo border border-borde-sutil bg-superficie-elevada p-2 text-texto-principal shadow-flotante"
 				>
 					<div className="flex flex-col gap-0.5 border-b border-borde-sutil px-3 pt-2 pb-3">
 						<span className="truncate font-semibold">{usuario.nombre}</span>
@@ -191,9 +191,8 @@ export function MenuMovil({ usuario, pie }: { usuario: UsuarioCabecera | null; p
 			</nav>
 			<div className="mt-6 flex flex-col gap-1">
 				{/* Por debajo de 640 px, las opciones de accesibilidad no caben en la barra: van aquí. */}
-				<div className="flex items-center gap-2 sm:hidden">
-					<PanelAccesibilidad className="-ms-3 text-texto-principal" />
-					<span aria-hidden="true">Accesibilidad</span>
+				<div className="sm:hidden">
+					<PanelAccesibilidad conTexto className="-ms-3 text-texto-principal" />
 				</div>
 				{usuario ? (
 					<>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Clock, Facebook, Instagram, MapPin, Phone } from "lucide-react";
 import { restaurantConfig } from "@/config/restaurant.config";
+import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
 import { Logo } from "@/components/marca/Logo";
 import { cn } from "@/lib/utils";
 
@@ -116,6 +117,10 @@ export function PieSitio({ anio = new Date().getFullYear() }: { anio?: number })
 								</Link>
 							</li>
 						))}
+						<li>
+							{/* Acceso a las opciones también desde el pie (DESIGN.md § PanelAccesibilidad). */}
+							<PanelAccesibilidad conTexto className="-ms-3 text-texto-tenue al-pasar:text-texto-principal" />
+						</li>
 						<li>
 							<Link href="/login" className={cn(CLASE_ENLACE, "text-texto-tenue")} data-prueba="acceso-personal">
 								Acceso del personal

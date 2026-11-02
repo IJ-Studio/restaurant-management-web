@@ -43,22 +43,32 @@ const GRUPOS = [
 
 /**
  * Opciones de accesibilidad: tema, tamaño de texto y movimiento (DESIGN.md § PanelAccesibilidad).
- * Versión funcional adelantada en PLAN 1.6; el acabado final llega en PLAN 3.12.
+ * Versión funcional del PLAN 1.6, con el acabado del 3.12: aparece como los menús flotantes
+ * (`.menu-flotante`), título como el de los diálogos, por encima de la cabecera fija, y un
+ * disparador con texto (`conTexto`) para el pie y el menú móvil.
+ *
+ * Es un Popover de Radix (`role="dialog"` con nombre): el foco entra al abrir, Esc lo cierra y el
+ * foco vuelve al botón. Cada grupo es un `fieldset` con `legend` y botones de opción nativos, así
+ * que las flechas cambian la opción y el cambio se aplica al momento.
  */
-export function PanelAccesibilidad({ className }: { className?: string }) {
+export function PanelAccesibilidad({ className, conTexto = false }: { className?: string; conTexto?: boolean }) {
   const { preferencias, actualizar } = usePreferencias();
   const id = useId();
 
   return (
     <Popover.Root>
       <Popover.Trigger
-        aria-label="Opciones de accesibilidad"
+        aria-label={conTexto ? undefined : "Opciones de accesibilidad"}
+        data-prueba={conTexto ? "accesibilidad-con-texto" : "accesibilidad"}
         className={cn(
-          "area-tactil-minima rounded-control text-current transition-colors duration-(--duracion-breve) hover:bg-superficie-cafe",
+          "area-tactil-minima gap-2 rounded-control text-current transition-colors duration-(--duracion-breve) al-pasar:bg-superficie-cafe",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
+          conTexto && "px-3",
           className,
         )}
       >
         <Settings2 aria-hidden="true" className="size-5" strokeWidth={1.5} />
+        {conTexto && <span>Opciones de accesibilidad</span>}
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
@@ -66,9 +76,9 @@ export function PanelAccesibilidad({ className }: { className?: string }) {
           sideOffset={8}
           collisionPadding={16}
           aria-labelledby={`${id}-titulo`}
-          className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-dialogo border border-borde-sutil bg-superficie-elevada p-(--espacio-lg) text-texto-principal shadow-flotante"
+          className="menu-flotante z-[110] w-[min(20rem,calc(100vw-2rem))] rounded-dialogo border border-borde-sutil bg-superficie-elevada p-(--espacio-lg) text-texto-principal shadow-flotante"
         >
-          <p id={`${id}-titulo`} className="font-titulos text-(length:--texto-titulo-interfaz) leading-tight">
+          <p id={`${id}-titulo`} className="m-0 font-texto text-(length:--texto-titulo-interfaz) font-semibold leading-[1.35]">
             Opciones de accesibilidad
           </p>
           <div className="mt-(--espacio-md) grid gap-(--espacio-lg)">
@@ -80,7 +90,7 @@ export function PanelAccesibilidad({ className }: { className?: string }) {
                 {grupo.opciones.map((opcion) => (
                   <label
                     key={opcion.valor}
-                    className="flex min-h-11 cursor-pointer items-center gap-(--espacio-sm) rounded-control px-(--espacio-sm) text-(length:--texto-cuerpo) hover:bg-superficie-cafe has-checked:bg-superficie-cafe"
+                    className="flex min-h-11 cursor-pointer items-center gap-(--espacio-sm) rounded-control px-(--espacio-sm) text-(length:--texto-cuerpo) al-pasar:bg-superficie-cafe has-checked:bg-superficie-cafe"
                   >
                     <input
                       type="radio"
@@ -98,7 +108,7 @@ export function PanelAccesibilidad({ className }: { className?: string }) {
           </div>
           <Popover.Close
             aria-label="Cerrar opciones de accesibilidad"
-            className="mt-(--espacio-md) min-h-11 w-full rounded-control border border-borde-control text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] hover:bg-superficie-cafe"
+            className="mt-(--espacio-md) min-h-11 w-full rounded-control border border-borde-control text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] al-pasar:bg-superficie-cafe focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco"
           >
             Cerrar
           </Popover.Close>

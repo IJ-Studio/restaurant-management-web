@@ -604,7 +604,9 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 
 ### Panel de opciones de accesibilidad — `PanelAccesibilidad`
 
-Se abre desde un botón de la cabecera (icono `Settings2`, «Opciones de accesibilidad») y desde el pie.
+Se abre desde un botón de la cabecera (icono `Settings2`, «Opciones de accesibilidad») y desde el pie, donde el botón lleva el texto visible (`conTexto`), igual que en el menú móvil.
+
+Es un menú flotante (`.menu-flotante`): aparece con opacidad y escala 0,98 → 1 desde su botón, por encima de la cabecera fija; título en `--texto-titulo-interfaz`, como los diálogos; cada opción es un grupo con su leyenda y botones de opción nativos (las flechas cambian la opción y se aplica al momento); Esc lo cierra y el foco vuelve al botón.
 
 | Opción | Valores | Por defecto |
 |---|---|---|
@@ -759,7 +761,7 @@ El movimiento es sobrio: confirma, nunca adorna.
 - El tema claro **solo redefine las variables**, así que las utilidades no cambian. Se elimina la variante `dark:` y no se escriben clases condicionales por tema.
 - En `styles/globals.css` se declara `@custom-variant dark (&:where(:root:not([data-tema="claro"]), :root:not([data-tema="claro"]) *));` únicamente como red de seguridad durante la migración: las clases `dark:` heredadas se aplican mientras el tema no sea claro, porque el oscuro es el tema por defecto y no lleva atributo. Se retira con los alias temporales (PLAN 5.20).
 
-**Clases explícitas** (en `styles/componentes.css`, capa `@layer components`): `.contenedor-pagina`, `.seccion-landing`, `.etiqueta-seccion`, `.filete-doble`, `.contraetiqueta`, `.texto-cifra-destacada`, `.numeros-tabulares`, `.enlace-subrayado`, `.area-tactil-minima`, `.solo-lectores`, `.salto-al-contenido`, `.titulo-equilibrado`, `.aparece-al-entrar`, `.velo-dialogo`, `.caja-dialogo`, `.panel-lateral`, `.cuerpo-dialogo`, `.pila-notificaciones`, `.notificacion`, `.esqueleto` y `.cabecera-sitio`. Cada nombre dice lo que hace; no se crean clases genéricas tipo `.card2` o `.btn-x`.
+**Clases explícitas** (en `styles/componentes.css`, capa `@layer components`): `.contenedor-pagina`, `.seccion-landing`, `.etiqueta-seccion`, `.filete-doble`, `.contraetiqueta`, `.texto-cifra-destacada`, `.numeros-tabulares`, `.enlace-subrayado`, `.area-tactil-minima`, `.solo-lectores`, `.salto-al-contenido`, `.titulo-equilibrado`, `.aparece-al-entrar`, `.velo-dialogo`, `.caja-dialogo`, `.panel-lateral`, `.cuerpo-dialogo`, `.pila-notificaciones`, `.notificacion`, `.esqueleto`, `.cabecera-sitio` y `.menu-flotante`. Cada nombre dice lo que hace; no se crean clases genéricas tipo `.card2` o `.btn-x`.
 
 ## Do's and Don'ts
 

@@ -12,10 +12,10 @@
 |---|---|
 | Etapa | **Fase 3 en curso** (2026-11-01). Fase 1 cerrada; sus ramas ya están en el remoto y el PR lo gestiona el usuario. Ya hechos de la fase 3: 3.0, 3.2 y parte de 3.4. |
 | Rama activa | `feature/rediseno-web-componentes` (sale de `feature/rediseno-web-cimientos`, `d6407c9`, porque el PR de la fase 1 aún no está fusionado) |
-| Último paso completado | **3.11 · CabeceraSitio y PieSitio** (2026-11-01). Detalle en [`BITACORA.md`](BITACORA.md). |
-| Bloqueo | **Revisión del usuario** de los pasos 3.4 y 3.6–3.11 en el catálogo (`next dev` → `/catalogo`). No empezar el 3.12 ni otro paso hasta que el usuario lo indique. |
-| Siguiente paso | **Revisión del usuario** de los pasos 3.4 y 3.6–3.11 en el catálogo. Después, lo que indique (quedan 3.12–3.14). Al cerrar la fase: build, Firefox, WebKit y `pnpm revisar:invisibles`. |
-| Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.4, 3.6, 3.7, 3.8, 3.9, 3.10 y 3.11, y **parar tras el 3.11**. Verificación en la fase: typecheck, lint de los archivos tocados, pruebas del catálogo, axe y contraste numérico de cada estado; build y los tres motores al cerrarla.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **3.12 · PanelAccesibilidad (acabado)** (2026-11-01). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Bloqueo | Ninguno. El usuario pidió seguir el PLAN (2026-11-01): 3.12 → 3.13 → 3.14 → cierre de la fase 3. La revisión de 3.4 y 3.6–3.11 en el catálogo sigue pendiente de su parte. |
+| Siguiente paso | 3.13 → 3.14 → cierre de la fase 3. |
+| Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.12 → 3.13 → 3.14 → cierre de la fase (build, revisar-bundle, batería completa en Chromium, Firefox y WebKit, `pnpm revisar:invisibles`, `pnpm audit` y texto del PR para el usuario; sin Lighthouse ni push). Verificación en la fase: typecheck, lint de los archivos tocados, pruebas del catálogo, axe y contraste numérico de cada estado; build y los tres motores al cerrarla.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
 
@@ -562,7 +562,7 @@ Cada paso crea el componente en `components/ui/` o `components/marca/` y lo mues
   - **Hacer:** componentes de servidor con islas de cliente para la cuenta, el menú móvil y la sección activa. En el pie, el enlace discreto «Acceso del personal». Los 7 SVG a mano de `ConditionalNavbar` se sustituyen por iconos Lucide.
   - **Commit:** `feat(marca): cabecera y pie del sitio`
 
-- [ ] **3.12 · `PanelAccesibilidad`**: tema, tamaño de texto y movimiento. *Adelantado en 1.6 en versión funcional (`components/accesibilidad/PanelAccesibilidad.tsx`, Popover de Radix, en `Navbar` y `AdminSidebar`); aquí queda el acabado: animación de apertura, acceso desde el pie y pruebas con lector de pantalla.*
+- [x] **3.12 · `PanelAccesibilidad`**: tema, tamaño de texto y movimiento. *Adelantado en 1.6 en versión funcional (`components/accesibilidad/PanelAccesibilidad.tsx`, Popover de Radix, en `Navbar` y `AdminSidebar`); aquí queda el acabado: animación de apertura, acceso desde el pie y pruebas con lector de pantalla.* · *Hecho (2026-11-01): animación (.menu-flotante), acceso desde el pie y el menú móvil (conTexto), título y capa coherentes. Lectores de pantalla reales: no verificado (fase 7).*
   - **Commit:** `feat(accesibilidad): panel de opciones de accesibilidad`
 
 - [ ] **3.13 · `NavegacionPanel`, `BarraSuperiorPanel` y `EncabezadoPagina`**: entradas por rol desde `config/navigation/*`, `<Link>` con `aria-current` y drawer por debajo de 1024 px.
