@@ -68,7 +68,7 @@ test.describe("tabla, paginación y pestañas del catálogo", () => {
 		const cargando = seccion(page).locator('[aria-busy="true"]').filter({ hasText: "Reservas de mañana" });
 		await expect(cargando).toHaveCount(1);
 		await expect(cargando.locator("tbody tr").first()).toHaveAttribute("aria-hidden", "true");
-		await expect(seccion(page).getByText("No hay reservas canceladas hoy.")).toBeVisible();
+		await expect(seccion(page).getByText("No hay reservas canceladas hoy")).toBeVisible();
 	});
 
 	test("la paginación lleva la página a la URL y marca la actual", async ({ page }) => {

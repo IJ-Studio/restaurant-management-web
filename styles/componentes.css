@@ -266,6 +266,26 @@
   .notificacion[data-saliendo] {
     animation: notificacion-sale var(--duracion-breve) var(--ease-estandar) forwards;
   }
+
+  /* Esqueleto (DESIGN.md § Otros componentes base): superficie elevada con pulso de opacidad.
+     Sobre una superficie, café: la elevada es blanca sobre hueso en el tema claro. Sin pulso
+     con movimiento reducido, salvo que la persona elija movimiento completo en el panel. */
+  .esqueleto {
+    border-radius: var(--radius-control);
+    background-color: var(--color-superficie-elevada);
+    animation: esqueleto-pulso 2s var(--ease-estandar) infinite;
+  }
+  .esqueleto[data-sobre="superficie"] {
+    background-color: var(--color-superficie-cafe);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-movimiento="completo"]) .esqueleto {
+      animation: none;
+    }
+  }
+  :root[data-movimiento="reducido"] .esqueleto {
+    animation: none;
+  }
 }
 
 @keyframes velo-entra { from { opacity: 0; } }
@@ -278,3 +298,4 @@
 @keyframes panel-sale-inicio { to { transform: translateX(-100%); } }
 @keyframes notificacion-entra { from { opacity: 0; transform: translateY(0.5rem); } }
 @keyframes notificacion-sale { to { opacity: 0; } }
+@keyframes esqueleto-pulso { 50% { opacity: 0.5; } }
