@@ -6,6 +6,36 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.13 · `NavegacionPanel`, `BarraSuperiorPanel` y `EncabezadoPagina` (2026-11-01)
+
+**Componentes** (`components/paneles/`), sin dependencias nuevas:
+- `NavegacionPanel.tsx`: `<nav>` con nombre, grupos con rótulo y `<Link>` con `aria-current="page"`.
+  - La entrada activa se calcula con `claveActiva`: la de ruta más concreta que contiene la actual y cuya consulta coincide. En la caja, `/dashboard/cajero?filter=pending` marca «Tickets Pendientes» y no «Caja Principal».
+  - La consulta se lee con `useSearchParams` dentro de un `Suspense` propio, con la activa solo por ruta como respaldo, porque el build de Next lo exige. `rutaActual` la fija para el catálogo y las pruebas.
+  - Las entradas con hijos se despliegan; la que contiene la activa empieza abierta.
+- `BarraSuperiorPanel.tsx`: drawer por debajo de 1024 px (`PanelLateral` desde el inicio, que se cierra al elegir), nombre del panel, accesibilidad y cuenta. El cierre de sesión llega por `alCerrarSesion` (2.14), como en la cabecera pública.
+- `EncabezadoPagina.tsx`: antetítulo, `h1`, descripción y acciones.
+- `config/navigation/por-rol.ts`: `navegacionDeRol(rol)` para admin, caja y cocina. El mesero no tiene navegación configurada: lista vacía y **NP-37**, porque sus entradas son una decisión de producto.
+- Catálogo: sección «Navegación de los paneles» (`DemosPaneles.tsx`), con un panel de administración completo y la navegación de caja.
+- DESIGN.md documenta los tres componentes.
+
+**Ajustes tras las capturas:**
+- A 1280 px con texto al 125 %, las acciones del encabezado se partían en dos filas: ahora no encogen.
+- En móvil, el nombre del panel quedaba en «A…» junto al logo: la barra del panel no lleva logo.
+- El desborde a 360 px era del rótulo de la demo, con rutas largas sin espacios, no de un componente. Se localizó ocultando bloques de la sección hasta dar con el responsable.
+
+**Verificación** (Chromium contra `next dev`):
+- `paneles.spec.ts` (nueva):
+  - a 1280 px: una sola activa («Proveedores»), con relleno café y filete de acento; su grupo abierto y los demás cerrados (se abren con el botón); listas con nombre; sin drawer;
+  - la consulta decide la activa en la caja;
+  - a 390 px: navegación en el drawer con la activa; Esc devuelve el foco; elegir un enlace lo cierra;
+  - cuenta con nombre y rol, sin «Cerrar sesión» hasta el 2.14; `h1` y la acción primaria al final;
+  - axe y sin desborde a 360 y 1280 px con texto al 125 % en los dos temas; la barra superior cabe.
+- `catalogo.spec.ts` con la sección nueva: verde.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+
+**No verificado:** Firefox, WebKit y el layout real de los paneles (5.1).
+
 ### 3.12 · `PanelAccesibilidad`: acabado (2026-11-01)
 
 La versión funcional era del 1.6. El usuario pidió seguir el PLAN tras el 3.11: 3.12, 3.13, 3.14 y el cierre de la fase 3.

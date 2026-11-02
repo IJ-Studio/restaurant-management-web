@@ -49,6 +49,7 @@
 | NP-33 | Calidad y metadatos de las imágenes en Cloudinary | Contenido | Media |
 | NP-34 | Retirar el limpiador de service workers antiguos | Deuda técnica | Baja |
 | NP-36 | Orígenes de imagen y de terceros por confirmar con datos reales | Seguridad / contenido | Media |
+| NP-37 | El mesero no tiene navegación de panel configurada | Producto / navegación | Baja |
 
 ---
 
@@ -482,3 +483,12 @@
 - **Solución sugerida:** decidir si toda imagen de contenido se sube a Cloudinary (la subida del admin ya va allí) y, si es así, retirar Supabase de la lista cuando el API deje de devolver esas URL; validar en el API que las URL de imagen sean de la nube de la casa. Al rehacer el admin (fase 5, 5.14), sustituir la vista previa de `LandscapeSection` por `Imagen`.
 - **Prioridad:** Media.
 - **Criterio de aceptación:** con datos reales, 0 imágenes con respaldo en la carta y la portada, y la lista de `hosts-permitidos.ts` coincide con los orígenes que aparecen en la base de datos.
+
+## NP-37 · El mesero no tiene navegación de panel configurada
+
+- **Archivos y rutas afectados:** `config/navigation/` (hay `admin`, `cajero` y `cocina`, pero no `mesero`), `config/navigation/por-rol.ts` y `app/dashboard/mesero/`.
+- **Problema:** `navegacionDeRol` devuelve una lista vacía para el mesero (y para el comensal), así que su panel no tendría barra lateral ni drawer. Las entradas de su menú son una decisión de producto: no se inventan.
+- **Riesgo:** al montar el layout de paneles (5.1), la pantalla del mesero quedaría sin navegación entre sus vistas.
+- **Solución sugerida:** definir con el usuario qué vistas tiene el mesero (mesas, comandas, llamadas…) y crear `config/navigation/mesero.nav.ts` con el mismo formato; si solo tiene una vista, confirmar que no necesita navegación.
+- **Prioridad:** Baja.
+- **Criterio de aceptación:** `navegacionDeRol(ROLES.MESERO)` devuelve sus secciones, o hay una decisión escrita de que no las necesita.
