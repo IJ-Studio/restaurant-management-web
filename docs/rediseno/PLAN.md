@@ -10,12 +10,12 @@
 
 | Campo | Valor |
 |---|---|
-| Etapa | **Fase 1 cerrada** (2026-11-01), pendiente de PR. Adelantados de la fase 3, ya aprobados: 3.0, 3.2 y parte de 3.4. |
-| Rama activa | `feature/rediseno-web-cimientos` |
-| Último paso completado | **Cierre de la fase 1** (2026-11-01): verificación completa en los tres motores, Lighthouse, `pnpm audit` y pendientes revisados; script de rendimiento móvil preparado. Detalle en [`BITACORA.md`](BITACORA.md). |
-| Bloqueo | El PR necesita subir `feature/rediseno-web` y `feature/rediseno-web-cimientos` al remoto; lo hace el usuario (el agente no hace `git push`). Texto del PR en `D:\dev-cache\rediseno\pr-fase-1.md`. |
-| Siguiente paso | El usuario sube las ramas y abre el PR, y mide el rendimiento móvil desde una terminal con el editor cerrado (`scripts/comparar-rendimiento.mjs --biseccion`). Después, **el resto de la fase 3** en `feature/rediseno-web-componentes`. |
-| Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden: 1.9 → cierre de la fase 1 → resto de la fase 3; **no adelantar más pasos de fases posteriores sin avisar**.<br>(2) Rendimiento móvil: la medición de `/` en `766855a` (cierre de la fase 0) y en el commit actual, con la mediana de 3 ejecuciones, **no se hace dentro de VS Code**; se prepara un script que guarda fuera de `test-results/` y, al final de la fase 1, se dejan los comandos exactos para que el usuario reabra la sesión desde una terminal con el editor cerrado. Si la diferencia persiste, se localiza el commit responsable.<br>(3) Tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
+| Etapa | **Fase 3 en curso** (2026-11-01). Fase 1 cerrada; sus ramas ya están en el remoto y el PR lo gestiona el usuario. Ya hechos de la fase 3: 3.0, 3.2 y parte de 3.4. |
+| Rama activa | `feature/rediseno-web-componentes` (sale de `feature/rediseno-web-cimientos`, `d6407c9`, porque el PR de la fase 1 aún no está fusionado) |
+| Último paso completado | **Medición de rendimiento móvil de la fase 1, verificada** (2026-11-01, hecha por el usuario): `/` 74 → 76, sin regresión; bisección descartada. El LCP de la portada (4339 → 5194 ms) se trata en el 4.3. Detalle en [`BITACORA.md`](BITACORA.md). |
+| Bloqueo | Ninguno. |
+| Siguiente paso | **3.1** (zod) → **3.5** (diálogos) → **3.3** (campos), y **detenerse tras el 3.3** para que el usuario lo revise en el catálogo. |
+| Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.1 → 3.5 → 3.3, y parar; **no adelantar más pasos sin avisar**.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
 
@@ -589,7 +589,7 @@ Cada paso conserva textos, endpoints y URL; sustituye los componentes antiguos p
 - [ ] **4.2 · Estructura de la landing.** Componente de servidor con las peticiones existentes en paralelo (`Promise.all`, `no-store`), anclas y resaltado de la sección activa. Retira los `console.log` y los handlers vacíos.
   - **Commit:** `feat(landing): estructura de una sola página con anclas`
 
-- [ ] **4.3 · Portada (`#inicio`).** Fotografía a sangre con `priority`, velo y titular de portada. La imagen actual (`Gemini_Generated_Image_2mv3…`, 1584×672) muestra en la esquina inferior derecha la **marca de agua de Gemini**: se recorta **en la entrega** con una transformación (`c_crop,w_0.9,h_0.9,g_north_west`) sin modificar el recurso. Como mide 1584 px, se sirve con `sizes="100vw"` y un ancho máximo de 1584 para no ampliarla. Su sustitución es NP-33.
+- [ ] **4.3 · Portada (`#inicio`).** Fotografía a sangre con `priority` (en Next 16, `preload`; ver BITÁCORA 1.9), velo y titular de portada. **LCP:** la medición del cierre de la fase 1 lo subió de 4339 a 5194 ms (FCP y TBT bajaron): la imagen de portada debe precargarse, pedirse con el ancho ajustado a su hueco (`sizes` real) y no debe haber precargas innecesarias que compitan con ella. La imagen actual (`Gemini_Generated_Image_2mv3…`, 1584×672) muestra en la esquina inferior derecha la **marca de agua de Gemini**: se recorta **en la entrega** con una transformación (`c_crop,w_0.9,h_0.9,g_north_west`) sin modificar el recurso. Como mide 1584 px, se sirve con `sizes="100vw"` y un ancho máximo de 1584 para no ampliarla. Su sustitución es NP-33.
   - **Aceptación:** axe verifica el contraste sobre la imagen real; LCP en móvil < 2,5 s.
   - **Commit:** `feat(landing): portada`
 
