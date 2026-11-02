@@ -13,6 +13,7 @@ import { DemosDialogo } from "./DemosDialogo";
 import { DemosEstados } from "./DemosEstados";
 import { DemosGraficas } from "./DemosGraficas";
 import { DemosMarca } from "./DemosMarca";
+import { DemosNavegacion } from "./DemosNavegacion";
 import { DemosTabla } from "./DemosTabla";
 import { Muestra } from "./Muestra";
 
@@ -247,6 +248,7 @@ export function Catalogo() {
 							["#estados", "Estados"],
 							["#graficas", "Gráficas"],
 							["#marca", "Marca"],
+							["#navegacion", "Navegación"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -515,6 +517,14 @@ export function Catalogo() {
 				reglas="La etiqueta de sección abre cada sección como la etiqueta de un vino: lote, rótulo en versalitas, filete doble de acento y título serif. La contraetiqueta da los datos en pares rótulo/valor con filetes finos, a una o dos columnas. El sello aparece una vez por página, como firma."
 			>
 				<DemosMarca />
+			</Seccion>
+
+			<Seccion
+				id="navegacion"
+				titulo="Migas de pan y Volver"
+				reglas="Las páginas de acción dicen dónde están («Inicio › La carta › Entradas») y ofrecen volver a la sección de la que vienen. Las migas son una lista ordenada con la página actual sin enlace. «Volver» nombra su destino; si se llegó desde el propio sitio, usa el historial."
+			>
+				<DemosNavegacion />
 			</Seccion>
 		</main>
 	);
