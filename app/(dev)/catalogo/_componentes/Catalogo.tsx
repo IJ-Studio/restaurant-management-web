@@ -11,6 +11,7 @@ import { DemosAvisos } from "./DemosAvisos";
 import { DemosCampos } from "./DemosCampos";
 import { DemosDialogo } from "./DemosDialogo";
 import { DemosEstados } from "./DemosEstados";
+import { DemosGraficas } from "./DemosGraficas";
 import { DemosTabla } from "./DemosTabla";
 import { Muestra } from "./Muestra";
 
@@ -243,6 +244,7 @@ export function Catalogo() {
 							["#dialogo", "Diálogos"],
 							["#tabla", "Tabla"],
 							["#estados", "Estados"],
+							["#graficas", "Gráficas"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -495,6 +497,14 @@ export function Catalogo() {
 				reglas="El vacío explica por qué no hay nada y ofrece la acción que lo resuelve. La carga conserva el tamaño de lo que viene, con un pulso que se detiene si el movimiento está reducido, y lo anuncia con aria-busy. El error dice qué no se pudo cargar, nunca muestra un cero en su lugar y ofrece Reintentar."
 			>
 				<DemosEstados />
+			</Seccion>
+
+			<Seccion
+				id="graficas"
+				titulo="Indicadores y gráficas"
+				reglas="El indicador da la cifra y su comparación con icono y texto: el color dice si es buena o mala noticia, nunca solo. Si falla, «No se pudo cargar», nunca un cero. Las gráficas son SVG propias con la paleta validada en orden fijo, marcas finas, cuadrícula recesiva, leyenda a partir de dos series, tooltip con puntero y teclado, y siempre una vista de tabla."
+			>
+				<DemosGraficas />
 			</Seccion>
 		</main>
 	);
