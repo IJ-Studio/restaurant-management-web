@@ -533,6 +533,20 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 - **`NavegacionPanel`:**
   - Usa `<Link>` con `aria-current="page"`, grupos con rótulo `--texto-etiqueta` y entradas **filtradas por rol** desde `config/navigation`.
   - El elemento activo lleva relleno `--color-superficie-cafe` y un filete de acento a la izquierda: cambia el relleno, no solo el tinte.
+  - **Implementación** (`components/paneles/NavegacionPanel.tsx`, PLAN 3.13):
+    - Las entradas llegan de `navegacionDeRol(rol)` (`config/navigation/por-rol.ts`).
+    - Rótulos de grupo en `--texto-etiqueta` y `--texto-tenue`. Son texto, no encabezados, porque la barra va antes del `h1`; cada lista toma su nombre del rótulo.
+    - Entradas de 44 px en `--texto-pequeno`, peso 500 y `--texto-secundario`. La activa va en `--texto-principal`, con relleno café y filete de acento de 2 px al inicio.
+    - Las entradas con hijos se despliegan con un botón (`aria-expanded`); la que contiene la activa empieza abierta.
+    - La activa es la de ruta más concreta. Si su enlace lleva consulta (`?filter=pending`), la consulta también tiene que coincidir.
+- **`BarraSuperiorPanel`:** alto `--alto-cabecera`, `--color-fondo` y filete sutil abajo. De inicio a fin:
+  - por debajo de 1024 px, el botón de menú, que abre la navegación en un `PanelLateral` desde el inicio y se cierra al elegir;
+  - el nombre del panel en `--texto-titulo-interfaz`, que se recorta si no cabe;
+  - las opciones de accesibilidad;
+  - la cuenta: menú con nombre y rol, y «Cerrar sesión» cuando exista el cierre único del 2.14.
+
+  Sin logo: en móvil no dejaría sitio al nombre.
+- **`EncabezadoPagina`:** antetítulo opcional, `h1` en `--texto-titulo-1` y descripción en `--texto-cuerpo` y `--texto-secundario`. Las acciones van a la derecha desde 768 px, con la primaria al final; en móvil se apilan a todo el ancho, con la primaria arriba.
 - **`PieSitio`:** de servidor. Contiene datos de contacto, horario, legales, redes con nombre accesible y, en la última fila, el «Acceso del personal».
   - Datos de `config/restaurant.config.ts`; textos y enlaces, los del pie actual. Tres columnas desde 768 px (contacto, «La casa», «Ayuda») con rótulos en `--texto-etiqueta`; enlaces en `--texto-secundario` con 44 px de alto.
   - Redes: iconos de Lucide con nombre para lectores («Facebook de El Quijote (abre en otra pestaña)») y `rel="noopener noreferrer"`.

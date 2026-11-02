@@ -14,6 +14,7 @@ import { DemosEstados } from "./DemosEstados";
 import { DemosGraficas } from "./DemosGraficas";
 import { DemosMarca } from "./DemosMarca";
 import { DemosNavegacion } from "./DemosNavegacion";
+import { DemosPaneles } from "./DemosPaneles";
 import { DemosSitio } from "./DemosSitio";
 import { DemosTabla } from "./DemosTabla";
 import { Muestra } from "./Muestra";
@@ -251,6 +252,7 @@ export function Catalogo() {
 							["#marca", "Marca"],
 							["#navegacion", "Navegación"],
 							["#sitio", "Cabecera y pie"],
+							["#paneles", "Paneles"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -535,6 +537,14 @@ export function Catalogo() {
 				reglas="La cabecera lleva el logo, las secciones de la landing con la activa marcada, las opciones de accesibilidad, la cuenta y «Reservar», el único llamado persistente; en móvil, el menú va en un panel lateral. El pie da contacto, horario, redes con nombre y, en la última fila, el acceso del personal, discreto."
 			>
 				<DemosSitio />
+			</Seccion>
+
+			<Seccion
+				id="paneles"
+				titulo="Navegación de los paneles"
+				reglas="Las entradas llegan por rol desde config/navigation. La activa lleva aria-current, relleno café y un filete de acento al inicio; los grupos con hijos se despliegan y la que contiene la activa empieza abierta. Desde 1024 px, barra lateral de 16rem; por debajo, un panel lateral desde la barra superior. El encabezado de página da el h1, la descripción y las acciones."
+			>
+				<DemosPaneles />
 			</Seccion>
 		</main>
 	);
