@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 3 en curso** (2026-11-01). Fase 1 cerrada; sus ramas ya están en el remoto y el PR lo gestiona el usuario. Ya hechos de la fase 3: 3.0, 3.2 y parte de 3.4. |
 | Rama activa | `feature/rediseno-web-componentes` (sale de `feature/rediseno-web-cimientos`, `d6407c9`, porque el PR de la fase 1 aún no está fusionado) |
-| Último paso completado | **3.5 · Diálogos** (2026-11-01): `Dialogo`, `PanelLateral`, `DialogoConfirmacion` y `useConfirmacion` sobre Radix, con su sección en el catálogo. Detalle en [`BITACORA.md`](BITACORA.md). |
-| Bloqueo | Ninguno. |
-| Siguiente paso | **3.3** (campos) y **detenerse** para que el usuario lo revise en el catálogo. |
+| Último paso completado | **3.3 · Campos de formulario** (2026-11-01): `Campo`, `AreaTexto`, `Selector`, `Casilla`, `Interruptor`, `CampoTrampa` y `useEnvioFormulario`, con su sección en el catálogo. Detalle en [`BITACORA.md`](BITACORA.md). |
+| Bloqueo | **Revisión del usuario** de los pasos 3.1, 3.5 y 3.3 en el catálogo (`next dev` → `/catalogo#campos` y `#dialogo`). |
+| Siguiente paso | Esperar la revisión. Después, el resto de la fase 3 en el orden que indique el usuario (quedan 3.4, de `Aviso` y `Notificacion`, y 3.6–3.14). Al cerrar la fase: Firefox y WebKit para los diálogos y los campos. |
 | Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.1 → 3.5 → 3.3, y parar tras el 3.3; **no adelantar más pasos sin avisar**.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -529,7 +529,7 @@ Cada paso crea el componente en `components/ui/` o `components/marca/` y lo mues
 - [x] **3.2 · `Boton` y `BotonEnlace`** *(adelantado a la fase 1 por orden del usuario; retira el `components/ui/Button.tsx` huérfano y `types/ui.ts`)*: variantes, tamaños y los estados de DESIGN.md (incluido cargando con bloqueo de doble clic).
   - **Commit:** `feat(ui): Boton y BotonEnlace con todos sus estados`
 
-- [ ] **3.3 · Campos de formulario**
+- [x] **3.3 · Campos de formulario** · *Hecho (2026-11-01); pendiente de la revisión del usuario en el catálogo. Añade `MensajeError`, `AnuncioFormulario`, `revelable` en contraseñas y `leerFormulario`.*
   - **Componentes:** `Campo`, `AreaTexto`, `Selector`, `Casilla`, `Interruptor`, `CampoTrampa` (honeypot oculto a la vista y a lectores, con `tabIndex={-1}` y `autocomplete="off"`) y el hook `useEnvioFormulario`. El hook bloquea el envío doble, enfoca el primer error, anuncia los errores en la región `aria-live` y aplica un tiempo mínimo de rellenado contra bots.
   - **Aceptación:** `aria-invalid`, `aria-describedby`, `autocomplete` e `inputmode` presentes en el catálogo; navegación completa con teclado.
   - **Commit:** `feat(ui): campos accesibles, campo trampa y envío protegido`

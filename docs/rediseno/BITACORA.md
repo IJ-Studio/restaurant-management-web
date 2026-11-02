@@ -6,6 +6,43 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.3 · Campos de formulario (2026-11-01)
+
+**Componentes** (`components/ui/`), sin dependencias nuevas:
+- `Campo.tsx`: `Campo` (con `contador`, `codigo` y `revelable`), `AreaTexto`, `Selector` (nativo, con `marcador` y opciones con fondo y color del tema) y `MensajeError`. Todos con la etiqueta visible encima, y `aria-describedby` con la ayuda, el contador y el error. El contador funciona controlado o no.
+- `Casilla.tsx`: `Casilla` e `Interruptor`, casillas nativas.
+- `CampoTrampa.tsx` y `AnuncioFormulario.tsx`.
+- `hooks/useEnvioFormulario.ts`: `propsFormulario` (`onSubmit`, `onInput`, `noValidate`), `errores`, `errorGeneral`, `enviando` y `anuncio`. Lee los datos del propio formulario por `name` (`leerFormulario`: booleano en casillas, número en `type="number"`, texto en el resto) o con `obtenerDatos`. Usa `erroresPorCampo` del 3.1.
+- Catálogo: sección «Campos de formulario» (`DemosCampos.tsx`), con la matriz de estados del campo (vacío, con valor, foco, error, deshabilitado y solo lectura), las variantes, casillas e interruptores en todos sus estados y un formulario completo con los esquemas del 3.1.
+
+**Decisiones conservadoras:**
+- Ante el campo trampa relleno o un envío demasiado rápido, el formulario no envía y muestra un mensaje neutro («No se pudo enviar. Revisa los datos e inténtalo de nuevo.»), sin fingir un éxito. Si una persona fue demasiado rápida, el segundo intento ya pasa.
+- El tiempo mínimo es de 3 s por defecto y se puede poner a 0. En el inicio de sesión (4.17) debe ser 0: con autorrelleno, una persona envía en menos de un segundo.
+- Si `alEnviar` lanza un `Error` con mensaje, ese mensaje es el error general. Quien llame decide qué texto mostrar: los mensajes genéricos de autenticación son responsabilidad de 4.17 y 4.18 (NP-15).
+- La marca de la casilla se dibuja sobre un `span` con su relleno, bajo el input transparente. Con la marca como hermana del input, su contraste se medía contra la página y, sin marcar, solo se ocultaba con `opacity`.
+- Casilla e interruptor se alinean con el borde de los campos mediante márgenes negativos, sin reducir los 44 px del área táctil (visto en la captura).
+- No hay estado «hover» en los campos de texto: DESIGN.md no lo define.
+
+**Verificación** (Chromium contra `next dev`):
+- `campos.spec.ts` (nueva) + `catalogo.spec.ts`: **24/24** (1 omitida: el 404 de producción), en la primera tanda y otra vez tras alinear la casilla y el interruptor.
+- `campos.spec.ts` cubre:
+  - etiqueta en cada control y errores enlazados con `aria-describedby` y `aria-invalid`;
+  - `autocomplete`, `inputmode` y `spellcheck` en el formulario;
+  - el campo trampa fuera de los lectores, del tabulador y del autorrelleno;
+  - el recorrido con el tabulador en orden, y la barra espaciadora en la casilla y el interruptor;
+  - el foco al primer inválido, con el anuncio «Revisa 6 campos: …» y el error que se borra al corregir;
+  - el envío antes de 3 s, que no sale, y el segundo intento, que sí;
+  - dos Enter seguidos que dan un solo envío;
+  - el campo trampa relleno, que no envía;
+  - el fallo del servidor, con `role="alert"` y conservando lo escrito;
+  - la contraseña revelable y el contador anunciado («10 / 300 caracteres»);
+  - el contraste no textual de filetes y pomos (≥ 3:1) y el del texto escrito y el marcador (≥ 4,5:1), en los dos temas;
+  - el foco real igual que la muestra fijada.
+- `catalogo.spec.ts` añade la sección al contraste de todas las muestras, a axe (0 violaciones en los dos temas, al 100 % y al 125 %), a las capturas y a la comprobación de desborde a 360 px.
+- Typecheck 0. Lint de los archivos tocados limpio.
+
+**No verificado:** Firefox y WebKit (cierre de la fase 3), lectores de pantalla reales (fase 7) y el uso en páginas reales (fases 4 y 5).
+
 ### 3.5 · `Dialogo`, `PanelLateral` y `DialogoConfirmacion` (2026-11-01)
 
 **Dependencias:** `@radix-ui/react-dialog@^1.3.1` y `@radix-ui/react-alert-dialog@^1.2.1`, publicadas el 2026-10-12 (la misma familia que el Popover que ya se usaba).
