@@ -13,12 +13,15 @@ for (const ruta of RUTAS_PUBLICAS) {
 			await page.goto(ruta, { waitUntil: "load" });
 			await page.waitForTimeout(1500); // deja que carguen imágenes y peticiones diferidas
 			hallazgos.push(...(await inspeccionarDom(page)));
+			// Se evalúa antes de la captura: en WebKit, Playwright inyecta un estilo para hacerla y la CSP
+			// solo de informe lo anota en consola. Es de la herramienta, no de la página (cierre de la fase 2).
+			const deLaPagina = [...hallazgos];
 			const nombre = `${ruta.replace(/\W+/g, "_") || "inicio"}-${ancho}`;
 			await page.screenshot({
 				path: `test-results/recorrido/${info.project.name}/${nombre}.png`,
 				fullPage: true,
 			});
-			expect(sinExcepciones(hallazgos), JSON.stringify(hallazgos, null, 1)).toEqual([]);
+			expect(sinExcepciones(deLaPagina), JSON.stringify(deLaPagina, null, 1)).toEqual([]);
 		});
 	}
 }

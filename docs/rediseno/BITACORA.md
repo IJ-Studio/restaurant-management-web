@@ -6,6 +6,91 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### Cierre de la fase 2 (2026-11-02): resumen para leer al volver
+
+La fase 2 está cerrada en `feature/rediseno-web-seguridad`, salvo el **2.5**, que no se ejecuta y espera tu aprobación. No se ha empezado la fase 4, no se ha hecho push y el árbol queda limpio. El PR lo gestionas tú.
+
+**Lo hecho, paso a paso:**
+
+| Paso | Commit | Resumen |
+|---|---|---|
+| 2.1 | `7577c79` | Next 16.4.3, React 19.2.9 y `eslint-config-next` 16.4.3 (D-01) |
+| 2.2 | `eaccb56` | Cabeceras base; sin `X-Powered-By` ni mapas de código |
+| 2.3 | `4a89df9` | CSP con nonce, **solo en modo informe** (D-02) |
+| 2.4 | `dbb6eae` | Sin scripts ni estilos en línea que la CSP bloquearía |
+| 2.5 | `44a4109` | **No ejecutado.** Nota de lo que falta, pendiente de tu aprobación |
+| 2.6 | `9191b75` | `no-store` en datos y páginas privadas |
+| 2.7 | `056216c` | Sin service worker, y limpieza de instalaciones previas |
+| 2.8 | `b0e29db` | Registro de errores sin datos sensibles |
+| 2.9 | `c30fa35` | Secreto JWT sin respaldos: falla cerrado |
+| 2.10 | `ff805e9` | Proxy: token en `/api` salvo las rutas públicas documentadas |
+| 2.11 | `23d2999` | DAL de sesión con `server-only` y DTO mínimo |
+| 2.12 | `1912c04` | Sin `dangerouslySetInnerHTML`: texto enriquecido con lista blanca |
+| 2.13 | `d6194af` | Redirecciones, enlaces y parámetros validados |
+| 2.14 | `3aff22c` | Cierre de sesión único que limpia todo |
+| 2.15 | `ed3885d` | Datos del usuario solo en memoria; `/api/auth/me` una vez por carga |
+| 2.16 | `d5bf2a6` | Variables públicas validadas en el build |
+| 2.17 | `e776aa1` | Límites de error por segmento, sin trazas |
+| 2.18 | `1638fee` | Revisión automática del bundle |
+
+**Bloqueado:** ningún paso. El 2.5 no está bloqueado: espera tu aprobación.
+
+**Verificación del cierre** (build de `1638fee`, contra `next start` salvo el catálogo):
+
+| Comprobación | Resultado |
+|---|---|
+| Typecheck | 0 errores |
+| Lint global | 302 problemas (200 errores y 102 avisos). Al empezar la fase eran 310: **no sube**. |
+| Build | Correcto |
+| Chromium, batería completa | 110 + 95 = **205/205** |
+| Firefox, batería completa | 82 + 24 + 95 = **201/201** |
+| WebKit, batería completa | 29 + 54 + 24 + 95 = **202/202**, tras los dos ajustes de las pruebas de abajo |
+| Pruebas omitidas | Las del catálogo (solo existen en `next dev`) y las que son de un solo motor |
+| Catálogo (`next dev`), 14 archivos (los 13 de la fase 3 más `limites-error`) | Chromium **115/115**, Firefox **115/115**, WebKit **115/115** |
+| `pnpm test:unidad` | 45/45 |
+| `pnpm revisar:invisibles` | 367 archivos sin caracteres prohibidos |
+| `node scripts/revisar-bundle.mjs` | 661 archivos; 0 coincidencias de secretos, 0 mapas de código y nada de desarrollo |
+| `pnpm audit` | 3 críticas, 45 altas, 31 moderadas y 6 bajas. Al cerrar la fase 3 eran 7 / 66 / 53 / 10. Las 3 críticas llegan por `firebase-admin` (NP-38). |
+| Procesos | Ninguno abierto tras cada tanda |
+
+**Dos ajustes de las pruebas en WebKit.** Son avisos que solo da WebKit; ninguno es un fallo de la página:
+1. **El aviso de la CSP solo de informe.** WebKit avisa en consola de que la política no tiene efecto porque no lleva `report-to`. Es el modo que pediste hasta aprobar el 2.5. Va a `excepciones.ts`, enlazado al 2.5, y desaparece al aplicar la política.
+2. **Las capturas del recorrido.**
+   - Cualquier captura de Playwright en WebKit inyecta un estilo sin nonce, y la CSP lo anota. Se comprobó con una sonda temporal: 0 avisos antes de capturar y 1 por cada captura.
+   - `recorrido.spec.ts` ahora evalúa los hallazgos antes de la captura.
+   - El primer intento, `caret: "initial"`, no bastó y se deshizo con `git restore`.
+
+**No verificado** (detalle en cada paso):
+- El checkout con Stripe y todo lo que lista el 2.5 (iframe de pago, 3-D Secure, widget de Cloudinary, mapa de `/about` y fotos de Supabase): no hay claves ni backend.
+- El backend en general:
+  - el login de punta a punta (2.13 y 2.15);
+  - que `POST /auth/sign-out` invalide la sesión (2.14);
+  - que el API envíe sus propias cabeceras de caché (2.6).
+- Lo que muestran los paneles con un usuario real (2.15): sin backend se ven los nombres por defecto.
+- El entorno de despliegue (2.16): si define `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` y si `NEXT_PUBLIC_API_URL` es `https:`.
+- `removeConsole` en el código de servidor con Turbopack (2.8, NP-40).
+- La limpieza del service worker en navegadores reales que tuvieran el antiguo (2.7).
+- La geolocalización y la búsqueda por voz con permisos reales (2.2).
+- `AboutSection`, que no se monta en ninguna página (2.12 y 2.13).
+- Los límites de error con un error real de producción, y `global-error` en el navegador (2.17).
+- Los proyectos móviles (`movil-ios` y `movil-android`): este cierre corrió Chromium, Firefox y WebKit, como pediste.
+- Lighthouse y la medición de rendimiento: los lanzas tú.
+
+**Decisiones pendientes tuyas:**
+1. **Aprobar el 2.5** (aplicar la CSP). Antes, comprobar lo que lista su entrada con claves de prueba de Stripe y el backend.
+2. **NP-36:** las fotos de muestra de Unsplash en `/dashboard/admin/about` (única violación justificada de la CSP). Se sustituyen por fotos de la casa o se añade `images.unsplash.com` a `hosts-permitidos.ts`.
+3. **Clave de Stripe en el entorno (2.16).** El `.env.local` y el `.env` no definen `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (no se leyeron: lo delató el build), y desde el 2.16 `pnpm build` falla sin ella. Hay que añadirla en local y en el despliegue.
+4. **NP-02:** rotar el `JWT_SECRET` si alguna vez coincidió con el que estaba incrustado en `proxy.ts`, que sigue en el historial de git.
+5. **NP-38:** las 3 dependencias críticas que llegan por `firebase-admin` (servidor, fuera del alcance).
+6. **`/api/public/*` y `/api/mesas` exigen token desde el 2.10.** Si alguna aplicación externa los usa sin token, dejará de funcionar.
+7. **NP-41:** la ruta `app/api/auth/logout` no caduca las cookies si el backend falla (backend).
+8. **`AGENTS.md`:** Next 16.4 lo crea al arrancar `next dev`. Está excluido en local; versionarlo es decisión tuya.
+9. **Otros avisos de la fase:**
+   - NP-39: idea para `revisar:invisibles`.
+   - NP-40: `console.log` del servidor.
+   - NP-42: «Cerrar sesión» en el menú móvil de la cabecera nueva, para la fase 4.
+   - En el 2.11, el DTO añade `apellidos` para conservar las iniciales.
+
 ### 2.18 · Revisión del bundle (2026-11-02)
 
 **Cambios:**
