@@ -6,6 +6,33 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.1 · Validación con zod (2026-11-01) — D-05
+
+**Dependencia:** `zod@^4.6.7`, publicada el 2026-10-12. Es la única librería de validación del front. Ya estaba en el lockfile la 3.25 como dependencia transitiva de ESLint; ahora entra como dependencia directa.
+
+**Archivos** (`lib/validacion/`):
+- `reglas.ts`: límites y expresiones **sin zod**. Es la fuente única. `utils/validators.tsx` pasa a reexportarla (mismos nombres, las 10 expresiones idénticas byte a byte, comprobado con `comm`), así que login, registro y `frm_reset` no cargan zod hasta que se rehagan (4.17–4.19).
+- `saneamiento.ts`: NFC, sin caracteres de control (en los textos de varias líneas se conserva el salto), sin controles bidireccionales (U+202A–202E, U+2066–2069), recorte y tope de 5.000 caracteres. Conserva el U+200D de los emoji compuestos.
+- `campos.ts`: correo del registro (formato y tamaños del API) y del acceso, correo con la regla del navegador para el admin, nombre (1–2 palabras, letras, con vocal, sin triples, ≤ 50), teléfono (10 dígitos; admite `+52` y separadores), lada, contraseña nueva (5 requisitos y sin secuencias) y de acceso (≥ 8), RFC, CP y números con mínimo. `MENSAJES.accesoIncorrecto` = «Correo o contraseña incorrectos.».
+- `formularios.ts`: acceso, registro (con datos personales en la contraseña y `aPayloadRegistro`, que da el contrato exacto de `POST /auth/sign-up`), perfil, reserva por pasos (`crearEsquemaReservaHorario(ahora)`), dirección y datos fiscales del checkout, y del admin: usuario (alta y edición), platillo, promoción, factura, movimiento de caja, propina, nómina, proveedor y orden de compra. También `erroresPorCampo`, para el hook del 3.3.
+- `archivos.ts`: vacío, tamaño (imagen ≤ 5 MB, hoja ≤ 2 MB), extensión, MIME declarado y firma de bytes (JPEG, PNG, WebP, AVIF `avif`/`avis`, XLSX `PK 03 04`). La firma debe coincidir con la extensión. `ACEPTA` da el atributo `accept`.
+- Pruebas: `tests/unidad/validacion.spec.ts` con `playwright.unidad.config.ts` (sin servidor ni navegador) y el script `pnpm test:unidad`.
+
+**Decisiones conservadoras:**
+- **Mismas reglas que hoy en cada formulario**, aunque sean flojas: la reserva solo exige texto en el teléfono y `\S+@\S+\.\S+` en el correo; el RFC de la factura del admin solo es obligatorio y de hasta 13; el correo fiscal del checkout no se valida; el CP del perfil admite hasta 5 caracteres. Endurecerlas es una decisión aparte (cambiaría el comportamiento al sustituir los formularios).
+- Únicas reglas nuevas: el saneamiento (lo pide el paso); un tope de 100 en el correo del acceso (es el límite de la columna, ninguna cuenta lo supera, y evita evaluar la expresión sobre textos largos); la fecha de inicio ≤ fin en promociones, porque la pide el 5.10; y el formato `AAAA-MM-DD`/`HH:MM` en la reserva, que los `type="date"`/`"time"` ya garantizan.
+- Las claves de cada esquema son las del estado actual de cada formulario. Los formularios que envían el estado entero (perfil y admin) usan `z.looseObject`, para que `id`, `tags`, `imageUrl`, etc., lleguen intactos.
+- La contraseña no se sanea: se envía tal cual se escribió.
+- zod 4.6 cuenta la longitud en puntos de código (igual que un `varchar` de Postgres); `maxLength` cuenta unidades UTF-16. Solo difiere con emoji (el campo de emoji de las promociones); queda documentado y probado.
+- La herramienta de escritura convirtió los escapes `\uXXXX` en caracteres literales invisibles (incluidos los bidireccionales, un riesgo de tipo «Trojan Source»). Se reescribieron como escapes ASCII y se comprobó que no queda ninguno.
+
+**Verificación:**
+- `pnpm test:unidad`: **22/22** (2,2 s). Incluye un `.exe` renombrado a `.png` que declara `image/png` (se rechaza), un PNG renombrado a `.jpg`, SVG, archivos vacíos, el límite exacto de 5 MB, 2 MB en hojas, entradas de 5.001 caracteres y una entrada patológica para la expresión del correo resuelta en < 200 ms.
+- Typecheck 0. Lint de los archivos nuevos y tocados limpio. Login, registro y `frm_reset` tienen los mismos 3 errores y 5 avisos de antes (no se tocaron).
+- Recorrido contra `next dev` en Chromium de `/login`, `/register` y `/frm_reset` (las rutas que importan las reglas) a 390 y 1440 px: 5/6. El fallo, `/register` a 1440, es el aviso de desarrollo de `next/image` «…was detected as the Largest Contentful Paint (LCP). Please add `loading="eager"`…» sobre el fondo decorativo. Se repite igual (2/2) y **también con el `utils/validators.tsx` de HEAD**, así que es previo al 3.1: viene del fondo del 1.9 y solo aparece en `next dev` (las comprobaciones del 1.9 fueron contra el build). No se añade a `excepciones.ts`, que solo puede decrecer. Se resuelve en el 4.18, junto al LCP de la portada (4.3).
+
+**No verificado:** que zod no entre en el bundle de login y registro se deduce de los imports (`reglas.ts` no importa nada); no se hizo build, porque el paso no toca `next.config` ni rutas de servidor.
+
 ### Medición de rendimiento móvil de la fase 1 · verificada (2026-11-01)
 
 **Medida por el usuario** con `scripts/comparar-rendimiento.mjs`, desde una terminal con el editor cerrado. Resultado en `D:\dev-cache\rendimiento\2026-11-01-23-11\resumen.md`. Lighthouse 12.8.2, móvil con limitación simulada, mediana de 3:
