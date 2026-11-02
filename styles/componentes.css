@@ -311,6 +311,18 @@
     position: relative;
   }
 
+  /* Menús flotantes (Popover de Radix: cuenta y opciones de accesibilidad). Aparecen como los
+     diálogos, desde su disparador; con movimiento reducido, las duraciones son 0,01 ms. */
+  .menu-flotante {
+    transform-origin: var(--radix-popover-content-transform-origin);
+  }
+  .menu-flotante[data-state="open"] {
+    animation: dialogo-entra var(--duracion-media) var(--ease-salida);
+  }
+  .menu-flotante[data-state="closed"] {
+    animation: dialogo-sale var(--duracion-breve) var(--ease-estandar) forwards;
+  }
+
   /* Esqueleto (DESIGN.md § Otros componentes base): superficie elevada con pulso de opacidad.
      Sobre una superficie, café: la elevada es blanca sobre hueso en el tema claro. Sin pulso
      con movimiento reducido, salvo que la persona elija movimiento completo en el panel. */

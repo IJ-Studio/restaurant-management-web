@@ -6,6 +6,31 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.12 · `PanelAccesibilidad`: acabado (2026-11-01)
+
+La versión funcional era del 1.6. El usuario pidió seguir el PLAN tras el 3.11: 3.12, 3.13, 3.14 y el cierre de la fase 3.
+
+**Cambios** en `components/accesibilidad/PanelAccesibilidad.tsx`:
+- **Animación de apertura:** clase nueva `.menu-flotante`. Opacidad y escala de 0,98 a 1 desde el disparador (`--radix-popover-content-transform-origin`), como los diálogos; con movimiento reducido dura 0,01 ms. El menú de cuenta de la cabecera usa la misma clase.
+- **Acceso desde el pie:** `conTexto` pinta el botón con su texto visible («Opciones de accesibilidad»). Va en la última fila de `PieSitio` y en el menú móvil de la cabecera, donde antes había una etiqueta oculta a lectores al lado de un botón solo icono.
+- **Coherencia con el sistema:**
+  - el título pasa de Fraunces a DM Sans 600, como el de los diálogos (decisión del usuario sobre los títulos de diálogo);
+  - `z-[110]`: con `z-50` quedaba por debajo de la cabecera fija nueva (`z-100`);
+  - `al-pasar:` en lugar de `hover:`, para que el catálogo pueda fijar el estado;
+  - foco visible propio en el disparador y en «Cerrar».
+
+**Verificación** (Chromium contra `next dev`):
+- `panel-accesibilidad.spec.ts` (nueva):
+  - con el teclado: Enter abre; aparece con `dialogo-entra` y `z-index` 110; el foco entra en la opción marcada y el grupo «Tema» tiene nombre; la flecha pasa a «Claro», se aplica al momento y se guarda; Esc cierra y el foco vuelve al botón;
+  - desde el pie: texto visible, el mismo nombre accesible y el mismo panel («Muy grande» se aplica);
+  - con movimiento reducido, la aparición dura 0,01 ms;
+  - axe con el panel abierto a 360 px con texto al 125 % en los dos temas, y el panel cabe en la pantalla.
+- La prueba del pie falló dos veces por tiempo. La primera, porque escribí archivos del 3.13 durante la tanda y el panel se volvió a montar; la segunda, porque con el panel abierto abajo el indicador de `next dev` tapa parte de él al ratón. Ahora usa el teclado (Espacio y Enter), que es lo que comprueba.
+- `preferencias.spec.ts`, que ya usaba el panel, `sitio.spec.ts` y `catalogo.spec.ts`: verdes.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+
+**No verificado:** lectores de pantalla reales (NVDA, VoiceOver), que pedía el PLAN. Las pruebas comprueban roles, nombres, grupos y foco, que es lo que esos lectores usan, pero no sustituyen la prueba con el lector. Queda para la fase 7, con Firefox y WebKit al cerrar esta fase.
+
 ### 3.11 · `CabeceraSitio` y `PieSitio` (2026-11-01) — D-09
 
 **Componentes**, sin dependencias nuevas:
