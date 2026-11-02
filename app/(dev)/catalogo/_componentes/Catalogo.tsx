@@ -10,6 +10,7 @@ import type { Preferencias } from "@/lib/preferencias/preferencias";
 import { DemosAvisos } from "./DemosAvisos";
 import { DemosCampos } from "./DemosCampos";
 import { DemosDialogo } from "./DemosDialogo";
+import { DemosEstados } from "./DemosEstados";
 import { DemosTabla } from "./DemosTabla";
 import { Muestra } from "./Muestra";
 
@@ -241,6 +242,7 @@ export function Catalogo() {
 							["#campos", "Campos"],
 							["#dialogo", "Diálogos"],
 							["#tabla", "Tabla"],
+							["#estados", "Estados"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -485,6 +487,14 @@ export function Catalogo() {
 				reglas="Desde 768 px, tabla semántica con leyenda para lectores y desplazamiento horizontal enfocable si no cabe; por debajo, tarjetas con contraetiqueta. Cifras alineadas al final y tabulares. La página y la pestaña van en la URL. La pestaña seleccionada lleva el filete doble; la página actual, relleno café y filete de acento."
 			>
 				<DemosTabla />
+			</Seccion>
+
+			<Seccion
+				id="estados"
+				titulo="Estados vacío, de carga y de error"
+				reglas="El vacío explica por qué no hay nada y ofrece la acción que lo resuelve. La carga conserva el tamaño de lo que viene, con un pulso que se detiene si el movimiento está reducido, y lo anuncia con aria-busy. El error dice qué no se pudo cargar, nunca muestra un cero en su lugar y ofrece Reintentar."
+			>
+				<DemosEstados />
 			</Seccion>
 		</main>
 	);

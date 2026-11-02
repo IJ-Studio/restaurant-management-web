@@ -1,5 +1,6 @@
 import { Fragment, type Key, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Esqueleto } from "./Esqueleto";
 import { RegionDesplazable } from "./RegionDesplazable";
 
 /**
@@ -124,13 +125,7 @@ export function Tabla<T>({
 									<tr key={i} className="border-b border-borde-sutil last:border-b-0" aria-hidden="true">
 										{columnas.map((c) => (
 											<td key={c.clave} className="px-4 py-4">
-												<span
-													className={cn(
-														"block h-3.5 rounded-control bg-superficie-cafe",
-														"animate-pulse motion-reduce:animate-none in-data-[movimiento=reducido]:animate-none",
-														c.numerica ? "ms-auto w-16" : "w-4/5",
-													)}
-												/>
+												<Esqueleto sobre="superficie" className={c.numerica ? "ms-auto w-16" : "w-4/5"} />
 											</td>
 										))}
 										{acciones && <td className="px-4 py-4" />}
@@ -176,14 +171,7 @@ export function Tabla<T>({
 					? Array.from({ length: FILAS_ESQUELETO }, (_, i) => (
 							<li key={i} aria-hidden="true" className="flex flex-col gap-3 rounded-tarjeta border border-borde-sutil bg-superficie p-4">
 								{["w-1/2", "w-full", "w-3/4"].map((ancho) => (
-									<span
-										key={ancho}
-										className={cn(
-											"block h-3.5 rounded-control bg-superficie-cafe",
-											"animate-pulse motion-reduce:animate-none in-data-[movimiento=reducido]:animate-none",
-											ancho,
-										)}
-									/>
+									<Esqueleto key={ancho} sobre="superficie" className={ancho} />
 								))}
 							</li>
 						))

@@ -6,6 +6,31 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.7 · `EstadoVacio`, `Esqueleto` y `EstadoError` (2026-11-01)
+
+**Componentes** (`components/ui/`), sin dependencias nuevas:
+- `EstadoVacio.tsx` (de servidor): icono de Lucide a 2,5rem con trazo de 1 px en `--texto-tenue`, sin círculo porque la única forma circular grande es el sello. Título, descripción y acción, con marco o `sinMarco`.
+- `EstadoError.tsx`: `CircleAlert` y título en `--color-error`. Título y descripción van en `role="alert"`, sin el botón. «Reintentar» carga mientras dura la promesa. Admite una segunda acción.
+- `Esqueleto.tsx`: `Esqueleto` (con `sobre="superficie"` en café, la excepción de las tarjetas), `EsqueletoLineas` y `ZonaCargando` (`aria-busy` y «Cargando…» para lectores).
+- `styles/componentes.css`: `.esqueleto` y `@keyframes esqueleto-pulso`. Sin pulso con movimiento reducido, salvo que se elija «completo» en el panel: la utilidad `motion-reduce:` de Tailwind no respetaba esa elección.
+- `Tabla` usa ya `Esqueleto` en su estado de carga. El catálogo muestra la tabla vacía con `EstadoVacio` y una tabla con error con `EstadoError`.
+- Catálogo: sección «Estados vacío, de carga y de error» (`DemosEstados.tsx`). El reintento falla la primera vez y carga la segunda.
+- DESIGN.md documenta los tres componentes y las clases nuevas (`.pila-notificaciones`, `.notificacion` y `.esqueleto`) en la lista de clases explícitas.
+
+**Desborde corregido:** a 360 px con texto al 125 %, la acción «Llamar al restaurante» no cabía, y la columna única de la rejilla tomaba su ancho mínimo, así que toda la sección desbordaba 23 px. Los botones del sistema no parten el texto (`whitespace-nowrap`). En `EstadoVacio` y `EstadoError` las acciones pueden pasar a dos líneas (WCAG 1.4.10) y el relleno lateral baja a 1rem en móvil. Se localizó con una prueba de diagnóstico temporal, ya borrada. **Para el 3.2 o la fase 6:** decidir si `Boton` debe poder partir su texto en general cuando no cabe.
+
+**Verificación** (Chromium contra `next dev`):
+- `estados.spec.ts` (nueva):
+  - el error se anuncia sin leer el botón, y el reintento carga, vuelve a fallar y después muestra el dato;
+  - `ZonaCargando` con `aria-busy`, su texto para lectores y el esqueleto oculto;
+  - el esqueleto pulsa, y no pulsa con movimiento reducido en el panel;
+  - sobre una superficie, el esqueleto es de otro color;
+  - axe a 360 px con texto al 125 % en los dos temas, sin desborde.
+- `tabla.spec.ts` y `catalogo.spec.ts`, con la sección nueva: contraste AA de todas las muestras (incluido el icono tenue del vacío, ≥ 3:1), axe, capturas y sin desborde a 360 px.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+
+**No verificado:** Firefox, WebKit y lectores de pantalla reales.
+
 ### 3.6 · `Tabla` responsiva, `Paginacion` y `Pestanas` (2026-11-01)
 
 **Componentes** (`components/ui/`), sin dependencias nuevas:

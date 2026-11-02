@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Boton, Insignia, Paginacion, Pestanas, Tabla } from "@/components/ui";
+import { Boton, EstadoError, EstadoVacio, Insignia, Paginacion, Pestanas, Tabla } from "@/components/ui";
 import type { ColumnaTabla } from "@/components/ui/Tabla";
 import type { TonoInsignia } from "@/components/ui/Insignia";
 import { Muestra } from "./Muestra";
@@ -85,20 +85,31 @@ export function DemosTabla() {
 				</Muestra>
 			</div>
 
-			<div className="grid gap-6 lg:grid-cols-2">
+			<div className="grid gap-6 lg:grid-cols-3">
 				<div className="flex flex-col gap-3">
 					<Rotulo>Tabla cargando</Rotulo>
 					<Tabla leyenda="Reservas de mañana" leyendaVisible columnas={COLUMNAS.slice(0, 4)} filas={[]} claveFila={(r) => r.id} estado="cargando" />
 				</div>
 				<div className="flex flex-col gap-3">
-					<Rotulo>Tabla vacía (con EstadoVacio desde el 3.7)</Rotulo>
+					<Rotulo>Tabla vacía, con EstadoVacio</Rotulo>
 					<Tabla
 						leyenda="Reservas canceladas"
 						leyendaVisible
 						columnas={COLUMNAS.slice(0, 4)}
 						filas={[]}
 						claveFila={(r) => r.id}
-						vacio={<p className="m-0 rounded-tarjeta border border-borde-sutil p-6 text-texto-secundario">No hay reservas canceladas hoy.</p>}
+						vacio={<EstadoVacio titulo="No hay reservas canceladas hoy" descripcion="Las cancelaciones del día aparecerán aquí." />}
+					/>
+				</div>
+				<div className="flex flex-col gap-3">
+					<Rotulo>Tabla con error, con EstadoError</Rotulo>
+					<Tabla
+						leyenda="Pedidos a domicilio"
+						leyendaVisible
+						columnas={COLUMNAS.slice(0, 4)}
+						filas={[]}
+						claveFila={(r) => r.id}
+						error={<EstadoError titulo="No se pudieron cargar los pedidos" alReintentar={() => undefined} />}
 					/>
 				</div>
 			</div>
