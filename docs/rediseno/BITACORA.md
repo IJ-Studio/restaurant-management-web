@@ -4,6 +4,25 @@
 
 ---
 
+## Fase 3 · Componentes reutilizables
+
+### Medición de rendimiento móvil de la fase 1 · verificada (2026-11-01)
+
+**Medida por el usuario** con `scripts/comparar-rendimiento.mjs`, desde una terminal con el editor cerrado. Resultado en `D:\dev-cache\rendimiento\2026-11-01-23-11\resumen.md`. Lighthouse 12.8.2, móvil con limitación simulada, mediana de 3:
+
+| Commit | Mediana | Ejecuciones | FCP | LCP | TBT | CLS | SI | benchmarkIndex |
+|---|---|---|---|---|---|---|---|---|
+| `766855a` (cierre de la fase 0) | **74** | 69 / 75 / 74 | 2415 ms | 4339 ms | 289 ms | 0,079 | 3455 ms | 2068 |
+| `d6407c9` (cierre de la fase 1) | **76** | 74 / 76 / 76 | 1207 ms | 5194 ms | 209 ms | 0,084 | 1342 ms | 2070 |
+
+- **Sin regresión** (+2 puntos), así que se descarta la bisección. Queda **verificado** el pendiente del 1.7: la bajada que se veía con VS Code abierto era del equipo, no del código.
+- **LCP de la portada:** sube de 4339 a 5194 ms, mientras FCP (−1208 ms), TBT (−80 ms) y SI bajan. Se trata en el paso **4.3**: imagen de portada precargada, ancho ajustado al hueco y sin precargas innecesarias.
+- El script borró los worktrees, pero quedan las carpetas `node_modules` en `D:\dev-cache\rendimiento\arboles\` (fuera del repo; no se borran sin permiso del usuario).
+
+**Rama.** `feature/rediseno-web-componentes` sale de `feature/rediseno-web-cimientos` (`d6407c9`) y no de `feature/rediseno-web`, porque el PR de la fase 1 aún no está fusionado y la fase 3 parte de sus tokens, su catálogo y sus componentes. Al fusionar ese PR, esta rama solo añadirá sus propios commits. Esta anotación va aquí, y no en la rama de la fase 1, para no cambiar una rama que ya está en el remoto.
+
+---
+
 ## Fase 1 · Cimientos y tokens (y adelantados de la fase 3)
 
 ### Cierre de la fase 1 (2026-11-01)
