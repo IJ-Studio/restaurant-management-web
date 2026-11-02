@@ -122,7 +122,7 @@ test.describe("catálogo de componentes", () => {
 					.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
 					.analyze();
 				expect(r.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
-				for (const id of ["boton", "boton-enlace", "insignia", "tarjeta", "avisos", "campos", "dialogo"]) {
+				for (const id of ["boton", "boton-enlace", "insignia", "tarjeta", "avisos", "campos", "dialogo", "tabla"]) {
 					await page.locator(`section#${id}`).screenshot({
 						path: join(SALIDA, info.project.name, `${id}-${tema}-${tamanoTexto}.png`),
 						animations: "disabled",
