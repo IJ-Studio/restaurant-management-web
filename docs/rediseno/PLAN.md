@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 3 en curso** (2026-11-01). Fase 1 cerrada; sus ramas ya están en el remoto y el PR lo gestiona el usuario. Ya hechos de la fase 3: 3.0, 3.2 y parte de 3.4. |
 | Rama activa | `feature/rediseno-web-componentes` (sale de `feature/rediseno-web-cimientos`, `d6407c9`, porque el PR de la fase 1 aún no está fusionado) |
-| Último paso completado | **3.7 · EstadoVacio, Esqueleto y EstadoError** (2026-11-01). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **3.8 · Indicador y gráficas base** (2026-11-01). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. 3.1, 3.5 y 3.3 aprobados por el usuario (2026-11-01), con las decisiones de la revisión aplicadas (BITÁCORA). |
-| Siguiente paso | 3.8 → 3.9 → 3.10 → 3.11, y **parar tras el 3.11** para la revisión del usuario en el catálogo. Al cerrar la fase: build, Firefox y WebKit. |
+| Siguiente paso | 3.9 → 3.10 → 3.11, y **parar tras el 3.11** para la revisión del usuario en el catálogo. Al cerrar la fase: build, Firefox y WebKit. |
 | Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.4, 3.6, 3.7, 3.8, 3.9, 3.10 y 3.11, y **parar tras el 3.11**. Verificación en la fase: typecheck, lint de los archivos tocados, pruebas del catálogo, axe y contraste numérico de cada estado; build y los tres motores al cerrarla.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -547,7 +547,7 @@ Cada paso crea el componente en `components/ui/` o `components/marca/` y lo mues
 - [x] **3.7 · `EstadoVacio`, `Esqueleto` y `EstadoError`** (con Reintentar). · *Hecho (2026-11-01): EstadoVacio, EstadoError, Esqueleto, EsqueletoLineas y ZonaCargando; Tabla usa Esqueleto.*
   - **Commit:** `feat(ui): estados vacío, de carga y de error`
 
-- [ ] **3.8 · `Indicador` y gráficas base**
+- [x] **3.8 · `Indicador` y gráficas base** · *Hecho (2026-11-01): Indicador y GraficaBarras, GraficaLinea y GraficaDonut en SVG propio, con vista de tabla.*
   - **Componentes:** `Indicador` con los estados normal, cargando, error, sin comparación y datos de ejemplo. Gráficas SVG propias (barras, línea y donut) según la guía de visualización: paleta `--color-grafica-*`, tooltip, leyenda a partir de 2 series y vista de tabla. Recharts queda solo para las gráficas de dispersión y predicción, cargado con `next/dynamic`.
   - **Commit:** `feat(ui): indicador y gráficas con la paleta validada`
 

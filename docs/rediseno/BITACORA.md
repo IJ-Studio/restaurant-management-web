@@ -6,6 +6,51 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.8 · `Indicador` y gráficas base (2026-11-01)
+
+**Guía aplicada:** la skill de visualización de datos.
+- **Paleta:** se volvió a validar con su script.
+  - Oscuro, sobre `#1C1712`: todo PASS; la peor pareja vecina para daltonismo da ΔE 10,2.
+  - Claro, sobre `#FBF8F2`: todo PASS salvo el aviso de contraste de `--color-grafica-4` (2,81:1), que ya recogía DESIGN.md. Por eso la vista de tabla es obligatoria en todas las gráficas.
+
+**Componentes**, sin dependencias nuevas:
+- `components/ui/Indicador.tsx`:
+  - Estados normal, cargando, error (nunca un cero), sin comparación y datos de ejemplo.
+  - El color de la comparación dice si es buena o mala noticia (`mejorSiSube`). El signo, el icono y un texto para lectores («mejora» o «empeora») dicen lo mismo.
+- `components/ui/graficas/`:
+  - `comun.tsx`: marco con título, «Ver tabla» y estados; leyenda; tooltip; zona interactiva con un solo tabulador, flechas, Inicio y Fin, y anuncio para lectores; escala con números redondos; ancho medido.
+  - `formato.ts`: formatos es-MX. Incluye `formatoPorcentaje` con espacio duro («8 %»): `Intl` en es-MX da «8%», contra la regla tipográfica de DESIGN.md.
+  - `GraficaBarras`, `GraficaLinea` y `GraficaDonut`, en SVG propio.
+- Catálogo: sección «Indicadores y gráficas» (`DemosGraficas.tsx`).
+- DESIGN.md documenta los componentes y la paleta en uso.
+
+**Decisiones:**
+- **Cifra del indicador** en Fraunces y con cifras tabulares, como dice DESIGN.md (`--texto-cifra-destacada`). La guía de visualización pide la sans y cifras proporcionales; manda el sistema del proyecto, y queda anotado en DESIGN.md.
+- **Donut:** la guía lo desaconseja para comparar. Se incluye porque lo pide el PLAN, solo para ver un reparto de un vistazo, con leyenda que da valor y porcentaje, y tabla. De la 5.ª parte en adelante va en «Otros» (`--color-borde-control`), como dice DESIGN.md.
+- **Rótulos:** solo se rotula un valor por gráfica (el más alto en barras, el último en una línea de una serie). Con varias líneas, leyenda y tooltip, sin rótulos al final que puedan chocar.
+- **Recharts** queda para dispersión y predicción: este paso no lo carga.
+
+**Desborde corregido:**
+- **Síntoma:** a 360 px con texto al 125 %, la sección desbordaba 20 px.
+- **Causa:** el SVG de barras y líneas tenía el ancho medido, y después, con `viewBox`, su proporción le daba a la rejilla ese mismo ancho mínimo, así que el contenedor no podía encogerse.
+- **Solución:** el SVG va en posición absoluta dentro de la zona, que ya tiene su alto.
+- **Segunda causa:** el estado de error dentro del marco sumaba el relleno del marco, el de `EstadoError` y el botón «Reintentar», que reserva el ancho de «Reintentando…» para no saltar: 347 px de mínimo. Con `sinMarco`, `EstadoError` y `EstadoVacio` ya no ponen relleno lateral, porque lo pone su contenedor (cambio sobre el 3.7).
+- Se localizó con pruebas de diagnóstico temporales, ya borradas, que miden el ancho mínimo de cada elemento.
+
+**Verificación** (Chromium contra `next dev`):
+- `graficas.spec.ts` (nueva):
+  - comparación con texto para lectores y color según sea buena o mala noticia; sin comparación no hay icono; datos de ejemplo; cargando;
+  - error sin «$ 0» y reintento que trae el dato;
+  - barras de 24 px como mucho y sin leyenda con una serie; tooltip con el puntero y con el teclado, y anuncio de cada valor;
+  - leyenda en orden y colores de la paleta;
+  - vista de tabla con los mismos datos y vuelta a la gráfica;
+  - donut con «Otros» y porcentajes;
+  - axe y sin desborde a 360 px con texto al 125 % en los dos temas.
+- `catalogo.spec.ts`, con la sección nueva: contraste AA de todas las muestras en los dos temas, axe y capturas.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio. El lint obligó a calcular los ángulos del donut sin reasignar variables durante el render.
+
+**No verificado:** Firefox, WebKit, lectores de pantalla reales y el modo de colores forzados (la textura de respaldo de la guía no se ha implementado; queda para la fase 7 si la auditoría la pide).
+
 ### 3.7 · `EstadoVacio`, `Esqueleto` y `EstadoError` (2026-11-01)
 
 **Componentes** (`components/ui/`), sin dependencias nuevas:

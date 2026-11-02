@@ -261,7 +261,14 @@ Paleta categórica en orden fijo (nunca rotada; a partir de la 5.ª serie se agr
 | `--color-grafica-3` | `#B84455` | `#AE3B4C` |
 | `--color-grafica-4` | `#56A76A` | `#60A563` ⚠ 2,81:1 (exige etiquetas directas o vista de tabla) |
 
-Una sola serie siempre usa `--color-grafica-1`. El texto de las gráficas usa los tokens de texto, nunca el color de la serie.
+Una sola serie siempre usa `--color-grafica-1`. El texto de las gráficas usa los tokens de texto, nunca el color de la serie. «Otros» usa `--color-borde-control`.
+
+**Componentes** (`components/ui/graficas/`, SVG propio, sin librería): `GraficaBarras` (columnas, agrupadas hasta 4 series), `GraficaLinea` (hasta 4 series; con una, velo al 10 % y último valor rotulado) y `GraficaDonut` (una magnitud repartida en partes, solo para verla de un vistazo; para comparar valores parecidos, barras).
+- **Marco:** tarjeta con título (`--texto-titulo-interfaz`), descripción, insignia «Datos de ejemplo» si procede y el botón «Ver tabla» / «Ver gráfica». La vista de tabla usa `Tabla` con los mismos datos: es la alternativa accesible y la que exige `--color-grafica-4` en claro. Estados cargando (esqueleto del alto de la gráfica), error (`EstadoError`) y vacío (`EstadoVacio`).
+- **Marcas:** columnas de 24 px como mucho, con 4 px de radio arriba y base recta, y 2 px de superficie entre columnas vecinas; líneas de 2 px con unión redondeada; puntos de 8 px con anillo de 2 px del color de la superficie; partes del donut separadas 2 px. Cuadrícula de 1 px en `--color-borde-sutil` y base en `--color-borde-control`, sin discontinuas. Ejes con números redondos desde 0 (compactos, «12 mil», si llegan a 10 000). Solo se rotula un valor (el más alto en barras, el último en una línea).
+- **Leyenda** a partir de 2 series, en el orden de la paleta: bloque para barras y donut, línea corta para líneas. En el donut, con valor y porcentaje.
+- **Interacción:** un solo tabulador por gráfica; con el puntero o con las flechas, Inicio y Fin se recorre cada categoría. La categoría activa se resalta (banda café en barras, línea vertical en líneas, parte más gruesa en el donut) y el tooltip (`--color-superficie-elevada`, valor en negrita y nombre después, con una línea del color de la serie) lista todas las series. Un texto para lectores dice cada valor. El dibujo va oculto a los lectores.
+- Recharts queda solo para dispersión y predicción, cargado con `next/dynamic`.
 
 ### Contraste verificado (WCAG 2.2 AA)
 
@@ -501,6 +508,9 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 - **`Indicador`:**
   - Rótulo en `--texto-etiqueta`, cifra en `--texto-cifra-destacada` y comparación en `--texto-pequeno` («+8 % frente al martes pasado»), con icono de tendencia y texto.
   - **Estados:** cargando (esqueleto del mismo tamaño), error («No se pudo cargar», con botón Reintentar; nunca «$0»), sin comparación (no se muestra la línea) y **datos de ejemplo** (insignia «Datos de ejemplo» en `--color-aviso`).
+  - **Color de la comparación:** dice si es buena o mala noticia, no si sube o baja (`mejorSiSube={false}` en cancelaciones o mermas): `--color-exito`, `--color-error` o `--texto-secundario` si no cambia. Nunca va solo: el signo, el icono (`TrendingUp`, `TrendingDown`, `Minus`) y un texto para lectores («mejora» o «empeora») dicen lo mismo. La referencia («frente al martes pasado») va en `--texto-secundario`.
+  - Un `detalle` opcional (periodo o fuente) en `--texto-pequeno` y `--texto-tenue`.
+  - **Cifra en Fraunces y tabular, a propósito:** la guía de visualización pide la sans y cifras proporcionales para la cifra protagonista. Aquí manda la jerarquía de este documento (`--texto-cifra-destacada`): la serif es parte de la marca y las cifras tabulares evitan que bailen al actualizarse.
 
 ### Navigation
 

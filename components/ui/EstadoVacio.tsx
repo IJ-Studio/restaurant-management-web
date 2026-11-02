@@ -36,8 +36,9 @@ export function EstadoVacio({
 	return (
 		<div
 			className={cn(
-				"flex min-w-0 flex-col items-center gap-4 px-4 py-10 text-center sm:px-6",
-				!sinMarco && "rounded-tarjeta border border-borde-sutil",
+				"flex min-w-0 flex-col items-center gap-4 py-10 text-center",
+				// Sin marco, el contenedor ya pone el relleno lateral.
+				!sinMarco && "rounded-tarjeta border border-borde-sutil px-4 sm:px-6",
 				className,
 			)}
 			{...resto}

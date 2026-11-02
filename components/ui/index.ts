@@ -17,6 +17,8 @@ export { DialogoConfirmacion, useConfirmacion } from "./DialogoConfirmacion";
 export { Esqueleto, EsqueletoLineas, ZonaCargando } from "./Esqueleto";
 export { EstadoError } from "./EstadoError";
 export { EstadoVacio } from "./EstadoVacio";
+export { GraficaBarras, GraficaDonut, GraficaLinea } from "./graficas";
+export { Indicador } from "./Indicador";
 export { Imagen } from "./Imagen";
 export { Insignia } from "./Insignia";
 export { Paginacion } from "./Paginacion";
