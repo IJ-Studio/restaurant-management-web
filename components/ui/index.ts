@@ -7,6 +7,8 @@
 
 export { Boton } from "./Boton";
 export { BotonEnlace } from "./BotonEnlace";
+export { CerrarDialogo, Dialogo, PanelLateral } from "./Dialogo";
+export { DialogoConfirmacion, useConfirmacion } from "./DialogoConfirmacion";
 export { Imagen } from "./Imagen";
 export { Insignia } from "./Insignia";
 export { Tarjeta } from "./Tarjeta";

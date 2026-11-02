@@ -7,6 +7,7 @@ import type { VarianteBoton } from "@/components/ui/estilos-boton";
 import type { TonoInsignia } from "@/components/ui/Insignia";
 import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 import type { Preferencias } from "@/lib/preferencias/preferencias";
+import { DemosDialogo } from "./DemosDialogo";
 import { Muestra } from "./Muestra";
 
 const esperar = (ms: number) => new Promise((resolver) => window.setTimeout(resolver, ms));
@@ -233,6 +234,7 @@ export function Catalogo() {
 							["#boton-enlace", "BotonEnlace"],
 							["#insignia", "Insignia"],
 							["#tarjeta", "Tarjeta"],
+							["#dialogo", "Diálogos"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -445,6 +447,14 @@ export function Catalogo() {
 						<DemoReintento />
 					</Muestra>
 				</div>
+			</Seccion>
+
+			<Seccion
+				id="dialogo"
+				titulo="Diálogos"
+				reglas="Dialogo, PanelLateral y DialogoConfirmacion sobre Radix: trampa de foco, Esc para cerrar, el foco vuelve a quien los abrió y la página de detrás no se desplaza. Velo opaco sin desenfoque, superficie elevada, radio de 6 px y sombra flotante. La confirmación empieza en «Cancelar» y no se cierra con un clic fuera."
+			>
+				<DemosDialogo />
 			</Seccion>
 		</main>
 	);

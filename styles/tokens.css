@@ -70,6 +70,7 @@
 
   --sombra-cabecera: 0 1px 0 var(--color-borde-sutil);
   --velo-fotografia: linear-gradient(to top, rgb(20 16 12 / 0.92) 0%, rgb(20 16 12 / 0.6) 45%, rgb(20 16 12 / 0.2) 100%);
+  --velo-dialogo: rgb(10 8 6 / 0.72);
 
   --duracion-instantanea: 100ms;
   --duracion-breve: 180ms;
@@ -101,6 +102,7 @@
   --color-grafica-3: #AE3B4C;
   --color-grafica-4: #60A563;
   --shadow-flotante: 0 16px 40px rgb(30 24 19 / 0.14);
+  --velo-dialogo: rgb(30 24 19 / 0.5);
 }
 
 :root[data-tamano-texto="grande"] { font-size: 112.5%; }
