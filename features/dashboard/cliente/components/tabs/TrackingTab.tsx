@@ -40,7 +40,7 @@ export function TrackingTab({ order, onGoToMenu }: TrackingTabProps) {
         <div className="absolute top-[-20px] left-[-20px] text-8xl opacity-[0.03] rotate-[-15deg] group-hover:scale-110 transition-transform duration-1000">🍳</div>
         <div className="relative z-10">
           <div className="text-6xl mb-6 animate-bounce duration-[2000ms]">
-            {order.estado === 'confirmado' ? '✅' : order.estado === 'preparando' ? '👨‍🍳' : '🥘'}
+            {order.estado === 'confirmado' ? '✅' : order.estado === 'preparando' ? '\u{1F468}\u200D\u{1F373}' : '🥘'}
           </div>
           <p className="text-[11px] font-black text-brand uppercase tracking-[0.3em] mb-2 leading-none">Orden {order.id}</p>
           <h3 className="font-display font-black text-3xl text-text m-0 tracking-tight leading-none mb-4">

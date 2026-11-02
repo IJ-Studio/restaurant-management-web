@@ -6,6 +6,21 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### Escape de la unión de ancho cero de un emoji (2026-11-01)
+
+Corrige las 2 líneas que encontró `pnpm revisar:invisibles`. Las dos tenían el emoji del cocinero, una secuencia de hombre, U+200D (unión de ancho cero) y sartén, con el U+200D escrito literal desde `a032603`:
+- `features/dashboard/admin/data/usersMock.tsx:59` (icono del rol «Cocina»).
+- `features/dashboard/cliente/components/tabs/TrackingTab.tsx:43` (estado «preparando»).
+
+Ahora se escribe como escape: `\u{1F468}\u200D\u{1F373}`. Los otros emojis de esas líneas no contienen caracteres prohibidos y se dejan como están. DESIGN.md no admite emojis como iconos; se sustituirán al rediseñar esas pantallas: `usersMock` en la fase 5, y `TrackingTab` según lo que se decida en NP-19, porque `/dashboard/cliente` aún no existe.
+
+**Verificación:**
+- Evaluado con Node, el escape produce los mismos códigos que el original (`1f468 200d 1f373`), así que se ve igual.
+- `pnpm revisar:invisibles`: 270 archivos, sin hallazgos.
+- Typecheck: 0 errores.
+- Lint: limpio en `usersMock.tsx`. En `TrackingTab.tsx` quedan 2 errores `no-explicit-any` (líneas 7 y 91), que ya estaban en `HEAD` y no son de la línea tocada.
+- Sin capturas: el cambio no altera lo que se muestra.
+
 ### Script que rechaza caracteres invisibles (2026-11-01)
 
 A raíz de los escapes `\uXXXX` que la herramienta de escritura convirtió en caracteres literales durante el 3.1 (ver su entrada), se añade una comprobación automática. No es un paso del PLAN.

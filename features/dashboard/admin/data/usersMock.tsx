@@ -56,7 +56,7 @@ export const ALL_PERMS = [
   { key: "dashboard", label: "Dashboard", icon: "📊" },
   { key: "pedidos", label: "Pedidos", icon: "🧾" },
   { key: "menu", label: "Catálogo Menú", icon: "🍽️" },
-  { key: "cocina", label: "Cocina", icon: "👨‍🍳" },
+  { key: "cocina", label: "Cocina", icon: "\u{1F468}\u200D\u{1F373}" },
   { key: "inventario", label: "Inventario", icon: "📦" },
   { key: "finanzas", label: "Finanzas", icon: "💰" },
   { key: "reportes", label: "Reportes", icon: "📈" },
