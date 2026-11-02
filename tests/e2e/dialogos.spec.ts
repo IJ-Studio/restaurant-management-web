@@ -134,9 +134,10 @@ test.describe("diálogos del catálogo", () => {
 		expect(caja.y).toBeGreaterThanOrEqual(0);
 		expect(caja.y + caja.height).toBeLessThanOrEqual(640);
 		const cuerpo = dialogo.locator(".cuerpo-dialogo");
+		// El WebKit de Playwright no admite overscroll-behavior (Safari sí, desde la 16): ahí no se exige.
 		const medidas = await cuerpo.evaluate((e) => ({
 			desplaza: e.scrollHeight > e.clientHeight,
-			overscroll: getComputedStyle(e).overscrollBehaviorY,
+			overscroll: CSS.supports("overscroll-behavior", "contain") ? getComputedStyle(e).overscrollBehaviorY : "contain",
 		}));
 		expect(medidas).toEqual({ desplaza: true, overscroll: "contain" });
 		// El pie («Entendido») sigue a la vista sin desplazar.
@@ -220,9 +221,13 @@ test.describe("diálogos del catálogo", () => {
 		await abrirCatalogo(page);
 		const disparador = prueba(page, "abrir-hook");
 		const resultado = prueba(page, "resultado-hook");
-		await disparador.click();
+		// Con el teclado: Safari (y WebKit) no enfoca un botón al pulsarlo con el ratón, así que solo
+		// con el teclado hay un foco al que volver. El foco empieza en «Conservar»: Enter la elige.
+		await disparador.focus();
+		await page.keyboard.press("Enter");
 		const confirmacion = page.getByRole("alertdialog", { name: /Lácteos de la Huasteca/ });
-		await confirmacion.getByRole("button", { name: "Conservar" }).click();
+		await expect(confirmacion.getByRole("button", { name: "Conservar" })).toBeFocused();
+		await page.keyboard.press("Enter");
 		await expect(resultado).toHaveText("Respuesta: conservar.");
 		await expect(confirmacion).toBeHidden();
 		await expect(disparador).toBeFocused();

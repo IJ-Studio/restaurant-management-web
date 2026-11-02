@@ -6,6 +6,43 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### Cierre de la fase 3 (2026-11-02)
+
+Los 15 pasos de la fase están hechos, con 3.4 y 3.6–3.14 pendientes de la revisión del usuario en el catálogo. Por orden del usuario no se lanza Lighthouse: la medición móvil la hace él con el editor cerrado.
+
+| Comprobación | Resultado |
+|---|---|
+| Typecheck | 0 errores |
+| Lint | Archivos nuevos limpios. De los 7 archivos que existían y se modificaron, ninguno sube su cuenta (`TrackingTab` sigue con sus 2 errores previos), comparado archivo a archivo con `d6407c9`. Total global: 309 problemas (205 errores y 104 avisos), todos previos. |
+| Build de producción | Correcto en 79 s. Las 66 rutas no cambian, porque la fase no toca `app/` fuera de `app/(dev)/`. `/catalogo` no está en la tabla y da 404 en `next start`. |
+| `revisar-bundle` | 890 archivos sin rastro del catálogo |
+| Producción (`next start`), batería completa | Chromium 164/164, Firefox 162/162, WebKit 163/163: las mismas cifras que en el cierre de la fase 1. Las omitidas (103–105) son las pruebas del catálogo, que solo existe en `next dev`. |
+| Catálogo (`next dev`), 13 archivos de pruebas | Chromium 103/103, Firefox 103/103, WebKit 103/103 (tras el ajuste de abajo) |
+| `pnpm test:unidad` | 27/27 |
+| `pnpm revisar:invisibles` | 0 hallazgos en 323 archivos |
+| `pnpm audit` | 7 críticas / 66 altas / 53 moderadas / 10 bajas, igual que al cerrar la fase 1: zod y Radix no añaden avisos |
+
+**WebKit en el catálogo: 2 fallos de la prueba, no de los componentes.** Están corregidos en `dialogos.spec.ts`, que ahora pasa 13/13 en los tres motores.
+- **`overscroll-behavior`:** el WebKit de Playwright no lo admite (`getComputedStyle(...).overscrollBehaviorY` es `undefined`; Safari lo admite desde la 16). Ahora la prueba solo lo exige donde `CSS.supports` lo admite.
+- **Foco al cerrar `useConfirmacion`:**
+  - **Por qué falló:** Safari, y con él WebKit, no enfoca un botón al pulsarlo con el ratón, así que al abrir no hay un foco que recordar y, al cerrar, el foco queda en el documento.
+  - **Con el teclado (Tab y Enter):** el botón sí tiene el foco y vuelve a él. La prueba ahora abre y responde con el teclado, que es el caso que exige WCAG.
+  - **Con el ratón en Safari:** que el foco no vuelva es el comportamiento normal de esa plataforma. Queda anotado; no se fuerza.
+
+**Pendientes «no verificado» de la fase, revisados:**
+- **Firefox y WebKit de 3.3, 3.5 y 3.4–3.14:** hecho; ver la tabla.
+- **Lectores de pantalla reales (3.5, 3.12):** siguen sin verificar; quedan para la fase 7.
+- **Montaje en páginas reales** (cabecera fija, navegación entre páginas públicas, layout de paneles): llega en las fases 4 y 5.
+- **Textura de respaldo de las gráficas** con colores forzados: no implementada; fase 7 si la auditoría la pide.
+
+**Pendientes que pasan a otras fases:**
+- **2.14:** «Cerrar sesión» en `MenuCuenta` y `BarraSuperiorPanel`.
+- **4.3:** cabecera transparente sobre la portada.
+- **NP-37:** navegación del mesero.
+
+**PR.** El agente no hace push. El texto del PR está en `D:\dev-cache\rediseno\pr-fase-3.md`. La rama sale de `feature/rediseno-web-cimientos`: conviene fusionar antes el PR de la fase 1.
+
+---
 ### 3.14 · `Buscador` (2026-11-01)
 
 **Archivos**, sin dependencias nuevas:
