@@ -2,7 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useCerrarSesion } from "@/lib/sesion/cerrar-sesion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/index";
 import Navbar from "@/components/Navbar";
 import Dropdown, { DropdownMenuItem } from "@/components/dropdown";
 import { cn } from "@/lib/utils";
@@ -12,29 +14,12 @@ export default function ConditionalNavbar() {
   const pathname = usePathname();
   const cerrarSesion = useCerrarSesion();
 
-  const [user, setUser] = useState<any>(null);
+  // El usuario sale del store (PLAN 2.15): lo hidrata una sola lectura de /api/auth/me por carga.
+  const user = useSelector((estado: RootState) => estado.auth.user);
   const [cartCount, setCartCount] = useState<number>(3);
   // El tema vive en las preferencias de accesibilidad (PLAN 1.6).
   const { preferencias, actualizar } = usePreferencias();
   const isDark = preferencias.tema === "oscuro";
-
-  // CONSULTA DE SESIÓN CONTINUA AL CAMBIAR DE RUTA
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const res = await fetch("/api/auth/me", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-        } else {
-          setUser(null);
-        }
-      } catch {
-        setUser(null);
-      }
-    };
-    checkSession();
-  }, [pathname]);
 
   if (pathname?.startsWith("/dashboard/admin")) {
     return null;
@@ -66,7 +51,6 @@ export default function ConditionalNavbar() {
   // ─── LÓGICA INTELIGENTE DE CERRAR SESIÓN ────────────────────────
   // Cierre de sesión único (PLAN 2.14): limpia todo y lleva a /login.
   const handleLogout = async () => {
-    setUser(null);
     await cerrarSesion();
   };
 
@@ -120,7 +104,7 @@ export default function ConditionalNavbar() {
   const themeLabel = `Tema: ${isDark ? "Oscuro" : "Claro"}`;
   let dropdownItems: DropdownMenuItem[] = [];
 
-  const activeUser = user?.user || user;
+  const activeUser = user;
 
   if (activeUser) {
     // Siempre incluye Cerrar sesión en el dropdown (sin importar la ruta)

@@ -4,6 +4,7 @@ import { useReservationAvailability } from '@/hooks/useReservationAvailability';
 import { createReservation } from '@/features/reservations/services/reservations.service';
 import TableMap from './TableMap';
 import { cn } from '@/lib/utils';
+import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 
 interface Props {
   onSuccess?: () => void;
@@ -37,7 +38,7 @@ export default function ReservationForm({ onSuccess }: Props) {
   useEffect(() => {
     const checkUserSession = async () => {
       try {
-        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        const res = await pedirSesion();
         if (res.ok) {
           const data = await res.json();
 

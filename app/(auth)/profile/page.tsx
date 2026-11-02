@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, Mail, Phone, MapPin, Save, RefreshCw, ArrowLeft, ShieldCheck, Edit3, X, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 
 export default function PerfilUsuarioPage() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function PerfilUsuarioPage() {
     const cargarInformacionUsuario = async () => {
       try {
         // Consultamos la sesión local que ya contiene los datos del usuario
-        const sessionRes = await fetch("/api/auth/me", { cache: "no-store" });
+        const sessionRes = await pedirSesion();
         if (!sessionRes.ok) {
           router.push("/login?redirect=/profile");
           return;

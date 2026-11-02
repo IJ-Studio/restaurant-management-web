@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.14 · Cierre de sesión único** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **2.15 · Datos del usuario solo en memoria** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | 2.15 · Datos personales fuera de `localStorage`. |
+| Siguiente paso | 2.16 · Validación de variables públicas en el build. |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -465,7 +465,7 @@
   - **Aceptación:** tras cerrar sesión desde cada rol, `almacenamiento.spec.ts` confirma que no queda nada de la sesión y que el store está en su estado inicial; volver atrás no muestra datos privados.
   - **Commit:** `fix(sesion): cierre de sesión único que limpia todo el estado`
 
-- [ ] **2.15 · Datos personales fuera de `localStorage`**
+- [x] **2.15 · Datos personales fuera de `localStorage`** · *Hecho (2026-11-02): sin localStorage.user; usuario en el store; /api/auth/me una vez por carga (pedirSesion); el aviso de instalación ya no se guarda.*
   - **Archivos:** `app/(auth)/login/page.tsx`, `app/dashboard/{mesero,cocina,cajero}/page.tsx` y `providers/AuthProvider.tsx`. El usuario sale del store, hidratado con **una sola** llamada deduplicada a `/api/auth/me`, en lugar de 2 o 3 por carga; el aviso de instalación de la PWA ya no se persiste.
   - **Aceptación:**
     - `localStorage.user` ya no existe.

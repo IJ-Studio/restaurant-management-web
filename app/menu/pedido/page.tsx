@@ -8,6 +8,7 @@ import { ShoppingBag, XCircle, RefreshCw, Clock, Truck, Send } from "lucide-reac
 import SmartImage from "@/components/SmartImage";
 import Link from "next/link";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
+import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 
 function ResumenPedidoPageContent() {
   const router = useRouter();
@@ -122,7 +123,7 @@ useEffect(() => {
 
   const verificarUsuario = async () => {
     try {
-      const res = await fetch("/api/auth/me", { cache: "no-store" });
+      const res = await pedirSesion();
       if (res.ok) {
         const sessionData = await res.json();
         const activeUser = sessionData?.user || sessionData;

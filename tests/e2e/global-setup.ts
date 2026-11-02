@@ -25,7 +25,6 @@ export default async function globalSetup() {
 					origin: ORIGEN,
 					localStorage: [
 						{ name: "authToken", value: token },
-						{ name: "user", value: JSON.stringify(usuario) },
 					],
 				},
 			],

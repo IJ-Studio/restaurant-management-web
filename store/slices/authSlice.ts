@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { AuthState, SessionUser } from "@/types/auth";
+import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 
 const initialState: AuthState = {
   user:    null,
@@ -13,7 +14,7 @@ export const hydrateSession = createAsyncThunk(
   async (_, { dispatch }) => {
     dispatch(setLoading(true));
     try {
-      const res = await fetch("/api/auth/me", { cache: "no-store" });
+      const res = await pedirSesion();
       if (!res.ok) {
         throw new Error("No hay sesión activa");
       }

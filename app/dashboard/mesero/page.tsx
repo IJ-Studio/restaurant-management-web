@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useCerrarSesion } from '@/lib/sesion/cerrar-sesion';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store/index';
 import { 
   Table2, ClipboardList, LogOut, 
   Bell, CheckCircle2 
@@ -24,7 +26,8 @@ import { OrderModal } from '@/features/dashboard/mesero/components/OrderModal';
 
 export default function MeseroDashboard() {
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  // El usuario sale del store (PLAN 2.15), no de localStorage.
+  const user = useSelector((estado: RootState) => estado.auth.user);
   const [tables, setTables] = useState<DiningTable[]>([]);
   const [menu, setMenu] = useState<MenuCategory[]>([]);
   const [settings, setSettings] = useState(SettingsService.getSettings());
@@ -35,8 +38,6 @@ export default function MeseroDashboard() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem('user');
-    if (stored) setUser(JSON.parse(stored));
 
     // Initial Load from "La Base"
     setTables(TableService.getTables());

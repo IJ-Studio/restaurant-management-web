@@ -20,17 +20,15 @@ import { StatCard } from "@/features/dashboard/cajero/components/StatCard";
 import { TicketRow } from "@/features/dashboard/cajero/components/TicketRow";
 import { BillingModal } from "@/features/dashboard/cajero/components/BillingModal";
 import { PaymentDistribution } from "@/features/dashboard/cajero/components/PaymentDistribution";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/index";
 
 export default function CajeroDashboard() {
   const [tickets, setTickets] = useState<Ticket[]>(MOCK_TICKETS);
   const [ticketActivo, setTicketActivo] = useState<Ticket | null>(null);
   const [busqueda, setBusqueda] = useState("");
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-    if (stored) setUser(JSON.parse(stored));
-  }, []);
+  // El usuario sale del store (PLAN 2.15), no de localStorage.
+  const user = useSelector((estado: RootState) => estado.auth.user);
 
   // Action Handlers
   function cobrarTicket(ticket: Ticket) {

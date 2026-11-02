@@ -6,6 +6,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { Check, MapPin, FileText, CreditCard, ShoppingBag, Loader2 } from "lucide-react";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
+import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 
 // Se crea UNA sola vez fuera del componente — evita recrear el objeto
 // Stripe en cada render.
@@ -107,7 +108,7 @@ function CheckoutWizard() {
 
     const cargar = async () => {
       try {
-        const resUser = await fetch("/api/auth/me", { cache: "no-store" });
+        const resUser = await pedirSesion();
         if (!resUser.ok) {
           router.push(
             `/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`,

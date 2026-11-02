@@ -15,6 +15,7 @@ import { useDispatch } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setUser } from "@/store/slices/authSlice";
 import { destinoTrasLogin, esRutaInternaSegura, rutaConParametros } from "@/lib/seguridad/urls";
+import { olvidarSesion } from "@/lib/sesion/sesion-cliente";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -109,9 +110,8 @@ export default function LoginPage() {
         roleName: roleName as any,
       };
 
-      // Guardamos en LocalStorage por compatibilidad local
-      localStorage.setItem("user", JSON.stringify(sessionUser));
-      // Inyectamos inmediatamente al Store de Redux para que los hooks del producto reaccionen al instante
+      // Los datos del usuario solo viven en memoria, en el store (PLAN 2.15).
+      olvidarSesion();
       dispatch(setUser(sessionUser));
 
       setTimeout(() => {
