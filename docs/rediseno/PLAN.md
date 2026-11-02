@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 3 en curso** (2026-11-01). Fase 1 cerrada; sus ramas ya están en el remoto y el PR lo gestiona el usuario. Ya hechos de la fase 3: 3.0, 3.2 y parte de 3.4. |
 | Rama activa | `feature/rediseno-web-componentes` (sale de `feature/rediseno-web-cimientos`, `d6407c9`, porque el PR de la fase 1 aún no está fusionado) |
-| Último paso completado | **Medición de rendimiento móvil de la fase 1, verificada** (2026-11-01, hecha por el usuario): `/` 74 → 76, sin regresión; bisección descartada. El LCP de la portada (4339 → 5194 ms) se trata en el 4.3. Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **3.1 · Validación con zod** (2026-11-01): esquemas de campo y de formulario con las reglas de hoy, saneamiento y verificación de archivos por firma; 22/22 pruebas unitarias. Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. |
-| Siguiente paso | **3.1** (zod) → **3.5** (diálogos) → **3.3** (campos), y **detenerse tras el 3.3** para que el usuario lo revise en el catálogo. |
+| Siguiente paso | **3.5** (diálogos) → **3.3** (campos), y **detenerse tras el 3.3** para que el usuario lo revise en el catálogo. |
 | Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.1 → 3.5 → 3.3, y parar; **no adelantar más pasos sin avisar**.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -516,7 +516,7 @@ Cada paso crea el componente en `components/ui/` o `components/marca/` y lo mues
     - `/catalogo` da 404 en `next start` y funciona en `next dev`.
   - **Commit:** `test(ui): catálogo de componentes solo en desarrollo`
 
-- [ ] **3.1 · Validación con zod** — *D-05*
+- [x] **3.1 · Validación con zod** — *D-05* · *Hecho (2026-11-01). Las reglas sin zod quedan en `lib/validacion/reglas.ts`, que `utils/validators.tsx` reexporta; las pruebas unitarias van en `tests/unidad/` con `pnpm test:unidad`.*
   - **Archivos:** `lib/validacion/{campos,formularios,archivos,saneamiento}.ts`.
   - **Hacer:**
     - **Esquemas** de correo, teléfono (+52, 10 dígitos), nombre, contraseña, RFC, CP, reserva, perfil, checkout y CRUD del admin, con **las mismas reglas que hoy**, alineadas con el API en HU-01. No se relajan sin acuerdo con el API (NP-06).
@@ -635,7 +635,7 @@ Cada paso conserva textos, endpoints y URL; sustituye los componentes antiguos p
 - [ ] **4.17 · `/login`.** Errores genéricos, `autocomplete` (`email`, `current-password`) y bloqueo del envío doble.
   - **Commit:** `feat(auth): inicio de sesión`
 
-- [ ] **4.18 · `/register`.** Campo trampa, bloqueo del envío doble y errores accesibles.
+- [ ] **4.18 · `/register`.** Campo trampa, bloqueo del envío doble y errores accesibles. En `next dev` a 1440 px, el fondo decorativo es el LCP y `next/image` avisa de que falta `loading="eager"` (BITÁCORA 3.1): decidir su carga (prioridad o tamaño) como en el 4.3.
   - **Commit:** `feat(auth): registro`
 
 - [ ] **4.19 · `/reset` y `/frm_reset`.** Aviso traducido al español con una salida (contacto). La funcionalidad sigue en NP-16.
