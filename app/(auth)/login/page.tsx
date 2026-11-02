@@ -14,6 +14,7 @@ import { INITIAL_SETTINGS, type SystemSettings } from "@/features/shared/data/re
 import { useDispatch } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setUser } from "@/store/slices/authSlice";
+import { destinoTrasLogin, esRutaInternaSegura, rutaConParametros } from "@/lib/seguridad/urls";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -28,6 +29,12 @@ export default function LoginPage() {
   const callbackUrl = searchParams.get("callbackUrl");
   const pendingAction = searchParams.get("action");
   const pendingCantidad = searchParams.get("cantidad");
+  // Enlace al registro que conserva la ruta de origen solo si es interna y segura (PLAN 2.13).
+  const urlRegistro = rutaConParametros("/register", {
+    callbackUrl: esRutaInternaSegura(callbackUrl) ? callbackUrl : undefined,
+    action: pendingAction,
+    cantidad: pendingCantidad,
+  });
 
   const isEmailValid = emailRegex.test(email);
   const isFormReady = isEmailValid && password.length >= 8;
@@ -108,16 +115,8 @@ export default function LoginPage() {
       dispatch(setUser(sessionUser));
 
       setTimeout(() => {
-        if (roleName === "cliente") {
-          if (callbackUrl) {
-            const nextDestination = `${callbackUrl}?autoExecute=${pendingAction || ""}&qty=${pendingCantidad || 1}`;
-            router.push(nextDestination);
-          } else {
-            router.push("/menu");
-          }
-        } else {
-          router.push(`/dashboard/${roleName}`);
-        }
+        // Destino validado (PLAN 2.13): un callbackUrl que no sea una ruta interna segura lleva al inicio.
+        router.push(destinoTrasLogin({ rol: roleName, callbackUrl, accion: pendingAction, cantidad: pendingCantidad }));
         router.refresh();
       }, 100);
     },
@@ -203,7 +202,7 @@ export default function LoginPage() {
             <Button
               type="button"
               label="Registrarse"
-              url={`/register?callbackUrl=${encodeURIComponent(callbackUrl || "")}&action=${pendingAction || ""}&cantidad=${pendingCantidad || ""}`}
+              url={urlRegistro}
               className="link-secondary"
             />
           </p>

@@ -9,6 +9,8 @@ import {
 import BackButton from "@/components/BackButton";
 import { useSelector } from "react-redux";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
+import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
+import { cantidadSegura } from "@/lib/seguridad/urls";
 
 function ProductDetailPageContent() {
   const params = useParams();
@@ -22,6 +24,8 @@ function ProductDetailPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cantidad, setCantidad] = useState(1);
+  // Confirmación antes de crear un pedido desde un enlace con autoExecute (PLAN 2.13).
+  const { confirmar, dialogo } = useConfirmacion();
 
   // Estados para el Modal de Mesas desde la BD
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -140,12 +144,23 @@ function ProductDetailPageContent() {
       const currentUser = await resolveCurrentUser();
       if (!currentUser) return;
 
+      // Cantidad de la URL: entero entre 1 y 20 (PLAN 2.13).
+      const qty = cantidadSegura(qtyParam);
       if (qtyParam) {
-        setCantidad(Number(qtyParam));
+        setCantidad(qty);
       }
 
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
+
+      // Un enlace ya no crea el pedido por sí solo: hace falta el clic de confirmación.
+      const confirmado = await confirmar({
+        titulo: "¿Añadir este platillo a tu pedido?",
+        descripcion: `${qty} × ${platillo.nombre}${urlMesa ? `, mesa ${urlMesa}` : ""}.`,
+        textoConfirmar: "Añadir al pedido",
+        textoCancelar: "Ahora no",
+      });
+      if (!confirmado) return;
 
       handleAddToOrderMesa(currentUser, urlMesa || undefined);
     };
@@ -305,6 +320,7 @@ function ProductDetailPageContent() {
 
   return (
     <div className="bg-background min-h-screen pb-20 pt-32 relative">
+      {dialogo}
       <div className="container mx-auto px-4 max-w-6xl">
 
         <div className="mb-8">

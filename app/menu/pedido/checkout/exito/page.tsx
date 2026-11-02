@@ -25,7 +25,7 @@ function ExitoContent() {
     const buscarFactura = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiUrl}/facturas/${ordenId}`, { cache: "no-store" });
+        const res = await fetch(`${apiUrl}/facturas/${encodeURIComponent(ordenId)}`, { cache: "no-store" });
         if (res.ok) {
           setFactura(await res.json());
         }
@@ -41,7 +41,7 @@ function ExitoContent() {
 
   const descargarFactura = (tipo: "pdf" | "xml") => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    window.open(`${apiUrl}/facturas/${ordenId}/descargar?tipo=${tipo}`, "_blank");
+    window.open(`${apiUrl}/facturas/${encodeURIComponent(ordenId ?? "")}/descargar?tipo=${encodeURIComponent(tipo)}`, "_blank", "noopener,noreferrer");
   };
 
   return (
