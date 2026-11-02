@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.8 · Logger sin datos sensibles** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **2.9 · Secreto JWT: fallar cerrado** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | 2.9 · Secreto JWT: fallar cerrado. |
+| Siguiente paso | 2.10 · Protección de rutas en el proxy. |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -387,7 +387,7 @@
   - **Aceptación:** `rg "console\.log" app components features hooks lib` sin resultados; la página de un producto inexistente no registra el `notFound()` como error.
   - **Commit:** `fix(registro): logger sin datos sensibles y sin console.log`
 
-- [ ] **2.9 · Secreto JWT: fallar cerrado**
+- [x] **2.9 · Secreto JWT: fallar cerrado** · *Hecho (2026-11-02): sin secretos de respaldo (lib/seguridad/secreto-jwt.ts); sin JWT_SECRET, las rutas protegidas redirigen a /login. Rotar el secreto que estaba en el código: NP-02.*
   - **Archivos:** `proxy.ts`, `lib/session.ts`.
   - **Hacer:** eliminar los valores de respaldo. Si falta `JWT_SECRET`, el proxy trata cualquier ruta protegida como no autenticada y el servidor registra un error de configuración, sin el valor. La rotación del secreto es NP-02.
   - **Aceptación:** `rg "fallback_|JWT_SECRET \|\|" proxy.ts lib` sin resultados; sin la variable, `/dashboard` redirige a `/login`.
