@@ -51,6 +51,7 @@
 | NP-36 | Orígenes de imagen y de terceros por confirmar con datos reales | Seguridad / contenido | Media |
 | NP-37 | El mesero no tiene navegación de panel configurada | Producto / navegación | Baja |
 | NP-38 | Avisos críticos de dependencias transitivas de `firebase-admin` | Dependencias del servidor | Alta |
+| NP-39 | `revisar:invisibles` no detecta otros caracteres de control | Herramientas / idea | Baja |
 
 ---
 
@@ -506,3 +507,12 @@
 - **Solución sugerida:** actualizar `firebase-admin` a una versión que arrastre las dependencias corregidas, o fijarlas con `pnpm.overrides`, y comprobar el servidor (respaldos, almacenamiento) tras el cambio.
 - **Prioridad:** Alta.
 - **Criterio de aceptación:** `pnpm audit` sin avisos críticos.
+
+## NP-39 · `revisar:invisibles` no detecta otros caracteres de control
+
+- **Archivos y rutas afectados:** `scripts/revisar-caracteres-invisibles.mjs`.
+- **Problema:** el script busca controles bidireccionales, caracteres de ancho cero y el BOM fuera de sitio, pero no los demás caracteres de control C0 (U+0000 a U+001F, salvo tabulador y saltos de línea). En el paso 2.3, la herramienta de escritura convirtió un `\b` de una expresión regular en un carácter de retroceso literal (U+0008), y solo se descubrió porque falló una prueba.
+- **Por qué no se hace ahora:** ampliar el script no está en el PLAN (es una idea).
+- **Solución sugerida:** añadir al script los caracteres C0 y U+007F a U+009F, informando solo de archivo y línea, como hoy.
+- **Prioridad:** Baja.
+- **Criterio de aceptación:** un archivo con U+0008 hace fallar `pnpm revisar:invisibles`.

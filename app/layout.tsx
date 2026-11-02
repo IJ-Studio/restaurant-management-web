@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { AppProviders } from "@/components/providers/AppProviders";
 // 👇 1. Importa tu nuevo AuthProvider (Ajusta la ruta si lo guardaste en otra carpeta)
 import { AuthProvider } from "@/providers/AuthProvider";
@@ -49,11 +50,14 @@ export const viewport: Viewport = {
   themeColor: COLOR_FONDO_POR_TEMA.oscuro,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Nonce de la CSP (PLAN 2.3), que pone proxy.ts. Leer las cabeceras hace dinámicas todas las
+  // páginas: un nonce por petición no cabe en una página prerenderizada.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="es"
@@ -61,7 +65,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <ScriptPreferencias />
+        <ScriptPreferencias nonce={nonce} />
       </head>
       <body>
         <AppProviders>
