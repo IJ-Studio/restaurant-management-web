@@ -6,6 +6,41 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.6 · `Tabla` responsiva, `Paginacion` y `Pestanas` (2026-11-01)
+
+**Componentes** (`components/ui/`), sin dependencias nuevas:
+- `Tabla.tsx` (sin `"use client"`, para usarla desde páginas de servidor):
+  - Columnas con `celda`, `numerica`, `principal` y `ocultarEnTarjeta`; acciones por fila, fila seleccionada, estado cargando y huecos para el vacío y el error.
+  - Desde 768 px pinta la tabla; por debajo, tarjetas con contraetiqueta. Las dos vistas se pintan y el CSS muestra una.
+- `RegionDesplazable.tsx`: isla de cliente que mide si el contenido desborda (con `ResizeObserver`) y solo entonces entra en el tabulador, como el cuerpo de los diálogos.
+- `Paginacion.tsx`: enlaces con la página en la URL. Exporta `paginasVisibles` y `hrefConParametro`, que conserva los demás parámetros.
+- `Pestanas.tsx`: patrón de pestañas de WAI-ARIA, propio, sin Radix: no hace falta otra dependencia para el teclado y así la sincronización con la URL queda en el mismo sitio.
+  - La pestaña de la URL se lee con `useSyncExternalStore`: en la hidratación vale la primera y luego la real, sin desajuste. El lint rechazó la primera versión, que hacía `setState` dentro de un efecto.
+  - La URL se actualiza con `replaceState`, sin una entrada de historial por clic. La página puede pasar `valorInicial` desde sus `searchParams` para acertar en la primera pintura.
+- Catálogo: sección «Tabla, paginación y pestañas» (`DemosTabla.tsx`), con:
+  - una tabla de reservas con insignias, acciones y fila seleccionada;
+  - tablas cargando y vacía;
+  - paginación ligada a `?pagina=` y cuatro muestras fijas;
+  - pestañas ligadas a `?pestana=` y otras en columna estrecha.
+- DESIGN.md documenta los tres componentes.
+
+**Revisión visual** (390 px, texto al 125 %, tema claro):
+- Las tarjetas de la tabla habían perdido el estilo de contraetiqueta: un `div` envolvía cada par y `.contraetiqueta > dt` dejaba de aplicarse. Se cambió por un `Fragment`.
+- «Página 1 de 12» se partía en dos líneas. En móvil, «Anterior» y «Siguiente» muestran solo la flecha, con el nombre en `aria-label`, y la cifra va en una sola línea.
+
+**Verificación** (Chromium contra `next dev`):
+- `tabla.spec.ts` (nueva):
+  - semántica de la tabla a 1024 px (`caption`, `scope`, cifras al final y tabulares, fila seleccionada) y tarjetas con `dt`/`dd` a 390 px, sin desborde;
+  - la región se enfoca y se desplaza con la flecha a 800 px, y sale del tabulador a 1600 px;
+  - cargando con `aria-busy` y esqueleto oculto;
+  - paginación: URL, `aria-current`, la última sin «Siguiente» para lectores, la 1 sin parámetro y la vista móvil;
+  - pestañas: flechas, Inicio, Fin, ciclo, un solo tabulador, URL, nombre con contador y recarga;
+  - axe a 390 px con texto al 125 % en los dos temas.
+- `catalogo.spec.ts`, con la sección nueva: contraste AA de todas las muestras en los dos temas, axe y capturas.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+
+**No verificado:** Firefox, WebKit y lectores de pantalla reales.
+
 ### 3.4 · `Aviso` y `Notificacion` (2026-11-01)
 
 `Tarjeta` e `Insignia` ya estaban hechas desde la fase 1; este paso completa el 3.4.

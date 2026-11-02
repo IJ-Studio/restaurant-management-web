@@ -10,6 +10,7 @@ import type { Preferencias } from "@/lib/preferencias/preferencias";
 import { DemosAvisos } from "./DemosAvisos";
 import { DemosCampos } from "./DemosCampos";
 import { DemosDialogo } from "./DemosDialogo";
+import { DemosTabla } from "./DemosTabla";
 import { Muestra } from "./Muestra";
 
 const esperar = (ms: number) => new Promise((resolver) => window.setTimeout(resolver, ms));
@@ -239,6 +240,7 @@ export function Catalogo() {
 							["#avisos", "Avisos"],
 							["#campos", "Campos"],
 							["#dialogo", "Diálogos"],
+							["#tabla", "Tabla"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -475,6 +477,14 @@ export function Catalogo() {
 				reglas="Dialogo, PanelLateral y DialogoConfirmacion sobre Radix: trampa de foco, Esc para cerrar, el foco vuelve a quien los abrió y la página de detrás no se desplaza. Velo opaco sin desenfoque, superficie elevada, radio de 6 px y sombra flotante. La confirmación empieza en «Cancelar» y no se cierra con un clic fuera."
 			>
 				<DemosDialogo />
+			</Seccion>
+
+			<Seccion
+				id="tabla"
+				titulo="Tabla, paginación y pestañas"
+				reglas="Desde 768 px, tabla semántica con leyenda para lectores y desplazamiento horizontal enfocable si no cabe; por debajo, tarjetas con contraetiqueta. Cifras alineadas al final y tabulares. La página y la pestaña van en la URL. La pestaña seleccionada lleva el filete doble; la página actual, relleno café y filete de acento."
+			>
+				<DemosTabla />
 			</Seccion>
 		</main>
 	);
