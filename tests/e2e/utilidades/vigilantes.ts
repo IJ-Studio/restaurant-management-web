@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Page, Request } from "@playwright/test";
 import { EXCEPCIONES, cubre } from "../excepciones";
 
 export interface Hallazgo {
@@ -18,9 +18,18 @@ export function vigilar(page: Page): Hallazgo[] {
 		}
 	});
 	page.on("pageerror", (e) => hallazgos.push({ tipo: "pagina", detalle: e.message }));
-	page.on("requestfailed", (r) =>
-		hallazgos.push({ tipo: "red", detalle: `${r.url()} ${r.failure()?.errorText ?? ""}` }),
-	);
+	page.on("requestfailed", (r) => {
+		const error = r.failure()?.errorText ?? "";
+		// Peticiones internas del router de Next (cabecera rsc: precargas de <Link> y navegaciones)
+		// que el propio router cancela al quedar superadas: no son fallos. Con las páginas
+		// dinámicas (nonce de la CSP, PLAN 2.3) tardan más y se cancelan más a menudo.
+		// Si el proxy redirige una precarga, las peticiones de la cadena pierden la cabecera: se
+		// recorre hasta la original.
+		let delRouter = false;
+		for (let p: Request | null = r; p; p = p.redirectedFrom()) if (p.headers()["rsc"]) delRouter = true;
+		if (error.includes("ERR_ABORTED") && delRouter) return;
+		hallazgos.push({ tipo: "red", detalle: `${r.url()} ${error}` });
+	});
 	page.on("response", (r) => {
 		if (r.status() >= 400) hallazgos.push({ tipo: "http", detalle: `${r.status()} ${r.url()}` });
 	});

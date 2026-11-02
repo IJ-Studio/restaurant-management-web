@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { CABECERA_CSP_INFORME, construirCsp, crearNonce } from "./config/seguridad/csp";
 
 // ─── Rutas públicas (no requieren autenticación) ───────────────────────────
 const PUBLIC_ROUTES = ["/", "/login", "/register", "/reset", "/frm_reset"];
@@ -48,7 +49,27 @@ async function getSessionFromRequest(request: NextRequest): Promise<{
   }
 }
 
+/**
+ * CSP con nonce por petición (PLAN 2.3, D-02), de momento **solo en modo informe**: aplicarla es
+ * el paso 2.5, pendiente de la aprobación del usuario. El nonce viaja a la aplicación en la
+ * cabecera de la petición `x-nonce` (lo lee `app/layout.tsx`), y la política también se copia en
+ * la petición: Next la lee de ahí para poner el nonce a sus propios scripts.
+ */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const nonce = crearNonce();
+  const politica = construirCsp({ nonce, desarrollo: process.env.NODE_ENV === "development", aplicada: false });
+  const cabecerasPeticion = new Headers(request.headers);
+  cabecerasPeticion.set("x-nonce", nonce);
+  cabecerasPeticion.set(CABECERA_CSP_INFORME, politica);
+  const respuesta = await decidir(request, () =>
+    NextResponse.next({ request: { headers: cabecerasPeticion } }),
+  );
+  respuesta.headers.set(CABECERA_CSP_INFORME, politica);
+  return respuesta;
+}
+
+/** Control de acceso. `continuar` deja pasar la petición con las cabeceras del nonce. */
+async function decidir(request: NextRequest, continuar: () => NextResponse): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // Permitir rutas públicas directamente
@@ -57,7 +78,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       (route) => pathname === route || pathname.startsWith(route + "/"),
     )
   ) {
-    return NextResponse.next();
+    return continuar();
   }
 
   // Rutas especiales — siempre accesibles
@@ -67,12 +88,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith("/unauthorized") ||
     pathname.startsWith("/api/")
   ) {
-    return NextResponse.next();
+    return continuar();
   }
 
   // Verificar si es una ruta del dashboard
   if (!pathname.startsWith(DASHBOARD_PREFIX)) {
-    return NextResponse.next();
+    return continuar();
   }
 
   // ── Validar sesión ────────────────────────────────────────────────────────
@@ -96,14 +117,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // El path /dashboard base redirige según rol (manejado en app/dashboard/page.tsx)
   if (pathname === DASHBOARD_PREFIX || pathname === DASHBOARD_PREFIX + "/") {
-    return NextResponse.next();
+    return continuar();
   }
 
   if (!hasAccess) {
     return NextResponse.redirect(new URL("/forbidden", request.url));
   }
 
-  return NextResponse.next();
+  return continuar();
 }
 
 export const config = {

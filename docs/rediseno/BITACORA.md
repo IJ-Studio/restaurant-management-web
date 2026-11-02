@@ -6,6 +6,56 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.3 · CSP en modo informe, con nonce (2026-11-02) — D-02
+
+**Cambios:**
+- `config/seguridad/csp.ts` (nuevo): `crearNonce` (128 bits con Web Crypto, base64) y `construirCsp`, a partir de `hosts-permitidos.ts`.
+  - Es la política del PLAN, con dos decisiones conservadoras:
+    - `frame-src` incluye también `HOSTS_MARCO` (mapa de Google en `/about` y widget de subida de Cloudinary), que la fase 1 dejó listos para esta CSP;
+    - `upgrade-insecure-requests` solo se añade cuando la CSP se aplique (2.5): en modo informe el navegador lo ignora y avisa en la consola.
+  - En desarrollo se añade `'unsafe-eval'`, y nada más.
+- `proxy.ts`:
+  - genera el nonce en cada petición y pone `Content-Security-Policy-Report-Only` en todas las respuestas;
+  - pasa `x-nonce` y la política en la petición, que es de donde Next lee el nonce para sus scripts;
+  - el control de acceso pasa a una función `decidir`, sin cambiar su lógica: cada «seguir» continúa con esas cabeceras.
+- `app/layout.tsx`: lee el nonce con `headers()` y se lo da a `ScriptPreferencias`.
+
+**Consecuencia:** leer las cabeceras en el layout hace **dinámicas** todas las páginas. Un nonce por petición no cabe en una página prerenderizada; lo exige Next y es lo que prevé el PLAN.
+- La tabla de rutas mantiene las 66 rutas, pero las páginas pasan de ○ a ƒ.
+- Por eso Next ya responde `Cache-Control: no-store` en las páginas. Las pruebas de `no-store` de `/profile`, `/menu/pedido`, `/login` y `/register` pasan antes del 2.6; el `test.fail()` queda solo en `/dashboard`, cuya redirección del proxy aún no lo lleva.
+
+**Ajustes de las pruebas:**
+- **`csp.spec.ts`** (nueva):
+  - comprueba que el nonce cambia en cada petición, que la política tiene sus directivas clave sin `unsafe-eval` y que no hay cabecera `Content-Security-Policy` aplicada;
+  - comprueba que todo `<script>` del HTML del servidor lleva el nonce; los que Next añade después los cubre `'strict-dynamic'`;
+  - registra las violaciones de las 42 rutas (públicas sin sesión y de panel con la sesión simulada de su rol) en `test-results/csp/`.
+- **`vigilantes.ts`:** una petición abortada del router de Next (cabecera `rsc`, buscada en toda la cadena de redirecciones) ya no cuenta como fallo de red. Son precargas y navegaciones superadas que el propio router cancela; con páginas dinámicas aparecían unas 700 en el recorrido. Cualquier otra petición abortada sigue fallando.
+- **`excepciones.ts`:** tipo nuevo `csp` y 3 excepciones **temporales** con el paso que las retira (ver la lista). La lista crece de forma temporal; el 2.4 retira dos y el 2.7 la tercera.
+
+**Lista de violaciones** (Chromium contra `next start`, 42 rutas):
+
+| Directiva | Qué | Dónde | Se corrige en |
+|---|---|---|---|
+| `worker-src` | registro de `/sw.js` (`ServiceWorkerRegister`) | las 42 rutas | 2.7 (sin service worker) |
+| `script-src-elem` | script en línea con `dangerouslySetInnerHTML` | `/offline` | 2.4 |
+| `style-src-elem` | `<style>` en línea (animación del carrusel de reseñas) | `/about` (2) | 2.4 |
+| `style-src-elem` | `<style>` en línea (`@keyframes spin`) | `/dashboard/admin/settings` (2) | 2.4 |
+| `style-src-elem` | `<style jsx>` que styled-jsx inyecta en tiempo de ejecución | `/dashboard/cajero` | 2.4 |
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+- Build: correcto.
+- Chromium contra `next start`, batería completa: 170 pasan.
+  - Los 3 fallos de esa tanda eran de las pruebas: la regla de la prueba del nonce y peticiones RSC abortadas en `/forbidden`.
+  - Corregidos, `csp.spec.ts`, el recorrido, la línea base y las cabeceras pasan, y `/forbidden`, `/unauthorized` y `/maintenance` pasan 45/45 con tres repeticiones.
+- Sin procesos abiertos.
+
+**Incidencia:** la herramienta de escritura convirtió un `\b` de una expresión regular en un carácter de retroceso (0x08). Se detectó porque la prueba no encontraba `<script>`, y se corrigió creándolo con `chr(92)`. Una revisión de los 23 archivos tocados desde el cierre de la fase 3 no encontró otros caracteres de control. `pnpm revisar:invisibles` no mira esos caracteres: idea anotada en **NP-39**, fuera del PLAN.
+
+**No verificado:**
+- El checkout con Stripe en modo de prueba (sin claves ni backend).
+- Las violaciones en Firefox, WebKit y los dos móviles (se comprueban en el 2.4, que exige los cinco proyectos).
+
 ### 2.2 · Cabeceras base y opciones de producción (2026-11-02)
 
 **Cambios:**

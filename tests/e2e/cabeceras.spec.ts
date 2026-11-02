@@ -14,10 +14,11 @@ const RUTAS_PRIVADAS = [
 ];
 
 test.describe("rutas privadas sin caché", () => {
-	// Se resuelve en el paso 2.6.
-	test.fail(true, "paso 2.6: aún no se emite Cache-Control: no-store");
 	for (const ruta of RUTAS_PRIVADAS) {
 		test(`${ruta} responde con no-store`, async ({ request }) => {
+			// Desde el 2.3 las páginas son dinámicas y Next ya responde no-store; las redirecciones
+			// del proxy (/dashboard sin sesión) aún no lo llevan: se resuelve en el paso 2.6.
+			test.fail(ruta.startsWith("/dashboard"), "paso 2.6: la redirección del proxy aún no lleva no-store");
 			const r = await request.get(ruta, { maxRedirects: 0 });
 			expect(r.headers()["cache-control"] ?? "").toContain("no-store");
 		});
