@@ -6,6 +6,30 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.2 · Cabeceras base y opciones de producción (2026-11-02)
+
+**Cambios:**
+- `next.config.ts` (el PLAN dice `next.config.js`, que pasó a `.ts` en el 1.9): `poweredByHeader: false` y `productionBrowserSourceMaps: false` explícito.
+- Las cabeceras de todas las rutas salen de **`config/seguridad/cabeceras.ts`** (nuevo), con los valores exactos del PLAN:
+  - HSTS, `nosniff`, `X-Frame-Options: DENY` y `Referrer-Policy: strict-origin-when-cross-origin` (antes `origin-when-cross-origin`);
+  - `Permissions-Policy` con micrófono y geolocalización para el propio sitio y el pago para Stripe;
+  - `Cross-Origin-Opener-Policy: same-origin-allow-popups`, `Cross-Origin-Resource-Policy: same-site` y `Origin-Agent-Cluster: ?1`.
+- Sin `Cross-Origin-Embedder-Policy`, como dice el PLAN. La regla de `/sw.js` sigue hasta el 2.7.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+- Build: correcto en 62 s. **0 archivos `.map`** en `.next/static`.
+- `cabeceras.spec.ts`:
+  - la prueba de `X-Powered-By` pasa sin `test.fail()`;
+  - las 8 cabeceras con su valor exacto, y la ausencia de COEP, en `/`, `/menu`, `/login`, `/dashboard` (incluida su redirección del proxy) y `/icon.svg`;
+  - en Chromium, `document.featurePolicy` permite la geolocalización y el micrófono al sitio y bloquea la cámara.
+- Chromium contra `next start`, batería completa: **170/170**, las 164 anteriores más las 6 nuevas.
+- Sin procesos abiertos.
+
+**No verificado:** la geolocalización real (`DistanceToRestaurant`) y la búsqueda por voz (`VoiceSearch`) con un dispositivo. Se comprueba que la política las permite, no que funcionen con permisos reales. Firefox y WebKit, en el cierre.
+
+**Fuera del PLAN:** Next 16.4 crea un `AGENTS.md` en la raíz cada vez que arranca `next dev`. No se versiona ni se borra: se excluye solo en local (`.git/info/exclude`) para mantener limpio el árbol. Si se quiere versionar, lo decide el usuario.
+
 ### 2.1 · Actualizar Next (2026-11-02) — D-01
 
 El usuario pidió ejecutar la fase 2 sin supervisión, del 2.1 al 2.18, sin aplicar la CSP (2.5) y cerrando la fase al final. Rama `feature/rediseno-web-seguridad`, creada desde `feature/rediseno-web-componentes` (`2098fa0`), que ya contiene las fases 1 y 3.
