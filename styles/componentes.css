@@ -28,33 +28,58 @@
     border-block: var(--grosor-filete) solid var(--color-acento);
   }
 
+  /* Rótulo a su ancho y valor en el resto, alineado al final: un valor largo pasa de línea sin
+     estrechar el rótulo. Rótulo y valor ocupan la fila entera y centran su contenido, así que
+     sus filetes quedan siempre a la misma altura. */
   .contraetiqueta {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     margin: 0;
   }
   .contraetiqueta > dt,
   .contraetiqueta > dd {
+    display: flex;
+    align-items: center;
     margin: 0;
     padding-block: var(--espacio-sm);
     border-block-end: var(--grosor-filete) solid var(--color-borde-sutil);
   }
   .contraetiqueta > dt {
+    padding-inline-end: var(--espacio-md);
     font-size: var(--texto-etiqueta);
     font-weight: 600;
     line-height: 1.2;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--color-texto-secundario);
-    align-self: center;
   }
   .contraetiqueta > dd {
+    justify-content: flex-end;
     font-size: var(--texto-cifra-tabla);
     font-weight: 500;
     line-height: 1.4;
     font-variant-numeric: tabular-nums;
     text-align: end;
     color: var(--color-texto-principal);
+  }
+  .contraetiqueta > dd[data-tipo="texto"] {
+    font-weight: 400;
+    font-variant-numeric: normal;
+  }
+  .contraetiqueta[data-sin-filete-final] > :nth-last-child(-n + 2) {
+    border-block-end: 0;
+  }
+  /* Dos pares por fila desde 768 px; el margen corta el filete entre las dos columnas. */
+  @media (min-width: 48rem) {
+    .contraetiqueta[data-columnas="2"] {
+      grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+    .contraetiqueta[data-columnas="2"] > dd:nth-of-type(odd) {
+      margin-inline-end: var(--espacio-xl);
+    }
+    .contraetiqueta[data-columnas="2"][data-sin-filete-final] > :nth-last-child(-n + 4) {
+      border-block-end: 0;
+    }
   }
 
   .texto-cifra-destacada {

@@ -12,6 +12,7 @@ import { DemosCampos } from "./DemosCampos";
 import { DemosDialogo } from "./DemosDialogo";
 import { DemosEstados } from "./DemosEstados";
 import { DemosGraficas } from "./DemosGraficas";
+import { DemosMarca } from "./DemosMarca";
 import { DemosTabla } from "./DemosTabla";
 import { Muestra } from "./Muestra";
 
@@ -245,6 +246,7 @@ export function Catalogo() {
 							["#tabla", "Tabla"],
 							["#estados", "Estados"],
 							["#graficas", "Gráficas"],
+							["#marca", "Marca"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -505,6 +507,14 @@ export function Catalogo() {
 				reglas="El indicador da la cifra y su comparación con icono y texto: el color dice si es buena o mala noticia, nunca solo. Si falla, «No se pudo cargar», nunca un cero. Las gráficas son SVG propias con la paleta validada en orden fijo, marcas finas, cuadrícula recesiva, leyenda a partir de dos series, tooltip con puntero y teclado, y siempre una vista de tabla."
 			>
 				<DemosGraficas />
+			</Seccion>
+
+			<Seccion
+				id="marca"
+				titulo="Piezas de marca"
+				reglas="La etiqueta de sección abre cada sección como la etiqueta de un vino: lote, rótulo en versalitas, filete doble de acento y título serif. La contraetiqueta da los datos en pares rótulo/valor con filetes finos, a una o dos columnas. El sello aparece una vez por página, como firma."
+			>
+				<DemosMarca />
 			</Seccion>
 		</main>
 	);
