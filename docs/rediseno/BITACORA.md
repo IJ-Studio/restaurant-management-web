@@ -6,6 +6,25 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### Decisiones de la revisión de 3.1, 3.5 y 3.3 (2026-11-01)
+
+El usuario aprueba los tres pasos y decide:
+
+1. **Validación** (`lib/validacion/`):
+   - El **correo fiscal del checkout** (`esquemaDatosFiscales.email`) sigue siendo opcional; si se escribe, se comprueba con `isValidEmail`, la regla del registro (formato, 100 caracteres y 64 antes de la @). Nuevo `correoOpcionalValidado` en `campos.ts`.
+   - El **RFC de la factura del admin** (`esquemaFactura.clientRFC`) sigue siendo obligatorio, en mayúsculas y de hasta 13; una vez escrito, se comprueba con `RFC_REGEX` («El RFC no tiene un formato válido.»).
+   - El **teléfono de la reserva** se queda como está. Anotado en NP-06: la validación real del formato es del servidor.
+2. **Envío protegido** (`useEnvioFormulario`):
+   - El campo trampa es la defensa principal.
+   - Tiempo mínimo: **1 s** por defecto, para registro y reserva, y **0** en el inicio de sesión. Anotado en los pasos 4.16, 4.17 y 4.18 del PLAN.
+   - El rechazo muestra «No se pudo enviar el formulario. Inténtalo de nuevo.»: invita a reintentar sin decir el motivo. Sustituye a «Revisa los datos…», que mandaba revisar unos datos correctos. Se exporta como `MENSAJE_ENVIO_RECHAZADO`.
+3. **Títulos de diálogo** en DM Sans 600: sin cambios.
+
+**Verificación:**
+- `pnpm test:unidad`: 22/22, con casos nuevos: correo fiscal vacío, con espacios, sin dominio completo y con más de 64 antes de la @; RFC vacío, corto y de persona moral en minúsculas.
+- `campos.spec.ts`: 11/11 en Chromium contra `next dev`. La prueba del envío demasiado rápido ahora fija `Date.now()` con `page.clock.setFixedTime` (los temporizadores siguen). Con 1 s ya no se podía garantizar enviar antes de tiempo, y la prueba anterior se saltaba esa parte si el relleno tardaba.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio. Sin procesos abiertos.
+
 ### Escape de la unión de ancho cero de un emoji (2026-11-01)
 
 Corrige las 2 líneas que encontró `pnpm revisar:invisibles`. Las dos tenían el emoji del cocinero, una secuencia de hombre, U+200D (unión de ancho cero) y sartén, con el U+200D escrito literal desde `a032603`:

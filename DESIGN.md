@@ -489,7 +489,7 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   - `Campo` con `codigo` (RFC, CP) o de tipo correo, teléfono, URL, número o contraseña: sin corrector ni mayúsculas automáticas. `revelable` añade a las contraseñas el botón «Mostrar contraseña» con `aria-pressed`.
   - `Casilla` e `Interruptor` son `<input type="checkbox">` nativos (el interruptor con `role="switch"`), con toda la etiqueta como área táctil de 44 px; el dibujo se alinea con el borde de los demás campos. Formas rectas con `--radio-control`, también en el carril y el pomo del interruptor. La marca de la casilla se dibuja sobre su propio relleno de acento.
   - `CampoTrampa`: fuera de la vista (no `display: none`), `aria-hidden`, `tabIndex={-1}` y `autoComplete="off"`.
-  - `useEnvioFormulario` (en `hooks/`): bloquea el envío doble, valida con zod, enfoca el primer inválido, anuncia «Revisa N campos: …» en `AnuncioFormulario` (`aria-live`), borra el error al corregir y no envía con el campo trampa relleno ni antes del tiempo mínimo (3 s por defecto; 0 en el inicio de sesión, por el autorrelleno).
+  - `useEnvioFormulario` (en `hooks/`): bloquea el envío doble, valida con zod, enfoca el primer inválido, anuncia «Revisa N campos: …» en `AnuncioFormulario` (`aria-live`), borra el error al corregir y no envía con el campo trampa relleno ni antes del tiempo mínimo (1 s por defecto, para registro y reserva; 0 en el inicio de sesión, por el autorrelleno). El campo trampa es la defensa principal, y el mensaje de rechazo es neutro e invita a reintentar («No se pudo enviar el formulario. Inténtalo de nuevo.»).
 
 ### Cards / Containers — `Tarjeta`, `Indicador`
 

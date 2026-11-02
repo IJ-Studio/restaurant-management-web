@@ -247,6 +247,14 @@ export const contrasenaNueva = z
 	.refine((v) => !tieneSecuenciaPredecible(v), { error: MENSAJES.contrasenaSecuencia });
 
 /** Contraseña del inicio de sesión: hoy solo se exige un mínimo de 8 caracteres. */
+/**
+ * Correo opcional con la regla del registro (`isValidEmail`): vacío se admite y, si se escribe,
+ * se comprueba el formato y los tamaños que acepta el API. Lo usa el correo fiscal del checkout.
+ */
+export const correoOpcionalValidado = textoCrudo(MENSAJES.correo)
+	.transform(sanearLinea)
+	.pipe(z.string().refine((v) => v === "" || isValidEmail(v), { error: MENSAJES.correo }));
+
 export const contrasenaAcceso = z
 	.string({ error: MENSAJES.accesoIncorrecto })
 	.min(8, { error: MENSAJES.accesoIncorrecto })
