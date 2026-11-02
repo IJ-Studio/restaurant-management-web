@@ -6,6 +6,27 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### Interrupción: falta de memoria durante la verificación del 2.4 (2026-11-02)
+
+**Qué pasó.** Con el código del 2.4 terminado, se lanzó en segundo plano el build y `csp.spec.ts` en los cinco proyectos. Claude Code paró la tarea porque el equipo se quedó sin memoria. No quedó salida: se cortó durante el build, antes de las pruebas. No quedaron procesos abiertos (0 de `node` y de navegadores; el 3100, libre).
+
+**Por qué se detiene la fase.** El aviso del sistema indica no relanzar la tarea sin que lo pida el usuario. El 2.4 y todos los pasos siguientes necesitan build y pruebas para verificarse, así que el bloqueo afecta a todos. Según la orden del usuario, en ese caso se detiene.
+
+**Estado para retomar:**
+- **Commits de la fase:** 2.1 (`7577c79`), 2.2 (`eaccb56`) y 2.3 (`4a89df9`), verificados.
+- **2.4, hecho y sin verificar, sin commit en el árbol de trabajo:**
+  - `app/offline/page.tsx` usa el nuevo `app/offline/RecargarAlConectar.tsx` en lugar del script en línea;
+  - sin `<style>` en línea en `about/page.tsx`, `admin/settings/page.tsx`, `admin/db-performance/page.tsx`, `ExportModal.tsx`, `Importpreviewmodal.tsx` y `PaymentDistribution.tsx` (`<style jsx>`);
+  - `marquee`, `.animate-marquee-elegant` y `slideRight` pasan a `styles/globals.css` (`spin` ya lo define Tailwind igual);
+  - `csp.spec.ts` falla con violaciones no justificadas (solo se tolera la de `/sw.js` hasta el 2.7) y comprueba la animación de `/about`;
+  - `excepciones.ts` ya no tiene las dos excepciones de lo que iba en línea.
+  - Comprobado antes de la interrupción: typecheck 0 errores y lint sin problemas nuevos en ningún archivo tocado.
+- **Para retomar:**
+  - `build`, `csp.spec.ts` en los cinco proyectos y el recorrido y la línea base en Chromium;
+  - si pasan, commit del 2.4 con su entrada;
+  - después, 2.6 (el 2.5 queda pendiente de aprobación).
+  - Conviene cerrar otras aplicaciones antes: el equipo tiene 5,8 GB de RAM.
+- **2.5:** no se ejecuta por orden del usuario, y queda pendiente de su aprobación. La lista de violaciones está en la entrada del 2.3.
 ### 2.3 · CSP en modo informe, con nonce (2026-11-02) — D-02
 
 **Cambios:**
