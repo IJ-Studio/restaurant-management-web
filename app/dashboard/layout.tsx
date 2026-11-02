@@ -1,53 +1,19 @@
-import { getSession } from "@/lib/session";
+import { verificarSesion } from "@/lib/sesion/dal";
 import AdminSidebar from "@/components/admin/AdminSidebar"; // ← importa tu componente
 import { redirect } from "next/navigation";
 
 // Datos privados: siempre se renderiza por petición, nunca se guarda (PLAN 2.6).
 export const dynamic = "force-dynamic";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
-
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  if (!session || !session.id || !session.roleId) redirect("/login");
-
-  // Mapeo de rol (igual que antes)
-  const roleMap: Record<number, string> = {
-    1: "admin",
-    2: "cajero",
-    3: "mesero",
-    4: "cocina",
-    5: "cliente",
-  };
-  const roleName = roleMap[session.roleId] || "cliente";
-
-  // Obtener usuario con nombre y apellido
-  const fullUser = {
-    id: session.id,
-    email: session.email,
-    name: "",
-    lastname: "",
-    roleName: roleName as "admin" | "cajero" | "mesero" | "cocina" | "cliente",
-  };
-
-  try {
-    const res = await fetch(`${BACKEND_URL}/users/${session.id}`, { cache: "no-store",
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    if (res.ok) {
-      const userData = await res.json();
-      fullUser.name = userData.name || "";
-      fullUser.lastname = userData.lastname || "";
-    }
-  } catch (error) {
-    console.error("Error cargando perfil:", error);
-  }
+  // DTO mínimo de la DAL (PLAN 2.11): la barra lateral solo recibe lo que pinta.
+  const sesion = await verificarSesion();
+  if (!sesion) redirect("/login");
 
   return (
     <div className="flex min-h-screen bg-bg">
       {/* Sidebar fijo con ancho dinámico */}
-      <AdminSidebar user={fullUser} />
+      <AdminSidebar user={{ name: sesion.nombre, lastname: sesion.apellidos }} />
 
       {/* Contenido: margen izquierdo según variable CSS (respaldo 260px) */}
       <div className="flex-1 min-w-0" style={{ marginLeft: 'var(--sidebar-width, 260px)' }}>

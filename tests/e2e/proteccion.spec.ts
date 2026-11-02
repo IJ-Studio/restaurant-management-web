@@ -114,3 +114,16 @@ for (const sujeto of ["anónimo", "cliente", "cajero", "mesero", "cocina", "admi
 		expect(fallos).toEqual([]);
 	});
 }
+
+// /dashboard reparte por rol con el DTO de la DAL (2.11). El redirect() ocurre durante el render
+// (el layout ya se está enviando), así que Next redirige en el navegador: se comprueba con uno.
+const DESTINO_POR_ROL = { admin: "/dashboard/admin", cajero: "/dashboard/cajero", mesero: "/dashboard/mesero", cocina: "/dashboard/cocina", cliente: "/dashboard/cliente" } as const;
+for (const [rol, destino] of Object.entries(DESTINO_POR_ROL) as [Rol, string][]) {
+	test(`/dashboard lleva a ${rol} a ${destino}`, async ({ browser }) => {
+		const contexto = await browser.newContext({ storageState: archivoSesion(rol) });
+		const page = await contexto.newPage();
+		await page.goto("/dashboard");
+		await expect(page).toHaveURL(new RegExp(`${destino}$`));
+		await contexto.close();
+	});
+}
