@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { CABECERA_CSP_INFORME, construirCsp, crearNonce } from "./config/seguridad/csp";
+import { claveJwt } from "./lib/seguridad/secreto-jwt";
 
 // ─── Rutas públicas (no requieren autenticación) ───────────────────────────
 const PUBLIC_ROUTES = ["/", "/login", "/register", "/reset", "/frm_reset"];
@@ -18,11 +19,6 @@ const ROLE_ROUTES: Record<number, string[]> = {
 // ─── Rutas del dashboard que siempre requieren auth ───────────────────────
 const DASHBOARD_PREFIX = "/dashboard";
 
-function getSecretKey(): Uint8Array {
-  const secret = process.env.JWT_SECRET || "dc42c5800a5e9ac2570f0ffdd3ead5af403fc4dcd3b22137cbc8cbf4067a9215";
-  return new TextEncoder().encode(secret);
-}
-
 async function getSessionFromRequest(request: NextRequest): Promise<{
   id: string;
   email: string;
@@ -35,9 +31,12 @@ async function getSessionFromRequest(request: NextRequest): Promise<{
     request.headers.get("authorization")?.replace("Bearer ", "");
 
   if (!token) return null;
+  // Sin JWT_SECRET no hay sesión válida (PLAN 2.9).
+  const clave = claveJwt();
+  if (!clave) return null;
 
   try {
-    const { payload } = await jwtVerify(token, getSecretKey());
+    const { payload } = await jwtVerify(token, clave);
     return payload as {
       id: string;
       email: string;

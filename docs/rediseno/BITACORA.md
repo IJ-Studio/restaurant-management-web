@@ -6,6 +6,29 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.9 · Secreto JWT: fallar cerrado (2026-11-02)
+
+El usuario pidió, a mitad del 2.8, seguir en automático y avanzar todo lo posible del PLAN sin esperar validaciones, con las mismas reglas.
+
+**Cambios:**
+- **`lib/seguridad/secreto-jwt.ts`** (nuevo): `claveJwt()` devuelve la clave a partir de `JWT_SECRET`, o `null` si falta. Registra una sola vez «[configuración] Falta JWT_SECRET…», sin el valor.
+- **`proxy.ts` y `lib/session.ts`:** usan `claveJwt()`; sin clave, no hay sesión válida. Se eliminan los valores de respaldo:
+  - en `proxy.ts`, un secreto de 64 caracteres hexadecimales incrustado en el código;
+  - en `lib/session.ts`, `"fallback_secret_key_for_development"`.
+
+**Aviso para el usuario:** el secreto que estaba incrustado en `proxy.ts` sigue en el historial de git. Si alguna vez coincidió con el `JWT_SECRET` real, hay que **rotarlo** (NP-02).
+
+**Verificación:**
+- `rg "fallback_|JWT_SECRET \|\|" proxy.ts lib`: sin resultados.
+- Typecheck: 0 errores.
+- Lint: los archivos tocados no cambian su cuenta (`lib/session.ts` conserva 1 previo) y el nuevo está limpio.
+- Build: correcto.
+- **Sin `JWT_SECRET`** (servidor arrancado sin la variable), con un token de admin válido firmado con el secreto de pruebas: `/dashboard/admin` responde `307` hacia `/login?callbackUrl=%2Fdashboard%2Fadmin`. El error de configuración aparece una vez en el registro y el token no aparece.
+- **Con el secreto**, Chromium contra `next start`:
+  - batería salvo el recorrido público: 86/86, incluida la línea base con las 42 rutas de panel y su sesión;
+  - recorrido público: 95/95.
+- Sin procesos abiertos.
+
 ### 2.8 · Logger del cliente sin datos sensibles (2026-11-02)
 
 **Cambios:**
