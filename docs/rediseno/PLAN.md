@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.11 · DAL de sesión** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **2.12 · Sin dangerouslySetInnerHTML** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | 2.12 · Eliminar todo dangerouslySetInnerHTML. |
+| Siguiente paso | 2.13 · URLs seguras. |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -424,7 +424,7 @@
   - **Aceptación:** el usuario del layout procede del DTO; `rg "server-only" lib/sesion` encuentra el import; ningún componente cliente recibe campos que no use.
   - **Commit:** `feat(seguridad): DAL de sesión con server-only y DTO mínimo`
 
-- [ ] **2.12 · Eliminar todo `dangerouslySetInnerHTML`** — *condición de D-03*
+- [x] **2.12 · Eliminar todo `dangerouslySetInnerHTML`** — *condición de D-03* · *Hecho (2026-11-02): lib/texto/texto-enriquecido.tsx con html-react-parser y lista blanca; Hero y AboutSection sin innerHTML; resaltado igual. AboutSection no se monta (comentada en la portada).*
   - **Archivos:** `lib/texto/texto-enriquecido.tsx`, `components/landing/Hero.tsx`, `components/landing/AboutSection.tsx`, `app/offline/page.tsx` (ya resuelto en 2.4), `package.json` (`html-react-parser`).
   - **Hacer:**
     - Los textos que llegan del API con marcado (`heroTitle`, `about.description`) se convierten en **elementos de React**, nunca en `innerHTML`, con la librería **`html-react-parser`**.

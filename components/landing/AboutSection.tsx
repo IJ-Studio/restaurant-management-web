@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { textoEnriquecido } from "@/lib/texto/texto-enriquecido";
 
 interface AboutData {
   description: string;
@@ -60,10 +61,10 @@ export default function AboutSection({
             Cocina Nacional e Internacional{" "}
             <span className="text-[var(--color-brand)]">en Huejutla</span>
           </h2>
-          <div
-            className="text-[var(--color-text-sec)] leading-relaxed space-y-4"
-            dangerouslySetInnerHTML={{ __html: data.description }}
-          />
+          {/* Marcado del API convertido en React con lista blanca, sin innerHTML (PLAN 2.12). */}
+          <div className="text-[var(--color-text-sec)] leading-relaxed space-y-4">
+            {textoEnriquecido(data.description)}
+          </div>
           <div className="space-y-3 mt-8">
             <div className="flex items-start gap-3 bg-[var(--color-surface)] p-4 rounded-2xl border border-[var(--color-border)]">
               <span className="text-xl">📍</span>

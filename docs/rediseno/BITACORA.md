@@ -6,6 +6,38 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.12 · Eliminar todo `dangerouslySetInnerHTML` (2026-11-02) — condición de D-03
+
+**Dependencia:** `html-react-parser@6.1.9` (2026-10-20), la que nombra el PLAN. `pnpm` la fija en versión exacta.
+
+**Cambios:**
+- **`lib/texto/texto-enriquecido.tsx`** (nuevo): `textoEnriquecido(html)` convierte el marcado del API en elementos de React con una lista blanca.
+  - Se conservan `<br>`, `<em>` y `<strong>`, y `<span>` pasa a `<em class="resaltado">`.
+  - Cualquier otra etiqueta se reduce a su texto, y `script`, `style`, `iframe`, `svg` y similares se descartan enteras.
+  - Se descartan todos los atributos, y el texto lo escapa React.
+- **`components/landing/Hero.tsx`** (título) y **`AboutSection.tsx`** (descripción): usan `textoEnriquecido` en lugar de `dangerouslySetInnerHTML`.
+- **`styles/globals.css`:** `.resaltado` reproduce el aspecto del `<span>` por defecto del título (degradado de acento a amarillo recortado al texto, mayúsculas) y quita la cursiva de `<em>`.
+  - Se escribió primero con `@apply` de las mismas utilidades, pero esa regla no llegaba al CSS compilado, y el build no daba ningún aviso. Se detectó midiendo el estilo calculado y quedó en CSS explícito con las mismas variables.
+- `/offline` ya se resolvió en el 2.4. Dos comentarios que nombraban la API (`ScriptPreferencias`, `RecargarAlConectar`) se reescriben, para que la búsqueda de la aceptación quede limpia.
+- **`tests/unidad/react-dom-server.d.ts`:** tipo mínimo de `renderToStaticMarkup` para la prueba unitaria. El proyecto no tiene `@types/react-dom`, y añadirlo sería una dependencia fuera del PLAN.
+
+**Verificación:**
+- `rg dangerouslySetInnerHTML app components features`: sin resultados.
+- `pnpm test:unidad`: 32/32. `texto-enriquecido.spec.tsx` (nueva) comprueba:
+  - que el título por defecto da `SABORES QUE <br/> <em class="resaltado">Trascienden</em>`;
+  - que las cargas `<img onerror>`, `<script>`, `<a href="javascript:">`, `<span onclick style>`, `<svg onload>`, `<em onmouseover>` e `<iframe>`/`<style>` quedan como texto o se descartan, sin atributos;
+  - que el texto plano se escapa.
+- `texto-enriquecido.spec.ts` (nueva, navegador): la portada con un título malicioso en el API simulado muestra «Cocina honesta» con el resaltado, sin `img`, `script` ni manejadores, con **0 diálogos y 0 errores**.
+- El resaltado se ve igual: estilo calculado (color transparente, `background-clip: text`, degradado, mayúsculas, sin cursiva) y captura del título revisada.
+- Typecheck: 0 errores. Lint: los archivos tocados no cambian su cuenta y los nuevos están limpios.
+- Build: correcto.
+- Chromium: texto enriquecido, recorrido público y CSP, **101/101**.
+- Sin procesos abiertos.
+
+**No verificado:**
+- **La descripción de «La casa» en el navegador:** `AboutSection` está **comentada en `app/page.tsx`** y no se monta en ninguna parte. Su conversión la cubre la prueba unitaria.
+- **Con datos reales:** si el API enviara párrafos `<p>` en la descripción, la lista blanca del PLAN los reduce a texto y se unirían en uno.
+
 ### 2.11 · Capa de acceso a datos de sesión (DAL) (2026-11-02)
 
 **Cambios:**

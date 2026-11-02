@@ -339,3 +339,17 @@
 .plato-boceto .figura-rellena { fill: var(--plato-relleno); stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
 .plato-boceto .trazo-fondo { fill: none; stroke: var(--plato-relleno); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
 .plato-boceto .punto { fill: currentColor; opacity: 0.9; }
+
+/* Resaltado del título de la portada: el <span> del marcado del API pasa a <em class="resaltado">
+   (PLAN 2.12). Mismo aspecto que las utilidades del <span> por defecto (text-transparent,
+   bg-clip-text, bg-gradient-to-r from-brand via-brand to-yellow-600, uppercase), sin la cursiva de
+   <em>. En CSS explícito: con @apply la regla no llegaba al CSS compilado.
+   Se rehace con la portada en el 4.3. */
+.resaltado {
+  font-style: normal;
+  text-transform: uppercase;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  background-image: linear-gradient(to right in oklab, var(--color-brand) 0%, var(--color-brand) 50%, var(--color-yellow-600) 100%);
+}

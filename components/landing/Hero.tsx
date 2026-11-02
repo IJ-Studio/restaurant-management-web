@@ -7,6 +7,7 @@ import { useTheme } from "@/hooks/useTheme";
 // Importamos el servicio que ya lee la configuración (horarios) del backend
 import { SettingsService } from "@/features/shared/services/dataService";
 import { cn } from "@/lib/utils";
+import { textoEnriquecido } from "@/lib/texto/texto-enriquecido";
 
 interface HeroProps {
   title: string;
@@ -91,10 +92,10 @@ export default function Hero({
             </div>
           )}
 
-          <h1
-            className="text-[clamp(3rem,6vw,6rem)] font-black mb-6 leading-[0.9] tracking-tighter"
-            dangerouslySetInnerHTML={{ __html: title }}
-          />
+          {/* Marcado del API convertido en React con lista blanca, sin innerHTML (PLAN 2.12). */}
+          <h1 className="text-[clamp(3rem,6vw,6rem)] font-black mb-6 leading-[0.9] tracking-tighter">
+            {textoEnriquecido(title)}
+          </h1>
           <p className="text-[var(--color-text-sec)] text-[clamp(1rem,1.5vw,1.25rem)] mb-10 max-w-lg leading-relaxed">
             {subtitle}
           </p>
