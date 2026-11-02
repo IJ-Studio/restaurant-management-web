@@ -292,6 +292,25 @@
     animation: notificacion-sale var(--duracion-breve) var(--ease-estandar) forwards;
   }
 
+  /* Cabecera del sitio (DESIGN.md § Navigation): fija arriba, con la zona segura superior; al
+     desplazar la página gana la sombra. `data-fija="no"` la deja en el flujo (catálogo). */
+  .cabecera-sitio {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 100;
+    padding-block-start: env(safe-area-inset-top, 0px);
+    background-color: var(--color-fondo);
+    color: var(--color-texto-principal);
+    transition: box-shadow var(--duracion-breve) var(--ease-estandar);
+  }
+  .cabecera-sitio[data-desplazada] {
+    box-shadow: var(--sombra-cabecera);
+  }
+  .cabecera-sitio[data-fija="no"] {
+    position: relative;
+  }
+
   /* Esqueleto (DESIGN.md § Otros componentes base): superficie elevada con pulso de opacidad.
      Sobre una superficie, café: la elevada es blanca sobre hueso en el tema claro. Sin pulso
      con movimiento reducido, salvo que la persona elija movimiento completo en el panel. */

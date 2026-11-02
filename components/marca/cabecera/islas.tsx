@@ -1,0 +1,219 @@
+"use client";
+
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import * as Popover from "@radix-ui/react-popover";
+import { CircleUserRound, LogIn, LogOut, Menu, UserRound } from "lucide-react";
+import { rutaPublica } from "@/config/navegacion-publica";
+import { cn } from "@/lib/utils";
+import { Boton } from "@/components/ui/Boton";
+import { CerrarDialogo, PanelLateral } from "@/components/ui/Dialogo";
+import { useRegistroRuta } from "@/components/ui/BotonVolver";
+import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
+import { ENLACES_CABECERA } from "./enlaces";
+
+/**
+ * Islas de cliente de `CabeceraSitio` (D-09): la sombra al desplazar, la sección activa, la
+ * cuenta y el menú móvil. Lo demás de la cabecera se pinta en el servidor.
+ */
+
+/** Marco de la cabecera: añade la sombra cuando la página se ha desplazado. */
+export function MarcoCabecera({ children, fija = true }: { children: ReactNode; fija?: boolean }) {
+	const desplazada = useSyncExternalStore(
+		(avisar) => {
+			window.addEventListener("scroll", avisar, { passive: true });
+			return () => window.removeEventListener("scroll", avisar);
+		},
+		() => window.scrollY > 8,
+		() => false,
+	);
+	useRegistroRuta();
+	return (
+		<header className="cabecera-sitio" data-fija={fija ? undefined : "no"} data-desplazada={(fija && desplazada) || undefined}>
+			{children}
+		</header>
+	);
+}
+
+/**
+ * Sección activa: en la landing, la que ocupa el centro de la pantalla; en una página de acción,
+ * la de su origen (`/menu` → «La carta»).
+ */
+function useSeccionActiva(): string | null {
+	const ruta = usePathname();
+	const [visible, setVisible] = useState<string | null>(null);
+	const esLanding = ruta === "/";
+
+	useEffect(() => {
+		if (!esLanding) return;
+		const secciones = ENLACES_CABECERA.map((e) => document.getElementById(e.href.split("#")[1])).filter(
+			(e): e is HTMLElement => e !== null,
+		);
+		if (!secciones.length) return;
+		const observador = new IntersectionObserver(
+			(entradas) => {
+				for (const entrada of entradas) if (entrada.isIntersecting) setVisible(`/#${entrada.target.id}`);
+			},
+			{ rootMargin: "-45% 0px -50% 0px" },
+		);
+		secciones.forEach((s) => observador.observe(s));
+		return () => observador.disconnect();
+	}, [esLanding]);
+
+	if (esLanding) return visible;
+	return rutaPublica(ruta)?.origen.href ?? null;
+}
+
+const CLASE_ENLACE =
+	"relative inline-flex min-h-11 items-center px-1 font-texto text-(length:--texto-pequeno) font-medium no-underline " +
+	"transition-colors duration-(--duracion-breve) ease-estandar al-pasar:text-texto-principal " +
+	"focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco " +
+	"after:absolute after:inset-x-1 after:bottom-2 after:h-px after:bg-acento after:content-[''] after:transition-opacity";
+
+/** Enlaces a las secciones de la landing, con la activa marcada (`aria-current="true"` y filete de acento). */
+export function NavegacionSecciones({ className }: { className?: string }) {
+	const activa = useSeccionActiva();
+	return (
+		<nav aria-label="Principal" className={className}>
+			<ul className="m-0 flex list-none items-center gap-5 p-0">
+				{ENLACES_CABECERA.map((e) => {
+					const actual = e.href === activa;
+					return (
+						<li key={e.href}>
+							<Link
+								href={e.href}
+								aria-current={actual ? "true" : undefined}
+								className={cn(CLASE_ENLACE, actual ? "text-texto-principal after:opacity-100" : "text-texto-secundario after:opacity-0")}
+							>
+								{e.nombre}
+							</Link>
+						</li>
+					);
+				})}
+			</ul>
+		</nav>
+	);
+}
+
+export interface UsuarioCabecera {
+	nombre: string;
+	correo?: string;
+}
+
+/**
+ * Cuenta del comensal. Sin sesión, un enlace a «Iniciar sesión». Con sesión, un menú con su
+ * nombre, «Tu cuenta» y «Cerrar sesión». El cierre llega como `alCerrarSesion`: la
+ * implementación única es del paso 2.14 (`lib/sesion/cerrar-sesion.ts`); sin ella, no se ofrece.
+ */
+export function MenuCuenta({ usuario, alCerrarSesion }: { usuario: UsuarioCabecera | null; alCerrarSesion?: () => void | Promise<unknown> }) {
+	if (!usuario)
+		return (
+			<Link
+				href="/login"
+				className="area-tactil-minima gap-2 rounded-control px-2 font-texto text-(length:--texto-pequeno) font-medium text-texto-principal no-underline al-pasar:bg-superficie-cafe focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco [&_svg]:size-5 [&_svg]:stroke-[1.5]"
+			>
+				<LogIn aria-hidden="true" />
+				<span className="max-xl:solo-lectores">Iniciar sesión</span>
+			</Link>
+		);
+	return (
+		<Popover.Root>
+			<Popover.Trigger asChild>
+				<Boton variante="fantasma" soloIcono icono={<CircleUserRound />} data-prueba="abrir-cuenta">
+					{`Tu cuenta, ${usuario.nombre}`}
+				</Boton>
+			</Popover.Trigger>
+			<Popover.Portal>
+				<Popover.Content
+					align="end"
+					sideOffset={8}
+					aria-label="Tu cuenta"
+					className="z-[110] flex w-64 flex-col rounded-dialogo border border-borde-sutil bg-superficie-elevada p-2 text-texto-principal shadow-flotante"
+				>
+					<div className="flex flex-col gap-0.5 border-b border-borde-sutil px-3 pt-2 pb-3">
+						<span className="truncate font-semibold">{usuario.nombre}</span>
+						{usuario.correo && <span className="truncate text-(length:--texto-pequeno) text-texto-secundario">{usuario.correo}</span>}
+					</div>
+					<Link
+						href="/profile"
+						className="mt-1 flex min-h-11 items-center gap-3 rounded-control px-3 no-underline al-pasar:bg-superficie-cafe focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-foco [&_svg]:size-5 [&_svg]:stroke-[1.5]"
+					>
+						<UserRound aria-hidden="true" />
+						Tu cuenta
+					</Link>
+					{alCerrarSesion && (
+						<button
+							type="button"
+							onClick={() => void alCerrarSesion()}
+							className="flex min-h-11 items-center gap-3 rounded-control px-3 text-start text-error al-pasar:bg-superficie-cafe focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-foco [&_svg]:size-5 [&_svg]:stroke-[1.5]"
+						>
+							<LogOut aria-hidden="true" />
+							Cerrar sesión
+						</button>
+					)}
+				</Popover.Content>
+			</Popover.Portal>
+		</Popover.Root>
+	);
+}
+
+/** Menú móvil (por debajo de 1024 px): las secciones y la cuenta en un `PanelLateral`. */
+export function MenuMovil({ usuario, pie }: { usuario: UsuarioCabecera | null; pie?: ReactNode }) {
+	const activa = useSeccionActiva();
+	return (
+		<PanelLateral
+			lado="fin"
+			titulo="Menú"
+			disparador={
+				<Boton variante="fantasma" soloIcono icono={<Menu />} className="lg:hidden" data-prueba="abrir-menu-movil">
+					Abrir el menú
+				</Boton>
+			}
+			pie={pie}
+		>
+			<nav aria-label="Principal">
+				<ul className="m-0 flex list-none flex-col p-0">
+					{ENLACES_CABECERA.map((e) => (
+						<li key={e.href} className="border-b border-borde-sutil">
+							<CerrarDialogo asChild>
+								<Link
+									href={e.href}
+									aria-current={e.href === activa ? "true" : undefined}
+									className="flex min-h-12 items-center font-titulos text-(length:--texto-titulo-3) text-texto-principal no-underline aria-[current=true]:text-acento focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco"
+								>
+									{e.nombre}
+								</Link>
+							</CerrarDialogo>
+						</li>
+					))}
+				</ul>
+			</nav>
+			<div className="mt-6 flex flex-col gap-1">
+				{/* Por debajo de 640 px, las opciones de accesibilidad no caben en la barra: van aquí. */}
+				<div className="flex items-center gap-2 sm:hidden">
+					<PanelAccesibilidad className="-ms-3 text-texto-principal" />
+					<span aria-hidden="true">Accesibilidad</span>
+				</div>
+				{usuario ? (
+					<>
+						<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">Sesión de {usuario.nombre}</p>
+						<CerrarDialogo asChild>
+							<Link href="/profile" className="flex min-h-11 items-center gap-3 text-texto-principal no-underline [&_svg]:size-5 [&_svg]:stroke-[1.5]">
+								<UserRound aria-hidden="true" />
+								Tu cuenta
+							</Link>
+						</CerrarDialogo>
+					</>
+				) : (
+					<CerrarDialogo asChild>
+						<Link href="/login" className="flex min-h-11 items-center gap-3 text-texto-principal no-underline [&_svg]:size-5 [&_svg]:stroke-[1.5]">
+							<LogIn aria-hidden="true" />
+							Iniciar sesión
+						</Link>
+					</CerrarDialogo>
+				)}
+			</div>
+		</PanelLateral>
+	);
+}

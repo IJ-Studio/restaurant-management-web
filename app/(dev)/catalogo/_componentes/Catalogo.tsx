@@ -14,6 +14,7 @@ import { DemosEstados } from "./DemosEstados";
 import { DemosGraficas } from "./DemosGraficas";
 import { DemosMarca } from "./DemosMarca";
 import { DemosNavegacion } from "./DemosNavegacion";
+import { DemosSitio } from "./DemosSitio";
 import { DemosTabla } from "./DemosTabla";
 import { Muestra } from "./Muestra";
 
@@ -249,6 +250,7 @@ export function Catalogo() {
 							["#graficas", "Gráficas"],
 							["#marca", "Marca"],
 							["#navegacion", "Navegación"],
+							["#sitio", "Cabecera y pie"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -525,6 +527,14 @@ export function Catalogo() {
 				reglas="Las páginas de acción dicen dónde están («Inicio › La carta › Entradas») y ofrecen volver a la sección de la que vienen. Las migas son una lista ordenada con la página actual sin enlace. «Volver» nombra su destino; si se llegó desde el propio sitio, usa el historial."
 			>
 				<DemosNavegacion />
+			</Seccion>
+
+			<Seccion
+				id="sitio"
+				titulo="Cabecera y pie"
+				reglas="La cabecera lleva el logo, las secciones de la landing con la activa marcada, las opciones de accesibilidad, la cuenta y «Reservar», el único llamado persistente; en móvil, el menú va en un panel lateral. El pie da contacto, horario, redes con nombre y, en la última fila, el acceso del personal, discreto."
+			>
+				<DemosSitio />
 			</Seccion>
 		</main>
 	);

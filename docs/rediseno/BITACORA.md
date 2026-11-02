@@ -6,6 +6,43 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.11 · `CabeceraSitio` y `PieSitio` (2026-11-01) — D-09
+
+**Componentes**, sin dependencias nuevas:
+- `components/marca/cabecera/CabeceraSitio.tsx`: de servidor. `islas.tsx` reúne las islas de cliente:
+  - `MarcoCabecera`: sombra al desplazar, con `useSyncExternalStore` sobre `scroll`; además registra cada ruta para `BotonVolver`.
+  - `NavegacionSecciones`: sección activa.
+  - `MenuCuenta`: Popover de Radix, ya instalado.
+  - `MenuMovil`: `PanelLateral` del 3.5.
+- `enlaces.ts` lista las secciones a partir de `SECCIONES_LANDING` (3.10).
+- `components/marca/PieSitio.tsx`: de servidor, sin JavaScript, con los datos de `config/restaurant.config.ts`.
+- `styles/componentes.css`: `.cabecera-sitio`.
+- Catálogo: sección «Cabecera y pie» (`DemosSitio.tsx`). Dentro del catálogo la cabecera va sin fijar (`fija={false}`), porque arriba ya está la barra actual del sitio.
+- DESIGN.md documenta los dos componentes.
+- Los 7 SVG a mano de `ConditionalNavbar` no pasan a la cabecera nueva: todos sus iconos son de Lucide. `ConditionalNavbar` sigue en uso hasta que la fase 4 monte la cabecera.
+
+**Decisiones conservadoras:**
+- **Cerrar sesión:** no se implementa aquí. Es el paso 2.14 (cierre único que limpia todo el estado), y otra implementación más sería la quinta. `MenuCuenta` lo recibe como `alCerrarSesion` y, mientras no exista, no lo ofrece. Anotado en el 2.14.
+- **Sesión:** la cabecera recibe `usuario` como dato; en la fase 4 llegará de la capa de datos de sesión (2.11). No se copia la consulta a `/api/auth/me` de `ConditionalNavbar`.
+- **Variante transparente sobre la portada:** se aplaza al 4.3. Sobre la foto, en el tema claro, el texto principal es oscuro y la parte alta del velo es muy suave. Hace falta texto claro en los dos temas y un velo propio (tokens nuevos), y comprobarlo con axe sobre la imagen real, como exige DESIGN.md. Anotado en el 4.3.
+- **Carrito:** la barra actual muestra un contador fijo (3) que no está conectado a nada. DESIGN.md no lo pide en la cabecera, así que no se incluye. Si hiciera falta, se decide en la fase 4 (13: `/menu/pedido`).
+- **Pie:** conserva los textos y enlaces actuales (PLAN, regla 6), también el aviso de derechos y el horario tal como está configurado. `DistanceToRestaurant` (distancia al restaurante con la ubicación) no se incluye: lo decide la fase 4.
+- **Acceso del personal:** apunta a `/login`, la entrada común de todos los roles.
+- **Móvil con texto al 125 %:** a 360 px, logo, accesibilidad, «Reservar» y menú sumaban unos 387 px y el botón de menú quedaba fuera; el marco del catálogo lo recortaba sin desbordar la página. Por debajo de 640 px, las opciones de accesibilidad pasan al menú (como la cuenta) y el logo baja a 2rem. La prueba comprueba ahora que la cabecera misma cabe y que el botón de menú se ve entero.
+
+**Verificación** (Chromium contra `next dev`):
+- `sitio.spec.ts` (nueva):
+  - a 1280 px: logo enlazado al inicio, cinco secciones con su `href`, accesibilidad, «Reservar» a `/reservations`, sin botón de menú; ningún SVG a mano salvo el logo; todo lo interactivo con 44 px de alto o más;
+  - cuenta con sesión: menú con nombre, correo y «Tu cuenta», sin «Cerrar sesión» hasta el 2.14; Esc lo cierra y el foco vuelve al botón. Sin sesión: «Iniciar sesión»;
+  - a 390 px: secciones ocultas, «Reservar» visible, menú en panel lateral con las cinco secciones y la cuenta; Esc lo cierra y el foco vuelve; la cabecera cabe;
+  - pie: dirección, teléfono con `tel:`, redes con nombre accesible y `rel`, y «Acceso del personal» en el color tenue a 14 px como último enlace;
+  - axe y sin desborde a 360 y 1280 px con texto al 125 % en los dos temas.
+  - La primera pasada falló en la prueba, no en el componente: dentro de `<main>` un `<footer>` no es el punto de referencia `contentinfo`; ahora se localiza por etiqueta.
+- `catalogo.spec.ts` con la sección nueva: contraste AA de todas las muestras en los dos temas, axe y capturas.
+- Typecheck: 0 errores. Lint de los archivos tocados: limpio.
+
+**No verificado:** Firefox, WebKit, lectores de pantalla reales y la cabecera fija con la página real (llega en la fase 4).
+
 ### 3.10 · `MigasDePan` y `BotonVolver` (2026-11-01)
 
 **Archivos:**

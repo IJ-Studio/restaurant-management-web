@@ -519,6 +519,11 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   - El enlace de la sección activa lleva `aria-current="true"` y filete inferior de acento.
   - Un `BotonEnlace` compacto **«Reservar»** (variante `secundario`, alto mínimo de 44 px) siempre visible, también en móvil junto al botón de menú. Es la única llamada a la acción persistente.
   - En móvil, menú en `PanelLateral` con trampa de foco y cierre con Esc.
+  - **Implementación** (`components/marca/cabecera/`): de servidor, con islas de cliente para la sombra al desplazar (`MarcoCabecera`), la sección activa (`NavegacionSecciones`), la cuenta (`MenuCuenta`) y el menú móvil (`MenuMovil`).
+    - De izquierda a derecha: el logo (enlace al inicio, 2,25rem de alto desde 640 px), las secciones (La casa, La carta, Promociones, Pedir, Visítanos) desde 1024 px, las opciones de accesibilidad y la cuenta (desde 640 px; por debajo, en el menú, para que quepa con texto al 125 %), «Reservar» y el botón de menú (por debajo de 1024 px). El logo mide 2rem de alto en móvil. Todo con 44 px de alto o más; iconos de Lucide.
+    - Enlaces de sección en `--texto-pequeno`, peso 500, `--texto-secundario`; el activo en `--texto-principal` con un filete de acento de 1 px debajo. En la landing, la sección activa es la que ocupa el centro de la pantalla (`IntersectionObserver`); en una página de acción, la de su origen (`/menu` → «La carta»).
+    - Cuenta: sin sesión, enlace a «Iniciar sesión» (solo el icono por debajo de 1280 px); con sesión, un menú (Popover) con nombre, correo, «Tu cuenta» y «Cerrar sesión», este último solo cuando exista el cierre único del paso 2.14.
+    - Clase `.cabecera-sitio`: fija arriba, `--color-fondo`, relleno de la zona segura superior y `--sombra-cabecera` al desplazar. **La variante transparente sobre la portada queda para el paso 4.3**, con la fotografía real, el velo y su comprobación de contraste.
 - **`MigasDePan`:** `<nav aria-label="Migas de pan">` con `<ol>` y `aria-current="page"` en la última miga.
   - Empiezan en «Inicio»; las intermedias salen del mapa `config/navegacion-publica.ts` y la última es la página actual, sin enlace, en `--texto-principal`. Las de rutas con parámetros reciben el nombre (la categoría o el plato).
   - `--texto-pequeno`; enlaces en `--texto-secundario` con subrayado fino y 44 px de alto; separador `ChevronRight` en `--texto-tenue`, oculto a lectores. Pasan de línea si no caben.
@@ -529,6 +534,9 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   - Usa `<Link>` con `aria-current="page"`, grupos con rótulo `--texto-etiqueta` y entradas **filtradas por rol** desde `config/navigation`.
   - El elemento activo lleva relleno `--color-superficie-cafe` y un filete de acento a la izquierda: cambia el relleno, no solo el tinte.
 - **`PieSitio`:** de servidor. Contiene datos de contacto, horario, legales, redes con nombre accesible y, en la última fila, el «Acceso del personal».
+  - Datos de `config/restaurant.config.ts`; textos y enlaces, los del pie actual. Tres columnas desde 768 px (contacto, «La casa», «Ayuda») con rótulos en `--texto-etiqueta`; enlaces en `--texto-secundario` con 44 px de alto.
+  - Redes: iconos de Lucide con nombre para lectores («Facebook de El Quijote (abre en otra pestaña)») y `rel="noopener noreferrer"`.
+  - Última fila, sobre un filete sutil: el aviso de derechos, los legales y «Acceso del personal» (a `/login`), en `--texto-tenue` y `--texto-pequeno`.
 
 ### Signature components
 
@@ -751,7 +759,7 @@ El movimiento es sobrio: confirma, nunca adorna.
 - El tema claro **solo redefine las variables**, así que las utilidades no cambian. Se elimina la variante `dark:` y no se escriben clases condicionales por tema.
 - En `styles/globals.css` se declara `@custom-variant dark (&:where(:root:not([data-tema="claro"]), :root:not([data-tema="claro"]) *));` únicamente como red de seguridad durante la migración: las clases `dark:` heredadas se aplican mientras el tema no sea claro, porque el oscuro es el tema por defecto y no lleva atributo. Se retira con los alias temporales (PLAN 5.20).
 
-**Clases explícitas** (en `styles/componentes.css`, capa `@layer components`): `.contenedor-pagina`, `.seccion-landing`, `.etiqueta-seccion`, `.filete-doble`, `.contraetiqueta`, `.texto-cifra-destacada`, `.numeros-tabulares`, `.enlace-subrayado`, `.area-tactil-minima`, `.solo-lectores`, `.salto-al-contenido`, `.titulo-equilibrado`, `.aparece-al-entrar`, `.velo-dialogo`, `.caja-dialogo`, `.panel-lateral`, `.cuerpo-dialogo`, `.pila-notificaciones`, `.notificacion` y `.esqueleto`. Cada nombre dice lo que hace; no se crean clases genéricas tipo `.card2` o `.btn-x`.
+**Clases explícitas** (en `styles/componentes.css`, capa `@layer components`): `.contenedor-pagina`, `.seccion-landing`, `.etiqueta-seccion`, `.filete-doble`, `.contraetiqueta`, `.texto-cifra-destacada`, `.numeros-tabulares`, `.enlace-subrayado`, `.area-tactil-minima`, `.solo-lectores`, `.salto-al-contenido`, `.titulo-equilibrado`, `.aparece-al-entrar`, `.velo-dialogo`, `.caja-dialogo`, `.panel-lateral`, `.cuerpo-dialogo`, `.pila-notificaciones`, `.notificacion`, `.esqueleto` y `.cabecera-sitio`. Cada nombre dice lo que hace; no se crean clases genéricas tipo `.card2` o `.btn-x`.
 
 ## Do's and Don'ts
 
