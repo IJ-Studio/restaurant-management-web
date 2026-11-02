@@ -11,6 +11,7 @@ import { Boton } from "@/components/ui/Boton";
 import { CerrarDialogo, PanelLateral } from "@/components/ui/Dialogo";
 import { useRegistroRuta } from "@/components/ui/BotonVolver";
 import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
+import { useCerrarSesion } from "@/lib/sesion/cerrar-sesion";
 import { ENLACES_CABECERA } from "./enlaces";
 
 /**
@@ -159,6 +160,12 @@ export function MenuCuenta({ usuario, alCerrarSesion }: { usuario: UsuarioCabece
 }
 
 /** Menú móvil (por debajo de 1024 px): las secciones y la cuenta en un `PanelLateral`. */
+/** `MenuCuenta` con el cierre de sesión único (PLAN 2.14), para la cabecera de servidor. */
+export function MenuCuentaConSesion({ usuario }: { usuario: UsuarioCabecera | null }) {
+	const cerrarSesion = useCerrarSesion();
+	return <MenuCuenta usuario={usuario} alCerrarSesion={cerrarSesion} />;
+}
+
 export function MenuMovil({ usuario, pie }: { usuario: UsuarioCabecera | null; pie?: ReactNode }) {
 	const activa = useSeccionActiva();
 	return (

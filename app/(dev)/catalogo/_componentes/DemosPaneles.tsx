@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { navegacionDeRol } from "@/config/navigation/por-rol";
 import { ROLES } from "@/config/roles.config";
+import { useCerrarSesion } from "@/lib/sesion/cerrar-sesion";
 import { BarraSuperiorPanel } from "@/components/paneles/BarraSuperiorPanel";
 import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
 import { NavegacionPanel } from "@/components/paneles/NavegacionPanel";
@@ -17,6 +18,7 @@ const RUTA_ADMIN = "/dashboard/admin/inventory/suppliers";
 
 /** Contenido de la sección «Navegación de los paneles» del catálogo. */
 export function DemosPaneles() {
+	const cerrarSesion = useCerrarSesion();
 	return (
 		<div className="flex flex-col gap-10">
 			<div className="flex flex-col gap-3">
@@ -35,6 +37,7 @@ export function DemosPaneles() {
 								nombrePanel="Administración"
 								secciones={navegacionDeRol(ROLES.ADMIN)}
 								usuario={{ nombre: "Laura Méndez", rol: "Administradora" }}
+								alCerrarSesion={cerrarSesion}
 								rutaActual={RUTA_ADMIN}
 							/>
 							<div className="flex flex-col gap-6 p-6">

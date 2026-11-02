@@ -53,6 +53,8 @@
 | NP-38 | Avisos críticos de dependencias transitivas de `firebase-admin` | Dependencias del servidor | Alta |
 | NP-39 | `revisar:invisibles` no detecta otros caracteres de control | Herramientas / idea | Baja |
 | NP-40 | `console.log` en código de servidor (cron de respaldos) | Backend / registro | Baja |
+| NP-41 | La ruta de cierre de sesión no caduca las cookies si el backend no responde | Backend / sesión | Media |
+| NP-42 | El menú móvil de la cabecera nueva no ofrece «Cerrar sesión» | Front / navegación | Baja |
 
 ---
 
@@ -526,3 +528,22 @@
 - **Solución sugerida:** al revisar el backend (NP-10, cron con `CRON_SECRET`), sustituirlos por el registro del servidor o eliminarlos.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** `rg "console\.log" app lib` sin resultados.
+
+## NP-41 · La ruta de cierre de sesión no caduca las cookies si el backend no responde
+
+- **Archivos y rutas afectados:** `app/api/auth/logout/route.ts`.
+- **Problema:** la ruta llama a `${NEXT_PUBLIC_API_URL}/auth/sign-out` y solo después caduca `session` y `access_token`. Si esa llamada lanza (backend caído o sin red), el `catch` devuelve 500 **sin** caducar las cookies. Visto en el código en el 2.14; la respuesta 500 sin backend no se comprobó en el navegador.
+- **Mitigación en el front (2.14):** `lib/sesion/cerrar-sesion.ts` caduca también `session` y `access_token` desde el cliente y borra el resto aunque la ruta falle. Si alguna vez se emite una cookie HttpOnly (NP-04), el cliente ya no podrá caducarla y dependerá solo de esta ruta.
+- **Riesgo:** medio cuando exista la cookie HttpOnly: la sesión seguiría viva en el navegador tras «Cerrar sesión» con el backend caído.
+- **Solución sugerida:** caducar las cookies en todas las salidas de la ruta (también en el `catch`), y que la invalidación en el backend no condicione la limpieza local.
+- **Prioridad:** Media.
+- **Criterio de aceptación:** con el backend apagado, `POST /api/auth/logout` responde con `Set-Cookie` que caduca `session` y `access_token`.
+
+## NP-42 · El menú móvil de la cabecera nueva no ofrece «Cerrar sesión»
+
+- **Archivos y rutas afectados:** `components/marca/cabecera/islas.tsx` (`MenuMovil`).
+- **Problema:** por debajo de 640 px la cuenta va dentro de `MenuMovil`, que muestra «Sesión de …» y «Tu cuenta», pero no «Cerrar sesión». El 2.14 solo conecta el cierre único a `MenuCuenta` (y a `BarraSuperiorPanel`), como dice el PLAN; añadirlo al menú móvil sería ampliar el paso.
+- **Riesgo:** bajo mientras `CabeceraSitio` no esté en el sitio real (fase 4): en móvil, cerrar sesión exigiría ir a «Tu cuenta».
+- **Solución sugerida:** al montar la cabecera en el sitio (4.x), añadir en `MenuMovil` un botón «Cerrar sesión» con `useCerrarSesion`, con el mismo estilo de acción destructiva que `MenuCuenta`.
+- **Prioridad:** Baja.
+- **Criterio de aceptación:** a 360 px, con sesión, el menú móvil ofrece «Cerrar sesión» y la prueba de `almacenamiento.spec.ts` pasa también desde ahí.

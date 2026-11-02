@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
 import { Logo } from "@/components/marca/Logo";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
-import { MarcoCabecera, MenuCuenta, MenuMovil, NavegacionSecciones, type UsuarioCabecera } from "./islas";
+import { MarcoCabecera, MenuCuentaConSesion, MenuMovil, NavegacionSecciones, type UsuarioCabecera } from "./islas";
 
 /**
  * Cabecera del sitio público (DESIGN.md § Navigation, D-09). Componente de servidor con islas de
@@ -45,7 +45,7 @@ export function CabeceraSitio({ usuario = null, fija = true }: CabeceraSitioProp
 						<PanelAccesibilidad className="text-texto-principal" />
 					</div>
 					<div className="hidden sm:block">
-						<MenuCuenta usuario={usuario} />
+						<MenuCuentaConSesion usuario={usuario} />
 					</div>
 					<BotonEnlace href="/reservations" variante="secundario" tamano="compacto" className="ms-1">
 						Reservar

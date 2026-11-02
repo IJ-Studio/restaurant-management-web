@@ -84,7 +84,7 @@ test.describe("navegación de los paneles", () => {
 		const menu = page.getByRole("dialog", { name: "Tu cuenta" });
 		await expect(menu).toContainText("Laura Méndez");
 		await expect(menu).toContainText("Administradora");
-		await expect(menu.getByRole("button", { name: "Cerrar sesión" })).toHaveCount(0);
+		await expect(menu.getByRole("button", { name: "Cerrar sesión" })).toBeVisible();
 		await page.keyboard.press("Escape");
 		const encabezado = prueba(page, "panel-admin").getByRole("heading", { level: 1 });
 		await expect(encabezado).toHaveText("Proveedores");
