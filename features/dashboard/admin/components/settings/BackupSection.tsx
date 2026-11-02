@@ -28,7 +28,7 @@ export function BackupSection({ API, isExternal }: { API: string, isExternal: bo
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/backups`)
+    fetch(`${API}/backups`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => setBackups(Array.isArray(data) ? data : []))
       .catch(() => setBackups([]));
@@ -36,7 +36,7 @@ export function BackupSection({ API, isExternal }: { API: string, isExternal: bo
 
   function handleManualBackup() {
     setSyncing(true);
-    fetch(`${API}/backups`, { method: "POST" })
+    fetch(`${API}/backups`, { cache: "no-store", method: "POST" })
       .then((r) => r.json())
       .then((newB) => {
         setBackups((bs) => [newB, ...bs]);
@@ -47,7 +47,7 @@ export function BackupSection({ API, isExternal }: { API: string, isExternal: bo
 
   async function handleDelete(id: number) {
     const url = isExternal ? `${API}/backups/${id}` : `${API}/backups?id=${id}`;
-    await fetch(url, { method: "DELETE" });
+    await fetch(url, { cache: "no-store", method: "DELETE" });
     setBackups((bs) => bs.filter((x) => x.id !== id));
   }
 

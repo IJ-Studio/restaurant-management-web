@@ -25,7 +25,7 @@ function ExitoContent() {
     const buscarFactura = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiUrl}/facturas/${ordenId}`);
+        const res = await fetch(`${apiUrl}/facturas/${ordenId}`, { cache: "no-store" });
         if (res.ok) {
           setFactura(await res.json());
         }

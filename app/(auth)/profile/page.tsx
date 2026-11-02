@@ -40,7 +40,7 @@ export default function PerfilUsuarioPage() {
     const cargarInformacionUsuario = async () => {
       try {
         // Consultamos la sesión local que ya contiene los datos del usuario
-        const sessionRes = await fetch("/api/auth/me");
+        const sessionRes = await fetch("/api/auth/me", { cache: "no-store" });
         if (!sessionRes.ok) {
           router.push("/login?redirect=/profile");
           return;
@@ -113,11 +113,11 @@ export default function PerfilUsuarioPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       const token = localStorage.getItem("authToken");
 
-      const sessionRes = await fetch("/api/auth/me");
+      const sessionRes = await fetch("/api/auth/me", { cache: "no-store" });
       const sessionData = await sessionRes.json();
       const activeUser = sessionData?.user || sessionData;
 
-      const res = await fetch(`${apiUrl}/usuarios/perfil/actualizar/${activeUser.id}`, {
+      const res = await fetch(`${apiUrl}/usuarios/perfil/actualizar/${activeUser.id}`, { cache: "no-store",
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

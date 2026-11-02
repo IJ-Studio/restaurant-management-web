@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 2 en curso** (2026-11-02), sin supervisión por orden del usuario. Fases 0, 1 y 3 cerradas. |
 | Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **2.4 · Eliminar scripts y estilos en línea** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
+| Último paso completado | **2.6 · Política de caché** (2026-11-02). Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | 2.5 queda pendiente de aprobación; sigue el 2.6 · Política de caché. |
+| Siguiente paso | 2.7 · Sin service worker. |
 | Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -362,7 +362,7 @@
   - **Aceptación:** recorrido completo con 0 violaciones y 0 errores de consola nuevos; el checkout de Stripe completa un pago de prueba; el auditor «csp-xss» de Lighthouse sin avisos de severidad alta.
   - **Commit:** `feat(seguridad): aplicar la CSP estricta`
 
-- [ ] **2.6 · Política de caché**
+- [x] **2.6 · Política de caché** · *Hecho (2026-11-02): no-store en rutas privadas (también la redirección del proxy) y en 88 fetch del front; sin revalidate; force-dynamic en segmentos privados.*
   - **Archivos:** `next.config.js` (cabecera `Cache-Control: private, no-store, max-age=0` para `/dashboard/:path*`, `/profile`, `/menu/pedido/:path*`, `/login`, `/register`, `/reset`, `/frm_reset`), todos los `fetch` de datos (`cache: "no-store"`; se elimina `revalidate: 60` en `app/api/menu/categories/route.ts`), `export const dynamic = "force-dynamic"` en los segmentos privados.
   - **Hacer:**
     - Los estáticos versionados (`/_next/static/*`) conservan su caché inmutable estándar: no contienen datos y quitarla degradaría el rendimiento.

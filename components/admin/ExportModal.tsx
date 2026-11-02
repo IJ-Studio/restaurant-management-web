@@ -99,7 +99,7 @@ export default function ExportModal({ onClose }: ExportModalProps) {
       });
       if (limit) params.set("limit", limit);
 
-      const res = await fetch(`${BASE_URL}/export?${params}`);
+      const res = await fetch(`${BASE_URL}/export?${params}`, { cache: "no-store" });
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `Error ${res.status}`);

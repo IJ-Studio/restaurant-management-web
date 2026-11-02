@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
 import { HOSTS_IMAGEN } from "./config/seguridad/hosts-permitidos";
-import { CABECERAS_SEGURIDAD } from "./config/seguridad/cabeceras";
+import { CABECERA_SIN_CACHE, CABECERAS_SEGURIDAD, RUTAS_SIN_CACHE } from "./config/seguridad/cabeceras";
 
 // Las páginas *.dev.tsx (catálogo de componentes, PLAN 3.0) solo existen en next dev:
 // en next build no son rutas y su código no se compila.
@@ -35,6 +35,8 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: CABECERAS_SEGURIDAD,
       },
+      // Datos privados sin caché (PLAN 2.6).
+      ...RUTAS_SIN_CACHE.map((source) => ({ source, headers: [CABECERA_SIN_CACHE] })),
       {
         // El service worker siempre debe revalidarse para que las actualizaciones lleguen.
         source: '/sw.js',

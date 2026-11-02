@@ -196,14 +196,14 @@ function useDBMetrics(intervalMs = 10_000) {
         resCpu, resRW, resVacuum, resStorage,
         resHot, resLatency, resConn, resWait,
       ] = await Promise.all([
-        fetch(endpoint("/db-metrics/cpu")),          // 1) CPU
-        fetch(endpoint("/db-metrics/rw-ratio")),     // 2) Lectura/Escritura
-        fetch(endpoint("/db-metrics/autovacuum")),   // 3) Autovacuum
-        fetch(endpoint("/db-metrics/storage")),      // 4) Almacenamiento
-        fetch(endpoint("/db-metrics/hot-tables")),   // 5) Tablas calientes
-        fetch(endpoint("/db-metrics/latency")),      // 6) Latencia SQL
-        fetch(endpoint("/db-metrics/connections")),  // 7) Conexiones
-        fetch(endpoint("/db-metrics/wait-events")),  // 8) Wait events
+        fetch(endpoint("/db-metrics/cpu"), { cache: "no-store" }),          // 1) CPU
+        fetch(endpoint("/db-metrics/rw-ratio"), { cache: "no-store" }),     // 2) Lectura/Escritura
+        fetch(endpoint("/db-metrics/autovacuum"), { cache: "no-store" }),   // 3) Autovacuum
+        fetch(endpoint("/db-metrics/storage"), { cache: "no-store" }),      // 4) Almacenamiento
+        fetch(endpoint("/db-metrics/hot-tables"), { cache: "no-store" }),   // 5) Tablas calientes
+        fetch(endpoint("/db-metrics/latency"), { cache: "no-store" }),      // 6) Latencia SQL
+        fetch(endpoint("/db-metrics/connections"), { cache: "no-store" }),  // 7) Conexiones
+        fetch(endpoint("/db-metrics/wait-events"), { cache: "no-store" }),  // 8) Wait events
       ]);
 
       if (!resCpu.ok || !resRW.ok || !resVacuum.ok || !resStorage.ok ||
@@ -234,7 +234,7 @@ function useDBMetrics(intervalMs = 10_000) {
   const runManualVacuum = useCallback(async () => {
     setState(s => ({ ...s, isVacuuming: true }));
     try {
-      const res = await fetch(endpoint("/db-metrics/vacuum-manual"), { method: "POST" });
+      const res = await fetch(endpoint("/db-metrics/vacuum-manual"), { cache: "no-store", method: "POST" });
       if (!res.ok) throw new Error("Error al iniciar limpieza");
       alert("La limpieza (Vacuum) ha comenzado en segundo plano. Esto mejorará el rendimiento de las tablas.");
       fetchAll();

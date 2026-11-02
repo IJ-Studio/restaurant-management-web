@@ -51,7 +51,7 @@ const isAuthenticated = !!user;
     setLoadingDb(true);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/pedidos/usuario?mesaId=${targetMesa}&usuarioId=${userId}`);
+      const res = await fetch(`${apiUrl}/pedidos/usuario?mesaId=${targetMesa}&usuarioId=${userId}`, { cache: "no-store" });
 
       if (!res.ok) {
         const errBody = await res.text().catch(() => "");
@@ -77,7 +77,7 @@ const isAuthenticated = !!user;
 
       const url = `${apiUrl}/pedidos/usuario?usuarioId=${userId}&tipo=domicilio`;
 
-      const res = await fetch(url, {
+      const res = await fetch(url, { cache: "no-store",
         headers: {
           ...(token ? { "Authorization": `Bearer ${token}` } : {})
         }
@@ -122,7 +122,7 @@ useEffect(() => {
 
   const verificarUsuario = async () => {
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
       if (res.ok) {
         const sessionData = await res.json();
         const activeUser = sessionData?.user || sessionData;
@@ -148,7 +148,7 @@ useEffect(() => {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/pedidos/cancelar/${ordenId}`, {
+      const res = await fetch(`${apiUrl}/pedidos/cancelar/${ordenId}`, { cache: "no-store",
         method: "PATCH",
         headers: { "Content-Type": "application/json" }
       });
@@ -169,7 +169,7 @@ useEffect(() => {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/pedidos/item/${itemId}`, {
+      const res = await fetch(`${apiUrl}/pedidos/item/${itemId}`, { cache: "no-store",
         method: "DELETE",
       });
 
@@ -195,7 +195,7 @@ useEffect(() => {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/pedidos/confirmar/${ordenId}`, {
+      const res = await fetch(`${apiUrl}/pedidos/confirmar/${ordenId}`, { cache: "no-store",
         method: "POST",
       });
 

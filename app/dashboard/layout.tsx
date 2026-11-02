@@ -2,6 +2,9 @@ import { getSession } from "@/lib/session";
 import AdminSidebar from "@/components/admin/AdminSidebar"; // ← importa tu componente
 import { redirect } from "next/navigation";
 
+// Datos privados: siempre se renderiza por petición, nunca se guarda (PLAN 2.6).
+export const dynamic = "force-dynamic";
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -28,10 +31,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   };
 
   try {
-    const res = await fetch(`${BACKEND_URL}/users/${session.id}`, {
+    const res = await fetch(`${BACKEND_URL}/users/${session.id}`, { cache: "no-store",
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      next: { revalidate: 0 },
     });
     if (res.ok) {
       const userData = await res.json();

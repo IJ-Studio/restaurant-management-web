@@ -107,7 +107,7 @@ function CheckoutWizard() {
 
     const cargar = async () => {
       try {
-        const resUser = await fetch("/api/auth/me");
+        const resUser = await fetch("/api/auth/me", { cache: "no-store" });
         if (!resUser.ok) {
           router.push(
             `/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`,
@@ -123,8 +123,7 @@ function CheckoutWizard() {
         setUsuarioId(activeUser.id);
 
         const resOrdenes = await fetch(
-          `${apiUrl}/pedidos/usuario?usuarioId=${activeUser.id}&tipo=domicilio`,
-        );
+          `${apiUrl}/pedidos/usuario?usuarioId=${activeUser.id}&tipo=domicilio`, { cache: "no-store" },);
         if (resOrdenes.ok) {
           const ordenesData = await resOrdenes.json();
           const ordenEncontrada = ordenesData.find((o: any) => o.id === orderId);
@@ -135,7 +134,7 @@ function CheckoutWizard() {
           }
         }
 
-        const resDirecciones = await fetch(`${apiUrl}/direcciones?usuarioId=${activeUser.id}`);
+        const resDirecciones = await fetch(`${apiUrl}/direcciones?usuarioId=${activeUser.id}`, { cache: "no-store" });
         if (resDirecciones.ok) {
           const data = await resDirecciones.json();
           setDirecciones(data);
@@ -144,7 +143,7 @@ function CheckoutWizard() {
           else if (data.length === 0) setDireccionSeleccionadaId("nueva");
         }
 
-        const resMetodos = await fetch(`${apiUrl}/metodos-pago?usuarioId=${activeUser.id}`);
+        const resMetodos = await fetch(`${apiUrl}/metodos-pago?usuarioId=${activeUser.id}`, { cache: "no-store" });
         if (resMetodos.ok) {
           const data = await resMetodos.json();
           setMetodosGuardados(data);
@@ -209,7 +208,7 @@ function CheckoutWizard() {
       if (direccionSeleccionadaId === "nueva" && guardarDireccion) {
         setProcesando(true);
         try {
-          const res = await fetch(`${apiUrl}/direcciones`, {
+          const res = await fetch(`${apiUrl}/direcciones`, { cache: "no-store",
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ usuarioId: Number(usuarioId), ...nuevaDireccion }),
@@ -242,7 +241,7 @@ function CheckoutWizard() {
       if (metodoSeleccionadoId === "nueva" && guardarTarjeta) {
         setProcesando(true);
         try {
-          const resSetup = await fetch(`${apiUrl}/metodos-pago/setup-intent`, {
+          const resSetup = await fetch(`${apiUrl}/metodos-pago/setup-intent`, { cache: "no-store",
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ usuarioId: Number(usuarioId) }),
@@ -256,7 +255,7 @@ function CheckoutWizard() {
 
           if (result.error) throw new Error(result.error.message || "No se pudo validar la tarjeta.");
 
-          const resGuardar = await fetch(`${apiUrl}/metodos-pago`, {
+          const resGuardar = await fetch(`${apiUrl}/metodos-pago`, { cache: "no-store",
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -294,7 +293,7 @@ function CheckoutWizard() {
         body.metodoPagoGuardadoId = metodoSeleccionadoId;
       }
 
-      const resIntento = await fetch(`${apiUrl}/pagos/crear-intento`, {
+      const resIntento = await fetch(`${apiUrl}/pagos/crear-intento`, { cache: "no-store",
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -323,7 +322,7 @@ function CheckoutWizard() {
       }
 
       if (requiereFactura) {
-        await fetch(`${apiUrl}/facturas`, {
+        await fetch(`${apiUrl}/facturas`, { cache: "no-store",
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ usuarioId: Number(usuarioId), ordenId: orden.id, ...datosFiscales }),

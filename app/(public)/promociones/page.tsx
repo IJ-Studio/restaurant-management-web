@@ -17,7 +17,7 @@ function PromocionesList() {
     let isMounted = true;
     (async () => {
       try {
-        const res = await fetch(`${API}/promociones`);
+        const res = await fetch(`${API}/promociones`, { cache: "no-store" });
         if (!res.ok) return;
         const data: PromotionRow[] = await res.json();
         if (!isMounted) return;

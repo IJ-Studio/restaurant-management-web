@@ -21,7 +21,7 @@ export function useFetch<T>(url: string | null) {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await fetch(fullUrl);
+        const res = await fetch(fullUrl, { cache: "no-store" });
         if (!res.ok) throw new Error(`Error ${res.status}`);
         const json = await res.json();
         if (isMounted) setData(json);

@@ -44,7 +44,7 @@ function ProductDetailPageContent() {
     if (reduxUser?.id) return reduxUser;
 
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
       if (res.ok) {
         const sessionData = await res.json();
         const activeUser = sessionData?.user || sessionData;
@@ -61,7 +61,7 @@ function ProductDetailPageContent() {
     const fetchPlatillo = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiUrl}/menu/items/${id}`);
+        const res = await fetch(`${apiUrl}/menu/items/${id}`, { cache: "no-store" });
 
         if (!res.ok) {
           if (res.status === 404) return notFound();
@@ -90,7 +90,7 @@ function ProductDetailPageContent() {
     const fetchCombo = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiUrl}/recommendations/combo/${platillo.id}`);
+        const res = await fetch(`${apiUrl}/recommendations/combo/${platillo.id}`, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
         setCombo(data);
@@ -109,7 +109,7 @@ function ProductDetailPageContent() {
         setLoadingMesas(true);
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-          const res = await fetch(`${apiUrl}/mesas`);
+          const res = await fetch(`${apiUrl}/mesas`, { cache: "no-store" });
 
           if (!res.ok) {
             const errBody = await res.text().catch(() => "");
@@ -190,7 +190,7 @@ function ProductDetailPageContent() {
             mesa: mesaFinal,
           };
 
-      const res = await fetch(`${apiUrl}/pedidos/mesa`, {
+      const res = await fetch(`${apiUrl}/pedidos/mesa`, { cache: "no-store",
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -244,7 +244,7 @@ function ProductDetailPageContent() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-      const res = await fetch(`${apiUrl}/pedidos/mesa`, {
+      const res = await fetch(`${apiUrl}/pedidos/mesa`, { cache: "no-store",
         method: "POST",
         headers: {
           "Content-Type": "application/json"

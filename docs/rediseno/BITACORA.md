@@ -6,6 +6,37 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.6 · Política de caché (2026-11-02)
+
+**Cambios:**
+- **`config/seguridad/cabeceras.ts`:** `RUTAS_SIN_CACHE` y `Cache-Control: private, no-store, max-age=0`, que `next.config.ts` aplica a `/dashboard/:path*`, `/profile`, `/menu/pedido/:path*`, `/login`, `/register`, `/reset` y `/frm_reset`. También se aplica a la redirección del proxy de `/dashboard` sin sesión. `/_next/static` conserva su caché inmutable.
+- **`cache: "no-store"` en 88 llamadas a `fetch` de 31 archivos** del front: páginas, componentes, hooks, `lib/api.ts` (el envoltorio `apiFetch`) y `hooks/useFetch.ts`.
+  - Se hizo con un script que separa los argumentos analizando paréntesis y cadenas, con tres casos: sin opciones, objeto literal y variable. Se revisó a mano una muestra de cada caso y los envoltorios compartidos.
+- **`revalidate` retirado:** el de 60 s de `app/api/menu/categories/route.ts`, que pide el PLAN, y el `revalidate: 0` del layout de paneles, que con `no-store` sobra. `rg revalidate app lib features components hooks` no encuentra nada.
+- **`export const dynamic = "force-dynamic"`:**
+  - en `app/dashboard/layout.tsx`;
+  - en dos layouts nuevos mínimos, que solo devuelven a sus hijos: `app/(auth)/profile/layout.tsx` y `app/menu/pedido/layout.tsx`. Sus páginas son de cliente y no pueden declarar la configuración del segmento. No cambia ninguna URL.
+- No se usa React Query ni SWR, y no hace falta caché cifrada.
+
+**Alcance:**
+- `app/api/auth/{login,logout,register}`, `app/api/cron/backups` y `lib/db.ts` también tienen `fetch`, pero el PLAN los trata como backend (NP-01). Solo se toca la ruta que nombra el propio 2.6.
+- En el servidor de Next 16, `fetch` ya no guarda en caché por defecto, así que su comportamiento no cambia.
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Lint: ningún archivo tocado cambia su cuenta y los dos layouts nuevos están limpios.
+- Build: correcto.
+- `cabeceras.spec.ts`:
+  - sin `test.fail()`;
+  - `no-store` y `private` en 10 rutas, incluida la redirección de `/dashboard`;
+  - `immutable` en un estático versionado.
+- Chromium contra `next start`, batería completa en dos tandas (por el límite de tiempo de cada llamada): 42 + 137 = **179/179**.
+- Sin procesos abiertos.
+
+**No verificado:**
+- Que el API del backend responda con sus propias cabeceras de caché.
+- Las cachés de proxies intermedios en producción.
+
 ### 2.5 · Aplicar la CSP — **pendiente de aprobación del usuario** (2026-11-02)
 
 No se ejecuta, por orden del usuario: el pago con Stripe no se puede verificar sin claves de prueba ni backend.

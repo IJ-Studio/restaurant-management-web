@@ -7,22 +7,33 @@ test.skip(process.env.E2E_MODO === "dev", "cabeceras: solo contra el build de pr
 const RUTAS_PRIVADAS = [
 	"/dashboard",
 	"/dashboard/admin",
+	"/dashboard/cajero",
 	"/profile",
 	"/menu/pedido",
+	"/menu/pedido/checkout",
 	"/login",
 	"/register",
+	"/reset",
+	"/frm_reset",
 ];
 
 test.describe("rutas privadas sin caché", () => {
 	for (const ruta of RUTAS_PRIVADAS) {
+		// Paso 2.6: también la redirección del proxy (/dashboard sin sesión) lleva no-store.
 		test(`${ruta} responde con no-store`, async ({ request }) => {
-			// Desde el 2.3 las páginas son dinámicas y Next ya responde no-store; las redirecciones
-			// del proxy (/dashboard sin sesión) aún no lo llevan: se resuelve en el paso 2.6.
-			test.fail(ruta.startsWith("/dashboard"), "paso 2.6: la redirección del proxy aún no lleva no-store");
 			const r = await request.get(ruta, { maxRedirects: 0 });
-			expect(r.headers()["cache-control"] ?? "").toContain("no-store");
+			const valor = r.headers()["cache-control"] ?? "";
+			expect(valor).toContain("no-store");
+			expect(valor).toContain("private");
 		});
 	}
+
+	test("los estáticos versionados conservan su caché inmutable", async ({ request }) => {
+		const html = await (await request.get("/")).text();
+		const estatico = /\/_next\/static\/[^"]+\.js/.exec(html)?.[0];
+		expect(estatico).toBeTruthy();
+		expect((await request.get(estatico!)).headers()["cache-control"]).toContain("immutable");
+	});
 });
 
 // Paso 2.2: poweredByHeader: false.

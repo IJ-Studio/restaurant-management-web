@@ -14,7 +14,7 @@ export default function IdleLogout() {
     timerRef.current = setTimeout(async () => {
       try {
         // Al no usar Firebase, solo llamamos al backend para limpiar cookie de sesión
-        await fetch("/api/logout", { method: "POST" });
+        await fetch("/api/logout", { cache: "no-store", method: "POST" });
         router.push("/login");
       } catch (err) {
         console.error("Error cerrando sesión por inactividad:", err);

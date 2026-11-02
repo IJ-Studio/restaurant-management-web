@@ -37,7 +37,7 @@ export default function ReservationForm({ onSuccess }: Props) {
   useEffect(() => {
     const checkUserSession = async () => {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
 
