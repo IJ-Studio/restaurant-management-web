@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
 import { useRouter, usePathname } from "next/navigation";
+import { useCerrarSesion } from "@/lib/sesion/cerrar-sesion";
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -122,15 +123,11 @@ export default function AdminSidebar({ activePage, user, onLogout }: AdminSideba
   const page = activePage || pathname?.split('/').pop() || '';
   const is = (k: string) => page === k;
 
+  // Cierre de sesión único (PLAN 2.14).
+  const cerrarSesion = useCerrarSesion();
   const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { cache: "no-store", method: "POST" });
-    } catch {
-      /* */
-    }
-    if (typeof window !== "undefined") localStorage.removeItem("user");
     if (onLogout) onLogout();
-    router.push("/login");
+    await cerrarSesion();
   };
 
   // Efecto para medir el ancho real del sidebar y pasarlo como variable CSS

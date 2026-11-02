@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useCerrarSesion } from '@/lib/sesion/cerrar-sesion';
 import { 
   Table2, ClipboardList, LogOut, 
   Bell, CheckCircle2 
@@ -43,10 +44,8 @@ export default function MeseroDashboard() {
     setSettings(SettingsService.getSettings());
   }, []);
 
-  const handleLogout = async () => {
-    localStorage.removeItem('user');
-    window.location.href = '/login';
-  };
+  // Cierre de sesión único (PLAN 2.14).
+  const handleLogout = useCerrarSesion();
 
   const handleCallCajero = (id: string | number) => {
     setCallingId(id);

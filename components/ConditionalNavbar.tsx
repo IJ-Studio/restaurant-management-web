@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useCerrarSesion } from "@/lib/sesion/cerrar-sesion";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Dropdown, { DropdownMenuItem } from "@/components/dropdown";
@@ -9,7 +10,7 @@ import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 
 export default function ConditionalNavbar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const cerrarSesion = useCerrarSesion();
 
   const [user, setUser] = useState<any>(null);
   const [cartCount, setCartCount] = useState<number>(3);
@@ -63,28 +64,10 @@ export default function ConditionalNavbar() {
   const applyOverlay = isMenuRoute && !isProductDetailRoute && !isPedidoRoute && !isCheckoutRoute;
 
   // ─── LÓGICA INTELIGENTE DE CERRAR SESIÓN ────────────────────────
+  // Cierre de sesión único (PLAN 2.14): limpia todo y lleva a /login.
   const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { cache: "no-store", method: "POST" });
-    } catch (error) {
-      console.error("Error al cerrar sesión mediante API:", error);
-    }
-
-    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    localStorage.removeItem("authToken");
     setUser(null);
-
-    const rutaActual = pathname || "/";
-    const esRutaProtegida =
-      rutaActual.startsWith("/dashboard") ||
-      rutaActual.startsWith("/profile") ||
-      rutaActual.startsWith("/settings");
-
-    if (esRutaProtegida) {
-      router.push("/");
-    } else {
-      window.location.reload();
-    }
+    await cerrarSesion();
   };
 
   const toggleTheme = () => actualizar({ tema: isDark ? "claro" : "oscuro" });

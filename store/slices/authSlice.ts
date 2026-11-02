@@ -13,7 +13,7 @@ export const hydrateSession = createAsyncThunk(
   async (_, { dispatch }) => {
     dispatch(setLoading(true));
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
       if (!res.ok) {
         throw new Error("No hay sesión activa");
       }
@@ -54,9 +54,14 @@ const authSlice = createSlice({
       state.loading = false;
       state.error   = null;
     },
+    /** Cierre de sesión (PLAN 2.14): el reductor raíz (store/index.ts) reinicia todo el store. */
+    sesionCerrada() {
+      return initialState;
+    },
   },
 });
 
-export const { setUser, setLoading, setError, clearAuth } = authSlice.actions;
+export const { setUser, setLoading, setError, clearAuth, sesionCerrada } = authSlice.actions;
+export { initialState as estadoInicialAuth };
 export default authSlice.reducer;
 

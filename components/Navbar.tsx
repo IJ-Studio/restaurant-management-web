@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/index";
 import { cn } from "@/lib/utils";
@@ -38,7 +38,6 @@ export default function Navbar({
 }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
 
   const { user } = useSelector((state: RootState) => state.auth);
   const isAuthenticated = !!user;
@@ -74,20 +73,7 @@ export default function Navbar({
   const mainLinks = filteredLinks.filter((link) => !link.isAction);
   const actionLinks = filteredLinks.filter((link) => link.isAction);
 
-  // Esta función ya no se usa desde ningún botón externo,
-  // pero la mantenemos por si se reutiliza desde algún otro lado.
-  // En realidad, el cierre de sesión se maneja en ConditionalNavbar (dropdown).
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { cache: "no-store", method: "POST" });
-    } catch (error) {
-      console.error("Error en logout:", error);
-    }
-    document.cookie =
-      "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    localStorage.removeItem("authToken");
-    router.push("/login");
-  };
+  // El cierre de sesión es único (lib/sesion/cerrar-sesion.ts, PLAN 2.14); aquí no se duplica.
 
   const navbarClasses = cn("transition-all top-0 left-0 right-0 w-full", {
     "sticky z-50 bg-surface border-b border-border": !overlay && !isTransparent,

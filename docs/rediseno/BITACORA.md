@@ -6,6 +6,47 @@
 
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
+### 2.14 · Cierre de sesión único (2026-11-02)
+
+**Cambios:**
+- **`lib/sesion/cerrar-sesion.ts`** (nuevo):
+  - `limpiarSesionDelNavegador()`:
+    1. `POST /api/auth/logout` con `cache: "no-store"` (y el `authToken` como `Authorization` si existe, para que el backend pueda invalidarlo).
+    2. Caduca las cookies `session` y `access_token` desde el cliente y borra `authToken`, `user` y `num_mesa`, aunque la llamada falle o no haya red.
+    3. Borra todas las cachés de Cache Storage, como defensa (D-11).
+  - `useCerrarSesion()`: lo anterior, más `dispatch(sesionCerrada())` y `router.replace("/login")`.
+- **Store:**
+  - `authSlice`: acción `sesionCerrada`, que devuelve el estado inicial.
+  - `store/index.ts`: un reductor raíz que, con `sesionCerrada`, devuelve **todos** los slices a su estado inicial, y `crearStore()` para la prueba unitaria.
+  - `hydrateSession` llama a `/api/auth/me` con `cache: "no-store"`: al 2.6 se le pasó `store/`.
+- **Implementaciones sustituidas:**
+  - `AdminSidebar` (la barra de todos los paneles) y `ConditionalNavbar` (menú desplegable) usan el cierre único. `ConditionalNavbar` ya no recarga ni manda al inicio según la ruta: siempre `/login`, como dice el PLAN.
+  - `Navbar` y `admin/reservations`: sus copias no las llamaba ningún botón, así que se retiran.
+  - **Fuera de la lista del PLAN:** `app/dashboard/mesero/page.tsx` tenía una quinta implementación (solo borraba `user`). Se encontró en las pruebas y también usa el cierre único. Es el mismo objetivo del paso; no amplía su alcance.
+- **Cabecera nueva:**
+  - `MenuCuentaConSesion` en `islas.tsx` conecta `MenuCuenta` con el cierre único. `CabeceraSitio` es de servidor y no puede pasar la función.
+  - En el catálogo, `BarraSuperiorPanel` lo recibe como `alCerrarSesion`. Pulsarlo allí cierra de verdad la sesión de desarrollo.
+- **NP-41:** según su código, sin backend la ruta `app/api/auth/logout` devuelve 500 y no caduca las cookies (backend, fuera de alcance). El cliente las caduca igualmente.
+- **NP-42:** `MenuMovil` no ofrece «Cerrar sesión» (el PLAN solo pide `MenuCuenta`).
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Lint: ningún archivo sube su cuenta; `Navbar` (1→0) y `admin/reservations` (6→5) bajan; los nuevos están limpios.
+- `pnpm test:unidad`: 38/38. `sesion.spec.ts` (nueva): tras `setUser` y `setError`, `sesionCerrada` deja el store igual que recién creado.
+- `almacenamiento.spec.ts`, «cierre de sesión» (nuevas, una por rol):
+  - **admin, cajero, mesero y cocina** desde su panel, con el botón propio del mesero incluido; **cliente** desde el menú de la cabecera, con `/api/auth/me` simulado.
+  - Antes de cerrar se siembran `num_mesa` y una caché.
+  - Después: URL `/login`, sin `authToken`, `user` ni `num_mesa`, sin cachés y sin cookies `session` ni `access_token`.
+  - Volver atrás no devuelve la página privada, y entrar de nuevo en ella lleva a `/login`.
+- `sitio.spec.ts` y `paneles.spec.ts` (catálogo, `next dev`): «Cerrar sesión» ya aparece en `MenuCuenta` y en `BarraSuperiorPanel`. 16/16.
+- Build: correcto.
+- Chromium contra `next start`, en dos tandas: 108 + 95 = **203/203**.
+- Sin procesos abiertos.
+
+**No verificado:**
+- Que el backend invalide la sesión con `POST /auth/sign-out`: no hay backend.
+- El estado del store en el navegador tras el cierre: la aplicación no expone el store y no se añadió un acceso solo para pruebas. Lo cubre la prueba unitaria del reductor.
+
 ### 2.13 · URLs seguras (2026-11-02)
 
 **Cambios:**

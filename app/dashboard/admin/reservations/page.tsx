@@ -11,12 +11,6 @@ function getAuthToken(): string | null {
   return localStorage.getItem('authToken');
 }
 
-function clearAuthToken() {
-  document.cookie = 'session=; Max-Age=0; path=/';
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('user');
-}
-
 /* ---------- constantes ---------- */
 const statusOptions = [
   { value: 'pendiente', label: 'Pendiente' },
@@ -129,11 +123,6 @@ export default function AdminReservationsPage() {
     } catch (err) {
       alert('Error al actualizar estado');
     }
-  };
-
-  const handleLogout = () => {
-    clearAuthToken();
-    router.push('/login');
   };
 
   /* spinner mientras se verifica sesión */

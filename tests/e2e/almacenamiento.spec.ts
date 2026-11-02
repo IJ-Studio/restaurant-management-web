@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { RUTAS_PUBLICAS } from "./rutas";
+import { ROLES, archivoSesion } from "./roles";
 
 test.describe.configure({ timeout: 120_000 }); // recorre 19 rutas; la primera visita en next dev compila
 
@@ -81,4 +82,64 @@ test("el service worker antiguo y sus cachés se retiran al recargar", async ({ 
 			})),
 		)
 		.toEqual({ workers: 0, caches: 0 });
+});
+
+// Paso 2.14: el cierre de sesión único no deja nada de la sesión, desde cada rol.
+test.describe("cierre de sesión", () => {
+	test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
+
+	/** Siembra los restos que el cierre debe borrar: num_mesa y una caché. */
+	async function sembrar(page: import("@playwright/test").Page) {
+		await page.evaluate(async () => {
+			localStorage.setItem("num_mesa", "4");
+			await caches.open("restos-de-sesion").then((c) => c.put("/privado", new Response("x")));
+		});
+	}
+
+	async function comprobarLimpio(page: import("@playwright/test").Page, rutaPrivada: string) {
+		await expect(page).toHaveURL(/\/login(\?|$)/);
+		const estado = await page.evaluate(async () => ({
+			claves: ["authToken", "user", "num_mesa"].filter((c) => localStorage.getItem(c) !== null),
+			caches: await caches.keys(),
+		}));
+		expect(estado).toEqual({ claves: [], caches: [] });
+		const cookies = (await page.context().cookies()).map((c) => c.name);
+		expect(cookies.filter((n) => n === "session" || n === "access_token")).toEqual([]);
+		// Volver atrás no devuelve la página privada: se reemplazó por /login en el historial.
+		await page.goBack({ waitUntil: "load" }).catch(() => null);
+		expect(new URL(page.url()).pathname).not.toBe(rutaPrivada);
+		// Y entrar de nuevo a la ruta privada pide iniciar sesión.
+		await page.goto(rutaPrivada, { waitUntil: "load" });
+		await expect(page).toHaveURL(/\/login(\?|$)/);
+	}
+
+	for (const rol of ["admin", "cajero", "mesero", "cocina"] as const) {
+		test(`desde el panel (${rol})`, async ({ browser }) => {
+			const contexto = await browser.newContext({ storageState: archivoSesion(rol), viewport: { width: 1280, height: 900 } });
+			const page = await contexto.newPage();
+			await page.goto("/", { waitUntil: "load" });
+			await page.goto(ROLES[rol].ruta, { waitUntil: "load" });
+			await sembrar(page);
+			// El panel de mesero tiene además su propio botón (el segundo); también usa el cierre único.
+			const botones = page.getByRole("button", { name: "Cerrar Sesión" });
+			await (rol === "mesero" ? botones.last() : botones.first()).click();
+			await comprobarLimpio(page, ROLES[rol].ruta);
+			await contexto.close();
+		});
+	}
+
+	test("desde el menú de la cabecera (cliente)", async ({ browser }) => {
+		const contexto = await browser.newContext({ storageState: archivoSesion("cliente"), viewport: { width: 1280, height: 900 } });
+		const page = await contexto.newPage();
+		await page.route("**/api/auth/me", (ruta) =>
+			ruta.fulfill({ contentType: "application/json", body: JSON.stringify({ user: { name: "Prueba", lastname: "Cliente", email: "prueba@correo.mx" } }) }),
+		);
+		await page.goto("/", { waitUntil: "load" });
+		await page.goto("/menu", { waitUntil: "load" });
+		await sembrar(page);
+		await page.getByText("Prueba Cliente").click();
+		await page.getByRole("menuitem", { name: "Cerrar sesión" }).click();
+		await comprobarLimpio(page, "/profile");
+		await contexto.close();
+	});
 });

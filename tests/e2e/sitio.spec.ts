@@ -45,8 +45,8 @@ test.describe("cabecera y pie del sitio en el catálogo", () => {
 		await expect(menu).toContainText("Ana López");
 		await expect(menu).toContainText("ana.lopez@correo.mx");
 		await expect(menu.getByRole("link", { name: "Tu cuenta" })).toHaveAttribute("href", "/profile");
-		// Sin la implementación única del 2.14 no se ofrece «Cerrar sesión».
-		await expect(menu.getByRole("button", { name: "Cerrar sesión" })).toHaveCount(0);
+		// El cierre de sesión único (2.14) llega a la cabecera.
+		await expect(menu.getByRole("button", { name: "Cerrar sesión" })).toBeVisible();
 		await page.keyboard.press("Escape");
 		await expect(menu).toBeHidden();
 		await expect(prueba(page, "abrir-cuenta")).toBeFocused();
