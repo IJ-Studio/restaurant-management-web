@@ -6,6 +6,37 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### 3.5 · `Dialogo`, `PanelLateral` y `DialogoConfirmacion` (2026-11-01)
+
+**Dependencias:** `@radix-ui/react-dialog@^1.3.1` y `@radix-ui/react-alert-dialog@^1.2.1`, publicadas el 2026-10-12 (la misma familia que el Popover que ya se usaba).
+
+**Componentes** (`components/ui/`):
+- `Dialogo.tsx`: `Dialogo` (centrado, `normal` 32rem o `amplio` 44rem) y `PanelLateral` (`fin` o `inicio`, a toda la altura, con zonas seguras), más `CerrarDialogo` para cerrar desde un botón propio. Controlados o no, con `disparador`, `titulo`, `descripcion` (se enlaza con `aria-describedby`; si no hay, no se apunta a nada), `pie` y `cerrable` (mientras es `false`, ni Esc, ni el velo, ni «Cerrar» lo cierran, y «Cerrar» queda con `aria-disabled`).
+- `DialogoConfirmacion.tsx`: AlertDialog (`role="alertdialog"`). El foco empieza en «Cancelar»; el velo no lo cierra; `destructiva` usa `peligro-confirmar`; mientras `alConfirmar` trabaja, el botón carga y se bloquean «Cancelar» y Esc; si falla, se queda abierto con el error (`role="alert"`). `useConfirmacion()` lo ofrece como promesa, para sustituir `if (!confirm(...)) return;` sin cambiar el flujo.
+- `comun-dialogo.tsx`: título y descripción, `useFocoDeRetorno` y `CuerpoDialogo`.
+- Estilos en `styles/componentes.css`: `.velo-dialogo`, `.caja-dialogo`, `.panel-lateral` y `.cuerpo-dialogo`, con animaciones solo de opacidad y transform y duraciones de token (con movimiento reducido duran 0,01 ms).
+- Token nuevo `--velo-dialogo` (oscuro `rgb(10 8 6 / 0.72)`, claro `rgb(30 24 19 / 0.5)`), añadido primero a DESIGN.md; `tokens.css` sigue siendo copia literal de su bloque (comprobado).
+- Catálogo: sección «Diálogos» (`DemosDialogo.tsx`) con siete demostraciones: guardar con bloqueo de cierre, contenido largo, panel de pedido, menú lateral, confirmación destructiva, confirmación que falla y `useConfirmacion`.
+
+**Decisiones conservadoras:**
+- Título en `--texto-titulo-interfaz` (DM Sans 600), como dice la jerarquía de DESIGN.md para los diálogos. Al principio lo puse en Fraunces y lo corregí al releer la tabla.
+- El botón «Cerrar» va el último en el orden del tabulador (arriba a la derecha a la vista), para que el foco empiece en el contenido o en la primera acción.
+- Sin disparador, Radix devuelve el foco a un `Trigger` que no existe y el foco se perdía (lo detectó la prueba de `useConfirmacion`). `useFocoDeRetorno` guarda el elemento enfocado al abrir y lo devuelve al cerrar.
+- `CuerpoDialogo` solo se vuelve enfocable si su contenido desborda (axe `scrollable-region-focusable`); si cabe, no añade una parada inútil al tabulador.
+- En el `PanelLateral`, las acciones del pie van siempre apiladas a todo el ancho, con la principal arriba: a 125 % no cabían en una fila y se partían de forma desigual (visto en la captura).
+- En la confirmación de demostración, el botón de cancelar dice «Conservar reserva» y no «Cancelar», para no chocar con «Cancelar reserva».
+- Al cargar, el nombre accesible del botón pasa a «Cancelando…» (la etiqueta se oculta); las pruebas lo localizan por su posición.
+
+**Verificación** (Chromium contra `next dev`):
+- `dialogos.spec.ts` (nueva) + `catalogo.spec.ts`: **26/26** (1 omitida: el 404 de producción). En la primera tanda salieron 10 fallos. Siete eran de las propias pruebas (`innerText` en mayúsculas por `text-transform`, un clic que Playwright no da sobre `aria-disabled` y el nombre del botón que cambia al cargar). Tres eran del código y se corrigieron: la vuelta del foco sin disparador, el cuerpo desplazable no enfocable y un desborde a 360 px por la etiqueta larga de un disparador del catálogo.
+- Cubren la trampa de foco (Tab y Mayús+Tab), Esc, la vuelta del foco, la página de detrás inerte para los lectores y sin desplazamiento, el bloqueo de cierre mientras guarda, el clic en el velo (cierra el diálogo y no la confirmación), el cuerpo desplazable con `overscroll-behavior: contain` y el pie a la vista a 390 × 640, la posición del panel en sus dos lados, la carga y el error de la confirmación, `useConfirmacion`, el movimiento reducido y el apilado a 360 px con texto al 125 %.
+- axe sin violaciones (WCAG 2.2 AA) y contraste de texto ≥ 4,5:1 e iconos ≥ 3:1 con **cada diálogo abierto**, en los dos temas y al 100 % y 125 %. Las capturas están en `test-results/catalogo/dialogos/`.
+- Typecheck 0. Lint de los archivos tocados limpio.
+
+**No verificado:** Firefox y WebKit (quedan para el cierre de la fase 3) y lectores de pantalla reales (fase 7).
+
+**Visto de paso (para el 3.9):** en `.contraetiqueta`, los filetes de `dt` y `dd` no se alinean cuando las dos celdas tienen distinto alto (queda un escalón en la línea). Es anterior a este paso.
+
 ### 3.1 · Validación con zod (2026-11-01) — D-05
 
 **Dependencia:** `zod@^4.6.7`, publicada el 2026-10-12. Es la única librería de validación del front. Ya estaba en el lockfile la 3.25 como dependencia transitiva de ESLint; ahora entra como dependencia directa.

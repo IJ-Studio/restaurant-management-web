@@ -139,4 +139,106 @@
   :root[data-movimiento="reducido"] .aparece-al-entrar[data-visible="false"] {
     transform: none;
   }
+
+
+  /* Diálogos y panel lateral (DESIGN.md § Otros componentes base). Solo se animan la opacidad
+     y el transform; las duraciones son tokens, así que con movimiento reducido duran 0,01 ms
+     y Radix sigue recibiendo el fin de la animación para desmontar. */
+  .velo-dialogo {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--velo-dialogo);
+  }
+  .velo-dialogo[data-state="open"] {
+    animation: velo-entra var(--duracion-media) var(--ease-salida);
+  }
+  .velo-dialogo[data-state="closed"] {
+    animation: velo-sale var(--duracion-breve) var(--ease-estandar) forwards;
+  }
+
+  .caja-dialogo {
+    position: fixed;
+    z-index: 201;
+    inset: 0;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    block-size: fit-content;
+    inline-size: min(32rem, 100% - 2 * var(--margen-pagina));
+    max-block-size: calc(
+      100dvh - 2 * var(--margen-pagina) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+    background: var(--color-superficie-elevada);
+    color: var(--color-texto-principal);
+    border: var(--grosor-filete) solid var(--color-borde-sutil);
+    border-radius: var(--radius-dialogo);
+    box-shadow: var(--shadow-flotante);
+    outline: none;
+  }
+  .caja-dialogo[data-ancho="amplio"] {
+    inline-size: min(44rem, 100% - 2 * var(--margen-pagina));
+  }
+  .caja-dialogo[data-state="open"] {
+    animation: dialogo-entra var(--duracion-media) var(--ease-salida);
+  }
+  .caja-dialogo[data-state="closed"] {
+    animation: dialogo-sale var(--duracion-breve) var(--ease-estandar) forwards;
+  }
+
+  .panel-lateral {
+    position: fixed;
+    z-index: 201;
+    inset-block: 0;
+    inset-inline-end: 0;
+    display: flex;
+    flex-direction: column;
+    inline-size: min(24rem, 100vw - 3rem);
+    padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+    padding-inline-end: env(safe-area-inset-right, 0px);
+    background: var(--color-superficie-elevada);
+    color: var(--color-texto-principal);
+    border-inline-start: var(--grosor-filete) solid var(--color-borde-sutil);
+    box-shadow: var(--shadow-flotante);
+    outline: none;
+  }
+  .panel-lateral[data-lado="inicio"] {
+    inset-inline: 0 auto;
+    padding-inline: env(safe-area-inset-left, 0px) 0;
+    border-inline-start: 0;
+    border-inline-end: var(--grosor-filete) solid var(--color-borde-sutil);
+  }
+  .panel-lateral[data-state="open"] {
+    animation: panel-entra-fin var(--duracion-media) var(--ease-salida);
+  }
+  .panel-lateral[data-state="closed"] {
+    animation: panel-sale-fin var(--duracion-breve) var(--ease-estandar) forwards;
+  }
+  .panel-lateral[data-lado="inicio"][data-state="open"] {
+    animation-name: panel-entra-inicio;
+  }
+  .panel-lateral[data-lado="inicio"][data-state="closed"] {
+    animation-name: panel-sale-inicio;
+  }
+
+  /* Cuerpo desplazable: el desplazamiento no se encadena a la página de detrás. */
+  .cuerpo-dialogo {
+    min-block-size: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* Si desborda, se enfoca para desplazarlo con el teclado; el anillo va por dentro para no recortarse. */
+  .cuerpo-dialogo:focus-visible {
+    outline-offset: -2px;
+  }
 }
+
+@keyframes velo-entra { from { opacity: 0; } }
+@keyframes velo-sale { to { opacity: 0; } }
+@keyframes dialogo-entra { from { opacity: 0; transform: scale(0.98); } }
+@keyframes dialogo-sale { to { opacity: 0; transform: scale(0.98); } }
+@keyframes panel-entra-fin { from { transform: translateX(100%); } }
+@keyframes panel-sale-fin { to { transform: translateX(100%); } }
+@keyframes panel-entra-inicio { from { transform: translateX(-100%); } }
+@keyframes panel-sale-inicio { to { transform: translateX(-100%); } }

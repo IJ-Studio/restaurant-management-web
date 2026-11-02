@@ -421,6 +421,7 @@ En el tema oscuro, la profundidad se expresa **con el tono de la superficie**, n
 | `--sombra-flotante` | `0 16px 40px rgb(0 0 0 / 0.5)` | `0 16px 40px rgb(30 24 19 / 0.14)` | Diálogos, menús desplegables, panel lateral |
 | `--sombra-cabecera` | `0 1px 0 var(--color-borde-sutil)` | igual | Cabecera fija al hacer scroll |
 | `--velo-fotografia` | `linear-gradient(to top, rgb(20 16 12 / 0.92) 0%, rgb(20 16 12 / 0.6) 45%, rgb(20 16 12 / 0.2) 100%)` | igual (la foto siempre lleva el velo oscuro) | Texto sobre fotografía |
+| `--velo-dialogo` | `rgb(10 8 6 / 0.72)` | `rgb(30 24 19 / 0.5)` | Velo opaco, sin desenfoque, detrás de diálogos y panel lateral |
 
 ### Named Rules
 
@@ -525,6 +526,11 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 ### Otros componentes base
 
 - **`Dialogo`** y **`PanelLateral`** (Radix): trampa de foco, `overscroll-behavior: contain`, cierre con Esc y un botón con nombre accesible. Sustituyen a `alert()` y `confirm()`.
+  - **Caja:** `--color-superficie-elevada` (lo más alto de la escala de tonos), filete `--color-borde-sutil`, `--radio-dialogo` y `--sombra-flotante`, sobre `--velo-dialogo` (sin desenfoque). Título en `--texto-titulo-interfaz` (DM Sans 600, como manda la jerarquía); descripción en `--texto-pequeno` y `--texto-secundario`. Si el cuerpo no cabe, se puede enfocar para desplazarlo con el teclado. Sin disparador (diálogo controlado o `useConfirmacion`), el foco vuelve al elemento que lo tenía al abrir.
+  - **`Dialogo`:** centrado, ancho `normal` (32rem) o `amplio` (44rem), alto máximo de la pantalla menos el margen y las zonas seguras. Solo se desplaza el cuerpo; cabecera y pie quedan fijos, y el pie lleva un filete sutil encima. En móvil, los botones del pie se apilan a todo el ancho con la acción principal arriba. El botón «Cerrar» (fantasma, solo icono) va arriba a la derecha, pero es el último en el orden del tabulador, para que el foco empiece en el contenido. Mientras guarda, `cerrable={false}` bloquea Esc, el velo y «Cerrar».
+  - **`PanelLateral`:** a toda la altura, pegado al lado `fin` (por defecto) o `inicio`, con ancho `min(24rem, 100vw − 3rem)` y relleno que suma `env(safe-area-inset-*)`. El cierre va en la cabecera y las acciones del pie van siempre apiladas a todo el ancho, con la principal arriba.
+  - **`DialogoConfirmacion`** (AlertDialog de Radix, `role="alertdialog"`): el foco empieza en «Cancelar»; ni el velo ni un clic fuera lo cierran. `destructiva` usa `peligro-confirmar`. Mientras confirma, el botón carga, «Cancelar» y Esc quedan bloqueados, y si falla se queda abierto con el error (`role="alert"`, `CircleAlert`) junto a los botones. `useConfirmacion()` lo ofrece como promesa (`await confirmar({...})`), para sustituir a `confirm()` sin cambiar el flujo.
+  - **Movimiento:** el velo aparece con opacidad; el diálogo, con opacidad y escala 0,98 → 1; el panel, con un desplazamiento desde su lado. `--duracion-media` y `--curva-salida` al abrir, `--duracion-breve` y `--curva-estandar` al cerrar; con movimiento reducido duran 0,01 ms.
 - **`Aviso`**: en línea, con `role="status"` o `role="alert"` según la gravedad.
 - **`Notificacion`**: región con `aria-live="polite"`.
 - **`Tabla`**: `<table>` semántica con `<caption>` oculto para lectores.
@@ -654,6 +660,7 @@ El movimiento es sobrio: confirma, nunca adorna.
 
   --sombra-cabecera: 0 1px 0 var(--color-borde-sutil);
   --velo-fotografia: linear-gradient(to top, rgb(20 16 12 / 0.92) 0%, rgb(20 16 12 / 0.6) 45%, rgb(20 16 12 / 0.2) 100%);
+  --velo-dialogo: rgb(10 8 6 / 0.72);
 
   --duracion-instantanea: 100ms;
   --duracion-breve: 180ms;
@@ -685,6 +692,7 @@ El movimiento es sobrio: confirma, nunca adorna.
   --color-grafica-3: #AE3B4C;
   --color-grafica-4: #60A563;
   --shadow-flotante: 0 16px 40px rgb(30 24 19 / 0.14);
+  --velo-dialogo: rgb(30 24 19 / 0.5);
 }
 
 :root[data-tamano-texto="grande"] { font-size: 112.5%; }
@@ -702,7 +710,7 @@ El movimiento es sobrio: confirma, nunca adorna.
 - El tema claro **solo redefine las variables**, así que las utilidades no cambian. Se elimina la variante `dark:` y no se escriben clases condicionales por tema.
 - En `styles/globals.css` se declara `@custom-variant dark (&:where(:root:not([data-tema="claro"]), :root:not([data-tema="claro"]) *));` únicamente como red de seguridad durante la migración: las clases `dark:` heredadas se aplican mientras el tema no sea claro, porque el oscuro es el tema por defecto y no lleva atributo. Se retira con los alias temporales (PLAN 5.20).
 
-**Clases explícitas** (en `styles/componentes.css`, capa `@layer components`): `.contenedor-pagina`, `.seccion-landing`, `.etiqueta-seccion`, `.filete-doble`, `.contraetiqueta`, `.texto-cifra-destacada`, `.numeros-tabulares`, `.enlace-subrayado`, `.area-tactil-minima`, `.solo-lectores`, `.salto-al-contenido`, `.titulo-equilibrado`, `.aparece-al-entrar`. Cada nombre dice lo que hace; no se crean clases genéricas tipo `.card2` o `.btn-x`.
+**Clases explícitas** (en `styles/componentes.css`, capa `@layer components`): `.contenedor-pagina`, `.seccion-landing`, `.etiqueta-seccion`, `.filete-doble`, `.contraetiqueta`, `.texto-cifra-destacada`, `.numeros-tabulares`, `.enlace-subrayado`, `.area-tactil-minima`, `.solo-lectores`, `.salto-al-contenido`, `.titulo-equilibrado`, `.aparece-al-entrar`, `.velo-dialogo`, `.caja-dialogo`, `.panel-lateral` y `.cuerpo-dialogo`. Cada nombre dice lo que hace; no se crean clases genéricas tipo `.card2` o `.btn-x`.
 
 ## Do's and Don'ts
 
