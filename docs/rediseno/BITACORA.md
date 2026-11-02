@@ -6,6 +6,21 @@
 
 ## Fase 3 · Componentes reutilizables
 
+### Script que rechaza caracteres invisibles (2026-11-01)
+
+A raíz de los escapes `\uXXXX` que la herramienta de escritura convirtió en caracteres literales durante el 3.1 (ver su entrada), se añade una comprobación automática. No es un paso del PLAN.
+
+- `scripts/revisar-caracteres-invisibles.mjs` y `pnpm revisar:invisibles`. Revisa los archivos versionados y los nuevos no ignorados (`git ls-files --cached --others --exclude-standard`) de `app`, `components`, `lib`, `features`, `hooks`, `config`, `tests` y `styles`, y salta los binarios.
+- Falla, con código 1, ante controles bidireccionales (U+202A a U+202E y U+2066 a U+2069), caracteres de ancho cero (U+200B a U+200F) o U+FEFF fuera del inicio del archivo. Solo informa de archivo y línea, una vez por línea, para no volver a imprimir el carácter.
+- Compara los códigos numéricamente, así que el script no contiene escapes ni caracteres invisibles.
+- Va aparte de `revisar-bundle.mjs` porque ese necesita un build y este revisa el código fuente.
+- Se añade a la definición de terminado del PLAN, **solo al cerrar cada fase**.
+
+**Verificación:**
+- En un repositorio temporal: detecta un control bidireccional en un archivo versionado y un carácter de ancho cero en uno nuevo sin añadir; deja pasar el BOM inicial y los archivos ignorados o fuera de las carpetas revisadas; detecta el BOM a mitad de archivo.
+- Sobre la rama: la primera ejecución encontró 2 líneas, `features/dashboard/admin/data/usersMock.tsx:59` y `features/dashboard/cliente/components/tabs/TrackingTab.tsx:43`, previas a la rama (`a032603`). Se corrigen en el commit siguiente.
+- `node --check` y lint del script: limpios.
+
 ### 3.3 · Campos de formulario (2026-11-01)
 
 **Componentes** (`components/ui/`), sin dependencias nuevas:

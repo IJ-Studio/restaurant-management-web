@@ -15,7 +15,7 @@
 | Último paso completado | **3.3 · Campos de formulario** (2026-11-01): `Campo`, `AreaTexto`, `Selector`, `Casilla`, `Interruptor`, `CampoTrampa` y `useEnvioFormulario`, con su sección en el catálogo. Detalle en [`BITACORA.md`](BITACORA.md). |
 | Bloqueo | **Revisión del usuario** de los pasos 3.1, 3.5 y 3.3 en el catálogo (`next dev` → `/catalogo#campos` y `#dialogo`). |
 | Siguiente paso | Esperar la revisión. Después, el resto de la fase 3 en el orden que indique el usuario (quedan 3.4, de `Aviso` y `Notificacion`, y 3.6–3.14). Al cerrar la fase: Firefox y WebKit para los diálogos y los campos. |
-| Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.1 → 3.5 → 3.3, y parar tras el 3.3; **no adelantar más pasos sin avisar**.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
+| Notas | **Órdenes vigentes del usuario (2026-11-01):**<br>(1) Orden de la fase 3: 3.1 → 3.5 → 3.3, y parar tras el 3.3; **no empezar el 3.4 ni ningún otro paso hasta que el usuario lo indique**.<br>(2) **No lanzar Lighthouse ni scripts de rendimiento** mientras se trabaja; la medición móvil la hace el usuario con el editor cerrado.<br>(3) Un solo proceso pesado a la vez; tras cada tanda de pruebas, comprobar que no quedan procesos hijos propios (Lighthouse, navegadores, servidor).<br>(4) La excepción de `lh3.googleusercontent.com` en `/about` es una sola entrada para los tres motores; la cierra la fase 4.<br>Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
 
@@ -70,6 +70,7 @@
    - Revisión visual de las rutas afectadas en 360, 390, 768, 1024 y 1440 px, en tema oscuro y claro, y con texto al 125 %. Las capturas de Playwright van a `test-results/` (ignorado por git).
    - La skill **impeccable** se usa en cada paso de UI, y los hallazgos de su hook de diseño se resuelven o se justifican en el mensaje del commit.
    - Las skills `vercel-react-best-practices` y `web-design-guidelines` se aplican como lista de comprobación en los pasos de componentes y páginas.
+   - **Solo al cerrar cada fase** (no en cada paso): `pnpm revisar:invisibles` sin hallazgos. Revisa los archivos versionados y los nuevos no ignorados de `app`, `components`, `lib`, `features`, `hooks`, `config`, `tests` y `styles`, y falla ante controles bidireccionales, caracteres de ancho cero o un BOM fuera del inicio. Si una cadena necesita uno de ellos, se escribe como escape.
 6. **Sin regresiones de contenido ni de lógica.** Los textos, los endpoints, los payloads y las URL de ruta no cambian. Si un paso lo necesitara, se detiene y se anota en NOTAS-PENDIENTES.
 
 ### ¿Reestructurar carpetas? Decisión y forma de comprobarlo
