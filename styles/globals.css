@@ -2,11 +2,6 @@
 @import "./tokens.css";
 @import "./componentes.css";
 
-/* Red de seguridad durante la migración: las clases dark: heredadas se aplican
-   mientras el tema no sea claro (el oscuro es el tema por defecto). Se retira
-   junto con los alias temporales (PLAN 5.20). */
-@custom-variant dark (&:where(:root:not([data-tema="claro"]), :root:not([data-tema="claro"]) *));
-
 /* Estados de los componentes de components/ui. Además del estado real, aceptan
    data-demo para que el catálogo de desarrollo los muestre fijos con la misma CSS.
    Un control con aria-disabled no cambia al pasar ni al pulsar. */
@@ -27,22 +22,6 @@
   &[data-demo="pulsado"] {
     @slot;
   }
-}
-
-/* ===== ALIAS TEMPORALES (PLAN 1.4 → se retiran en 5.20) =====
-   Tokens antiguos apuntando a los semánticos, para que toda la app adopte
-   la paleta nueva sin romperse. No usar en código nuevo. */
-@theme {
-  --color-brand: var(--color-acento);
-  --color-brand-dark: var(--color-acento-intenso);
-  --color-surface: var(--color-superficie);
-  --color-text: var(--color-texto-principal);
-  --color-text-sec: var(--color-texto-secundario);
-  --color-text-muted: var(--color-texto-tenue);
-  --color-border: var(--color-borde-sutil);
-  --color-secondary: var(--color-superficie-cafe);
-  --font-display: var(--font-titulos);
-  --font-body: var(--font-texto);
 }
 
 /* ===== ESTILOS BASE ===== */
@@ -104,228 +83,6 @@
   }
 }
 
-/* ===== CLASES HEREDADAS =====
-   Se conservan hasta que sus componentes se sustituyan (fases 3 a 5); aquí solo
-   se cambiaron sus colores a tokens semánticos. */
-@layer components {
-  /* Contenedor principal de páginas auth */
-  .auth-grid {
-    @apply min-h-screen bg-fondo lg:grid lg:grid-cols-[1fr_1.3fr] lg:items-center;
-  }
-
-  /* Wrapper del formulario */
-  .auth-form-wrapper {
-    @apply flex flex-col justify-center px-6 py-12 lg:px-10;
-  }
-
-  .auth-form-inner {
-    @apply mx-auto w-full max-w-sm lg:max-w-md;
-  }
-
-  /* Título de página */
-  .auth-title {
-    @apply text-3xl font-bold text-texto-principal;
-  }
-
-  /* Input con etiqueta flotante */
-  .input-floating {
-    @apply block w-full rounded-lg border border-borde-control bg-superficie py-3.5 px-4 text-texto-principal placeholder:text-texto-tenue focus:outline-none focus:ring-2 focus:ring-foco/50;
-  }
-
-  .input-label {
-    @apply absolute left-4 top-0 -translate-y-1/2 bg-superficie px-1 text-xs text-texto-secundario;
-  }
-
-  /* Botón primario */
-  .btn-primary {
-    @apply flex w-full justify-center rounded-xl px-3 py-3 text-sm font-semibold leading-6 text-texto-sobre-acento shadow-lg transition-all duration-300 bg-acento;
-  }
-  .btn-primary:enabled:hover {
-    @apply bg-acento-intenso -translate-y-0.5;
-  }
-  .btn-primary:enabled:active {
-    @apply translate-y-0;
-  }
-  .btn-primary:disabled {
-    @apply opacity-40 cursor-not-allowed;
-  }
-  .btn-primary--loading {
-    @apply bg-superficie-elevada text-texto-secundario cursor-not-allowed opacity-100;
-  }
-
-  /* Botón secundario */
-  .btn-secondary {
-    @apply flex w-full justify-center rounded-xl px-3 py-2.5 text-sm font-semibold leading-6 text-texto-principal border border-texto-principal shadow-lg transition-all duration-300 bg-transparent;
-  }
-  .btn-secondary:enabled:hover {
-    @apply bg-superficie-cafe;
-  }
-  .btn-secondary:disabled {
-    @apply opacity-40 cursor-not-allowed;
-  }
-
-  /* Separador "o" */
-  .separator {
-    @apply relative my-8;
-  }
-  .separator-line {
-    @apply absolute inset-0 flex items-center;
-  }
-  .separator-line div {
-    @apply w-full border-t border-borde-sutil;
-  }
-  .separator-text {
-    @apply relative flex justify-center text-sm;
-  }
-  .separator-text span {
-    @apply bg-fondo px-4 text-texto-tenue font-light;
-  }
-
-  /* Alertas */
-  .alert-success {
-    @apply mt-4 p-3 rounded-md text-sm font-semibold text-center bg-superficie-elevada text-exito border border-exito;
-  }
-  .alert-error {
-    @apply mt-4 p-3 bg-superficie-elevada text-error border border-error rounded-md text-sm;
-  }
-  .alert-warning {
-    @apply mt-4 p-3 bg-superficie-elevada text-aviso border border-aviso rounded-md text-sm font-semibold text-center;
-  }
-
-  /* Enlace secundario */
-  .link-secondary {
-    @apply font-semibold text-acento hover:underline;
-  }
-
-  .google-btn {
-    @apply flex w-full justify-center rounded-lg border border-borde-control bg-superficie px-4 py-3 text-sm font-medium text-texto-principal shadow-sm hover:bg-superficie-elevada transition-colors duration-200;
-  }
-
-  /* Tarjeta de menú */
-  .menu-card {
-    @apply bg-superficie rounded-[2.5rem] overflow-hidden border border-borde-sutil hover:border-acento/30 hover:shadow-xl transition-all duration-300 cursor-pointer;
-  }
-  .menu-card-image {
-    @apply relative h-52 w-full overflow-hidden;
-  }
-  .menu-card-image img {
-    @apply object-cover group-hover:scale-105 transition-transform duration-500;
-  }
-  .menu-card-tag {
-    @apply absolute top-4 left-4 bg-acento text-texto-sobre-acento text-xs font-bold px-3 py-1 rounded-full;
-  }
-  .menu-card-price {
-    @apply absolute top-4 right-4 bg-fondo/80 backdrop-blur-md px-3 py-1.5 rounded-full font-black text-acento text-sm;
-  }
-  .menu-card-content {
-    @apply p-6;
-  }
-  .menu-card-category {
-    @apply text-xs uppercase tracking-widest text-acento font-bold mb-1;
-  }
-  .menu-card-title {
-    @apply text-lg font-black mb-2 leading-tight;
-  }
-  .menu-card-desc {
-    @apply text-texto-secundario text-xs leading-relaxed mb-4 line-clamp-2;
-  }
-  .menu-card-footer {
-    @apply flex items-center justify-between;
-  }
-  .menu-card-rating {
-    @apply flex items-center gap-1 text-xs text-texto-secundario;
-  }
-  .menu-card-add {
-    @apply w-9 h-9 bg-acento hover:bg-acento-intenso text-texto-sobre-acento rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-md;
-  }
-
-  /* Tarjeta de promoción */
-  .promo-card {
-    @apply min-w-[min(360px,85vw)] bg-gradient-to-br border border-borde-sutil rounded-[2.5rem] p-8 flex-shrink-0 hover:-translate-y-1 transition-all cursor-pointer;
-  }
-  .promo-badge {
-    @apply inline-block bg-acento text-texto-sobre-acento text-xs font-bold px-3 py-1 rounded-full mb-4;
-  }
-  .promo-title {
-    @apply text-2xl font-black mb-3;
-  }
-  .promo-desc {
-    @apply text-texto-secundario text-sm leading-relaxed mb-6;
-  }
-  .promo-price {
-    @apply flex items-baseline gap-3;
-  }
-  .promo-price-new {
-    @apply text-4xl font-black text-acento;
-  }
-  .promo-price-old {
-    @apply text-texto-tenue line-through text-lg;
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-  }
-
-  /* Esqueletos: superficie elevada con pulso de opacidad (sin pulso si el movimiento está reducido). */
-  .skeleton {
-    animation: pulse 2s var(--ease-estandar) infinite;
-    background-color: var(--color-superficie-elevada);
-    border-radius: 0.5rem;
-  }
-  .skeleton-card {
-    background-color: var(--color-superficie-elevada);
-    border-radius: 2.5rem;
-    height: 24rem;
-  }
-  .skeleton-title {
-    height: 2rem;
-    background-color: var(--color-superficie-elevada);
-    border-radius: 0.5rem;
-    width: 75%;
-  }
-  .skeleton-text {
-    height: 1rem;
-    background-color: var(--color-superficie-elevada);
-    border-radius: 0.25rem;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    :root:not([data-movimiento="completo"]) .skeleton {
-      animation: none;
-    }
-  }
-  :root[data-movimiento="reducido"] .skeleton {
-    animation: none;
-  }
-}
-
-/* Animaciones de pantallas heredadas que estaban en <style> en línea, que la CSP con nonce
-   bloquearía (PLAN 2.4). Mismo comportamiento que antes; se retiran al rehacer /about (fase 4) y
-   la caja (fase 5). `spin` no hace falta: Tailwind ya define @keyframes spin igual. */
-@keyframes marquee {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-50%); }
-}
-.animate-marquee-elegant {
-  display: flex;
-  width: max-content;
-  animation: marquee 65s linear infinite;
-}
-.animate-marquee-elegant:hover {
-  animation-play-state: paused;
-}
-@keyframes slideRight {
-  from { width: 0%; }
-}
-
-/* Ilustraciones SVG heredadas de la landing (MolinoAnimado, Plato). Sus estilos estaban en un
-   <style> dentro del SVG, que la CSP bloquearía (PLAN 2.4). Mismas reglas, acotadas a cada dibujo;
-   el relleno llega como variable desde la prop fillColor. */
 /* Molino de la casa (components/marca/MolinoAnimado.tsx, D-21): el relleno es el fondo sobre el
    que va; las aspas y el viento se mueven dos veces y se paran, y nada con movimiento reducido. */
 .molino-animado { --molino-relleno: var(--color-fondo); }
@@ -343,16 +100,9 @@
 .molino-animado .sombra { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.6; }
 .molino-animado .viento { fill: none; stroke: currentColor; stroke-width: 2.5; opacity: 0.4; stroke-dasharray: 120 400; stroke-linecap: round; }
 
-/* Resaltado del título de la portada: el <span> del marcado del API pasa a <em class="resaltado">
-   (PLAN 2.12). Mismo aspecto que las utilidades del <span> por defecto (text-transparent,
-   bg-clip-text, bg-gradient-to-r from-brand via-brand to-yellow-600, uppercase), sin la cursiva de
-   <em>. En CSS explícito: con @apply la regla no llegaba al CSS compilado.
-   Se rehace con la portada en el 4.3. */
+/* Resaltado del marcado del API: el <span> pasa a <em class="resaltado"> (PLAN 2.12). Desde el
+   PLAN 5.20, en el acento de la casa y sin el degradado del naranja antiguo; sin la cursiva de <em>. */
 .resaltado {
   font-style: normal;
-  text-transform: uppercase;
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  background-image: linear-gradient(to right in oklab, var(--color-brand) 0%, var(--color-brand) 50%, var(--color-yellow-600) 100%);
+  color: var(--color-acento);
 }

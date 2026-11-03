@@ -13,6 +13,7 @@ import { Selector } from "@/components/ui/Campo";
 import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
+import { Medidor } from "@/components/ui/graficas/Medidor";
 import { Indicador } from "@/components/ui/Indicador";
 import { Insignia, type TonoInsignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
@@ -49,17 +50,6 @@ const NIVELES: Record<Nivel, { texto: string; tono: TonoInsignia; relleno: strin
 const importe = (n: number) => formatearImporte(n) ?? "—";
 const entero = new Intl.NumberFormat("es-MX");
 const cantidad = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 2 });
-
-/** Barra de nivel respecto al máximo; decorativa, porque la insignia dice lo mismo con texto. */
-function BarraNivel({ p }: { p: Product }) {
-	const pct = p.maxStock > 0 ? Math.max(0, Math.min(100, (p.stock / p.maxStock) * 100)) : 0;
-	return (
-		<svg aria-hidden="true" viewBox="0 0 100 6" preserveAspectRatio="none" className="block h-1.5 w-24 overflow-hidden rounded-full">
-			<rect width="100" height="6" className="fill-borde-sutil" />
-			<rect width={pct} height="6" className={NIVELES[nivel(p)].relleno} />
-		</svg>
-	);
-}
 
 const ESTADOS_FILTRO = [
 	{ valor: "todos", texto: "Todos" },
@@ -136,7 +126,7 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 			celda: (p) => (
 				<span className="flex flex-col items-start gap-1.5">
 					<Insignia tono={NIVELES[nivel(p)].tono}>{NIVELES[nivel(p)].texto}</Insignia>
-					<BarraNivel p={p} />
+					<Medidor valor={p.stock} maximo={p.maxStock} relleno={NIVELES[nivel(p)].relleno} />
 					<span className="text-(length:--texto-pequeno) text-texto-secundario whitespace-nowrap">{`Mín. ${cantidad.format(p.minStock)} · máx. ${cantidad.format(p.maxStock)}`}</span>
 				</span>
 			),

@@ -6,6 +6,45 @@
 
 ## Fase 5 · Administración
 
+### 5.20 · Retirar los alias y las clases heredadas (2026-11-03)
+
+**Cambios:**
+- **`styles/globals.css`: de 358 a 108 líneas.** Fuera:
+  - el bloque de alias del paso 1.4: `--color-brand`, `-brand-dark`, `-surface`, `-text`, `-text-sec`, `-text-muted`, `-border`, `-secondary`, `--font-display` y `--font-body`;
+  - la red de seguridad `@custom-variant dark`;
+  - todas las «clases heredadas»: `.auth-*`, `.input-floating`, `.input-label`, `.btn-primary` y `.btn-secondary`, `.separator*`, `.alert-*`, `.link-secondary`, `.google-btn`, `.menu-card*`, `.promo-*` y `.skeleton*`;
+  - las animaciones `marquee` y `slideRight`.
+  - `.resaltado` (el `<span>` del API) pasa del degradado naranja con `--color-brand` al acento de la casa.
+- **Últimos consumidores de alias:** `InstallPrompt` y `ConnectionStatus` (PWA), montados en todo el sitio, pasan a tokens. Usan `Boton`, `superficie-elevada` y `shadow-flotante`, y los iconos de conexión llevan tono de éxito o aviso.
+  - De paso se corrigieron sus dos errores de lint previos (estado en efecto).
+- **Código muerto retirado** (todo versionado y sin importar):
+  - `features/dashboard/cliente/` (8 archivos, sin ruta);
+  - `components/Button`, `Checkbox`, `FloatingInput`, `PhoneInput`, `PasswordToggleButton`, `PasswordRequirements`, `BackButton` y `SmartImage`;
+  - los mocks `usersMock`, `mockData` y `suppliersMock`;
+  - de `menuMock`, todo salvo el tipo `TagKey`.
+  - **`IdleLogout` se conserva:** nunca se montó, tampoco antes del rediseño, y activarlo es de producto (NP-47).
+- **Barridos (aceptación de 5.20) en `app`, `components`, `features`, `hooks` y `lib`:**
+  - **Hex fuera de `tokens.css`: 0**, salvo el `theme-color` de `lib/preferencias/preferencias.ts`. Esa `<meta>` necesita un color literal; replica `--color-fondo` de cada tema.
+  - Las categorías de ejemplo y la apariencia sin efecto de `restaurantData` pasan a tokens.
+  - **`text-[Npx]`: 0.**
+  - **`style={{` (estilos en línea): 0.**
+    - Las muestras de color de las gráficas pasan a un SVG con `fill` (`Muestra`).
+    - Las alturas dinámicas de la zona y del esqueleto se reservan con un SVG espaciador (`Espaciador`).
+    - La dona se coloca en absoluto sobre él.
+    - `Imagen` sigue pasando su prop `style`, como la API de `next/image`.
+  - **Llamadas a `alert()` y `confirm()`: 0.** Las coincidencias que quedan son textos o comentarios.
+  - **Clases heredadas, `bg-brand`, `text-brand`, `dark:` y blanco sobre acento: 0.**
+  - **Colores por defecto de Tailwind en la UI: 0.** Quedan los valores de `GRADIENT_PRESETS`, que son datos del API (campo `color` de las promociones).
+  - **SVG hechos a mano fuera de `components/marca`:** solo los del sistema de gráficas (`components/ui/graficas`, con el nuevo `Medidor`, adonde pasa la barra de nivel del inventario) y el molino de `Imagen`, que usa los datos de la marca.
+
+**Verificación:**
+- Typecheck limpio. Lint limpio en los archivos tocados, incluidos los dos errores previos de la PWA. Build correcto.
+- Chromium en producción, batería completa en cuatro tandas: administración 191/191, públicas 124 + 90 (134 omitidas, del catálogo) y recorrido 95/95.
+- Catálogo (dev), Chromium: 73 + 68.
+  - La prueba de la leyenda de `graficas.spec` leía `style.background`; ahora lee el `fill` de la muestra.
+
+**No verificado:** Firefox y WebKit (en el cierre de la fase, a continuación).
+
 ### 5.19 · Panel de cocina (2026-11-03)
 
 **Cambios:**

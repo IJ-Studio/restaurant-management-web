@@ -67,16 +67,30 @@ export function useAncho<T extends HTMLElement>() {
 /** Ancho aproximado de un texto de 12 px en DM Sans, para reservar el margen del eje. */
 export const anchoTexto = (texto: string) => texto.length * 7 + 4;
 
+/**
+ * Muestra de color de una serie: un SVG con `fill`, sin estilos en línea (PLAN 5.20). El color es
+ * una variable de token (`var(--color-grafica-N)`), que el atributo de presentación acepta.
+ */
+export function Muestra({ color, forma }: { color: string; forma: "linea" | "bloque" | "corta" }) {
+	const [ancho, alto] = forma === "linea" ? [16, 2] : forma === "corta" ? [12, 2] : [10, 10];
+	return (
+		<svg aria-hidden="true" width={ancho} height={alto} viewBox={`0 0 ${ancho} ${alto}`} className="shrink-0">
+			<rect width={ancho} height={alto} rx={forma === "bloque" ? 2 : 1} fill={color} />
+		</svg>
+	);
+}
+
+/** Reserva un alto que llega como número (la zona de la gráfica) sin estilos en línea. */
+export function Espaciador({ alto }: { alto: number }) {
+	return <svg aria-hidden="true" width="1" height={alto} className="block" />;
+}
+
 export function Leyenda({ series, forma }: { series: { nombre: string; color: string }[]; forma: "linea" | "bloque" }) {
 	return (
 		<ul className="m-0 flex list-none flex-wrap gap-x-5 gap-y-1.5 p-0 text-(length:--texto-pequeno) text-texto-secundario" aria-label="Leyenda">
 			{series.map((s) => (
 				<li key={s.nombre} className="inline-flex items-center gap-2">
-					<span
-						aria-hidden="true"
-						className={cn("shrink-0", forma === "linea" ? "h-0.5 w-4 rounded-full" : "size-2.5 rounded-[2px]")}
-						style={{ background: s.color }}
-					/>
+					<Muestra color={s.color} forma={forma} />
 					{s.nombre}
 				</li>
 			))}
@@ -105,7 +119,7 @@ export function Tooltip({ x, ancho, titulo, filas }: { x: number; ancho: number;
 			<span className="text-texto-secundario">{titulo}</span>
 			{filas.map((f) => (
 				<span key={f.nombre} className="flex items-center gap-2 whitespace-nowrap">
-					<span aria-hidden="true" className="h-0.5 w-3 shrink-0 rounded-full" style={{ background: f.color }} />
+					<Muestra color={f.color} forma="corta" />
 					<strong className="font-semibold text-texto-principal numeros-tabulares">{f.valor}</strong>
 					<span className="text-texto-secundario">{f.nombre}</span>
 				</span>
@@ -198,7 +212,10 @@ export function MarcoGrafica({
 					<span role="status" className="solo-lectores">
 						Cargando…
 					</span>
-					<Esqueleto sobre="superficie" style={{ height: alto + 28 }} className="w-full" />
+					<div className="relative w-full">
+						<Espaciador alto={alto + 28} />
+						<Esqueleto sobre="superficie" className="absolute inset-0 h-full w-full" />
+					</div>
 				</>
 			) : estado === "error" ? (
 				<EstadoError sinMarco nivelTitulo={4} titulo="No se pudo cargar la gráfica" alReintentar={alReintentar} className="py-6" />
@@ -270,8 +287,8 @@ export function ZonaInteractiva({
 				alMover(e.clientX - caja.left, e.clientY - caja.top);
 			}}
 			className="relative w-full rounded-control focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foco"
-			style={{ minHeight: alto }}
 		>
+			<Espaciador alto={alto} />
 			{children}
 			<p aria-live="polite" aria-atomic="true" className="solo-lectores">
 				{anuncio}

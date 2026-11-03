@@ -72,7 +72,8 @@ test.describe("indicadores y gráficas del catálogo", () => {
 		await abrir(page);
 		const leyenda = prueba(page, "grafica-barras-series").getByRole("list", { name: "Leyenda" });
 		await expect(leyenda.getByRole("listitem")).toHaveText(["En mesa", "A domicilio", "Para llevar", "Eventos"]);
-		const colores = await leyenda.locator("li > span").evaluateAll((s) => s.map((e) => (e as HTMLElement).style.background));
+		// La muestra es un SVG con `fill` (PLAN 5.20: sin estilos en línea).
+		const colores = await leyenda.locator("li > svg rect").evaluateAll((s) => s.map((e) => e.getAttribute("fill")));
 		expect(colores).toEqual([1, 2, 3, 4].map((n) => `var(--color-grafica-${n})`));
 		await expect(prueba(page, "grafica-linea-series").getByRole("list", { name: "Leyenda" }).getByRole("listitem")).toHaveCount(3);
 	});

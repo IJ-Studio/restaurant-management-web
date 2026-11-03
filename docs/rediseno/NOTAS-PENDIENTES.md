@@ -59,6 +59,7 @@
 | NP-44 | El API no da las cifras que pide el inicio de administración | Backend / indicadores | Media |
 | NP-45 | Caja, propinas y facturas sin backend; las acciones de factura no existían | Backend / producto | Media |
 | NP-46 | Carta del panel: subida de imágenes con preset de marcador y cambios que no llegan al servidor | Backend / configuración | Alta |
+| NP-47 | El cierre de sesión por inactividad (`IdleLogout`) nunca se monta | Producto / seguridad | Media |
 
 ---
 
@@ -605,3 +606,11 @@
 - **Solución sugerida:** que el backend firme las subidas (o dé el preset correcto); con eso, un cargador propio que pase `verificarArchivo(archivo, "imagen")` antes de subir. Para la disponibilidad y el borrado, conectar los `PATCH` y `DELETE` de `/platillos/:id`. Es un cambio de lógica y de backend, fuera del alcance.
 - **Prioridad:** Alta.
 - **Criterio de aceptación:** una imagen sube a `dcb1tspbj` con la firma comprobada antes, y disponibilidad y borrado persisten tras recargar.
+
+## NP-47 · El cierre de sesión por inactividad (`IdleLogout`) nunca se monta
+
+- **Archivos y rutas afectados:** `components/IdleLogout.tsx`; los layouts que podrían montarlo (`app/dashboard/layout.tsx` y el de la parte pública).
+- **Problema:** el componente cierra la sesión tras 15 minutos sin actividad, pero ningún archivo lo importa, ni antes del rediseño (`3775918`) ni ahora. Al limpiar los componentes sin uso en 5.20 se conservó, porque es una función de seguridad y activarla es una decisión de producto.
+- **Solución sugerida:** decidir si se activa y dónde (¿solo en los paneles?, ¿también para clientes?) y con qué aviso previo. Después, montarlo en el layout que toque y pasarlo al lenguaje del sitio (`CargadorMarca` o una notificación «Cerramos tu sesión por inactividad»).
+- **Prioridad:** Media.
+- **Criterio de aceptación:** la sesión del panel se cierra a los 15 minutos de inactividad, con aviso, o hay una decisión escrita de no hacerlo.

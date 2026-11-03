@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 5 en curso** (2026-11-03). Fases 0, 1, 2 (salvo 2.5), 3 y 4 cerradas. Catálogo aprobado por el usuario: referencia de estilo obligatoria. |
 | Rama activa | `feature/rediseno-web-admin` (sale de `feature/rediseno-web-publico`, `e64cc8b`) |
-| Último paso completado | 5.19 · Cocina. |
+| Último paso completado | 5.20 · Retirar alias y clases heredadas. |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) sigue sin ejecutarse**: pendiente de la aprobación del usuario. |
-| Siguiente paso | 5.20 · Retirar alias y clases heredadas. |
+| Siguiente paso | Cierre de la fase 5 (verificación completa). |
 | Notas | **Órdenes vigentes (2026-11-03):** fases 4 → 5 → 6 → 7 (solo lo comprobable sin el usuario), con ramas `publico` → `admin` → `pulido` → `auditoria`, cada una desde la anterior; D-17 a D-21; excepciones autorizadas fuera del PLAN, cada una en su commit: retirar `firebase-admin` si nada lo importa (NP-38) y que `/api/auth/logout` caduque siempre las cookies (NP-41); nunca `images.unsplash.com`; sin push, pull, fetch, rebase ni fusiones; sin `.env`; sin dependencias fuera del PLAN; sin Lighthouse ni scripts de rendimiento; quedan para el usuario 2.5, 7.3, lectores de pantalla y dispositivos reales. Decisiones anteriores: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -739,7 +739,7 @@ Las pruebas usan la API simulada del paso 0.7. Los endpoints no cambian.
 - [x] **5.19 · Cocina** (tablet o monitor, lectura a distancia)
   - **Commit:** `feat(cocina): panel de comandas`
 
-- [ ] **5.20 · Retirar los alias y las clases heredadas**
+- [x] **5.20 · Retirar los alias y las clases heredadas**
   - **Inventario de lo temporal creado en 1.4** (todo en `styles/globals.css`). **Retirada prevista: paso 5.20, al cerrar la fase 5 (`feature/rediseno-web-admin`).** El PLAN no tiene calendario: la fecha se fija al abrir la fase 5. Nada de esto se usa en código nuevo.
 
     | Alias | Apunta a | Usos al crearlo |

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, Share, X } from "lucide-react";
+import { Boton } from "@/components/ui/Boton";
 
 const DISMISS_KEY = "pwa-install-dismissed";
 
@@ -52,6 +53,7 @@ export default function InstallPrompt() {
     if (isStandalone() || descartado) return;
 
     if (isIos()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- el sistema solo se conoce en el navegador, al montar
       setShowIosHint(true);
       return;
     }
@@ -90,44 +92,34 @@ export default function InstallPrompt() {
     <div
       role="dialog"
       aria-label="Instalar aplicación"
-      className="fixed inset-x-4 bottom-4 z-[60] mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-[var(--color-text)] shadow-2xl sm:inset-x-auto sm:right-6"
+      className="fixed inset-x-4 bottom-4 z-[60] mx-auto flex max-w-md items-center gap-3 rounded-tarjeta border border-borde-sutil bg-superficie-elevada p-4 text-texto-principal shadow-flotante sm:inset-x-auto sm:right-6"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/icons/icon-192.png" alt="" width={44} height={44} className="shrink-0 rounded-xl" />
+      <img src="/icons/icon-192.png" alt="" width={44} height={44} className="shrink-0 rounded-control" />
 
-      <div className="min-w-0 flex-1 text-sm">
-        <p className="font-bold">Instala El Quijote</p>
+      <div className="min-w-0 flex-1 text-(length:--texto-pequeno)">
+        <p className="m-0 font-semibold">Instala El Quijote</p>
         {showIosHint ? (
-          <p className="text-[var(--color-text-sec)]">
+          <p className="m-0 text-texto-secundario">
             Toca <Share className="inline h-4 w-4 align-text-bottom" aria-label="Compartir" /> y
             luego «Agregar a inicio».
           </p>
         ) : (
-          <p className="text-[var(--color-text-sec)]">
+          <p className="m-0 text-texto-secundario">
             Accede más rápido al menú y a tus pedidos.
           </p>
         )}
       </div>
 
       {deferred && (
-        <button
-          type="button"
-          onClick={install}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--color-brand)] px-3 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90"
-        >
-          <Download className="h-4 w-4" />
+        <Boton tamano="compacto" icono={<Download />} onClick={install} className="shrink-0">
           Instalar
-        </button>
+        </Boton>
       )}
 
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label="Cerrar"
-        className="shrink-0 rounded-lg p-1 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
-      >
-        <X className="h-5 w-5" />
-      </button>
+      <Boton variante="fantasma" tamano="compacto" soloIcono icono={<X />} onClick={dismiss} className="shrink-0">
+        Cerrar
+      </Boton>
     </div>
   );
 }

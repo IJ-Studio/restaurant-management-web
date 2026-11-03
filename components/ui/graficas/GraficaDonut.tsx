@@ -2,6 +2,7 @@
 
 import {
 	COLOR_OTROS,
+	Muestra,
 	MAXIMO_SERIES,
 	MarcoGrafica,
 	Tooltip,
@@ -129,7 +130,7 @@ export function GraficaDonut({
 						alto={DIAMETRO}
 					>
 						{ancho > 0 && (
-							<svg width={DIAMETRO} height={DIAMETRO} aria-hidden="true" className="block font-texto">
+							<svg width={DIAMETRO} height={DIAMETRO} aria-hidden="true" className="absolute inset-x-0 top-0 block font-texto">
 								{/* Una sola parte es el anillo entero: un arco de 360° no se puede trazar con dos puntos iguales. */}
 								{arcos.length === 1 && (
 									<circle cx={r} cy={r} r={r - 2 - GROSOR / 2} fill="none" stroke={arcos[0].color} strokeWidth={GROSOR} />
@@ -168,7 +169,7 @@ export function GraficaDonut({
 							className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-borde-sutil py-2 last:border-b-0 data-activa:text-texto-principal"
 						>
 							<span className="flex min-w-24 flex-1 items-center gap-3">
-								<span aria-hidden="true" className="size-2.5 shrink-0 rounded-[2px]" style={{ background: p.color }} />
+								<Muestra color={p.color} forma="bloque" />
 								<span className="min-w-0 text-texto-secundario [overflow-wrap:anywhere]">{p.nombre}</span>
 							</span>
 							<span className="ms-auto flex items-center gap-3">

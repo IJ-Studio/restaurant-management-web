@@ -226,7 +226,7 @@ export const INITIAL_MENU: MenuCategory[] = [
     id: "entradas",
     name: "Entradas",
     icon: "🥗",
-    color: "#e85d04",
+    color: "var(--color-grafica-1)",
     items: [
       { id: 101, name: "Guacamole Quijote", description: "Receta secreta con totopos", price: 125, category: "entradas", available: true, tags: ["popular", "vegano"], prepTime: 5, image: "/images/menu/guacamole.jpg" },
       { id: 102, name: "Queso Fundido", description: "Con chorizo y tortillas", price: 140, category: "entradas", available: true, prepTime: 8 },
@@ -236,7 +236,7 @@ export const INITIAL_MENU: MenuCategory[] = [
     id: "fuertes",
     name: "Platos Fuertes",
     icon: "🥩",
-    color: "#2563eb",
+    color: "var(--color-grafica-2)",
     items: [
       { id: 201, name: "Corte New York", description: "300g de calidad sonora", price: 450, category: "fuertes", available: true, tags: ["premium"], prepTime: 20 },
       { id: 202, name: "Enchiladas Huastecas", description: "Con cecina y queso fresco", price: 210, category: "fuertes", available: true, tags: ["tradicion"], prepTime: 12 },
@@ -246,7 +246,7 @@ export const INITIAL_MENU: MenuCategory[] = [
     id: "bebidas",
     name: "Bebidas",
     icon: "🍹",
-    color: "#0ea5e9",
+    color: "var(--color-grafica-3)",
     items: [
       { id: 301, name: "Margarita Clásica", description: "Tequila reposado y limón", price: 110, category: "bebidas", available: true, prepTime: 5 },
       { id: 302, name: "Agua de Jamaica", description: "Natural y refrescante", price: 45, category: "bebidas", available: true, prepTime: 2 },
@@ -330,8 +330,9 @@ export const INITIAL_SETTINGS: SystemSettings = {
   heroButtonText: "Ver Menú Completo",
   featuredCategoryIds: ["entradas", "fuertes", "bebidas"],
   appearance: {
-    primaryColor: "#e85d04",
-    secondaryColor: "#1a1208",
+    // Sin efecto desde el PLAN 5.14 (D-12): la apariencia es la de DESIGN.md. Tokens, no hex.
+    primaryColor: "var(--color-acento)",
+    secondaryColor: "var(--color-fondo)",
     fontDisplay: "Fraunces",
     fontBody: "DM Sans",
     borderRadius: "medium",

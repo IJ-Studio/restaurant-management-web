@@ -15,8 +15,8 @@ export default function ConnectionStatus() {
 
   useEffect(() => {
     if (!online) {
+      // Sin conexión manda `online`; `showBack` solo importa al volver.
       wasOffline.current = true;
-      setShowBack(false);
       return;
     }
     if (!wasOffline.current) return;
@@ -35,17 +35,15 @@ export default function ConnectionStatus() {
       className="pointer-events-none fixed inset-x-0 top-20 z-[70] flex justify-center px-4"
     >
       <div
-        className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold text-white shadow-lg ${
-          online ? "bg-emerald-600" : "bg-[var(--color-secondary)]"
-        }`}
+        className="flex items-center gap-2 rounded-pastilla border border-borde-sutil bg-superficie-elevada px-4 py-2 text-(length:--texto-pequeno) font-semibold text-texto-principal shadow-flotante [&_svg]:size-4 [&_svg]:stroke-[1.5]"
       >
         {online ? (
           <>
-            <Wifi size={14} /> Conexión restablecida
+            <Wifi aria-hidden="true" className="text-exito" /> Conexión restablecida
           </>
         ) : (
           <>
-            <WifiOff size={14} /> Sin conexión · mostrando la versión guardada
+            <WifiOff aria-hidden="true" className="text-aviso" /> Sin conexión: ves la última versión guardada
           </>
         )}
       </div>
