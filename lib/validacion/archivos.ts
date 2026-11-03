@@ -9,6 +9,7 @@
  * Es una defensa del front: el servidor (o Cloudinary, con un preset firmado, NP-08) debe volver
  * a comprobarlo.
  */
+import "./configurar-zod";
 import { z } from "zod";
 
 export type FormatoArchivo = "jpeg" | "png" | "webp" | "avif" | "xlsx";

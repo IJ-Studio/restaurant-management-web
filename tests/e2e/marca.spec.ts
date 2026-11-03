@@ -64,11 +64,13 @@ test.describe("marco público renderizado en el servidor (4.1)", () => {
 		});
 	}
 
-	test("«Saltar al contenido» es lo primero del tabulador y lleva al main", async ({ page }) => {
+	test("«Saltar al contenido» es lo primero del tabulador y lleva al main", async ({ page }, info) => {
 		await simularApi(page);
 		await page.goto("/about", { waitUntil: "load" });
-		await page.keyboard.press("Tab");
 		const enlace = page.getByRole("link", { name: "Saltar al contenido" });
+		// WebKit (como Safari) no lleva el tabulador a los enlaces por defecto: allí se enfoca directamente.
+		if (info.project.name === "webkit") await enlace.focus();
+		else await page.keyboard.press("Tab");
 		await expect(enlace).toBeFocused();
 		await expect(enlace).toBeInViewport();
 		await page.keyboard.press("Enter");

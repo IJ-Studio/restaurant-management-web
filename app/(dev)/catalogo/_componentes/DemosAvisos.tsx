@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Aviso, Boton, ProveedorNotificaciones, useNotificaciones, VistaNotificacion } from "@/components/ui";
+import { Aviso, Boton, useNotificaciones, VistaNotificacion } from "@/components/ui";
 import type { TonoEstado } from "@/components/ui/Aviso";
 import { Muestra } from "./Muestra";
 
@@ -138,9 +138,8 @@ export function DemosAvisos() {
 					Aparecen abajo a la derecha (a todo el ancho en móvil). Información y éxito se van solas a los 6 s, y el tiempo se detiene
 					con el puntero o el foco encima; los errores y las que llevan acción se quedan hasta cerrarlas. Como mucho tres a la vez.
 				</p>
-				<ProveedorNotificaciones>
-					<Disparadores />
-				</ProveedorNotificaciones>
+				{/* Usa el proveedor global de AppProviders: uno solo en toda la app, con una sola región viva. */}
+				<Disparadores />
 				<div className="grid gap-6 md:grid-cols-2">
 					{(["info", "exito", "aviso", "error"] as const).map((tono) => (
 						<div key={tono} className="flex flex-col gap-2">

@@ -6,6 +6,46 @@
 
 ## Fase 4 · Páginas públicas
 
+### Cierre de la fase 4 (2026-11-03)
+
+Los pasos 4.0.1, 4.0.2 y 4.1–4.23 están hechos, más las dos excepciones autorizadas: `firebase-admin` retirado (NP-38) y `/api/auth/logout` caduca siempre las cookies (NP-41). Son 27 commits sobre `3775918`, más este. Por orden del usuario no se lanza Lighthouse.
+
+| Comprobación | Resultado |
+|---|---|
+| Typecheck | 0 errores |
+| Lint global | 127 errores y 67 avisos en 74 archivos, ninguno en la parte pública (`app/(public)`, `app/(auth)`, `app/menu`, `components/{marca,landing,carta,auth,ui}`): todo son pantallas del panel de la fase 5. En el cierre de la fase 3 eran 205 y 104. |
+| Build de producción | Correcto (el último, tras 4.23, con las 42 rutas del recorrido) |
+| `revisar-bundle` | 652 archivos: sin contenido de desarrollo, 0 secretos y 0 mapas de código |
+| Producción (`next start`), batería completa en tres tandas | Chromium 124 + 90 + 95; Firefox 120 + 90 + 95; WebKit 121 + 90 + 95. Ningún fallo. Las omitidas (60–78 por tanda) son las pruebas del catálogo y las que exigen otro motor. |
+| Catálogo (`next dev`), 16 archivos en dos mitades | Chromium 73 + 66 (la prueba de avisos falló en la primera mitad y pasa, repetida junto a la segunda, tras el ajuste de abajo), Firefox 74 + 60, WebKit 74 + 60; 1 omitida por motor en la primera mitad |
+| `pnpm test:unidad` | 49/49 |
+| `pnpm revisar:invisibles` | 0 hallazgos en 409 archivos |
+| `pnpm audit` | 0 críticas / 19 altas / 13 moderadas / 0 bajas (antes de retirar `firebase-admin`: 3/45/31/6) |
+
+**Correcciones del cierre (este commit):**
+- **CSP y zod:**
+  - **Problema:** zod v4 compila sus validadores con `new Function`, y la CSP en modo informe (2.5 sigue sin aplicarse) lo registraba como `eval` en cada formulario.
+  - **Arreglo:** `z.config({ jitless: true })` en un módulo propio, `lib/validacion/configurar-zod.ts`, que se importa antes de zod en cada archivo que valida con él (`campos`, `archivos`, `ReservationSidebar` y la demo de campos). Así no depende del orden de carga de los módulos. Valida igual, sin `eval`. Tras el build: CSP, reservas, registro, acceso, checkout y cuenta, 46/46 en Chromium.
+- **Una sola región viva para las notificaciones:** desde 4.12 `ProveedorNotificaciones` está montado una vez en `AppProviders`. La demo del catálogo (`DemosAvisos`) montaba el suyo dentro, y la página tenía dos `aria-live`. Ahora la demo usa el global.
+- **Pruebas desfasadas por las fases 4.x:**
+  - `csp.spec`: el carrusel de `/about` ya no existe, y su prueba pasa a «ningún `<style>` sin nonce» en `/about`.
+  - `texto-enriquecido.spec`: espera el nuevo `h1` de la portada.
+  - `excepciones.ts`: los avisos de consola del API simulado se llaman ahora `[promociones]` y `[carta]`.
+- **Pruebas que dependían del motor:**
+  - **WebKit aplica la CSP en informe a `addStyleTag`:** `landing.spec` oculta el texto con `style.setProperty` sobre el elemento.
+  - **WebKit no llega a los enlaces con Tab:** `marca.spec` enfoca el enlace de salto con `focus()`.
+  - **El campo de contraseña puede escribirse antes de hidratar:** `registro.spec` reintenta con `toPass()`.
+
+**No verificado en la fase (queda para el usuario o para la fase 7):**
+- **Lighthouse y la medición móvil** (7.3): las lanza el usuario con el editor cerrado.
+- **Lectores de pantalla reales y dispositivos reales:** CargadorMarca, PaginaEstado, el panel de reservas y el dictado.
+- **Dictado por voz** (`BotonDictado`): solo se prueba que el botón no aparece sin `SpeechRecognition`. No se ha probado con un micrófono real.
+- **Stripe real en el checkout:** se prueba con la tarjeta simulada, sin pago real.
+
+**Por confirmar con el restaurante (NP-43):** la contradicción «cocina mexicana» / «cocina española» y los datos de horario, dirección y teléfono que no estén en `config/restaurant.config.ts`.
+
+**Decisiones pendientes del usuario:** 2.5 (aplicar la CSP).
+
 ### 4.23 · Páginas de sistema (2026-11-03) — D-20 y D-21
 
 **Cambios:**

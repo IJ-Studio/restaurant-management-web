@@ -78,12 +78,9 @@ for (const [grupo, rutas, conSesion] of [
 	});
 }
 
-// /about: el carrusel de reseñas conserva su animación, que pasó del <style> en línea al CSS global (2.4).
-test("/about: el carrusel de reseñas sigue animado sin <style> en línea", async ({ page }) => {
+// /about: sin <style> en línea (2.4). El carrusel de reseñas se retiró en el 4.21 (eran inventadas).
+test("/about: ningún <style> sin nonce", async ({ page }) => {
 	await page.goto("/about", { waitUntil: "load" });
-	const carrusel = page.locator(".animate-marquee-elegant").first();
-	await expect(carrusel).toBeAttached();
-	expect(await carrusel.evaluate((e) => getComputedStyle(e).animationName)).toBe("marquee");
 	expect(await page.locator("style:not([nonce])").count()).toBe(0);
 });
 

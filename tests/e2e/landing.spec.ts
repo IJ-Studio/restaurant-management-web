@@ -116,7 +116,15 @@ for (const tema of ["oscuro", "claro"] as const) {
 			});
 			expect(textos.length).toBeGreaterThan(3);
 
-			await page.addStyleTag({ content: ".portada *, .cabecera-sitio * { color: transparent !important; text-shadow: none !important; transition: none !important; }" });
+			// Con estilos de atributo y no con un <style> (WebKit aplica la CSP solo de informe a addStyleTag;
+			// `style-src-attr` sí lo permite, D-02).
+			await page.evaluate(() => {
+				for (const e of document.querySelectorAll<HTMLElement>(".portada *, .cabecera-sitio *")) {
+					e.style.setProperty("color", "transparent", "important");
+					e.style.setProperty("text-shadow", "none", "important");
+					e.style.setProperty("transition", "none", "important");
+				}
+			});
 			const captura = (await page.screenshot({ path: `test-results/landing/portada-sin-texto-${tema}-${ancho}.png` })).toString("base64");
 			const resultados = await page.evaluate(
 				async ({ datos, textos }) => {

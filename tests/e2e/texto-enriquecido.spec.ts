@@ -5,7 +5,7 @@ const TITULO = 'Cocina <span onclick="alert(1)">honesta</span><img src=x onerror
 const DESCRIPCION =
 	'<p>Desde 1996.</p><a href="javascript:alert(4)">enlace</a><svg onload=alert(5)></svg><span onmouseover="alert(6)">casa</span>';
 
-test("la portada muestra el marcado del API como texto, sin ejecutar nada", async ({ page }) => {
+test("la portada no pinta el marcado del API ni ejecuta nada", async ({ page }) => {
 	const dialogos: string[] = [];
 	const errores: string[] = [];
 	page.on("dialog", async (d) => {
@@ -37,12 +37,11 @@ test("la portada muestra el marcado del API como texto, sin ejecutar nada", asyn
 		},
 	);
 	await page.goto("/", { waitUntil: "load" });
+	// Desde el 4.2 la portada es de servidor y su titular es un texto estático (D-17): el marcado de
+	// los ajustes del API ya no llega a la página. La conversión segura la cubre la prueba unitaria.
 	const titulo = page.locator("h1").first();
-	await expect(titulo).toContainText("Cocina honesta");
-	await expect(titulo.locator("em.resaltado")).toHaveText("honesta");
-	await expect(titulo.locator("img, script, [onclick]")).toHaveCount(0);
-	// La descripción (AboutSection) no se ve: la sección está comentada en app/page.tsx y no se
-	// monta. Su conversión la cubre la prueba unitaria con las mismas cargas.
+	await expect(titulo).toHaveText("Cocina española con alma");
+	await expect(page.locator("main img[src='x'], main script:not([nonce]), [onclick]")).toHaveCount(0);
 	await expect(page.locator('a[href^="javascript:"], svg[onload], [onmouseover]')).toHaveCount(0);
 	await page.waitForTimeout(500);
 	expect(dialogos).toEqual([]);

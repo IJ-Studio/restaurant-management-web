@@ -36,8 +36,9 @@ export const EXCEPCIONES: Excepcion[] = [
 	{ tipo: "http", contiene: "localhost:3100/settings", resuelve: "0.7 (API simulada)" },
 	{ tipo: "http", contiene: "/reservations/availability", resuelve: "0.7 (API simulada)" },
 	{ tipo: "http", contiene: "/api/menu/categories", resuelve: "0.7 (API simulada)" },
-	{ tipo: "consola", contiene: "No se pudieron cargar las promociones", resuelve: "0.7 (API simulada)" },
-	{ tipo: "consola", contiene: "Error en Fetch Menu", resuelve: "0.7 (API simulada)" },
+	// Sin backend, /promociones y /menu registran su fallo con registrarError (2.8; mensajes del 4.10 y 4.21).
+	{ tipo: "consola", contiene: "[promociones]", resuelve: "0.7 (API simulada)" },
+	{ tipo: "consola", contiene: "[carta]", resuelve: "0.7 (API simulada)" },
 	{ tipo: "consola", contiene: "status of 401", resuelve: "0.7 (API simulada); /api/auth/me sin sesión" },
 	{ tipo: "consola", contiene: "status of 404", resuelve: "0.7 (API simulada)" },
 ];

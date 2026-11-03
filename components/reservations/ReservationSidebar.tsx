@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import "@/lib/validacion/configurar-zod";
 import { z } from "zod";
 import { ArrowLeft, Check } from "lucide-react";
 import { AnuncioFormulario } from "@/components/ui/AnuncioFormulario";

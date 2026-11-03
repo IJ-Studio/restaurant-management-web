@@ -12,6 +12,7 @@
  * `varchar(n)` de Postgres; el `maxLength` del navegador cuenta unidades UTF-16 y solo difiere
  * con emoji y otros caracteres fuera del plano básico.
  */
+import "./configurar-zod";
 import { z } from "zod";
 import {
 	LONGITUD_MAXIMA_ENTRADA,

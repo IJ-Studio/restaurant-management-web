@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import "@/lib/validacion/configurar-zod";
 import { z } from "zod";
 import { AnuncioFormulario, AreaTexto, Boton, Campo, CampoTrampa, Casilla, Interruptor, MensajeError, Selector } from "@/components/ui";
 import { useEnvioFormulario } from "@/hooks/useEnvioFormulario";

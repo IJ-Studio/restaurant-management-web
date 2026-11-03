@@ -43,8 +43,12 @@ test("requisitos de la contraseña con su estado en texto", async ({ page }) => 
 	await abrir(page);
 	const requisitos = page.getByRole("list", { name: "Requisitos de la contraseña" });
 	await expect(requisitos.getByRole("listitem")).toHaveCount(5);
-	await page.getByLabel("Contraseña", { exact: true }).fill("abc");
-	await expect(requisitos.getByRole("listitem").filter({ hasText: "Una letra minúscula" })).toContainText("(cumplido)");
+	// Si se escribe antes de que React hidrate el campo (WebKit es más lento), el estado no se entera: se reintenta.
+	await expect(async () => {
+		await page.getByLabel("Contraseña", { exact: true }).fill("");
+		await page.getByLabel("Contraseña", { exact: true }).fill("abc");
+		await expect(requisitos.getByRole("listitem").filter({ hasText: "Una letra minúscula" })).toContainText("(cumplido)", { timeout: 1_000 });
+	}).toPass();
 	await expect(requisitos.getByRole("listitem").filter({ hasText: "Un número" })).toContainText("(pendiente)");
 	await expect(page.getByText("La contraseña contiene secuencias predecibles.")).toBeVisible();
 });
