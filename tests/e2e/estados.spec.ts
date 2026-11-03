@@ -76,7 +76,7 @@ test.describe("estados vacío, de carga y de error del catálogo", () => {
 			await expect(c).toHaveText(texto);
 			await expect(c.locator("svg")).toHaveAttribute("aria-hidden", "true");
 			// El texto no se ve: solo lo oye el lector.
-			expect(await c.locator(".sr-only").evaluate((e) => e.getBoundingClientRect().width <= 1)).toBe(true);
+			expect(await c.locator(".solo-lectores").evaluate((e) => e.getBoundingClientRect().width <= 1)).toBe(true);
 		}
 		expect(await animacion(page, '[data-prueba="cargadores"] .cargador-marca__aspas')).toBe("cargador-aspas");
 	});

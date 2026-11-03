@@ -16,6 +16,7 @@ import { DemosGraficas } from "./DemosGraficas";
 import { DemosMarca } from "./DemosMarca";
 import { DemosNavegacion } from "./DemosNavegacion";
 import { DemosPaneles } from "./DemosPaneles";
+import { DemosPaginasEstado } from "./DemosPaginasEstado";
 import { DemosSitio } from "./DemosSitio";
 import { DemosTabla } from "./DemosTabla";
 import { Muestra } from "./Muestra";
@@ -255,6 +256,7 @@ export function Catalogo() {
 							["#sitio", "Cabecera y pie"],
 							["#paneles", "Paneles"],
 							["#buscador", "Buscador"],
+							["#paginas-estado", "Páginas de estado"],
 						].map(([href, texto]) => (
 							<li key={href}>
 								<a href={href} className="enlace-subrayado area-tactil-minima">
@@ -555,6 +557,14 @@ export function Catalogo() {
 				reglas="Campo de búsqueda con etiqueta, lupa y «Borrar búsqueda»; Esc borra. Sobre una lista en memoria, lo escrito se pinta al momento y el filtrado va detrás (useDeferredValue). Contra el API, busca 300 ms después de dejar de escribir y cancela la petición anterior. El resultado se anuncia sin mover el foco."
 			>
 				<DemosBuscador />
+			</Seccion>
+
+			<Seccion
+				id="paginas-estado"
+				titulo="Páginas de estado"
+				reglas="Un solo diseño para 401, 403, 404, 500, error, mantenimiento y sin conexión: ilustración propia del tipo, el código en Fraunces itálica como un número de lote, el filete doble, el título y una salida clara. Nada técnico: ni trazas, ni la ruta pedida, ni mensajes de red. Las ilustraciones son de línea, con un solo detalle en acento, y su gesto se detiene con movimiento reducido."
+			>
+				<DemosPaginasEstado />
 			</Seccion>
 		</main>
 	);

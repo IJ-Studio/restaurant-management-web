@@ -71,7 +71,7 @@ export function CargadorMarca({ texto = "Un momento, por favor…", tamano = "no
 					</g>
 				</g>
 			</svg>
-			<span className="sr-only">{texto}</span>
+			<span className="solo-lectores">{texto}</span>
 		</div>
 	);
 }

@@ -6,6 +6,45 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.0.2 · Ilustraciones de marca y `PaginaEstado` (2026-11-03) — D-21
+
+**Cambios:**
+- **`components/marca/ilustraciones/`** (nuevo): siete ilustraciones de línea sobre un `Lienzo` común (160 × 120, `currentColor`, trazo de 1,5 px que no escala, `aria-hidden`), en el estilo de `MolinoAnimado` y `Plato`, con un solo detalle en acento.
+
+  | Ilustración | Uso | Gesto |
+  |---|---|---|
+  | `PlatoCloche`: plato con la campana levantada | 404, plato y categoría no encontrados | Flota |
+  | `LlaveBodega`: llave con su etiqueta | 401 | Se mece |
+  | `PuertaCandado`: puerta con candado bajo un arco | 403 | El candado se mece |
+  | `OllaHumeante` | 500 | El vapor respira |
+  | `CopaVolcada` | error de segmento y global | La gota cae |
+  | `MesaReloj`: mesa con reloj de arena | mantenimiento | La arena cae |
+  | `MolinoQuieto` | sin conexión | Un hilo de viento que se va |
+
+  - Pesan entre 860 y 1340 bytes renderizadas.
+  - Cada gesto se repite dos o tres veces y vuelve a su sitio (`--duracion-ilustracion`, token nuevo). Con movimiento reducido no se mueve nada.
+- **`components/marca/PaginaEstado.tsx`** (nuevo): ilustración, código en Fraunces itálica de acento con «Código» para lectores, filete doble, título, texto y acciones. Va a pantalla completa o dentro de un límite de error (`pantallaCompleta={false}`, `nivelTitulo={2}`).
+- **`components/marca/textos-estado.ts`:** los textos de las nueve páginas (D-17), sin datos inventados. «Sin conexión» no promete conservar el pedido, porque no se ha comprobado.
+- **Tokens:** `--duracion-vuelta-cargador` (el cargador del 4.0.1 deja de llevar la duración escrita a mano) y `--duracion-ilustracion`.
+- **Catálogo:** nueva sección «Páginas de estado» con los nueve casos y sus salidas reales (inicio, carta, iniciar sesión, reintentar, llamar con el teléfono de la configuración).
+- **DESIGN.md:** `PaginaEstado`, las ilustraciones y los dos tokens de duración.
+
+**Revisión visual** (SVG renderizados en los dos temas y la sección a 360 y 1440 px):
+- La primera versión de la puerta parecía una jaula: se añadieron el arco de piedra, el escalón y los clavos de los herrajes.
+- La copa era pequeña: se escaló.
+- La llave llevaba unos rayos que sobraban: se cambiaron por la etiqueta de bodega.
+- A 360 px la captura de la sección entera es demasiado estrecha para juzgar el detalle; lo cubren axe y la prueba de desbordamiento.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- `paginas-estado.spec.ts` (nueva) y `estados.spec.ts`, Chromium contra `next dev`: 18/18. Comprueban:
+  - que cada ilustración está oculta a los lectores, pesa menos de 4 KB y no lleva colores literales;
+  - la estructura (código con su nombre para lectores, título, salida, nada técnico);
+  - los gestos, y que no hay ninguno con movimiento reducido;
+  - axe sin violaciones y sin desbordar a 360 px (texto al 125 %) y a 1440 px en los dos temas, con el contraste medido de cada muestra en AA.
+- Dos fallos de la primera tanda eran de las pruebas: un `data-prueba` del catálogo coincidía con el de los estados, y volver a la misma URL con ancla no recarga la página.
+- Sin procesos abiertos.
+
 ### 4.0.1 · `CargadorMarca` y estados de carga y de error (2026-11-03) — D-20
 
 **Cambios:**

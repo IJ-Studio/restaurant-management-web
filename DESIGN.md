@@ -616,6 +616,10 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   - `role="status"` con el texto **solo para lectores** (cálido: «Preparando la carta…», «Te llevamos a tu cuenta…»); el SVG va con `aria-hidden`.
   - Tamaños `compacto` (2,5rem, en línea), `normal` (4rem) y `amplio` (6–7rem). `pagina` lo centra en la pantalla menos la cabecera, para `loading.tsx` y las redirecciones. Dentro de un bloque con forma conocida se prefiere `Esqueleto`.
 - **Redacción de los errores (D-20):** cálida, en primera persona del restaurante y sin jerga: nunca códigos, mensajes de red, el texto de la excepción ni «Error al…». Por defecto, `EstadoError` dice «No pudimos mostrar esta parte» y «Suele arreglarse al volver a intentarlo.»; en la parte pública conviene una segunda salida humana («Llamar al restaurante», con el teléfono de `restaurant.config.ts`).
+- **`PaginaEstado`** (`components/marca/`, PLAN 4.0.2, D-21): el único diseño de las páginas de sistema (401, 403, 404, 500, error de segmento y global, mantenimiento, sin conexión, plato o categoría no encontrados).
+  - De arriba abajo, centrado y con `--ancho` máximo de 44rem: la ilustración del tipo (16rem, 18rem desde 768 px), el código en Fraunces itálica de acento a `--texto-titulo-2` (como un número de lote, con «Código» para lectores), el filete doble, el título en Fraunces `--texto-titulo-1` (máx. 22ch), el texto en `--texto-entradilla` y `--texto-secundario` (máx. 48ch) y las acciones: en móvil apiladas a todo el ancho; desde 640 px, en fila.
+  - Ocupa la pantalla menos la cabecera (`pantallaCompleta`) o solo su contenido dentro de un límite de error. Los textos están en `components/marca/textos-estado.ts`.
+- **Ilustraciones de marca** (`components/marca/ilustraciones/`): una por tipo, de línea en `currentColor` con un solo detalle en acento, lienzo de 160 × 120, trazo de 1,5 px que no escala, `aria-hidden` y menos de 4 KB. Plato con la campana levantada (404), llave de bodega con su etiqueta (401), puerta de bodega con candado (403), olla humeante (500), copa volcada (error), mesa a medio preparar con reloj de arena (mantenimiento) y molino con las aspas quietas (sin conexión). Cada una hace un gesto breve (flotar, mecerse, vapor, arena, viento, gota) que se repite dos o tres veces, con `--duracion-ilustracion`, y vuelve a su sitio; con movimiento reducido no se mueve nada.
 - **`PanelAccesibilidad`**: ver más abajo.
 
 ### Iconos
@@ -653,13 +657,15 @@ El movimiento es sobrio: confirma, nunca adorna.
 | `--duracion-breve` | `180ms` | Hover y foco |
 | `--duracion-media` | `240ms` | Diálogos, panel lateral y menús |
 | `--duracion-pausada` | `480ms` | Aparición de secciones al entrar en pantalla (una sola vez) |
+| `--duracion-vuelta-cargador` | `4.8s` | Una vuelta de las aspas de `CargadorMarca` |
+| `--duracion-ilustracion` | `2.4s` | Gesto de las ilustraciones de las páginas de estado |
 | `--curva-salida` | `cubic-bezier(0.22, 1, 0.36, 1)` | Entradas |
 | `--curva-estandar` | `cubic-bezier(0.4, 0, 0.2, 1)` | Cambios de estado |
 
 - **Qué se anima:** solo `transform` y `opacity`, con las propiedades listadas. Nunca `transition: all`.
 - **Aparición de secciones:** opacidad 0→1 y `translateY(12px)` → 0, una vez, con `IntersectionObserver`. Si JavaScript no llega, el contenido es visible.
 - **Diálogos:** opacidad con escala 0,98 → 1.
-- **Prohibido:** sin parallax, sin vídeo en autoplay y sin animaciones en bucle. **Única excepción:** las aspas de `CargadorMarca`, que solo existen mientras algo carga y se detienen con movimiento reducido.
+- **Prohibido:** sin parallax, sin vídeo en autoplay y sin animaciones en bucle. **Única excepción:** las aspas de `CargadorMarca`, que solo existen mientras algo carga y se detienen con movimiento reducido. Las ilustraciones de las páginas de estado repiten su gesto dos o tres veces y se paran.
 - **Movimiento reducido:** con `prefers-reduced-motion: reduce` o `data-movimiento="reducido"`, todas las duraciones pasan a `0.01ms`, desaparecen los desplazamientos (solo cambios de opacidad instantáneos) y el `scroll-behavior` deja de ser `smooth`.
 
 ## Tokens (`styles/tokens.css`) — el único lugar donde se definen valores
@@ -743,6 +749,8 @@ El movimiento es sobrio: confirma, nunca adorna.
   --duracion-breve: 180ms;
   --duracion-media: 240ms;
   --duracion-pausada: 480ms;
+  --duracion-vuelta-cargador: 4.8s;
+  --duracion-ilustracion: 2.4s;
 }
 
 :root[data-tema="claro"] {

@@ -76,6 +76,9 @@
   --duracion-breve: 180ms;
   --duracion-media: 240ms;
   --duracion-pausada: 480ms;
+  /* Solo para el cargador de marca y las ilustraciones (PLAN 4.0.1 y 4.0.2); se detienen con movimiento reducido. */
+  --duracion-vuelta-cargador: 4.8s;
+  --duracion-ilustracion: 2.4s;
 }
 
 :root[data-tema="claro"] {
