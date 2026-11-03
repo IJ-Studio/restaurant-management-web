@@ -57,6 +57,7 @@
 | NP-42 | El menú móvil de la cabecera nueva no ofrece «Cerrar sesión» | Front / navegación | Baja |
 | NP-43 | Posicionamiento y datos por confirmar con el restaurante | Producto / contenido | Alta |
 | NP-44 | El API no da las cifras que pide el inicio de administración | Backend / indicadores | Media |
+| NP-45 | Caja, propinas y facturas sin backend; las acciones de factura no existían | Backend / producto | Media |
 
 ---
 
@@ -582,3 +583,14 @@
   - **Front:** pintar la comparación y sustituir un indicador por el ticket medio.
 - **Prioridad:** Media.
 - **Criterio de aceptación:** el inicio muestra la comparación semanal y el ticket medio con datos del API.
+
+## NP-45 · Caja, propinas y facturas sin backend; las acciones de factura no existían
+
+- **Archivos y rutas afectados:** `/dashboard/admin/finance` y `/dashboard/admin/finance/invoices` (`features/dashboard/admin/finanzas/`, `features/dashboard/admin/facturas/`, `financeMock` e `invoicesMock`).
+- **Problema:**
+  - Las dos pantallas trabajan con datos de ejemplo en memoria: lo registrado se pierde al recargar y las facturas no se timbran.
+  - En el detalle de factura, los botones «PDF», «Enviar» e «Imprimir» no tenían ninguna acción. Se retiraron en 5.5 para no prometer lo que no hace.
+- **Mientras tanto:** las pantallas lo avisan («Pantalla con datos de ejemplo») y llevan la insignia D-13.
+- **Solución sugerida:** endpoints de caja chica, cierres, propinas y facturación con un PAC, y con ellos la descarga del PDF y XML y el envío por correo. Es backend y una decisión de producto.
+- **Prioridad:** Media.
+- **Criterio de aceptación:** las pantallas leen y escriben en el API, y el detalle de factura descarga y envía el CFDI.

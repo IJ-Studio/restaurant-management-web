@@ -1,6 +1,3 @@
-import React from "react";
-import { Clock, CheckCircle2, XCircle } from "lucide-react";
-
 export type InvStatus = "emitida" | "pagada" | "cancelada" | "pendiente";
 export type PayMethod = "efectivo" | "tarjeta" | "transferencia";
 export type CfdiUse = "G03" | "G01" | "P01" | "D10" | "S01";
@@ -45,36 +42,6 @@ export const PAY_FORMS = [
   "04 – Tarjeta de crédito",
   "28 – Tarjeta de débito",
 ];
-
-export const STATUS_CFG: Record<
-  InvStatus,
-  { label: string; colorClass: string; bgClass: string; icon: React.ReactNode }
-> = {
-  emitida: {
-    label: "Emitida",
-    colorClass: "text-blue-600",
-    bgClass: "bg-blue-50 border-blue-200",
-    icon: <Clock size={11} />,
-  },
-  pagada: {
-    label: "Pagada",
-    colorClass: "text-emerald-600",
-    bgClass: "bg-emerald-50 border-emerald-200",
-    icon: <CheckCircle2 size={11} />,
-  },
-  cancelada: {
-    label: "Cancelada",
-    colorClass: "text-red-600",
-    bgClass: "bg-red-50 border-red-200",
-    icon: <XCircle size={11} />,
-  },
-  pendiente: {
-    label: "Pendiente",
-    colorClass: "text-amber-600",
-    bgClass: "bg-amber-50 border-amber-200",
-    icon: <Clock size={11} />,
-  },
-};
 
 export const PAY_CFG: Record<PayMethod, { label: string }> = {
   efectivo: { label: "Efectivo" },

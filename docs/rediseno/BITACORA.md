@@ -6,6 +6,41 @@
 
 ## Fase 5 · Administración
 
+### 5.5 · Facturas (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/finance/invoices/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/admin/facturas/Facturas.tsx`.
+- **Sin endpoint, como antes** (`invoicesMock` en memoria), y ahora avisado: «no se guarda ni se timbra» e insignia D-13 (NP-45).
+- **Migas:** `components/paneles/MigasPanel.tsx`, «Caja y propinas › Facturas», en el antetítulo. Las migas públicas empiezan en «Inicio» de la web y no sirven en el panel.
+- **Indicadores:** facturado como protagonista (sin canceladas), cobrado y por cobrar.
+- **Lista:** `Buscador` (folio, cliente o RFC) y `Selector` de estado, sobre una `Tabla` que pasa a tarjetas por debajo de 768 px.
+  - **El folio es el botón que abre el detalle** («Ver la factura A-0001» para lectores). Una columna de acciones quedaba fuera de la vista en tableta.
+  - El folio y la fecha no se parten.
+- **Detalle en `PanelLateral`:**
+  - Estado, datos fiscales en `Contraetiqueta`, conceptos en `Tabla` y totales.
+  - La nota interna va en `Aviso`.
+  - «Marcar como pagada» y «Cancelar factura». Cancelar pide confirmación del sistema, destructiva y con «Conservarla»; antes era `confirm()`.
+  - Se retiraron «PDF», «Enviar» e «Imprimir», que no hacían nada (NP-45).
+- **Factura nueva (`DialogoFactura`):** misma lógica que `InvoiceModal`.
+  - Valida al enviar: RFC con el esquema `rfc` del paso 3.1, correo opcional con `correoBasicoOpcional`, y cada concepto con descripción, cantidad y precio.
+  - El subtotal, el IVA y el total se ven en vivo.
+  - Los conceptos se añaden y se quitan con un botón que lleva su nombre («Quitar el concepto 2»).
+- **Retirados:** `InvoiceDrawer`, `InvoiceModal` y el `STATUS_CFG` de `invoicesMock`, con sus clases de color fijas.
+- **`RegionDesplazable` pasa a `relative`:**
+  - **Fallo:** el texto `solo-lectores` de la cabecera de acciones va en posición absoluta, y la región no lo contenía. A 768 px desbordaba la página aunque la tabla se recortara bien.
+  - **Alcance:** vale para todas las tablas.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `facturas.spec` (nueva), 9/9; con finanzas, reportes e inicio, 44/44. La nueva comprueba:
+  - migas, búsqueda, filtro y estado vacío;
+  - factura nueva: validación de RFC y conceptos, IVA calculado («$ 1,160.00») y notificación;
+  - detalle y cancelación con la confirmación del sistema;
+  - axe en la página y en el panel, sin desborde, a 360, 768 y 1440 px, en los dos temas.
+- Capturas revisadas: detalle en oscuro a 1440 px, claro a 768 px y oscuro a 360 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.4 · Finanzas: caja y propinas (2026-11-03)
 
 **Cambios:**

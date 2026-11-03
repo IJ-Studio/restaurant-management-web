@@ -28,7 +28,9 @@ export function RegionDesplazable({ className, children, ...resto }: HTMLAttribu
 			role="region"
 			tabIndex={desborda ? 0 : undefined}
 			data-desborda={desborda || undefined}
-			className={cn("overflow-x-auto overscroll-x-contain focus-visible:outline-offset-[-2px]", className)}
+			// `relative`: contiene lo que va en posición absoluta dentro (el texto `solo-lectores` de una
+			// cabecera), que si no desbordaría la página aunque la región lo recorte (PLAN 5.5).
+			className={cn("relative overflow-x-auto overscroll-x-contain focus-visible:outline-offset-[-2px]", className)}
 			{...resto}
 		>
 			{children}
