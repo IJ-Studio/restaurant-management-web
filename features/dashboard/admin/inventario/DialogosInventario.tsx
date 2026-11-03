@@ -39,7 +39,7 @@ const hoy = () => new Date().toISOString().split("T")[0];
 const marcaDeTiempo = () => Date.now();
 
 /** Botones del pie de un formulario de diálogo. */
-function Pie({ formulario, texto, guardando, alCancelar }: { formulario: string; texto: string; guardando: boolean; alCancelar: () => void }) {
+export function Pie({ formulario, texto, guardando, alCancelar }: { formulario: string; texto: string; guardando: boolean; alCancelar: () => void }) {
 	return (
 		<>
 			<Boton variante="secundario" deshabilitado={guardando} onClick={alCancelar}>
@@ -53,7 +53,7 @@ function Pie({ formulario, texto, guardando, alCancelar }: { formulario: string;
 }
 
 /** Estado común: abierto, errores y «guardando», con el envío que espera la promesa. */
-function useDialogo(alGuardar: () => Promise<boolean> | null) {
+export function useDialogo(alGuardar: () => Promise<boolean> | null) {
 	const [abierto, setAbierto] = useState(false);
 	const [errores, setErrores] = useState<Record<string, string>>({});
 	const [guardando, setGuardando] = useState(false);

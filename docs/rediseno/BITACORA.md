@@ -6,6 +6,43 @@
 
 ## Fase 5 · Administración
 
+### 5.8 · Proveedores (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/inventory/suppliers/page.tsx` pasa a ser de servidor** (lee `?vista=proveedores|ordenes`). La pantalla es `features/dashboard/admin/proveedores/Proveedores.tsx`.
+- **Mismo hook** (`useInventory`) y mismos cuerpos hacia `/api/inventory/suppliers` y `/api/inventory/orders`.
+- **Migas:** «Productos y existencias › Proveedores».
+- **Indicadores:** tres; lo comprado como protagonista, órdenes en curso (con las que van en camino) y proveedores activos.
+- **Proveedores:**
+  - `Tarjeta` con su estado en insignia.
+  - `Contraetiqueta` con contacto, teléfono (`tel:`), correo (`mailto:`), entrega («2 días»), pago, órdenes y lo que surte («Jitomate, Cebolla y 3 más»).
+  - Pie con «Hacer pedido» (solo los activos), editar y eliminar.
+  - Antes era un menú «⋮» hecho a mano y la opacidad para los inactivos.
+- **Órdenes:** `Tabla` con buscador, filtro de estado, número de artículos y estado en `Insignia`.
+- **Diálogos** (`DialogosProveedores.tsx`): sustituyen a `SupplierModal` y `OrderModal`.
+  - **Proveedor:** correo validado con `correoBasicoOpcional`, días ≥ 0, y productos que se añaden con Enter o con «Añadir» y se quitan con un botón que lleva su nombre.
+  - **Orden:** solo ofrece los productos que surte el proveedor elegido, como antes, y lo explica si no hay ninguno. Toma el costo del inventario y calcula el total en vivo. El estado se cambia en un `Selector` en lugar de pastillas de colores.
+  - Los dos validan, esperan la respuesta y avisan del resultado.
+- **Operaciones:**
+  - Las notificaciones sustituyen al banner «Error al…».
+  - Eliminar un proveedor o una orden pide confirmación del sistema, destructiva; antes era `confirm()`.
+- **Retirados:** los emojis de las pestañas y las clases de color fijas de `ORDER_STATUS`.
+- **Comunes:** `Pie` y `useDialogo` se exportan desde `DialogosInventario.tsx` para los diálogos con guardado asíncrono.
+- **Probado y descartado:** `Insignia` sin saltos de línea para todo el sitio. Desbordaba el catálogo a 360 px con etiquetas largas, así que solo el estado de las órdenes, que es corto, va en una línea.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `proveedores.spec` (nueva) más todo administración y las públicas con insignias (pedido, producto, carta, categoría, informativas), 134/134. Tras el ajuste final, proveedores, pedido y carta, 38/38. La nueva comprueba:
+  - las migas, las cifras y el teléfono enlazado, y que al inactivo no se le pueda pedir;
+  - la orden: solo productos del proveedor, total y el `POST` exacto;
+  - el proveedor nuevo: correo validado, producto con Enter y `POST`;
+  - eliminar una orden con confirmación y `DELETE ?id=7`;
+  - axe, sin desborde, en proveedores (360, 768 y 1440 px) y órdenes (360 y 1440 px), en los dos temas.
+- Catálogo (dev): catálogo, estados y tabla, 30/30 (1 omitida).
+- Capturas revisadas: proveedores en oscuro a 1440 px y órdenes en claro a 360 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.7 · Inventario (2026-11-03)
 
 **Cambios:**
