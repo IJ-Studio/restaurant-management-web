@@ -172,10 +172,10 @@ test.describe("datos del usuario", () => {
 			}),
 		);
 		await page.goto("/login", { waitUntil: "load" });
-		// El formulario antiguo no asocia sus etiquetas (se rehace en el 4.17): se usa el id.
-		await page.locator("#email").fill("prueba@correo.mx");
-		await page.locator("#password").fill("contrasena-de-prueba");
-		await page.getByRole("button", { name: "Iniciar Sesión" }).click();
+		// Desde el 4.17 las etiquetas están asociadas a sus campos.
+		await page.getByLabel("Correo").fill("prueba@correo.mx");
+		await page.getByLabel("Contraseña", { exact: true }).fill("contrasena-de-prueba");
+		await page.getByRole("button", { name: "Iniciar sesión" }).click();
 		await expect(page).toHaveURL(/\/menu(\?|$)/);
 		const claves = await page.evaluate(() => Object.keys(localStorage));
 		expect(claves).not.toContain("user");

@@ -6,6 +6,43 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.17 · `/login` (2026-11-03)
+
+**Lógica sin cambios:**
+- `POST /api/auth/login` con `{ email, password }`.
+- El token en la cookie `session` y en `authToken` (D-03, hasta NP-04).
+- El usuario solo en el store (2.15).
+- El bloqueo temporal que lee `useLockout` del texto del API.
+- El destino validado tras entrar (2.13).
+- El enlace al registro con la ruta de origen.
+- El fondo configurable de los ajustes, que se sigue leyendo tras montar para que no cambie al hidratar.
+
+**Cambios:**
+- **Errores genéricos (NP-15):**
+  - un 400, 401 o 404 dice siempre «El correo o la contraseña no coinciden»: nunca si la cuenta existe ni el texto del servidor;
+  - un fallo de red u otro estado: «No pudimos iniciar sesión…»;
+  - se conservan el aviso de demasiados intentos (429) y el de bloqueo, que ahora dice «Podrás intentarlo de nuevo en N segundos», con el botón inactivo.
+- **`useEnvioFormulario`** con `esquemaAcceso`, el **campo trampa** y `tiempoMinimoMs={0}` (con autorrelleno, una persona entra en menos de un segundo; decisión del usuario). Impide el **envío doble** y valida el formato del correo sin llamar al API.
+- **Campos del sistema** con etiqueta asociada, `autocomplete` (`email`, `current-password`), `inputmode` y la contraseña revelable.
+- `EncabezadoPublico` («Inicio › Iniciar sesión», «Volver al inicio») y entradilla nueva (D-17).
+- La foto en un marco del sistema, no en la tarjeta redondeada con sombra.
+- **Al entrar:** `CargadorMarca` («Te llevamos a tu cuenta…» para lectores), en lugar de «¡Login exitoso! Redirigiendo...» (D-20).
+- Fuera: `FloatingInput`, `PasswordToggleButton`, `Button`, `BackButton` y las clases `.auth-*`, `.btn-primary` y `.alert-*` en esta página.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `acceso.spec.ts` (nueva, Chromium contra `next start`, con `/api/auth/login` simulado) junto con `almacenamiento.spec.ts`, `imagenes.spec.ts` y `urls.spec.ts`: 30/30. Comprueba:
+  - las etiquetas y el `autocomplete`;
+  - el error genérico, que no repite el texto del API ni dice si la cuenta existe;
+  - el bloqueo con sus segundos y el botón inactivo;
+  - que un correo inválido no llama al API;
+  - el cargador al entrar, sin «Redirigiendo»;
+  - axe y que no desborda a 360 (al 125 %) y 1440 px, en los dos temas.
+- `almacenamiento.spec.ts` usa ya las etiquetas en lugar de los `id`.
+- Revisión visual a 1440 px en oscuro.
+- Sin procesos abiertos.
+
 ### 4.16 · `/reservations` (2026-11-03)
 
 **Lógica sin cambios:**
