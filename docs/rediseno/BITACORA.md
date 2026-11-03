@@ -6,6 +6,23 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.15 · `/menu/pedido/checkout/exito` (2026-11-03) — D-17 y D-20
+
+**Cambios:**
+- **Lógica sin cambios:** busca la factura del pedido (`/facturas/{ordenId}`) y la descarga en PDF o XML en otra pestaña (`noopener,noreferrer`), con las mismas URL.
+- **Interfaz:**
+  - migas, el **sello de la casa** como firma, el filete doble y el `h1` en Fraunces;
+  - las descargas con los botones del sistema y «Ver tu pedido» como acción principal.
+- **Textos (D-17):** «Gracias, tu pedido está pagado» y «Ya lo estamos preparando. Puedes seguir su estado desde tu pedido.». Sustituyen a «¡Pago confirmado!» y a «Te avisaremos cuando salga a reparto», una promesa que nada en el código cumple.
+- **Estados (D-20):** `CargadorMarca` mientras busca la factura y en el `Suspense`, en lugar de «Cargando...» y del giro.
+- Error registrado con `registrarError`.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `checkout.spec.ts`, con la prueba nueva de la confirmación (con sesión de cliente: el proxy protege todo `/menu/pedido`): 9/9. Comprueba el título, la ausencia de «Cargando…», la URL exacta que abre la descarga del PDF, el enlace a tu pedido y axe sin violaciones.
+- Sin procesos abiertos.
+
 ### 4.14 · `/menu/pedido/checkout` (2026-11-03)
 
 **Lógica sin cambios:**

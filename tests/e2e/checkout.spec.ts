@@ -142,3 +142,29 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+// PLAN 4.15: confirmación del pago, con la factura en PDF y XML si existe.
+test("confirmación: sello, mensaje sin promesas y descarga de la factura en otra pestaña", async ({ browser }) => {
+	const contexto = await browser.newContext({ storageState: archivoSesion("cliente") });
+	const page = await contexto.newPage();
+	await page.addInitScript(() => {
+		(window as unknown as { abiertas: string[] }).abiertas = [];
+		window.open = ((url: string) => {
+			(window as unknown as { abiertas: string[] }).abiertas.push(url);
+			return null;
+		}) as typeof window.open;
+	});
+	await page.route(
+		(url) => url.origin === "http://localhost:3100" && url.pathname.startsWith("/facturas/"),
+		(r) => r.fulfill({ status: 200, contentType: "application/json", body: '{"id":1}' }),
+	);
+	await page.goto("/menu/pedido/checkout/exito?ordenId=dom12345", { waitUntil: "load" });
+	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Gracias, tu pedido está pagado");
+	await expect(page.locator("main")).not.toContainText(/Cargando|Te avisaremos/);
+	await page.getByRole("button", { name: "Factura en PDF" }).click();
+	expect(await page.evaluate(() => (window as unknown as { abiertas: string[] }).abiertas)).toEqual(["http://localhost:3100/facturas/dom12345/descargar?tipo=pdf"]);
+	await expect(page.getByRole("link", { name: "Ver tu pedido" })).toHaveAttribute("href", "/menu/pedido?tab=domicilio");
+	const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+	expect(r.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+	await contexto.close();
+});
