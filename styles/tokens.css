@@ -84,6 +84,8 @@
   /* Solo para el cargador de marca y las ilustraciones (PLAN 4.0.1 y 4.0.2); se detienen con movimiento reducido. */
   --duracion-vuelta-cargador: 4.8s;
   --duracion-ilustracion: 2.4s;
+  --duracion-molino-aspas: 12s;
+  --duracion-molino-viento: 7s;
 }
 
 :root[data-tema="claro"] {

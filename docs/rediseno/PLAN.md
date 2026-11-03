@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 4 en curso** (2026-11-03). Fases 0, 1, 2 (salvo 2.5) y 3 cerradas. Catálogo aprobado por el usuario: referencia de estilo obligatoria. |
 | Rama activa | `feature/rediseno-web-publico` (sale de `feature/rediseno-web-seguridad`, `3775918`) |
-| Último paso completado | 4.3 · Portada. |
+| Último paso completado | 4.4 · Nosotros. |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) sigue sin ejecutarse**: pendiente de la aprobación del usuario. |
-| Siguiente paso | 4.4 · Nosotros (`#nosotros`). |
+| Siguiente paso | 4.5 · Menú (`#menu`). |
 | Notas | **Órdenes vigentes (2026-11-03):** fases 4 → 5 → 6 → 7 (solo lo comprobable sin el usuario), con ramas `publico` → `admin` → `pulido` → `auditoria`, cada una desde la anterior; D-17 a D-21; excepciones autorizadas fuera del PLAN, cada una en su commit: retirar `firebase-admin` si nada lo importa (NP-38) y que `/api/auth/logout` caduque siempre las cookies (NP-41); nunca `images.unsplash.com`; sin push, pull, fetch, rebase ni fusiones; sin `.env`; sin dependencias fuera del PLAN; sin Lighthouse ni scripts de rendimiento; quedan para el usuario 2.5, 7.3, lectores de pantalla y dispositivos reales. Decisiones anteriores: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -605,7 +605,7 @@ Cada paso conserva endpoints, payloads y URL; sustituye los componentes antiguos
   - **Aceptación:** axe verifica el contraste sobre la imagen real; LCP en móvil < 2,5 s.
   - **Commit:** `feat(landing): portada`
 
-- [ ] **4.4 · La casa (`#la-casa`).** Galería con `Imagen` y `sizes`; la fachada con respaldo.
+- [x] **4.4 · La casa (`#la-casa`).** Galería con `Imagen` y `sizes`; la fachada con respaldo.
   - **Commit:** `feat(landing): sección la casa`
 
 - [ ] **4.5 · La carta (`#carta`).** Platos con `Contraetiqueta` y foto (sin emoji), y enlace a `/menu`.

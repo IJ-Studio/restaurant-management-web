@@ -6,6 +6,43 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.4 · Nosotros (`#nosotros`) (2026-11-03) — D-17, D-18 y D-19
+
+**Cambios:**
+- **`components/landing/secciones/Nosotros.tsx`:**
+  - El contenido de `/about` reescrito con D-17: la propuesta de PRODUCT.md, sin misión ni visión de plantilla, sin «líder de la región» y sin las opiniones inventadas.
+  - El molino de la casa.
+  - El enlace «Conoce la casa» a `/about`.
+  - Una **galería** con fotos de platos que envía el API, con su nombre como pie y, como mucho, tres. Sin fotos no se pinta.
+- **Decisión conservadora (D-18):** no hay fotos propias de sala, fachada ni bodega.
+  - La portada es de IA (NP-33).
+  - La fachada de `/about` es de Google y queda excluida.
+  - Las de fondo de login y registro parecen de banco por su nombre (Pixabay).
+  - Así que la galería no presenta ninguna foto como «la casa»: usa fotos de platos subidas por el restaurante. Anotado en NP-43 §4.
+- **`lib/publico/seleccion-platos.ts`:** reparte los platos reales entre «Menú» (4.5) y la galería sin repetir. En el menú va uno por categoría y primero los que tienen foto.
+- **`components/marca/MolinoAnimado.tsx`** (D-21: conversión de `landing/MolinoAnimado.jsx` a TSX con tokens):
+  - El relleno es el fondo sobre el que va.
+  - El giro pasa de SMIL (`animateTransform`, que ignora `prefers-reduced-motion`) a CSS: dos vueltas y se para. Sin movimiento con movimiento reducido.
+  - Las aspas y el pasto se dibujan sin `<use>`, porque los estilos del documento no llegaban a sus copias y las aspas salían negras.
+  - Duraciones en tokens (`--duracion-molino-aspas`, `--duracion-molino-viento`).
+  - `/about` usa la versión nueva.
+- **Retirados por quedarse sin uso:** `landing/Hero.tsx`, `landing/Plato.jsx` (D-21: el plato ya no se usa y sus estilos `.plato-boceto` salen de `globals.css`), `landing/MolinoAnimado.jsx` y `landing/AboutSection.tsx`.
+- **Catálogo:** nueva sección «Secciones de la landing», con «Nosotros» y datos de ejemplo. Allí se prueban las secciones con datos, que en el build no hay backend. Las pruebas unitarias no pueden renderizar componentes con `next/link`.
+
+**Verificación:**
+- Typecheck: 0 errores.
+- Lint: limpio en los archivos nuevos. `/about` mantiene sus 4 errores previos, comparado con `HEAD`.
+- `pnpm test:unidad`: 47/47, con la selección de platos.
+- `landing-catalogo.spec.ts` (nueva, Chromium contra `next dev`): 6/6. Comprueba:
+  - la galería, sus pies, fotos de la nube de la casa y el respaldo sin foto;
+  - que el molino gira dos veces y se para con movimiento reducido;
+  - axe sin violaciones y sin desbordar a 360 (texto al 125 %) y 1440 px, en los dos temas.
+- Build: correcto. Landing, portada y recorrido de `/` y `/about` contra `next start`: 30/30.
+- Revisión visual a 1440 px en claro:
+  - la primera versión pintaba las aspas en negro (el problema de `<use>`) y el respaldo se perdía sobre la banda café; ya corregido;
+  - las fotos son diferidas y en la captura aún no habían cargado; la prueba comprueba sus URL.
+- Sin procesos abiertos.
+
 ### 4.3 · Portada (`#inicio`) (2026-11-03)
 
 **Cambios:**

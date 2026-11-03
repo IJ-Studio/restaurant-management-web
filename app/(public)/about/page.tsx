@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { Star, MapPin, Clock, ShieldCheck, Award, Heart, Layers, Facebook, Minimize2, Maximize2 } from "lucide-react";
-import MolinoAnimado from "@/components/landing/MolinoAnimado";
-import { useTheme } from "@/hooks/useTheme";
+import { MolinoAnimado } from "@/components/marca/MolinoAnimado";
 import DistanceToRestaurant from "@/components/pwa/DistanceToRestaurant";
 import { Imagen } from "@/components/ui/Imagen";
 
@@ -15,8 +14,6 @@ const GoogleIcon = ({ size = 12 }: { size?: number }) => (
 );
 
 export default function AboutPage() {
-  const isDark = useTheme();
-  const molinoFillColor = isDark ? "#121212" : "#ffffff";
 
   // Estado para controlar si la tarjeta informativa de la fachada está minimizada
   const [isMinimized, setIsMinimized] = useState(false);
@@ -60,11 +57,7 @@ export default function AboutPage() {
           </div>
 
           <div className="hidden lg:flex lg:w-[40%] items-center justify-end aspect-square opacity-80">
-            <MolinoAnimado
-              colorClassName="text-[var(--color-brand)]"
-              bgColorClassName="bg-transparent"
-              fillColor={molinoFillColor}
-            />
+            <MolinoAnimado className="text-acento" />
           </div>
         </div>
       </section>

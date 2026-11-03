@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { CalendarDays, MapPin } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { Nosotros } from "@/components/landing/secciones/Nosotros";
 import { Portada } from "@/components/landing/secciones/Portada";
 import { SeccionLanding } from "@/components/landing/secciones/SeccionLanding";
 import { ReintentarSeccion } from "@/components/landing/secciones/ReintentarSeccion";
 import { obtenerCarta, obtenerPromociones } from "@/lib/publico/datos-landing";
+import { seleccionarPlatos } from "@/lib/publico/seleccion-platos";
 import { restaurantConfig } from "@/config/restaurant.config";
 
 // Metadatos de la portada (D-17): la propuesta de PRODUCT.md, sin datos que no estén en la configuración.
@@ -21,6 +23,7 @@ export const metadata: Metadata = {
 export default async function Inicio() {
 	const [carta, promociones] = await Promise.all([obtenerCarta(), obtenerPromociones()]);
 	const { contact } = restaurantConfig;
+	const seleccion = seleccionarPlatos(carta.estado === "ok" ? carta.datos : []);
 	const llamar = (
 		<BotonEnlace href={contact.phoneHref} variante="fantasma">
 			Llamar al restaurante
@@ -31,20 +34,7 @@ export default async function Inicio() {
 		<>
 			<Portada />
 
-			<SeccionLanding
-				id="nosotros"
-				lote={1}
-				rotulo="Nosotros"
-				fondo="cafe"
-				titulo="Una casa con nombre de caballero andante"
-				entradilla="En El Quijote la cocina española se sirve sin prisa: técnica precisa, platos de la casa y una carta de vinos pensada para acompañarlos."
-			>
-				<div>
-					<BotonEnlace href="/about" variante="secundario">
-						Conoce la casa
-					</BotonEnlace>
-				</div>
-			</SeccionLanding>
+			<Nosotros galeria={seleccion.galeria} />
 
 			<SeccionLanding id="menu" lote={2} rotulo="Menú" titulo="Platos de la casa" entradilla="Una selección de la carta. El resto te espera en la carta completa.">
 				{carta.estado === "error" ? (

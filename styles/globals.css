@@ -326,19 +326,22 @@
 /* Ilustraciones SVG heredadas de la landing (MolinoAnimado, Plato). Sus estilos estaban en un
    <style> dentro del SVG, que la CSP bloquearía (PLAN 2.4). Mismas reglas, acotadas a cada dibujo;
    el relleno llega como variable desde la prop fillColor. */
+/* Molino de la casa (components/marca/MolinoAnimado.tsx, D-21): el relleno es el fondo sobre el
+   que va; las aspas y el viento se mueven dos veces y se paran, y nada con movimiento reducido. */
+.molino-animado { --molino-relleno: var(--color-fondo); }
+.molino-animado--cafe { --molino-relleno: var(--color-superficie-cafe); }
+.molino-animado__aspas { transform-box: view-box; transform-origin: 300px 280px; animation: molino-aspas var(--duracion-molino-aspas) linear 2; }
+.molino-animado__viento { animation: molino-viento var(--duracion-molino-viento) linear 2; }
+@keyframes molino-aspas { to { transform: rotate(360deg); } }
+@keyframes molino-viento { from { transform: translateX(300px); } to { transform: translateX(-300px); } }
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-movimiento="completo"]) .molino-animado * { animation: none; }
+}
+:root[data-movimiento="reducido"] .molino-animado * { animation: none; }
 .molino-animado .tinta { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
 .molino-animado .solido { fill: var(--molino-relleno); stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
 .molino-animado .sombra { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.6; }
 .molino-animado .viento { fill: none; stroke: currentColor; stroke-width: 2.5; opacity: 0.4; stroke-dasharray: 120 400; stroke-linecap: round; }
-.plato-boceto .boceto-guia { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 4 4; opacity: 0.3; }
-.plato-boceto .boceto-principal { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
-.plato-boceto .boceto-medio { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; opacity: 0.7; }
-.plato-boceto .boceto-fino { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; opacity: 0.4; }
-.plato-boceto .boceto-achurado { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.5; stroke-linecap: round; }
-.plato-boceto .boceto-sombra-densa { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.8; stroke-linecap: round; }
-.plato-boceto .figura-rellena { fill: var(--plato-relleno); stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
-.plato-boceto .trazo-fondo { fill: none; stroke: var(--plato-relleno); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-.plato-boceto .punto { fill: currentColor; opacity: 0.9; }
 
 /* Resaltado del título de la portada: el <span> del marcado del API pasa a <em class="resaltado">
    (PLAN 2.12). Mismo aspecto que las utilidades del <span> por defecto (text-transparent,
