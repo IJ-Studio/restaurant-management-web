@@ -1,585 +1,525 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { notFound, useParams, useRouter, useSearchParams } from "next/navigation";
-import SmartImage from "@/components/SmartImage";
-import {
-  Minus, Plus, Utensils, Truck, AlertTriangle, X, Sparkles
-} from "lucide-react";
-import BackButton from "@/components/BackButton";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Bike, Minus, Phone, Plus, Sparkles, UtensilsCrossed } from "lucide-react";
 import { useSelector } from "react-redux";
-import OnlineOnly from "@/components/pwa/OnlineOnly";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { BotonVolver } from "@/components/ui/BotonVolver";
+import { Dialogo } from "@/components/ui/Dialogo";
+import { Esqueleto, EsqueletoLineas, ZonaCargando } from "@/components/ui/Esqueleto";
+import { EstadoError } from "@/components/ui/EstadoError";
+import { Imagen } from "@/components/ui/Imagen";
+import { Insignia } from "@/components/ui/Insignia";
+import { MigasDePan } from "@/components/ui/MigasDePan";
+import { useNotificaciones } from "@/components/ui/Notificacion";
 import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
+import { CargadorMarca } from "@/components/marca/CargadorMarca";
+import { Contraetiqueta, type ParContraetiqueta } from "@/components/marca/Contraetiqueta";
+import { PaginaEstado } from "@/components/marca/PaginaEstado";
+import { TEXTOS_ESTADO } from "@/components/marca/textos-estado";
+import OnlineOnly from "@/components/pwa/OnlineOnly";
+import { restaurantConfig } from "@/config/restaurant.config";
+import { formatearPrecio } from "@/lib/formato/precio";
+import { registrarError } from "@/lib/registro/registrar-error";
 import { cantidadSegura } from "@/lib/seguridad/urls";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
-
-function ProductDetailPageContent() {
-  const params = useParams();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const id = params?.id || params?.slug;
-
-  const reduxUser = useSelector((state: any) => state.auth.user);
-
-  const [platillo, setPlatillo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [cantidad, setCantidad] = useState(1);
-  // Confirmación antes de crear un pedido desde un enlace con autoExecute (PLAN 2.13).
-  const { confirmar, dialogo } = useConfirmacion();
-
-  // Estados para el Modal de Mesas desde la BD
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mesas, setMesas] = useState<any[]>([]);
-  const [loadingMesas, setLoadingMesas] = useState(false);
-
-  // Leemos la mesa directamente del parámetro de la URL (?mesaQuery=...) en lugar de localStorage
-  const urlMesa = searchParams?.get("mesaQuery");
-  const [selectedMesa, setSelectedMesa] = useState<string>(urlMesa || "");
-
-  // Recomendación de combo (reglas de asociación calculadas en el backend)
-  const [combo, setCombo] = useState<any>(null);
-  // Items extra (el combo sugerido) que se agregan junto con el platillo base
-  // en la próxima llamada a handleAddToOrderMesa.
-  const pendingComboRef = useRef<{ platilloId: number; cantidad: number }[] | null>(null);
-
-  // Fuente de verdad única para validar sesión mediante la API sin tokens locales
-  const resolveCurrentUser = async (): Promise<any | null> => {
-    if (reduxUser?.id) return reduxUser;
-
-    try {
-      const res = await pedirSesion();
-      if (res.ok) {
-        const sessionData = await res.json();
-        const activeUser = sessionData?.user || sessionData;
-        if (activeUser?.id) return activeUser;
-      }
-    } catch (e) {
-      console.error("No se pudo verificar la sesión activa:", e);
-    }
-    return null;
-  };
-
-  // Cargar detalles del platillo
-  useEffect(() => {
-    const fetchPlatillo = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiUrl}/menu/items/${id}`, { cache: "no-store" });
-
-        if (!res.ok) {
-          if (res.status === 404) return notFound();
-          throw new Error("Error al cargar los detalles del platillo");
-        }
-
-        const data = await res.json();
-        setPlatillo(data);
-      } catch (err: any) {
-        console.error("Error capturado en el Front:", err);
-        setError("No se pudo cargar la información del producto. Intenta más tarde.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchPlatillo();
-    }
-  }, [id]);
-
-  // Cargar la recomendación de combo (reglas de asociación) para este platillo
-  useEffect(() => {
-    if (!platillo?.id) return;
-
-    const fetchCombo = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiUrl}/recommendations/combo/${platillo.id}`, { cache: "no-store" });
-        if (!res.ok) return;
-        const data = await res.json();
-        setCombo(data);
-      } catch (err) {
-        console.error("No se pudo cargar la recomendación de combo:", err);
-      }
-    };
-
-    fetchCombo();
-  }, [platillo?.id]);
-
-  // Cargar las mesas de la base de datos cuando se abre el modal
-  useEffect(() => {
-    if (isModalOpen) {
-      const fetchMesasDeBD = async () => {
-        setLoadingMesas(true);
-        try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-          const res = await fetch(`${apiUrl}/mesas`, { cache: "no-store" });
-
-          if (!res.ok) {
-            const errBody = await res.text().catch(() => "");
-            console.error(`Error ${res.status} al consultar mesas:`, errBody);
-            return;
-          }
-
-          const data = await res.json();
-          setMesas(data);
-        } catch (error) {
-          console.error("Error de red consultando mesas:", error);
-        } finally {
-          setLoadingMesas(false);
-        }
-      };
-      fetchMesasDeBD();
-    }
-  }, [isModalOpen]);
-
-  // Manejo del auto-execute si viene escaneado por query params
-  useEffect(() => {
-    const autoExecute = searchParams?.get("autoExecute");
-    const qtyParam = searchParams?.get("qty");
-
-    if (!platillo || autoExecute !== "pedir_mesa") return;
-
-    const ejecutarAutoPedido = async () => {
-      const currentUser = await resolveCurrentUser();
-      if (!currentUser) return;
-
-      // Cantidad de la URL: entero entre 1 y 20 (PLAN 2.13).
-      const qty = cantidadSegura(qtyParam);
-      if (qtyParam) {
-        setCantidad(qty);
-      }
-
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-
-      // Un enlace ya no crea el pedido por sí solo: hace falta el clic de confirmación.
-      const confirmado = await confirmar({
-        titulo: "¿Añadir este platillo a tu pedido?",
-        descripcion: `${qty} × ${platillo.nombre}${urlMesa ? `, mesa ${urlMesa}` : ""}.`,
-        textoConfirmar: "Añadir al pedido",
-        textoCancelar: "Ahora no",
-      });
-      if (!confirmado) return;
-
-      handleAddToOrderMesa(currentUser, urlMesa || undefined);
-    };
-
-    ejecutarAutoPedido();
-  }, [platillo, reduxUser, searchParams, urlMesa]);
-
-  const handleAddToOrderMesa = async (forcedUser?: any, targetMesa?: string) => {
-    const currentUser = forcedUser || (await resolveCurrentUser());
-
-    if (!currentUser) {
-      const currentUrl = window.location.pathname;
-      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
-      return;
-    }
-
-    const mesaFinal = targetMesa || selectedMesa;
-    if (!mesaFinal) {
-      setIsModalOpen(true);
-      return;
-    }
-
-    const comboItems = pendingComboRef.current;
-
-    setIsSubmitting(true);
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-      const body = comboItems?.length
-        ? {
-            usuarioId: Number(currentUser.id),
-            mesa: mesaFinal,
-            items: [
-              { platilloId: Number(platillo?.id), cantidad: Number(cantidad) },
-              ...comboItems,
-            ],
-          }
-        : {
-            platilloId: Number(platillo?.id),
-            cantidad: Number(cantidad),
-            usuarioId: Number(currentUser.id),
-            mesa: mesaFinal,
-          };
-
-      const res = await fetch(`${apiUrl}/pedidos/mesa`, { cache: "no-store",
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || errData.error || "El servidor rechazó la solicitud de orden.");
-      }
-
-      const data = await res.json();
-
-      // FIX: el producto ya NO se manda a cocina de inmediato, solo se
-      // agrega al carrito de la mesa. El envío real a cocina ahora pasa
-      // en /menu/pedido cuando el cliente presiona "Confirmar".
-      const mensaje = comboItems?.length
-        ? `Agregado a tu pedido: ${cantidad}x ${platillo?.nombre} + ${combo?.sugerido?.nombre}. Revísalo en "Mis Pedidos" y confírmalo cuando estés listo.`
-        : `Agregado a tu pedido: ${cantidad}x ${platillo?.nombre}. Revísalo en "Mis Pedidos" y confírmalo cuando estés listo.`;
-      alert(mensaje);
-      setIsModalOpen(false);
-
-      // Redirigimos pasando el número de mesa en la URL de forma limpia
-      router.push(`/menu/pedido?mesaQuery=${data.mesaId || mesaFinal}&tab=mesa`);
-    } catch (err: any) {
-      console.error("Error detallado al crear pedido:", err);
-      alert(err.message || "Ocurrió un error al enviar el pedido.");
-    } finally {
-      setIsSubmitting(false);
-      pendingComboRef.current = null;
-    }
-  };
-
-  const handleAddCombo = () => {
-    if (!combo?.disponible) return;
-    pendingComboRef.current = [{ platilloId: combo.sugerido.id, cantidad: 1 }];
-    handleAddToOrderMesa();
-  };
-
-  const handleAddToCartDomicilio = async () => {
-    const currentUser = await resolveCurrentUser();
-
-    if (!currentUser) {
-      const currentUrl = window.location.pathname;
-      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-      const res = await fetch(`${apiUrl}/pedidos/mesa`, { cache: "no-store",
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          platilloId: Number(platillo?.id),
-          cantidad: Number(cantidad),
-          usuarioId: Number(currentUser.id),
-          // Sin parámetro "mesa" para indicarle al backend que es a domicilio
-        }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("Fallo al agregar a domicilio:", res.status, errData);
-        throw new Error(errData.message || errData.error || `No se pudo agregar el producto (HTTP ${res.status}).`);
-      }
-
-      alert(`Agregado a tu pedido a domicilio: ${cantidad}x ${platillo?.nombre}`);
-      router.push("/menu/pedido?tab=domicilio");
-    } catch (err: any) {
-      console.error("Error al agregar al pedido a domicilio:", err);
-      alert(err.message || "Ocurrió un error al agregar el producto.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDecrease = () => {
-    if (cantidad > 1) setCantidad(cantidad - 1);
-  };
-
-  const handleIncrease = () => {
-    if (cantidad < 20) setCantidad(cantidad + 1);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center pt-24">
-        <div className="text-center flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
-          <p>Cargando experiencia gastronómica...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 pt-24">
-        <p className="text-red-500 text-lg">{error}</p>
-        <BackButton fallbackHref="/menu" label="Volver al menú" />
-      </div>
-    );
-  }
-
-  if (!platillo) return notFound();
-
-  return (
-    <div className="bg-background min-h-screen pb-20 pt-32 relative">
-      {dialogo}
-      <div className="container mx-auto px-4 max-w-6xl">
-
-        <div className="mb-8">
-          <BackButton fallbackHref="/menu" label="← Volver al menú" />
-        </div>
-
-        <div className="bg-surface rounded-3xl overflow-hidden shadow-sm border border-border flex flex-col lg:flex-row">
-
-          {/* Sección de Imagen e Info Nutricional */}
-          <div className="w-full lg:w-1/2 flex flex-col bg-surface-hover/10">
-            <div className="relative w-full h-80 sm:h-96 lg:h-[500px]">
-              {platillo.imagenUrl ? (
-                <SmartImage
-                  src={platillo.imagenUrl}
-                  fill
-                  alt={platillo.nombre}
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  preload
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full w-full text-text/40 text-lg bg-surface">
-                  Vacío (Sin fotografía)
-                </div>
-              )}
-
-              {!platillo.disponible && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                  <span className="bg-red-600 text-white text-lg px-6 py-2 rounded-full font-bold tracking-widest uppercase shadow-lg">
-                    Agotado Temporalmente
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Detalles del Platillo */}
-          <div className="w-full lg:w-1/2 p-8 md:p-12 flex flex-col justify-between bg-surface">
-            <div>
-              <span className="text-brand font-semibold tracking-widest uppercase text-xs mb-3 block">
-                {platillo.categoria?.nombre || "General"}
-              </span>
-
-              <h1 className="text-3xl md:text-5xl font-semibold text-text mb-4 leading-tight">
-                {platillo.nombre}
-              </h1>
-
-              <div className="text-4xl font-light text-text mb-6 flex items-baseline gap-1">
-                <span className="text-brand font-medium text-2xl">$</span>
-                <span className="font-semibold">
-                  {typeof platillo.precio === 'string' ? parseFloat(platillo.precio).toFixed(2) : platillo.precio?.toFixed(2)}
-                </span>
-                <span className="text-xs text-text/50 ml-2">IVA Incluido</span>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {platillo.esNuevo && <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 text-xs font-semibold uppercase">★ Nuevo</span>}
-                {platillo.esPopular && <span className="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-600 text-xs font-semibold uppercase">🔥 Popular</span>}
-              </div>
-
-              <div className="space-y-4 mb-6">
-                {platillo.descripcionCorta && (
-                  <p className="text-text font-medium text-lg italic border-l-4 border-brand pl-3">
-                    {platillo.descripcionCorta}
-                  </p>
-                )}
-                <p className="text-text-sec leading-relaxed text-sm">{platillo.descripcion}</p>
-              </div>
-
-              <div className="mb-6 bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
-                <div className="flex items-center gap-2 text-amber-700 text-xs font-bold uppercase tracking-wider mb-1">
-                  <AlertTriangle size={14} />
-                  <span>Advertencia de Alérgenos</span>
-                </div>
-                <p className="text-xs text-text-sec">
-                  {platillo.alergenos && platillo.alergenos.length > 0
-                    ? `Este producto contiene o puede contener: ${platillo.alergenos.join(", ")}.`
-                    : "No se han declarado alérgenos críticos."}
-                </p>
-              </div>
-
-              {/* Selector de cantidad y acciones */}
-              <div className="mt-8 space-y-6">
-                <div className="flex items-center justify-between bg-background p-3 rounded-2xl border border-border">
-                  <span className="text-sm font-semibold text-text-sec pl-2">Cantidad</span>
-                  <div className="flex items-center gap-4 bg-surface rounded-xl border border-border p-1">
-                    <button
-                      onClick={handleDecrease}
-                      className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-surface-hover text-text/70 transition-colors"
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span className="text-base font-bold w-6 text-center font-mono">{cantidad}</span>
-                    <button
-                      onClick={handleIncrease}
-                      className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-surface-hover text-text/70 transition-colors"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <button
-                    onClick={() => handleAddToOrderMesa()}
-                    disabled={isSubmitting || !platillo.disponible}
-                    className="bg-brand hover:bg-brand/90 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Utensils size={16} />
-                    Pedir en Mesa
-                  </button>
-
-                  <button
-                    onClick={handleAddToCartDomicilio}
-                    disabled={isSubmitting || !platillo.disponible}
-                    className="bg-surface hover:bg-surface-hover border border-border text-text font-bold py-4 px-6 rounded-2xl transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Truck size={16} />
-                    Para Domicilio
-                  </button>
-                </div>
-
-                {/* Recomendación de combo (reglas de asociación) */}
-                {combo?.disponible && (
-                  <div className="bg-brand/5 border border-brand/20 rounded-2xl p-4">
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-brand bg-brand/10 px-2.5 py-1 rounded-full mb-3">
-                      <Sparkles size={11} />
-                      Recomendación
-                    </span>
-                    <p className="text-sm font-bold text-text mb-3">Arma tu combo y ahorra</p>
-
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-surface border border-border">
-                        {combo.sugerido.imagenUrl ? (
-                          <SmartImage
-                            src={combo.sugerido.imagenUrl}
-                            fill
-                            alt={combo.sugerido.nombre}
-                            className="object-cover"
-                            sizes="56px"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-text/30 text-[10px]">S/I</div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-text truncate">{combo.sugerido.nombre}</p>
-                        <p className="text-xs text-text-sec leading-snug">
-                          {combo.confianza}% de las órdenes con este platillo también incluyeron{" "}
-                          {combo.sugerido.nombre} — llévalo por{" "}
-                          <span className="font-bold text-brand">${combo.precioCombo}</span> en vez de $
-                          {combo.sugerido.precio}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={handleAddCombo}
-                        disabled={isSubmitting || !platillo.disponible}
-                        className="flex-shrink-0 bg-secondary hover:opacity-90 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Agregar combo
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* MODAL DE SELECCIÓN DE MESA DESDE LA BASE DE DATOS */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface border border-border w-full max-w-md rounded-3xl p-6 relative shadow-xl text-text animate-in fade-in zoom-in-95 duration-200">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-text/40 hover:text-text p-1 rounded-xl bg-surface-hover/50 transition-colors"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand">
-                <Utensils size={20} />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold">Selecciona tu Mesa</h3>
-                <p className="text-xs text-text-sec">Indica en qué mesa te encuentras para marchar tu orden.</p>
-              </div>
-            </div>
-
-            {loadingMesas ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-3">
-                <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-xs text-text-sec">Consultando salones activos...</p>
-              </div>
-            ) : mesas.length > 0 ? (
-              <div className="max-h-60 overflow-y-auto grid grid-cols-3 gap-2 p-1 mb-6 custom-scrollbar">
-                {mesas.map((m: any) => {
-                  const isSelected = selectedMesa === m.numero;
-                  return (
-                    <button
-                      key={m.id || m.numero}
-                      type="button"
-                      onClick={() => setSelectedMesa(m.numero)}
-                      className={`p-3 text-sm font-bold rounded-xl border transition-all flex flex-col items-center justify-center gap-1 ${
-                        isSelected
-                          ? "bg-brand border-brand text-white shadow-md scale-95"
-                          : "bg-background border-border text-text hover:border-brand/50"
-                      }`}
-                    >
-                      <span className="text-[10px] uppercase opacity-60 font-medium">Mesa</span>
-                      <span className="text-base font-black">{m.numero}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-center text-text-sec py-8">No se encontraron mesas disponibles en el sistema.</p>
-            )}
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="flex-1 py-3 bg-surface-hover border border-border text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-surface-hover/80 transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAddToOrderMesa()}
-                disabled={isSubmitting || !selectedMesa}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${
-                  selectedMesa && !isSubmitting
-                    ? "bg-brand text-white shadow-lg hover:bg-brand/90 cursor-pointer"
-                    : "bg-surface-hover border border-border text-text/20 cursor-not-allowed"
-                }`}
-              >
-                {isSubmitting ? "Enviando..." : "Confirmar Mesa"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+import { cn } from "@/lib/utils";
+
+/**
+ * Detalle de un plato (`/menu/producto/[id]`, PLAN 4.12). La lógica no cambia: los mismos
+ * endpoints (`/menu/items/{id}`, `/recommendations/combo/{id}`, `/mesas`, `POST /pedidos/mesa`),
+ * los mismos payloads, las mismas redirecciones y la confirmación del enlace `autoExecute` (2.13).
+ *
+ * Lo nuevo es la interfaz: contraetiqueta del plato (sección, precio y alérgenos), selector de
+ * cantidad accesible, `Dialogo` para elegir la mesa, notificaciones y avisos en lugar de
+ * `alert()`, y estados sin texto técnico (D-20); un plato inexistente muestra `PaginaEstado` (D-21).
+ */
+const API = process.env.NEXT_PUBLIC_API_URL;
+const MAXIMO = 20;
+const MENSAJE_FALLO = "No pudimos añadirlo a tu pedido. Inténtalo de nuevo en un momento o pídelo en sala.";
+
+type Estado = "cargando" | "error" | "no-existe" | "listo";
+
+function DetallePlato() {
+	const params = useParams();
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const id = params?.id || params?.slug;
+	const { notificar } = useNotificaciones();
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- forma del usuario del store, sin tipar desde el 2.15
+	const reduxUser = useSelector((state: any) => state.auth.user);
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- el API envía el plato sin contrato tipado (NP-17)
+	const [platillo, setPlatillo] = useState<any>(null);
+	const [estado, setEstado] = useState<Estado>("cargando");
+	const [cantidad, setCantidad] = useState(1);
+	const [fallo, setFallo] = useState<string | null>(null);
+	// Confirmación antes de crear un pedido desde un enlace con autoExecute (PLAN 2.13).
+	const { confirmar, dialogo } = useConfirmacion();
+
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- mesas del API sin contrato tipado
+	const [mesas, setMesas] = useState<any[]>([]);
+	const [loadingMesas, setLoadingMesas] = useState(false);
+	const [falloMesas, setFalloMesas] = useState(false);
+
+	// La mesa sale del parámetro de la URL (?mesaQuery=...), no de localStorage.
+	const urlMesa = searchParams?.get("mesaQuery");
+	const [selectedMesa, setSelectedMesa] = useState<string>(urlMesa || "");
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- recomendación del API sin contrato tipado
+	const [combo, setCombo] = useState<any>(null);
+	const pendingComboRef = useRef<{ platilloId: number; cantidad: number }[] | null>(null);
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- usuario de la sesión sin contrato tipado
+	const resolveCurrentUser = async (): Promise<any | null> => {
+		if (reduxUser?.id) return reduxUser;
+		try {
+			const res = await pedirSesion();
+			if (res.ok) {
+				const sessionData = await res.json();
+				const activeUser = sessionData?.user || sessionData;
+				if (activeUser?.id) return activeUser;
+			}
+		} catch (e) {
+			registrarError(e, "detalle de plato: sesión");
+		}
+		return null;
+	};
+
+	const cargarPlatillo = useCallback(async () => {
+		setEstado("cargando");
+		try {
+			const res = await fetch(`${API}/menu/items/${id}`, { cache: "no-store" });
+			if (res.status === 404) {
+				setEstado("no-existe");
+				return;
+			}
+			if (!res.ok) throw new Error(`plato ${res.status}`);
+			setPlatillo(await res.json());
+			setEstado("listo");
+		} catch (err) {
+			registrarError(err, "detalle de plato");
+			setEstado("error");
+		}
+	}, [id]);
+
+	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial del plato
+		if (id) void cargarPlatillo();
+	}, [id, cargarPlatillo]);
+
+	// Recomendación de combo (reglas de asociación calculadas en el backend).
+	useEffect(() => {
+		if (!platillo?.id) return;
+		(async () => {
+			try {
+				const res = await fetch(`${API}/recommendations/combo/${platillo.id}`, { cache: "no-store" });
+				if (!res.ok) return;
+				setCombo(await res.json());
+			} catch (err) {
+				registrarError(err, "detalle de plato: combo");
+			}
+		})();
+	}, [platillo?.id]);
+
+	// Mesas de la base de datos al abrir el diálogo.
+	useEffect(() => {
+		if (!isModalOpen) return;
+		(async () => {
+			setLoadingMesas(true);
+			setFalloMesas(false);
+			try {
+				const res = await fetch(`${API}/mesas`, { cache: "no-store" });
+				if (!res.ok) throw new Error(`mesas ${res.status}`);
+				setMesas(await res.json());
+			} catch (error) {
+				registrarError(error, "detalle de plato: mesas");
+				setFalloMesas(true);
+			} finally {
+				setLoadingMesas(false);
+			}
+		})();
+	}, [isModalOpen]);
+
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- usuario de la sesión sin contrato tipado
+	const handleAddToOrderMesa = async (forcedUser?: any, targetMesa?: string) => {
+		setFallo(null);
+		const currentUser = forcedUser || (await resolveCurrentUser());
+		if (!currentUser) {
+			router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+			return;
+		}
+		const mesaFinal = targetMesa || selectedMesa;
+		if (!mesaFinal) {
+			setIsModalOpen(true);
+			return;
+		}
+		const comboItems = pendingComboRef.current;
+		setIsSubmitting(true);
+		try {
+			const body = comboItems?.length
+				? {
+						usuarioId: Number(currentUser.id),
+						mesa: mesaFinal,
+						items: [{ platilloId: Number(platillo?.id), cantidad: Number(cantidad) }, ...comboItems],
+					}
+				: {
+						platilloId: Number(platillo?.id),
+						cantidad: Number(cantidad),
+						usuarioId: Number(currentUser.id),
+						mesa: mesaFinal,
+					};
+			const res = await fetch(`${API}/pedidos/mesa`, {
+				cache: "no-store",
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+			if (!res.ok) throw new Error(`pedido en mesa ${res.status}`);
+			const data = await res.json();
+			// El plato se añade al pedido de la mesa; el envío a cocina se confirma en /menu/pedido.
+			notificar({
+				tono: "exito",
+				titulo: "Añadido a tu pedido",
+				descripcion: comboItems?.length
+					? `${cantidad} × ${platillo?.nombre} y ${combo?.sugerido?.nombre}. Revísalo y confírmalo cuando quieras.`
+					: `${cantidad} × ${platillo?.nombre}. Revísalo y confírmalo cuando quieras.`,
+			});
+			setIsModalOpen(false);
+			router.push(`/menu/pedido?mesaQuery=${data.mesaId || mesaFinal}&tab=mesa`);
+		} catch (err) {
+			registrarError(err, "detalle de plato: pedido en mesa");
+			setFallo(MENSAJE_FALLO);
+		} finally {
+			setIsSubmitting(false);
+			pendingComboRef.current = null;
+		}
+	};
+
+	// Enlace escaneado con autoExecute: pide confirmación antes de crear nada (2.13).
+	useEffect(() => {
+		const autoExecute = searchParams?.get("autoExecute");
+		const qtyParam = searchParams?.get("qty");
+		if (!platillo || autoExecute !== "pedir_mesa") return;
+
+		const ejecutarAutoPedido = async () => {
+			const currentUser = await resolveCurrentUser();
+			if (!currentUser) return;
+			// Cantidad de la URL: entero entre 1 y 20 (PLAN 2.13).
+			const qty = cantidadSegura(qtyParam);
+			if (qtyParam) setCantidad(qty);
+			window.history.replaceState({}, document.title, window.location.pathname);
+			const confirmado = await confirmar({
+				titulo: "¿Añadir este plato a tu pedido?",
+				descripcion: `${qty} × ${platillo.nombre}${urlMesa ? `, mesa ${urlMesa}` : ""}.`,
+				textoConfirmar: "Añadir al pedido",
+				textoCancelar: "Ahora no",
+			});
+			if (!confirmado) return;
+			handleAddToOrderMesa(currentUser, urlMesa || undefined);
+		};
+		ejecutarAutoPedido();
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- mismas dependencias que antes del rediseño
+	}, [platillo, reduxUser, searchParams, urlMesa]);
+
+	const handleAddCombo = () => {
+		if (!combo?.disponible) return;
+		pendingComboRef.current = [{ platilloId: combo.sugerido.id, cantidad: 1 }];
+		handleAddToOrderMesa();
+	};
+
+	const handleAddToCartDomicilio = async () => {
+		setFallo(null);
+		const currentUser = await resolveCurrentUser();
+		if (!currentUser) {
+			router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+			return;
+		}
+		setIsSubmitting(true);
+		try {
+			const res = await fetch(`${API}/pedidos/mesa`, {
+				cache: "no-store",
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				// Sin «mesa»: así sabe el backend que es a domicilio.
+				body: JSON.stringify({ platilloId: Number(platillo?.id), cantidad: Number(cantidad), usuarioId: Number(currentUser.id) }),
+			});
+			if (!res.ok) throw new Error(`pedido a domicilio ${res.status}`);
+			notificar({ tono: "exito", titulo: "Añadido a tu pedido a domicilio", descripcion: `${cantidad} × ${platillo?.nombre}.` });
+			router.push("/menu/pedido?tab=domicilio");
+		} catch (err) {
+			registrarError(err, "detalle de plato: pedido a domicilio");
+			setFallo(MENSAJE_FALLO);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	if (estado === "no-existe")
+		return (
+			<PaginaEstado
+				{...TEXTOS_ESTADO.platoNoEncontrado}
+				pantallaCompleta={false}
+				acciones={
+					<BotonEnlace href="/menu" variante="primario" icono={<ArrowLeft />}>
+						Ver la carta
+					</BotonEnlace>
+				}
+			/>
+		);
+
+	const ruta = `/menu/producto/${id}`;
+	const nombre: string = platillo?.nombre || "Plato de la casa";
+
+	return (
+		<div className="contenedor-pagina pt-(--espacio-xl) pb-(--espacio-entre-secciones)">
+			{dialogo}
+			<div className="mb-(--espacio-xl) flex flex-col-reverse items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<MigasDePan ruta={ruta} actual={estado === "listo" ? nombre : "Plato"} />
+				<BotonVolver className="-ms-3 sm:ms-0" />
+			</div>
+
+			{estado === "error" ? (
+				<EstadoError
+					titulo="No pudimos traer este plato"
+					descripcion="A veces tarda un poco más de la cuenta. Vuelve a intentarlo o llámanos."
+					alReintentar={cargarPlatillo}
+					accion={
+						<BotonEnlace href={restaurantConfig.contact.phoneHref} variante="fantasma" icono={<Phone />}>
+							Llamar al restaurante
+						</BotonEnlace>
+					}
+				/>
+			) : estado === "cargando" ? (
+				<ZonaCargando cargando texto="Preparando el plato…">
+					<div className="grid gap-(--espacio-2xl) lg:grid-cols-2">
+						<Esqueleto className="aspect-[4/5] w-full" />
+						<div className="flex flex-col gap-4">
+							<Esqueleto className="h-4 w-1/4" />
+							<Esqueleto className="h-12 w-3/4" />
+							<EsqueletoLineas lineas={5} />
+						</div>
+					</div>
+				</ZonaCargando>
+			) : (
+				<Ficha
+					platillo={platillo}
+					nombre={nombre}
+					cantidad={cantidad}
+					alCambiarCantidad={setCantidad}
+					enviando={isSubmitting}
+					fallo={fallo}
+					combo={combo}
+					alPedirMesa={() => handleAddToOrderMesa()}
+					alPedirDomicilio={handleAddToCartDomicilio}
+					alPedirCombo={handleAddCombo}
+				/>
+			)}
+
+			<Dialogo
+				abierto={isModalOpen}
+				alCambiarAbierto={setIsModalOpen}
+				titulo="¿En qué mesa estás?"
+				descripcion="Elige tu mesa para que el pedido llegue a ella."
+				cerrable={!isSubmitting}
+				pie={
+					<>
+						<Boton variante="secundario" onClick={() => setIsModalOpen(false)} deshabilitado={isSubmitting}>
+							Cancelar
+						</Boton>
+						<Boton variante="primario" onClick={() => handleAddToOrderMesa()} deshabilitado={!selectedMesa} cargando={isSubmitting} textoCargando="Añadiendo…">
+							Confirmar mesa
+						</Boton>
+					</>
+				}
+			>
+				{loadingMesas ? (
+					<CargadorMarca texto="Buscando las mesas…" className="py-8" />
+				) : falloMesas ? (
+					<Aviso tono="error" titulo="No pudimos ver las mesas">
+						Vuelve a abrir esta ventana en un momento o pide tu mesa en sala.
+					</Aviso>
+				) : mesas.length > 0 ? (
+					<fieldset className="m-0 border-0 p-0">
+						<legend className="solo-lectores">Mesa</legend>
+						<div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+							{mesas.map((m) => {
+								const numero = String(m.numero);
+								const elegida = selectedMesa === m.numero || selectedMesa === numero;
+								return (
+									<label
+										key={m.id || numero}
+										className={cn(
+											"flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-control border text-center",
+											"transition-[background-color,border-color] duration-(--duracion-breve) ease-estandar",
+											"has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-foco",
+											elegida ? "border-acento bg-superficie-cafe" : "border-borde-control al-pasar:bg-superficie-cafe",
+										)}
+									>
+										<input type="radio" name="mesa" value={numero} checked={elegida} onChange={() => setSelectedMesa(m.numero)} className="solo-lectores" />
+										<span className="text-(length:--texto-etiqueta) uppercase tracking-[0.16em] text-texto-secundario">Mesa</span>
+										<span className="font-titulos text-(length:--texto-titulo-3) leading-none numeros-tabulares">{numero}</span>
+									</label>
+								);
+							})}
+						</div>
+					</fieldset>
+				) : (
+					<p className="m-0 text-texto-secundario">Ahora mismo no hay mesas para elegir. Pide la tuya en sala.</p>
+				)}
+				{fallo && isModalOpen && (
+					<Aviso tono="error" className="mt-4">
+						{fallo}
+					</Aviso>
+				)}
+			</Dialogo>
+		</div>
+	);
+}
+
+function Ficha({
+	platillo,
+	nombre,
+	cantidad,
+	alCambiarCantidad,
+	enviando,
+	fallo,
+	combo,
+	alPedirMesa,
+	alPedirDomicilio,
+	alPedirCombo,
+}: {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- plato del API sin contrato tipado
+	platillo: any;
+	nombre: string;
+	cantidad: number;
+	alCambiarCantidad: (n: number) => void;
+	enviando: boolean;
+	fallo: string | null;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- recomendación del API sin contrato tipado
+	combo: any;
+	alPedirMesa: () => void;
+	alPedirDomicilio: () => void;
+	alPedirCombo: () => void;
+}) {
+	const disponible = platillo.disponible !== false;
+	const precio = formatearPrecio(typeof platillo.precio === "string" ? Number(platillo.precio) : platillo.precio);
+	const alergenos: string[] = Array.isArray(platillo.alergenos) ? platillo.alergenos : [];
+	const seccion = typeof platillo.categoria === "string" ? platillo.categoria : platillo.categoria?.nombre;
+	const pares: ParContraetiqueta[] = [{ rotulo: "Sección", valor: seccion || "De la casa", tipo: "texto" }];
+	if (precio)
+		pares.push({
+			rotulo: "Precio",
+			valor: (
+				<span>
+					{precio} <span className="text-(length:--texto-pequeno) font-normal text-texto-tenue">IVA incluido</span>
+				</span>
+			),
+		});
+	pares.push({ rotulo: "Alérgenos", valor: alergenos.length > 0 ? alergenos.join(", ") : "No se han declarado", tipo: "texto" });
+
+	return (
+		<div className="grid items-start gap-(--espacio-2xl) lg:grid-cols-2">
+			<div className="relative aspect-[4/5] overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie lg:sticky lg:top-[calc(var(--alto-cabecera)+var(--espacio-lg))]">
+				<Imagen src={platillo.imagenUrl} alt={nombre} fill preload sizes="(min-width: 64rem) 36rem, 100vw" className="object-cover" />
+			</div>
+
+			<div className="flex flex-col gap-(--espacio-lg)">
+				<div className="flex flex-col gap-(--espacio-sm)">
+					<span aria-hidden="true" className="filete-doble" />
+					<h1 className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] [text-wrap:balance]">{nombre}</h1>
+					{(platillo.esNuevo || platillo.esPopular || !disponible) && (
+						<div className="flex flex-wrap gap-2">
+							{!disponible && <Insignia tono="aviso">Agotado</Insignia>}
+							{platillo.esNuevo && <Insignia tono="acento">Nuevo</Insignia>}
+							{platillo.esPopular && <Insignia tono="neutro">De los más pedidos</Insignia>}
+						</div>
+					)}
+					{platillo.descripcionCorta && <p className="m-0 font-titulos text-(length:--texto-titulo-3) italic leading-[1.35] text-texto-secundario">{platillo.descripcionCorta}</p>}
+					{platillo.descripcion && <p className="m-0 max-w-(--ancho-lectura) text-texto-secundario [text-wrap:pretty]">{platillo.descripcion}</p>}
+				</div>
+
+				<Contraetiqueta pares={pares} />
+
+				<div className="flex flex-col gap-(--espacio-md)">
+					<SelectorCantidad cantidad={cantidad} alCambiar={alCambiarCantidad} />
+					<div className="grid gap-3 sm:grid-cols-2">
+						<Boton variante="primario" icono={<UtensilsCrossed />} onClick={alPedirMesa} deshabilitado={!disponible} cargando={enviando} textoCargando="Añadiendo…">
+							Pedir en mesa
+						</Boton>
+						<Boton variante="secundario" icono={<Bike />} onClick={alPedirDomicilio} deshabilitado={!disponible || enviando}>
+							Para domicilio
+						</Boton>
+					</div>
+					{!disponible && <p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">Este plato está agotado; vuelve a intentarlo más tarde.</p>}
+					{fallo && <Aviso tono="error">{fallo}</Aviso>}
+				</div>
+
+				{combo?.disponible && (
+					<section aria-labelledby="combo-titulo" className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
+						<div className="flex flex-wrap items-center gap-2">
+							<Insignia tono="acento" icono={<Sparkles />}>
+								Recomendación
+							</Insignia>
+						</div>
+						<h2 id="combo-titulo" className="m-0 font-texto text-(length:--texto-titulo-interfaz) font-semibold">
+							Arma tu combo
+						</h2>
+						<div className="flex items-center gap-(--espacio-md)">
+							<div className="relative size-16 shrink-0 overflow-hidden rounded-control border border-borde-sutil bg-superficie-cafe">
+								<Imagen src={combo.sugerido.imagenUrl} alt={combo.sugerido.nombre} fill sizes="4rem" className="object-cover" />
+							</div>
+							<p className="m-0 min-w-0 text-(length:--texto-pequeno) leading-[1.5] text-texto-secundario">
+								El {combo.confianza} % de los pedidos con este plato llevan también <strong className="text-texto-principal">{combo.sugerido.nombre}</strong>. Juntos,{" "}
+								<strong className="text-texto-principal numeros-tabulares">{formatearPrecio(Number(combo.precioCombo))}</strong> en lugar de{" "}
+								<span className="numeros-tabulares">{formatearPrecio(Number(combo.sugerido.precio))}</span> por el segundo.
+							</p>
+						</div>
+						<div>
+							<Boton variante="secundario" onClick={alPedirCombo} deshabilitado={!disponible || enviando}>
+								Añadir el combo
+							</Boton>
+						</div>
+					</section>
+				)}
+			</div>
+		</div>
+	);
+}
+
+/** Cantidad de 1 a 20 con botones de 44 px; el valor se anuncia al cambiar. */
+function SelectorCantidad({ cantidad, alCambiar }: { cantidad: number; alCambiar: (n: number) => void }) {
+	return (
+		<div role="group" aria-labelledby="cantidad-rotulo" className="flex items-center justify-between gap-4 border-y border-borde-sutil py-2">
+			<span id="cantidad-rotulo" className="text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] text-texto-secundario">
+				Cantidad
+			</span>
+			<div className="flex items-center gap-1">
+				<Boton variante="fantasma" soloIcono icono={<Minus />} onClick={() => alCambiar(Math.max(1, cantidad - 1))} deshabilitado={cantidad <= 1}>
+					Quitar uno
+				</Boton>
+				<output aria-live="polite" className="w-8 text-center font-titulos text-(length:--texto-titulo-3) numeros-tabulares">
+					{cantidad}
+				</output>
+				<Boton variante="fantasma" soloIcono icono={<Plus />} onClick={() => alCambiar(Math.min(MAXIMO, cantidad + 1))} deshabilitado={cantidad >= MAXIMO}>
+					Añadir uno
+				</Boton>
+			</div>
+		</div>
+	);
 }
 
 // Depende del servidor: sin conexión se muestra un aviso y se carga al reconectar.
-export default function ProductDetailPage() {
-  return (
-    <OnlineOnly what="este platillo">
-      <ProductDetailPageContent />
-    </OnlineOnly>
-  );
+export default function PaginaPlato() {
+	return (
+		<OnlineOnly what="este plato">
+			<DetallePlato />
+		</OnlineOnly>
+	);
 }

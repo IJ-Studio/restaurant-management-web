@@ -6,6 +6,53 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.12 · `/menu/producto/[id]` (2026-11-03) — D-20 y D-21
+
+**Lógica sin cambios:**
+- Los mismos endpoints: `/menu/items/{id}`, `/recommendations/combo/{id}`, `/mesas` y `POST /pedidos/mesa`.
+- Los mismos payloads: con mesa o sin ella, y con combo.
+- Las mismas redirecciones: login con `callbackUrl`, `/menu/pedido?mesaQuery=…&tab=mesa` y `?tab=domicilio`.
+- El límite de 20 unidades.
+- La confirmación del enlace `autoExecute` (2.13). Su título dice ahora «plato» en lugar de «platillo», con su prueba actualizada.
+- El efecto de `autoExecute` se movió detrás de la función que llama, por la regla de lint `react-hooks/immutability`. Sus dependencias son las mismas.
+
+**Interfaz nueva:**
+- Migas («Inicio › La carta › {plato}») y «Volver a la carta».
+- Foto 4:5 fija al desplazar en escritorio, con `preload`.
+- `h1` en Fraunces con el filete doble.
+- Insignias sin emoji: «Agotado», «Nuevo» y «De los más pedidos» (antes «★ Nuevo» y «🔥 Popular»).
+- Contraetiqueta con la sección, el precio con «IVA incluido» y los alérgenos.
+- **Selector de cantidad** accesible: botones de 44 px «Quitar uno» y «Añadir uno», y el valor en un `output` que se anuncia.
+- «Pedir en mesa» como acción principal y «Para domicilio» como secundaria.
+- **Elegir mesa:** un `Dialogo` con las mesas como opciones (`radio` en una etiqueta de 56 px). Mientras busca, `CargadorMarca`; si falla, un aviso.
+- **Sin `alert()`:**
+  - el éxito es una **notificación** («Añadido a tu pedido»), que sobrevive a la navegación;
+  - el fallo es un **aviso en línea** cálido: «No pudimos añadirlo a tu pedido…». Ya no se muestra el mensaje del servidor, que podía ser técnico.
+- **Estados (D-20 y D-21):**
+  - Cargando: esqueletos, en lugar de «Cargando experiencia gastronómica…».
+  - Error: cálido, con «Reintentar».
+  - Plato inexistente: `PaginaEstado` («Este plato ya no está en la carta»), en lugar de `notFound()`.
+- Los errores se registran con `registrarError` y no con `console.error` del objeto (2.8).
+- **`ProveedorNotificaciones`** pasa a `AppProviders`, para todo el sitio. Hasta ahora solo existía en el catálogo y nadie podía sustituir `alert()` por una notificación.
+
+**Pruebas:**
+- `producto.spec.ts` (nueva, Chromium contra `next start`, con el API simulado): 12/12. Comprueba:
+  - la contraetiqueta, las insignias, el combo y que no hay emoji;
+  - el selector de cantidad;
+  - pedir en mesa con el diálogo, el **payload idéntico** (`{ platilloId: 7, cantidad: 2, usuarioId: 41, mesa: "5" }`), la redirección y la notificación;
+  - el fallo con aviso y sin `alert()` ni el mensaje del servidor;
+  - el plato inexistente y el error de carga;
+  - axe y que no desborda a 360 (al 125 %), 1024 y 1440 px, en los dos temas.
+- `urls.spec.ts` (autoExecute) y `csp.spec.ts`: verdes en la misma tanda.
+- **Artefacto de las pruebas corregido:** la simulación del API respondía también a las peticiones RSC de la navegación de Next. Next recibía un JSON, recargaba la página entera y la notificación se perdía. Ahora se excluyen las peticiones con cabecera `rsc`, también en el `simularApi` compartido; la batería completa lo comprobará al cerrar la fase.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- Revisión visual a 1440 px en claro.
+- **No verificado:** el pedido real (sin backend).
+- Sin procesos abiertos.
+
 ### 4.11 · `/menu/categoria/[slug]` (2026-11-03) — D-20 y D-21
 
 **Cambios:**

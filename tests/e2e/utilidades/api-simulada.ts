@@ -14,7 +14,9 @@ export async function simularApi(page: Page) {
 		(url) => url.origin === "http://localhost:3100" && !url.pathname.startsWith("/_next"),
 		async (route) => {
 			const r = route.request();
-			if (!["fetch", "xhr"].includes(r.resourceType())) return route.fallback();
+			// Las peticiones RSC de la navegación de Next (cabecera `rsc`) no son del API: si se simularan,
+			// Next recibiría un JSON en lugar del árbol y recargaría la página entera (visto en el PLAN 4.12).
+			if (!["fetch", "xhr"].includes(r.resourceType()) || r.headers()["rsc"]) return route.fallback();
 			const { pathname } = new URL(r.url());
 			let cuerpo = fixture("lista-vacia");
 			if (pathname.endsWith("/auth/me")) cuerpo = fixture("auth-me");

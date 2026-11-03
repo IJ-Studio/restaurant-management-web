@@ -6,6 +6,7 @@ import { DesignSystemProvider } from "@/components/providers/DesignSystemProvide
 import { store, type AppDispatch } from "@/store/index";
 import { useEffect } from "react";
 import { hydrateSession } from "@/store/slices/authSlice";
+import { ProveedorNotificaciones } from "@/components/ui/Notificacion";
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -34,7 +35,8 @@ export function AppProviders({ children }: AppProvidersProps) {
       <PreferenciasProvider>
         <DesignSystemProvider>      
           <AuthInitializer>
-            {children}
+            {/* Notificaciones del sistema en todo el sitio (PLAN 4.12): sustituyen a alert(). */}
+            <ProveedorNotificaciones>{children}</ProveedorNotificaciones>
           </AuthInitializer>
         </DesignSystemProvider>
       </PreferenciasProvider>

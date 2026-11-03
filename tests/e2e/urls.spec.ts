@@ -45,7 +45,7 @@ test("autoExecute pide confirmación: «Ahora no» no crea el pedido; confirmar 
 	await simular(page, pedidos);
 
 	await page.goto("/menu/producto/7?autoExecute=pedir_mesa&qty=50&mesaQuery=4", { waitUntil: "load" });
-	const confirmacion = page.getByRole("alertdialog", { name: "¿Añadir este platillo a tu pedido?" });
+	const confirmacion = page.getByRole("alertdialog", { name: "¿Añadir este plato a tu pedido?" });
 	await expect(confirmacion).toBeVisible();
 	// La cantidad de la URL se limita a 20.
 	await expect(confirmacion).toContainText("20 × Mole de olla, mesa 4.");
