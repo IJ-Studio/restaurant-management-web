@@ -17,7 +17,9 @@ export interface OpcionesBoton {
 
 const BASE =
 	"relative inline-flex min-h-11 items-center justify-center gap-2 rounded-control border font-texto font-semibold uppercase " +
-	"text-(length:--texto-etiqueta) leading-[1.2] tracking-[0.16em] whitespace-nowrap select-none cursor-pointer " +
+	// Sin `whitespace-nowrap`: un rótulo largo pasa a dos líneas antes que desbordar a 360 px con
+	// texto al 125 % (WCAG 1.4.10, PLAN 4.11). `max-w-full` lo mantiene dentro de su contenedor.
+	"text-(length:--texto-etiqueta) leading-[1.2] tracking-[0.16em] max-w-full text-center [text-wrap:balance] select-none cursor-pointer " +
 	"transition-[background-color,border-color,color,text-decoration-color,transform] duration-(--duracion-breve) ease-estandar " +
 	"al-pulsar:translate-y-px " +
 	"aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-busy:cursor-progress " +

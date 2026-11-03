@@ -6,6 +6,37 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.11 · `/menu/categoria/[slug]` (2026-11-03) — D-20 y D-21
+
+**Cambios:**
+- **`app/menu/categoria/[slug]/page.tsx`**, reescrita con la misma petición (`/menu/categories/with-products` del API), la misma búsqueda por `id`, los mismos enlaces a `/menu/producto/{id}` y la misma tolerancia a los nombres en español o en inglés.
+  - `EncabezadoPublico` con las migas («Inicio › La carta › Arroces»), «Volver a la carta», el nombre y la descripción que envía el API.
+  - Foto de la sección (21:9) solo si existe.
+  - Rejilla de **`TarjetaPlato`** (nueva, `components/carta/`): foto 4:5 o respaldo, nombre en Fraunces, precio tabular y descripción. La tarjeta entera lleva al detalle con el patrón de `Tarjeta` (el enlace es el título, extendido, y el foco rodea la tarjeta). Agotado: insignia de aviso con el texto «Agotado».
+  - Estados (D-20):
+    - Cargando: esqueletos, sin «Cargando categoría…».
+    - Error: «No pudimos traer esta sección», con «Reintentar» y «Llamar al restaurante».
+    - Vacía: un estado honesto.
+  - **Sección que no existe (D-21):** `PaginaEstado` con la ilustración del plato y su campana y el texto «Esta sección de la carta no existe», en lugar del 404 genérico.
+  - Fuera: el «$0.00» inventado cuando faltaba el precio (ahora no se muestra), «Sin imagen», «Platillo sin nombre» y `BackButton`.
+- **`estilos-boton.ts`** (botones de todo el sitio): sin `whitespace-nowrap`; con `max-w-full`, texto centrado y equilibrado.
+  - Un rótulo largo pasa a dos líneas antes que desbordar a 360 px con texto al 125 % (WCAG 1.4.10). Lo detectó la prueba con «Ver todas las secciones», como antes «Pedir» en el 4.8.
+  - En los anchos habituales no cambia nada: los rótulos son cortos.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `categoria.spec.ts` (nueva, Chromium contra `next start`, con el API simulado) junto con `carta.spec.ts` y `landing.spec.ts`: 49/49. Comprueba:
+  - las migas, los platos, el precio, «Agotado», los nombres en inglés y el respaldo sin foto;
+  - que un clic en la foto lleva al detalle;
+  - la sección vacía;
+  - la página de estado de una sección inexistente;
+  - el error cálido sin texto técnico, y que «Reintentar» vuelve a pedirla;
+  - axe y que no desborda a 360 (al 125 %), 768 y 1440 px, en los dos temas.
+- Revisión visual a 1440 px en oscuro.
+- Las pruebas del catálogo con el cambio de los botones se pasan al cerrar la fase.
+- Sin procesos abiertos.
+
 ### 4.10 · `/menu` (2026-11-03) — D-17 y D-20
 
 **Cambios:**
