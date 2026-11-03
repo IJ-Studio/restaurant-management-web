@@ -6,6 +6,22 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.9 · Visítanos (`#visitanos`) (2026-11-03) — D-19
+
+**Cambios:**
+- **`components/landing/secciones/Visitanos.tsx`:**
+  - En contraetiqueta, la dirección, el horario y el teléfono de `restaurant.config.ts`.
+  - **«Cómo llegar»** enlaza el mapa de la configuración en otra pestaña (`noopener noreferrer`) y lo dice a los lectores. **Sin iframe**: no carga terceros hasta que la persona lo pide.
+  - **Redes** (Facebook e Instagram): iconos de Lucide, el nombre visible y «… de El Quijote (abre en otra pestaña)» para lectores.
+  - Título y entradilla (D-17) sacados de la dirección («En la plazuela Hidalgo…»), sin inventar distancias ni referencias.
+- **Landing:** las seis secciones ya son componentes propios. `page.tsx` solo pide los datos y los reparte.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas, tras quitar un import que dejó de usarse.
+- Build: correcto.
+- `landing.spec.ts` (Chromium contra `next start`): 24/24. Prueba nueva: los tres datos, el mapa enlazado con `target` y `rel`, ningún `iframe` en la página y las redes con su nombre accesible.
+- Sin procesos abiertos.
+
 ### 4.8 · Pedir (`#pedir`) (2026-11-03) — D-19
 
 **Cambios:**

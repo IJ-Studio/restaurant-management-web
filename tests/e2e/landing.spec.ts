@@ -194,3 +194,16 @@ test("pedir: los dos modos con enlace a sus páginas, horario y teléfono de la 
 	await expect(seccion.locator("dd").first()).toHaveText(/Lunes a Domingo/);
 	await expect(seccion.getByRole("link", { name: /771 702 8172/ })).toHaveAttribute("href", "tel:+527717028172");
 });
+
+test("visítanos: dirección, horario y teléfono; mapa enlazado sin iframe y redes con nombre", async ({ page }) => {
+	await abrir(page);
+	const seccion = page.locator("section#visitanos");
+	await expect(seccion.locator("dd")).toHaveText([/Pzla\. Hidalgo 5-1/, /Lunes a Domingo/, /771 702 8172/]);
+	const mapa = seccion.getByRole("link", { name: /Cómo llegar/ });
+	await expect(mapa).toHaveAttribute("href", /^https:\/\/maps\.google\.com\//);
+	await expect(mapa).toHaveAttribute("target", "_blank");
+	await expect(mapa).toHaveAttribute("rel", "noopener noreferrer");
+	await expect(page.locator("iframe")).toHaveCount(0);
+	for (const red of ["Facebook", "Instagram"])
+		await expect(seccion.getByRole("link", { name: `${red} de El Quijote (abre en otra pestaña)` })).toHaveAttribute("rel", "noopener noreferrer");
+});

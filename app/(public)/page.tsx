@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { MapPin } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { MenuLanding } from "@/components/landing/secciones/MenuLanding";
 import { Nosotros } from "@/components/landing/secciones/Nosotros";
 import { Pedir } from "@/components/landing/secciones/Pedir";
 import { PromocionesLanding } from "@/components/landing/secciones/PromocionesLanding";
 import { Reservas } from "@/components/landing/secciones/Reservas";
+import { Visitanos } from "@/components/landing/secciones/Visitanos";
 import { Portada } from "@/components/landing/secciones/Portada";
-import { SeccionLanding } from "@/components/landing/secciones/SeccionLanding";
 import { ReintentarSeccion } from "@/components/landing/secciones/ReintentarSeccion";
 import { obtenerCarta, obtenerPromociones } from "@/lib/publico/datos-landing";
 import { seleccionarPlatos } from "@/lib/publico/seleccion-platos";
@@ -58,13 +57,7 @@ export default async function Inicio() {
 
 			<Pedir />
 
-			<SeccionLanding id="visitanos" lote={6} rotulo="Visítanos" fondo="cafe" titulo="Te esperamos" entradilla={contact.address}>
-				<div>
-					<BotonEnlace href={contact.googleMaps} variante="secundario" icono={<MapPin />} target="_blank" rel="noopener noreferrer">
-						Cómo llegar
-					</BotonEnlace>
-				</div>
-			</SeccionLanding>
+			<Visitanos />
 		</>
 	);
 }
