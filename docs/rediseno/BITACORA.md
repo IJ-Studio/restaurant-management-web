@@ -6,6 +6,36 @@
 
 ## Fase 5 · Administración
 
+### 5.15 · Acerca del restaurante (panel) (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/about/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/admin/acerca/AcercaAdmin.tsx`.
+- **Lo que hacía era engañoso, y se dice:**
+  - «Guardar» mostraba «guardado» sin llamar a nadie.
+  - La vista previa (`AboutPreviewModal`) imitaba una página «Nosotros» que ya no existe: la de la fase 4 sale de la configuración (NP-43).
+  - Ahora un aviso dice que son datos de ejemplo, que se editan en la visita y no se guardan. Cada bloque lleva su insignia (D-13) y ya no hay botón de guardar falso ni vista previa.
+- **Bloques:**
+  - **Identidad:** nombre, lema, razón social, RFC, descripción e historia, con contador.
+  - **Contacto.**
+  - **Horario:** hora de apertura y de cierre con etiqueta por día, e `Interruptor` «Cerrado», que deshabilita las horas.
+  - **Lo que ofrece la casa:** lista sin emojis; añadir con Enter y quitar con un botón que lleva su nombre.
+  - **Galería.**
+- **D-18:**
+  - La galería del mock traía tres fotos de `images.unsplash.com` y ahora empieza vacía.
+  - Añadir una foto solo admite la nube propia (`esImagenPermitida`).
+- **Retirados** (versionados): las seis secciones de `components/about/` y `AboutPreviewModal`.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `acerca-admin.spec` (nueva), 8/8. Comprueba:
+  - el aviso, que no haya «Guardar» ni «Vista previa» y que no salga ninguna petición a Unsplash, Pixabay ni Pravatar;
+  - la foto de Unsplash rechazada y la de Cloudinary propia añadida;
+  - el lunes cerrado con su hora deshabilitada y una característica añadida;
+  - axe, sin desborde, a 360, 768 y 1440 px, en los dos temas.
+- Captura revisada: claro a 360 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.14 · Ajustes (2026-11-03) — D-12
 
 **Cambios:**

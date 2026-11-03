@@ -76,24 +76,6 @@ export const INITIAL_ABOUT_INFO: RestaurantInfo = {
     { id: 5, icon: "🍕", text: "Cocina internacional" },
     { id: 6, icon: "🎂", text: "Eventos privados y banquetes" },
   ],
-  gallery: [
-    {
-      id: 1,
-      url: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600",
-      caption: "Interior del restaurante",
-      order: 1,
-    },
-    {
-      id: 2,
-      url: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600",
-      caption: "Nuestra cocina",
-      order: 2,
-    },
-    {
-      id: 3,
-      url: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=600",
-      caption: "Terraza",
-      order: 3,
-    },
-  ],
+  // Sin fotos de terceros (D-18): la galería de ejemplo empieza vacía; se añaden fotos propias.
+  gallery: [],
 };
