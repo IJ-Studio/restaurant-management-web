@@ -6,6 +6,37 @@
 
 ## Fase 5 · Administración
 
+### 5.18 · Panel del mesero (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/mesero/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/mesero/MeseroPanel.tsx`, pensada para el móvil.
+- **Misma lógica sobre los servicios locales** (`TableService`, `MenuService`, `OrderService`):
+  - tomar un pedido crea la orden (`addOrder`) y ocupa la mesa;
+  - «Pedir la cuenta» (antes «Llamar al cajero») pasa la mesa a «lista».
+  - Los servicios se leen al montar, sin `mounted` ni `return null`.
+- **Retirados de la pantalla:**
+  - la barra lateral propia (cuadro con la inicial y botones «Mesas» y «Pedidos»); la pestaña «Pedidos» no mostraba nada;
+  - `SettingsService`, que solo servía para esa inicial.
+- **Indicadores:** libres como protagonista (de cuántas), ocupadas y cuenta pedida. Más un filtro de estado.
+- **Mesas en tarjetas:** nombre en Fraunces, capacidad, pedido actual y estado en `Insignia` (Libre, Ocupada, Cuenta pedida).
+  - Botones a todo el ancho de **48 px**: «Tomar pedido» o «Añadir al pedido» y «Pedir la cuenta», con nombres accesibles que empiezan por el texto visible y nombran la mesa.
+- **Pedido en `PanelLateral`:**
+  - `Selector` de categoría y platos con «Añadir un…» y «Quitar un…» de 48 px, más la cantidad con `aria-live`.
+  - Resumen del pedido, descuento (porcentaje o cantidad fija) y total en vivo.
+  - Envío «Enviar a cocina · $ X» con notificación.
+- **Se conserva** lo que hacía el pedido: el descuento se calcula y se ve, pero la orden se guarda con el total sin descuento. Corregirlo cambiaría la lógica de la orden; queda anotado aquí.
+- **Retirados:** `OrderModal`, `TableCard` y `TableGrid`, con sus colores fijos y `bg-[#0a0a0e]`.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `mesero.spec` (nueva) y el layout de paneles, 18/18. La nueva comprueba:
+  - el pedido en una mesa libre, con botones de 48 px o más, dos platos, el 10 % de descuento a la vista, la mesa que pasa a ocupada y la notificación;
+  - «Pedir la cuenta», que la deja en «Cuenta pedida»;
+  - axe en la página y en el panel, sin desborde, a 360, 390, 768 y 1440 px, en los dos temas.
+- Captura revisada: oscuro a 390 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase). Un móvil real.
+
 ### 5.17 · Panel de caja (2026-11-03)
 
 **Cambios:**
