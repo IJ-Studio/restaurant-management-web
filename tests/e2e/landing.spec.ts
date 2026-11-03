@@ -157,3 +157,30 @@ test("la cabecera deja de ser transparente al pasar la portada", async ({ page }
 	await expect(cabecera).not.toHaveAttribute("data-sobre-portada");
 	await expect(cabecera).toHaveAttribute("data-desplazada", "true");
 });
+
+// PLAN 4.7, D-19: el flujo real de reserva se abre en un panel lateral dentro de la landing.
+for (const ancho of [360, 1440]) {
+	test(`reservas: el formulario real en un panel lateral, con axe y cierre con Esc (${ancho} px)`, async ({ page }) => {
+		await page.setViewportSize({ width: ancho, height: 900 });
+		await abrir(page);
+		const seccion = page.locator("section#reservas");
+		await expect(seccion.locator("svg").first()).toBeVisible(); // el sello
+		await expect(seccion.getByText(/Lunes a Domingo/)).toBeVisible();
+		const abrirReserva = seccion.getByRole("button", { name: "Reservar mesa" });
+		await abrirReserva.click();
+		const panel = page.getByRole("dialog", { name: "Reservar mesa" });
+		await expect(panel).toBeVisible();
+		await expect(panel.locator("form")).toBeVisible({ timeout: 15_000 });
+		await expect(panel.locator('input[type="tel"]')).toBeVisible(); // primer paso: los datos de contacto
+		const caja = await panel.boundingBox();
+		expect(caja!.width).toBeLessThanOrEqual(ancho);
+		if (ancho === 1440) expect(caja!.width).toBeGreaterThan(500);
+		const r = await new AxeBuilder({ page }).include('[role="dialog"]').withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+		// El interior del formulario se rehace en el 4.16; aquí se exige que el panel no añada violaciones propias.
+		const delPanel = r.violations.filter((v) => v.nodes.some((n) => n.target.join(" ").includes("panel-lateral") || n.target.join(" ").includes("[role=\"dialog\"] > header")));
+		expect(delPanel.map((v) => v.id)).toEqual([]);
+		await page.keyboard.press("Escape");
+		await expect(panel).toBeHidden();
+		await expect(abrirReserva).toBeFocused();
+	});
+}

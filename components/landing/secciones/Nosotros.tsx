@@ -16,7 +16,6 @@ export function Nosotros({ galeria }: { galeria: PlatoDestacado[] }) {
 			id="nosotros"
 			lote={1}
 			rotulo="Nosotros"
-			fondo="cafe"
 			titulo="Una casa con nombre de caballero andante"
 			entradilla="Cocina española de alta gama en el centro de Huejutla de Reyes, servida sin prisa."
 		>
@@ -33,7 +32,7 @@ export function Nosotros({ galeria }: { galeria: PlatoDestacado[] }) {
 						</BotonEnlace>
 					</div>
 				</div>
-				<MolinoAnimado sobre="cafe" className="mx-auto max-w-[18rem] text-acento md:max-w-[22rem]" />
+				<MolinoAnimado className="mx-auto max-w-[18rem] text-acento md:max-w-[22rem]" />
 			</div>
 			{galeria.length > 0 && (
 				<ul aria-label="De nuestra cocina" className="m-0 grid list-none grid-cols-1 gap-(--espacio-lg) p-0 sm:grid-cols-3" data-prueba="galeria-nosotros">

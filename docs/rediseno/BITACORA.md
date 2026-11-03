@@ -6,6 +6,29 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.7 · Reservas (`#reservas`) (2026-11-03) — D-19
+
+**Cambios:**
+- **`components/landing/secciones/Reservas.tsx`:** banda café centrada con el **sello de la casa** (su única aparición en la página), el horario y el teléfono de `restaurant.config.ts` en contraetiqueta, y dos salidas:
+  - **«Reservar mesa»** (`ReservarEnPanel`) abre el **flujo real**, `ReservationSidebar`, en un `PanelLateral` amplio dentro de la misma página (D-19). **No se cambian su lógica ni su payload**: se monta igual que en `/reservations`, con la misma `key` que se reinicia en `onSuccess` y el mismo `OnlineOnly` con la salida de llamar.
+    - El formulario se carga con `next/dynamic` al abrir el panel; mientras llega, `CargadorMarca` («Preparando tu reserva…»).
+    - Su interior conserva el estilo antiguo hasta el 4.16, que lo rehace.
+  - «Abrir en su propia página» lleva a `/reservations`, que sigue existiendo (D-08).
+- **`PanelLateral`:** nueva opción `ancho="amplio"` (`min(40rem, 100vw − 3rem)`) para un formulario con plano. El catálogo sigue usando el ancho normal.
+- **Retirado** `landing/ReservationSection.tsx`, el formulario simulado que confirmaba sin llamar al API (PLAN 4.7).
+- **Alternancia de fondos:** DESIGN.md quiere la reserva en banda café. Quedan así: Nosotros fondo, Menú café, Promociones fondo, Reservas café, Pedir fondo y Visítanos café.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `landing.spec.ts` (Chromium contra `next start`): 22/22. Las pruebas nuevas, a 360 y 1440 px:
+  - el panel se abre con el formulario real (primer paso: datos de contacto) y, a 1440 px, mide más de 500 px sin pasarse de la pantalla;
+  - el marco del panel no añade violaciones de axe;
+  - Esc lo cierra y el foco vuelve a «Reservar mesa».
+- Revisión visual: la página entera a 768 px en oscuro.
+- **No verificado:** reservar de verdad desde el panel (sin backend). El payload es el mismo porque el componente no cambia.
+- Sin procesos abiertos.
+
 ### 4.6 · Promociones (`#promociones`) (2026-11-03) — D-19
 
 **Cambios:**

@@ -125,10 +125,13 @@ export function Dialogo({
 export interface PanelLateralProps extends BaseDialogoProps {
 	/** Lado de la pantalla: `fin` (derecha, por defecto) o `inicio` (izquierda, menús). */
 	lado?: "inicio" | "fin";
+	/** `normal` (24rem) o `amplio` (40rem), para un formulario con plano, como la reserva (PLAN 4.7). */
+	ancho?: "normal" | "amplio";
 }
 
 export function PanelLateral({
 	lado = "fin",
+	ancho = "normal",
 	titulo,
 	descripcion,
 	children,
@@ -145,6 +148,7 @@ export function PanelLateral({
 			<RadixDialogo.Content
 				className={cn("panel-lateral", className)}
 				data-lado={lado}
+				data-ancho={ancho === "amplio" ? "amplio" : undefined}
 				{...(descripcion ? {} : { "aria-describedby": undefined })}
 				{...cierre}
 				{...foco}

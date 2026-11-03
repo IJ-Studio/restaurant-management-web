@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { CalendarDays, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { MenuLanding } from "@/components/landing/secciones/MenuLanding";
 import { Nosotros } from "@/components/landing/secciones/Nosotros";
 import { PromocionesLanding } from "@/components/landing/secciones/PromocionesLanding";
+import { Reservas } from "@/components/landing/secciones/Reservas";
 import { Portada } from "@/components/landing/secciones/Portada";
 import { SeccionLanding } from "@/components/landing/secciones/SeccionLanding";
 import { ReintentarSeccion } from "@/components/landing/secciones/ReintentarSeccion";
@@ -52,23 +53,11 @@ export default async function Inicio() {
 				error={promociones.estado === "error" ? <ReintentarSeccion titulo="No pudimos traer las promociones" descripcion="Vuelve a intentarlo en un momento." /> : undefined}
 			/>
 
-			<SeccionLanding
-				id="reservas"
-				lote={4}
-				rotulo="Reservas"
-				titulo="Tu mesa, a tu hora"
-				entradilla="Elige el día, la hora y el número de comensales, y escoge tu mesa en el plano de la sala."
-			>
-				<div>
-					<BotonEnlace href="/reservations" variante="primario" icono={<CalendarDays />}>
-						Reservar mesa
-					</BotonEnlace>
-				</div>
-			</SeccionLanding>
+			<Reservas />
 
-			<SeccionLanding id="pedir" lote={5} rotulo="Pedir" fondo="cafe" titulo="Pide en tu mesa o en tu casa" entradilla="Elige desde la carta y paga en línea." />
+			<SeccionLanding id="pedir" lote={5} rotulo="Pedir" titulo="Pide en tu mesa o en tu casa" entradilla="Elige desde la carta y paga en línea." />
 
-			<SeccionLanding id="visitanos" lote={6} rotulo="Visítanos" titulo="Te esperamos" entradilla={contact.address}>
+			<SeccionLanding id="visitanos" lote={6} rotulo="Visítanos" fondo="cafe" titulo="Te esperamos" entradilla={contact.address}>
 				<div>
 					<BotonEnlace href={contact.googleMaps} variante="secundario" icono={<MapPin />} target="_blank" rel="noopener noreferrer">
 						Cómo llegar

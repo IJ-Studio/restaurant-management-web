@@ -52,7 +52,7 @@ export function TarjetaPromocion({ promocion: p, nivelTitulo = 3 }: { promocion:
 export function PromocionesLanding({ promociones, error }: { promociones: Promotion[]; error?: ReactNode }) {
 	const visibles = promociones.slice(0, MAXIMO);
 	return (
-		<SeccionLanding id="promociones" lote={3} rotulo="Promociones" fondo="cafe" titulo="Para esta temporada" entradilla="Las propuestas vigentes de la casa.">
+		<SeccionLanding id="promociones" lote={3} rotulo="Promociones" titulo="Para esta temporada" entradilla="Las propuestas vigentes de la casa.">
 			{error ??
 				(visibles.length > 0 ? (
 					<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-xl) p-0 md:grid-cols-3" data-prueba="promociones-landing">

@@ -227,6 +227,9 @@
     box-shadow: var(--shadow-flotante);
     outline: none;
   }
+  .panel-lateral[data-ancho="amplio"] {
+    inline-size: min(40rem, 100vw - 3rem);
+  }
   .panel-lateral[data-lado="inicio"] {
     inset-inline: 0 auto;
     padding-inline: env(safe-area-inset-left, 0px) 0;

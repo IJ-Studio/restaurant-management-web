@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
  */
 export function MenuLanding({ platos, error }: { platos: PlatoDestacado[]; error?: ReactNode }) {
 	return (
-		<SeccionLanding id="menu" lote={2} rotulo="Menú" titulo="Platos de la casa" entradilla="Una selección de la carta. El resto te espera en la carta completa.">
+		<SeccionLanding id="menu" lote={2} rotulo="Menú" fondo="cafe" titulo="Platos de la casa" entradilla="Una selección de la carta. El resto te espera en la carta completa.">
 			{error ??
 				(platos.length > 0 ? (
 					<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-xl) p-0 sm:grid-cols-2 lg:grid-cols-4" data-prueba="platos-menu">
