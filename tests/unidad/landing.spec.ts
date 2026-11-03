@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { seleccionarPlatos } from "../../lib/publico/seleccion-platos";
 import { formatearPrecio } from "../../lib/formato/precio";
+import { formatearDia } from "../../lib/formato/fecha";
 import type { CategoriaCarta } from "../../lib/publico/datos-landing";
 
 // Selección de platos de la landing (PLAN 4.4 y 4.5). Las secciones con datos se ven en el catálogo.
@@ -32,4 +33,11 @@ test("precio con espacio duro, sin decimales si es entero y nunca un cero invent
 	expect(formatearPrecio(null)).toBeNull();
 	expect(formatearPrecio(Number.NaN)).toBeNull();
 	expect(formatearPrecio(-3)).toBeNull();
+});
+
+test("la vigencia se lee como el día escrito, sin desplazarse por la zona horaria", () => {
+	expect(formatearDia("2026-11-30")).toBe("30 de noviembre");
+	expect(formatearDia("2026-12-01")).toBe("1 de diciembre");
+	expect(formatearDia("no es fecha")).toBeNull();
+	expect(formatearDia(undefined)).toBeNull();
 });

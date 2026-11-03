@@ -6,6 +6,30 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.6 · Promociones (`#promociones`) (2026-11-03) — D-19
+
+**Cambios:**
+- **`components/landing/secciones/PromocionesLanding.tsx`:**
+  - Muestra como mucho tres promociones **vigentes** del API: activas, con título y dentro de sus fechas (`promocionesVigentes`, 4.2).
+  - `TarjetaPromocion` lleva la foto si la hay (decorativa), la insignia que pone el admin (tono acento), el título en Fraunces y la descripción. En contraetiqueta van «Antes» tachado, «Precio» y «Hasta el», cada uno solo si existe.
+  - Desaparecen el emoji y el degradado de color del diseño anterior.
+  - Enlace «Ver todas las promociones» a `/promociones` (D-08).
+  - Sin datos: el error cálido con «Reintentar». Sin vigentes: «Ahora mismo no hay promociones vigentes.», sin enlace.
+  - `TarjetaPromocion` se exporta para que `/promociones` la reutilice en el 4.21.
+- **`lib/formato/fecha.ts`:** «30 de noviembre». Una fecha sin hora se lee como ese día, sin desplazarse por la zona horaria.
+- **Catálogo:** dos promociones de ejemplo (una con precio y vigencia, otra con foto) y el caso sin vigentes.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- `pnpm test:unidad`: 49/49, con el formato de la fecha.
+- `landing-catalogo.spec.ts`, Chromium contra `next dev`: 8/8. Comprueba:
+  - las tarjetas, la contraetiqueta («$ 480» tachado, «$ 390», «30 de noviembre»), el enlace y la ausencia de emoji;
+  - el caso sin vigentes;
+  - axe y que no desborda a 360 y 1440 px en los dos temas.
+- Build: correcto. `landing.spec.ts` contra `next start`: 20/20.
+- Revisión visual: el catálogo a 1440 px en oscuro.
+- Sin procesos abiertos.
+
 ### 4.5 · Menú (`#menu`) (2026-11-03) — D-19 y D-20
 
 **Cambios:**

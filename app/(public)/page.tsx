@@ -3,6 +3,7 @@ import { CalendarDays, MapPin } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { MenuLanding } from "@/components/landing/secciones/MenuLanding";
 import { Nosotros } from "@/components/landing/secciones/Nosotros";
+import { PromocionesLanding } from "@/components/landing/secciones/PromocionesLanding";
 import { Portada } from "@/components/landing/secciones/Portada";
 import { SeccionLanding } from "@/components/landing/secciones/SeccionLanding";
 import { ReintentarSeccion } from "@/components/landing/secciones/ReintentarSeccion";
@@ -46,11 +47,10 @@ export default async function Inicio() {
 				}
 			/>
 
-			<SeccionLanding id="promociones" lote={3} rotulo="Promociones" fondo="cafe" titulo="Para esta temporada" entradilla="Las propuestas vigentes de la casa.">
-				{promociones.estado === "error" ? (
-					<ReintentarSeccion titulo="No pudimos traer las promociones" descripcion="Vuelve a intentarlo en un momento." />
-				) : null}
-			</SeccionLanding>
+			<PromocionesLanding
+				promociones={promociones.estado === "ok" ? promociones.datos : []}
+				error={promociones.estado === "error" ? <ReintentarSeccion titulo="No pudimos traer las promociones" descripcion="Vuelve a intentarlo en un momento." /> : undefined}
+			/>
 
 			<SeccionLanding
 				id="reservas"

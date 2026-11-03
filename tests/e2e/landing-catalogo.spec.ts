@@ -53,6 +53,21 @@ test.describe("secciones de la landing en el catálogo", () => {
 		await expect(prueba(page, "demo-menu-vacio")).toContainText("Todavía no hay platos publicados en la carta.");
 	});
 
+	test("Promociones: vigentes con insignia, precio y vigencia; sin emoji; enlace a /promociones", async ({ page }) => {
+		await abrir(page);
+		const demo = prueba(page, "demo-promociones");
+		const tarjetas = demo.locator('[data-prueba="promociones-landing"] > li');
+		await expect(tarjetas).toHaveCount(2);
+		const primera = tarjetas.first();
+		await expect(primera.getByRole("heading", { level: 3 })).toHaveText("Menú de mediodía");
+		await expect(primera.locator("dd")).toHaveText(["$ 480", "$ 390", "30 de noviembre"]);
+		await expect(primera.locator("s")).toHaveCount(1);
+		await expect(demo.getByRole("link", { name: "Ver todas las promociones" })).toHaveAttribute("href", "/promociones");
+		expect(await demo.textContent()).not.toMatch(/\p{Extended_Pictographic}/u);
+		await expect(prueba(page, "demo-promociones-vacias")).toContainText("Ahora mismo no hay promociones vigentes.");
+		await expect(prueba(page, "demo-promociones-vacias").getByRole("link")).toHaveCount(0);
+	});
+
 	for (const tema of ["oscuro", "claro"] as const) {
 		for (const ancho of [360, 1440]) {
 			test(`axe y sin desbordar a ${ancho} px, tema ${tema}`, async ({ page }, info) => {
