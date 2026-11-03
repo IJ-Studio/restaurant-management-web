@@ -1,0 +1,317 @@
+"use client";
+
+import { useMemo, useRef, useState } from "react";
+import { Download, FileSpreadsheet, Pencil, Plus, Trash2, Upload, UtensilsCrossed } from "lucide-react";
+import { BloquePanel } from "@/components/paneles/BloquePanel";
+import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
+import { Boton } from "@/components/ui/Boton";
+import { Buscador } from "@/components/ui/Buscador";
+import { Selector } from "@/components/ui/Campo";
+import { Dialogo } from "@/components/ui/Dialogo";
+import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
+import { EstadoVacio } from "@/components/ui/EstadoVacio";
+import { Indicador } from "@/components/ui/Indicador";
+import { Insignia } from "@/components/ui/Insignia";
+import { useNotificaciones } from "@/components/ui/Notificacion";
+import { Tabla, type ColumnaTabla } from "@/components/ui/Tabla";
+import type { MenuItem } from "@/features/shared/data/restaurantData";
+import { contar } from "@/lib/formato/plural";
+import { formatearImporte } from "@/lib/formato/precio";
+import { ACEPTA } from "@/lib/validacion/archivos";
+import { DialogoImportacion } from "./DialogoImportacion";
+import { DialogoPlatillo, ETIQUETAS } from "./DialogoPlatillo";
+import { leerArchivo, type Fila } from "./importacion";
+import { API, API_EXTERNA, useCartaAdmin } from "./useCartaAdmin";
+
+/**
+ * Carta en administración (PLAN 5.9). Misma lógica (`useCartaAdmin`), otra forma: indicadores,
+ * una tabla por categoría (tarjetas por debajo de 1024 px), diálogos del catálogo, importar y
+ * exportar en diálogos con opciones nombradas (antes, menús desplegables hechos a mano) y, al
+ * importar, el archivo se valida antes de leerlo (`leerArchivo`).
+ */
+
+const importe = (n: number) => formatearImporte(n) ?? "—";
+const entero = new Intl.NumberFormat("es-MX");
+const SIN_API = "Disponible cuando la carta esté conectada al sistema.";
+
+type Pendiente = { archivo: File; filas: Fila[]; filasBd: Fila[] };
+
+export function CartaAdmin() {
+	const carta = useCartaAdmin();
+	const [busqueda, setBusqueda] = useState("");
+	const [disponibilidad, setDisponibilidad] = useState("todos");
+	const [pendiente, setPendiente] = useState<Pendiente | null>(null);
+	const [leyendo, setLeyendo] = useState(false);
+	const [dialogo, setDialogo] = useState<null | "importar" | "exportar">(null);
+	const entrada = useRef<HTMLInputElement>(null);
+	const formato = useRef<"csv" | "xlsx">("xlsx");
+	const { notificar } = useNotificaciones();
+	const { confirmar, dialogo: confirmacion } = useConfirmacion();
+
+	const todos = carta.categorias.flatMap((c) => c.items);
+	const disponibles = todos.filter((i) => i.available).length;
+
+	const filtrar = useMemo(() => {
+		const q = busqueda.trim().toLowerCase();
+		return (items: MenuItem[]) =>
+			items.filter(
+				(i) =>
+					(!q || i.name.toLowerCase().includes(q) || i.description?.toLowerCase().includes(q)) &&
+					(disponibilidad === "todos" || (disponibilidad === "disponibles" ? i.available : !i.available)),
+			);
+	}, [busqueda, disponibilidad]);
+
+	async function eliminar(categoria: string, p: MenuItem) {
+		const ok = await confirmar({
+			titulo: `¿Eliminar ${p.name} de la carta?`,
+			descripcion: "Deja de aparecer en la carta de este panel. No se puede deshacer.",
+			textoConfirmar: "Eliminar platillo",
+			destructiva: true,
+		});
+		if (!ok) return;
+		if (carta.eliminar(categoria, p.id)) notificar({ tono: "exito", titulo: `${p.name} eliminado` });
+		else notificar({ tono: "error", titulo: "No se pudo eliminar", descripcion: "Este platillo aún no tiene un registro válido." });
+	}
+
+	function elegirArchivo(f: "csv" | "xlsx") {
+		formato.current = f;
+		setDialogo(null);
+		// `accept` se fija aquí, antes del clic: el selector se abre antes de que React vuelva a pintar.
+		if (entrada.current) {
+			entrada.current.accept = f === "xlsx" ? ACEPTA.hoja : ".csv,text/csv";
+			entrada.current.click();
+		}
+	}
+
+	async function alElegir(archivo: File | undefined) {
+		if (entrada.current) entrada.current.value = "";
+		if (!archivo) return;
+		setLeyendo(true);
+		const leido = await leerArchivo(archivo, formato.current);
+		if ("error" in leido) {
+			setLeyendo(false);
+			notificar({ tono: "error", titulo: "No se puede importar ese archivo", descripcion: leido.error, duracionMs: null });
+			return;
+		}
+		const filasBd = await carta.filasActualesBd();
+		setLeyendo(false);
+		setPendiente({ archivo, filas: leido.filas, filasBd });
+	}
+
+	async function descargar(tipo: "excel" | "plantilla-csv" | "plantilla-xlsx") {
+		setDialogo(null);
+		if (!(await carta.descargarDelApi(tipo))) notificar({ tono: "error", titulo: "No se pudo descargar", descripcion: "Vuelve a intentarlo en un momento." });
+	}
+
+	const columnas: ColumnaTabla<MenuItem>[] = [
+		{
+			clave: "platillo",
+			titulo: "Platillo",
+			principal: true,
+			celda: (p) => (
+				<span className="flex flex-col gap-0.5">
+					<span>{p.name}</span>
+					{p.description && <span className="text-(length:--texto-pequeno) font-normal text-texto-secundario">{p.description}</span>}
+				</span>
+			),
+		},
+		{ clave: "precio", titulo: "Precio", numerica: true, celda: (p) => importe(p.price) },
+		{ clave: "preparacion", titulo: "Preparación", numerica: true, celda: (p) => <span className="whitespace-nowrap">{`${p.prepTime ?? 0} min`}</span> },
+		{ clave: "etiquetas", titulo: "Etiquetas", celda: (p) => (p.tags?.length ? p.tags.map((t) => ETIQUETAS[t] ?? t).join(", ") : "—") },
+		{
+			clave: "estado",
+			titulo: "Estado",
+			celda: (p) =>
+				p.available ? (
+					<Insignia tono="exito" className="whitespace-nowrap">
+						Disponible
+					</Insignia>
+				) : (
+					<Insignia tono="neutro" className="whitespace-nowrap">
+						Agotado
+					</Insignia>
+				),
+		},
+	];
+
+	return (
+		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
+			<EncabezadoPagina
+				antetitulo="Carta"
+				titulo="Platillos"
+				descripcion="Lo que se ofrece, a qué precio y si está disponible."
+				acciones={
+					<>
+						<Boton variante="secundario" icono={<Upload />} cargando={leyendo} textoCargando="Leyendo el archivo…" onClick={() => setDialogo("importar")}>
+							Importar
+						</Boton>
+						<Boton variante="secundario" icono={<Download />} onClick={() => setDialogo("exportar")}>
+							Exportar
+						</Boton>
+					</>
+				}
+			/>
+			<input ref={entrada} type="file" hidden onChange={(e) => void alElegir(e.target.files?.[0])} />
+
+			<div className={REJILLA_INDICADORES}>
+				<Indicador rotulo="Platillos en la carta" valor={entero.format(todos.length)} detalle={contar(carta.categorias.length, "categoría")} className={INDICADOR_PROTAGONISTA} estado={carta.cargada ? "listo" : "cargando"} />
+				<Indicador rotulo="Disponibles" valor={entero.format(disponibles)} estado={carta.cargada ? "listo" : "cargando"} />
+				<Indicador rotulo="Agotados" valor={entero.format(todos.length - disponibles)} estado={carta.cargada ? "listo" : "cargando"} />
+				<Indicador rotulo="Populares" valor={entero.format(todos.filter((i) => i.tags?.includes("popular")).length)} estado={carta.cargada ? "listo" : "cargando"} />
+			</div>
+
+			<div className="flex flex-wrap items-end gap-3">
+				<Buscador etiqueta="Buscar platillo" valor={busqueda} alCambiar={setBusqueda} marcador="Nombre o descripción" />
+				<Selector
+					etiqueta="Mostrar"
+					opciones={[
+						{ valor: "todos", texto: "Todos" },
+						{ valor: "disponibles", texto: "Disponibles" },
+						{ valor: "agotados", texto: "Agotados" },
+					]}
+					value={disponibilidad}
+					onChange={(e) => setDisponibilidad(e.target.value)}
+				/>
+			</div>
+
+			{carta.cargada && carta.categorias.length === 0 && (
+				<EstadoVacio icono={<UtensilsCrossed />} titulo="La carta está vacía" descripcion="Importa los platillos desde una plantilla para empezar." />
+			)}
+
+			{carta.categorias.map((c) => {
+				const filas = filtrar(c.items);
+				if (filas.length === 0 && busqueda) return null;
+				return (
+					<BloquePanel
+						key={c.id}
+						titulo={c.name}
+						descripcion={`Disponibles: ${entero.format(c.items.filter((i) => i.available).length)} de ${entero.format(c.items.length)}`}
+						acciones={
+							<DialogoPlatillo
+								categoria={c.name}
+								alGuardar={(d) => {
+									carta.guardar(c.id, d);
+									notificar({ tono: "exito", titulo: "Platillo añadido", descripcion: d.name });
+								}}
+								disparador={
+									<Boton variante="secundario" icono={<Plus />}>
+										{`Añadir a ${c.name}`}
+									</Boton>
+								}
+							/>
+						}
+					>
+						<Tabla
+							leyenda={`Platillos de ${c.name}`}
+							tablaDesde="lg"
+							columnas={columnas}
+							filas={filas}
+							claveFila={(p) => p.id}
+							tituloAcciones="Acciones"
+							acciones={(p) => (
+								<>
+									<Boton
+										variante="fantasma"
+										tamano="compacto"
+										// El nombre accesible empieza por el texto visible (WCAG 2.5.3).
+										aria-label={p.available ? `Agotar ${p.name}` : `Ofrecer ${p.name}`}
+										onClick={() => carta.alternarDisponible(c.id, p.id)}
+									>
+										{p.available ? "Agotar" : "Ofrecer"}
+									</Boton>
+									<DialogoPlatillo
+										platillo={p}
+										categoria={c.name}
+										alGuardar={(d) => {
+											carta.guardar(c.id, d);
+											notificar({ tono: "exito", titulo: "Cambios guardados", descripcion: d.name });
+										}}
+										disparador={
+											<Boton variante="secundario" tamano="compacto" soloIcono icono={<Pencil />}>
+												{`Editar ${p.name}`}
+											</Boton>
+										}
+									/>
+									<Boton variante="secundario" tamano="compacto" soloIcono icono={<Trash2 />} onClick={() => eliminar(c.id, p)}>
+										{`Eliminar ${p.name}`}
+									</Boton>
+								</>
+							)}
+							vacio={<EstadoVacio icono={<UtensilsCrossed />} titulo="Nada que mostrar" descripcion={busqueda || disponibilidad !== "todos" ? "Prueba con otro filtro." : "Añade el primer platillo de esta categoría."} />}
+						/>
+					</BloquePanel>
+				);
+			})}
+
+			<Dialogo
+				abierto={dialogo === "importar"}
+				alCambiarAbierto={(a) => setDialogo(a ? "importar" : null)}
+				titulo="Importar platillos"
+				descripcion="Descarga la plantilla, rellénala y súbela. Antes de guardar verás qué cambia."
+			>
+				<div className="flex flex-col gap-(--espacio-md)">
+					{!API_EXTERNA && <p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">{SIN_API}</p>}
+					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+						<Boton variante="secundario" icono={<FileSpreadsheet />} deshabilitado={!API_EXTERNA} onClick={() => descargar("plantilla-xlsx")}>
+							Plantilla de Excel
+						</Boton>
+						<Boton variante="secundario" icono={<Download />} deshabilitado={!API_EXTERNA} onClick={() => descargar("plantilla-csv")}>
+							Plantilla CSV
+						</Boton>
+						<Boton icono={<Upload />} deshabilitado={!API_EXTERNA} onClick={() => elegirArchivo("xlsx")}>
+							Subir Excel
+						</Boton>
+						<Boton icono={<Upload />} deshabilitado={!API_EXTERNA} onClick={() => elegirArchivo("csv")}>
+							Subir CSV
+						</Boton>
+					</div>
+					<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">Excel (.xlsx) o CSV, de hasta 2 MB.</p>
+				</div>
+			</Dialogo>
+
+			<Dialogo abierto={dialogo === "exportar"} alCambiarAbierto={(a) => setDialogo(a ? "exportar" : null)} titulo="Exportar la carta">
+				<div className="flex flex-col gap-2">
+					<Boton
+						variante="secundario"
+						onClick={() => {
+							carta.exportarCsv();
+							setDialogo(null);
+						}}
+					>
+						CSV de este panel
+					</Boton>
+					<Boton
+						variante="secundario"
+						onClick={() => {
+							carta.exportarJson();
+							setDialogo(null);
+						}}
+					>
+						JSON de este panel
+					</Boton>
+					<Boton variante="secundario" deshabilitado={!API_EXTERNA} onClick={() => descargar("excel")}>
+						Excel desde el sistema
+					</Boton>
+					{!API_EXTERNA && <p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">{SIN_API}</p>}
+				</div>
+			</Dialogo>
+
+			{pendiente && (
+				<DialogoImportacion
+					archivo={pendiente.archivo}
+					filas={pendiente.filas}
+					filasBd={pendiente.filasBd}
+					api={API}
+					alCerrar={() => setPendiente(null)}
+					alTerminar={(r) => {
+						setPendiente(null);
+						notificar({ tono: "exito", titulo: "Importación completa", descripcion: `${contar(r.inserted, "nuevo")} y ${contar(r.updated, "actualizado")}.` });
+						void carta.recargarDeBd();
+					}}
+				/>
+			)}
+			{confirmacion}
+		</div>
+	);
+}

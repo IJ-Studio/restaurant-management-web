@@ -6,6 +6,51 @@
 
 ## Fase 5 · Administración
 
+### 5.9 · Carta en administración (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/menu/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/admin/carta/CartaAdmin.tsx`.
+- **La lógica sale de la página a `useCartaAdmin.ts` sin cambiar el contrato:**
+  - `MenuService` como almacén local y carga de `GET /platillos/export.json`;
+  - alta optimista con `POST /platillos`, que reconcilia el id real;
+  - `PATCH /platillos/:id` solo para los ids de la BD;
+  - exportación local a CSV y JSON; Excel y plantillas desde el API.
+  - Los colores de categoría pasan de hex a tokens de gráfica.
+  - Sin `alert()` ni `confirm()`: las operaciones devuelven su resultado y la pantalla avisa.
+- **Pantalla:**
+  - Indicadores: platillos como protagonista (con las categorías), disponibles, agotados y populares.
+  - Buscador y filtro de disponibilidad.
+  - Una `Tabla` por categoría (tarjetas por debajo de 1024 px): precio, preparación, etiquetas como texto y estado en `Insignia`.
+  - Acciones con nombre: «Agotar» u «Ofrecer» (el nombre accesible empieza por el texto visible, WCAG 2.5.3), editar y eliminar, que pide confirmación del sistema.
+  - Importar y exportar abren diálogos con las opciones nombradas, en lugar de menús desplegables hechos a mano. Sin conexión al API, las opciones quedan deshabilitadas y lo explican; antes, `alert("Configura NEXT_PUBLIC_API_URL…")`.
+- **Importación (`importacion.ts` + `DialogoImportacion.tsx`):**
+  - **Validación antes de leer (5.9):** el XLSX pasa por `verificarArchivo(archivo, "hoja")` (≤ 2 MB, extensión, MIME y firma `PK 03 04`) **antes** de llegar a la librería `xlsx` (NP-31). El CSV y el JSON tienen el mismo tope de 2 MB. Los errores llegan en una notificación fija, sin texto técnico.
+  - **La vista previa sustituye a `ImportPreviewModal`** (968 líneas, 86 hex, estilos en línea y `text-[Npx]`):
+    - mismas diferencias por nombre con la BD, y los iguales empiezan sin marcar;
+    - cada platillo es una `Casilla` con su insignia (Nuevo, Cambia, Sin cambios) y sus cambios «antes → después»;
+    - buscador, filtro y «Marcar o desmarcar todos»;
+    - mismos endpoints de subida (`/platillos/import.csv`, `/platillos/import.json`, `/import/platillos/excel`, `mode=upsert`).
+- **`DialogoPlatillo` sustituye a `ItemModal`:**
+  - Nombre y descripción con `esquemaPlatillo` (paso 3.1); números con sus propios mensajes.
+  - Etiquetas como casillas y disponibilidad con `Interruptor`.
+  - Imagen con vista previa y «Quitar la imagen».
+  - La subida conserva el widget de Cloudinary y su preset, y ahora limita en el widget los formatos y los 5 MB.
+  - La firma antes de abrir la subida necesita un cargador propio y un preset firmado (NP-46); el preset actual es un marcador.
+- **Retirados** (versionados): `ItemModal`, `components/admin/Importpreviewmodal.tsx`. `components/admin/` queda vacía.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `carta-admin.spec` (nueva) y el recorrido de rutas, 105/105. La nueva comprueba:
+  - la carta de la BD por categorías, el filtro y «Agotar»;
+  - el `PATCH /platillos/21` y el `POST /platillos` con `categoria_id`, nombre, precio y etiquetas;
+  - un `.xlsx` que no es Excel se rechaza **antes** de leerlo;
+  - un CSV se revisa (nuevos, con cambios y sin cambios) y se sube a `/platillos/import.csv?mode=upsert`;
+  - eliminar con confirmación;
+  - axe en la página y en el diálogo del platillo, sin desborde, a 360, 768 y 1440 px, en los dos temas.
+- Capturas revisadas: oscuro a 1440 px y claro a 768 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase). La subida real a Cloudinary (NP-46) y la importación contra el backend real.
+
 ### 5.8 · Proveedores (2026-11-03)
 
 **Cambios:**

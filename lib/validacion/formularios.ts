@@ -191,7 +191,7 @@ export const esquemaUsuarioEdicion = esquemaUsuarioNuevo
 	})
 	.transform(({ password, ...resto }) => (password ? { ...resto, password } : resto));
 
-/** Platillo de la carta (`ItemModal`). */
+/** Platillo de la carta (`DialogoPlatillo`, PLAN 5.9). */
 export const esquemaPlatillo = z.looseObject({
 	name: lineaRequerida("Escribe el nombre del platillo."),
 	description: textoLibre().optional(),

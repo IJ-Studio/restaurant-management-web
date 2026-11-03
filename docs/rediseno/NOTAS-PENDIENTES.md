@@ -58,6 +58,7 @@
 | NP-43 | Posicionamiento y datos por confirmar con el restaurante | Producto / contenido | Alta |
 | NP-44 | El API no da las cifras que pide el inicio de administración | Backend / indicadores | Media |
 | NP-45 | Caja, propinas y facturas sin backend; las acciones de factura no existían | Backend / producto | Media |
+| NP-46 | Carta del panel: subida de imágenes con preset de marcador y cambios que no llegan al servidor | Backend / configuración | Alta |
 
 ---
 
@@ -594,3 +595,13 @@
 - **Solución sugerida:** endpoints de caja chica, cierres, propinas y facturación con un PAC, y con ellos la descarga del PDF y XML y el envío por correo. Es backend y una decisión de producto.
 - **Prioridad:** Media.
 - **Criterio de aceptación:** las pantallas leen y escriben en el API, y el detalle de factura descarga y envía el CFDI.
+
+## NP-46 · Carta del panel: subida de imágenes con preset de marcador y cambios que no llegan al servidor
+
+- **Archivos y rutas afectados:** `features/dashboard/admin/carta/DialogoPlatillo.tsx` (antes `ItemModal`) y `useCartaAdmin.ts` (antes, la página `/dashboard/admin/menu`).
+- **Problema:**
+  1. **El widget de Cloudinary usa `uploadPreset="tu_upload_preset"`**, que es un marcador: la subida no puede funcionar tal cual. En 5.9 se limitan en el widget los formatos (JPG, PNG, WebP, AVIF) y el tamaño (5 MB). La comprobación de la **firma de bytes antes de abrir la subida**, que pide el PLAN, necesita un cargador propio, y con él un preset firmado o un endpoint del backend que firme (NP-08). No se inventa un preset.
+  2. **«Agotar» u «Ofrecer» y «Eliminar» solo cambian el estado local** (`MenuService`, almacenamiento del navegador), como antes del rediseño. No hay `PATCH` ni `DELETE` al API: al recargar desde la BD, el cambio se pierde.
+- **Solución sugerida:** que el backend firme las subidas (o dé el preset correcto); con eso, un cargador propio que pase `verificarArchivo(archivo, "imagen")` antes de subir. Para la disponibilidad y el borrado, conectar los `PATCH` y `DELETE` de `/platillos/:id`. Es un cambio de lógica y de backend, fuera del alcance.
+- **Prioridad:** Alta.
+- **Criterio de aceptación:** una imagen sube a `dcb1tspbj` con la firma comprobada antes, y disponibilidad y borrado persisten tras recargar.
