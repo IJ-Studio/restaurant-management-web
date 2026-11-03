@@ -116,12 +116,13 @@ test.describe("imágenes en las páginas", () => {
 		expect(google).toEqual([]);
 	});
 
-	test("la portada de /menu se precarga desde Cloudinary con el cargador", async ({ page }) => {
+	// PLAN 4.3 y 4.10: la foto de portada vive ahora solo en la landing (/menu ya no la repite).
+	test("la portada de la landing se precarga desde Cloudinary con el cargador y el recorte", async ({ page }) => {
 		await simularApi(page);
-		await page.goto("/menu", { waitUntil: "load" });
+		await page.goto("/", { waitUntil: "load" });
 		const portada = page.locator('img[src*="Gemini_Generated_Image"]');
 		await expect(portada).toBeVisible();
-		expect(await portada.getAttribute("src")).toMatch(CARGADOR);
+		expect(await portada.getAttribute("src")).toContain("/c_crop,w_0.9,h_0.9,g_north_west/f_auto,q_auto,c_limit,w_");
 		// En Next 16, `preload` (antes `priority`) añade la precarga en <head>; no pone fetchpriority.
 		await expect(page.locator('head link[rel="preload"][as="image"][imagesrcset*="Gemini_Generated_Image"]')).toHaveCount(1);
 		await expect.poll(() => portada.evaluate((i: HTMLImageElement) => i.naturalWidth)).toBeGreaterThan(0);

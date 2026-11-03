@@ -15,7 +15,7 @@ export const SECCIONES_LANDING = {
 	inicio: { nombre: "Inicio", href: "/", volver: "Volver al inicio" },
 	portada: { nombre: "Inicio", href: "/#inicio", volver: "Volver al inicio" },
 	nosotros: { nombre: "Nosotros", href: "/#nosotros", volver: "Volver a «Nosotros»" },
-	menu: { nombre: "Menú", href: "/#menu", volver: "Volver al menú" },
+	menu: { nombre: "Menú", href: "/#menu", volver: "Volver a «Menú»" },
 	promociones: { nombre: "Promociones", href: "/#promociones", volver: "Volver a promociones" },
 	reservas: { nombre: "Reservas", href: "/#reservas", volver: "Volver a «Reservas»" },
 	pedir: { nombre: "Pedir", href: "/#pedir", volver: "Volver a «Pedir»" },

@@ -7,6 +7,7 @@ import type { Promotion } from "@/features/shared/data/promotions";
 import { formatearDia } from "@/lib/formato/fecha";
 import { formatearPrecio } from "@/lib/formato/precio";
 import { SeccionLanding } from "./SeccionLanding";
+import { EsqueletoTarjetas } from "./EsqueletoTarjetas";
 
 const MAXIMO = 3;
 
@@ -49,11 +50,14 @@ export function TarjetaPromocion({ promocion: p, nivelTitulo = 3 }: { promocion:
  * fechas), como mucho tres, sin el emoji ni el degradado de color del diseño anterior. Enlace a
  * `/promociones` (D-08). Sin datos, el error cálido; sin vigentes, una frase honesta.
  */
-export function PromocionesLanding({ promociones, error }: { promociones: Promotion[]; error?: ReactNode }) {
+export function PromocionesLanding({ promociones, error, cargando = false }: { promociones: Promotion[]; error?: ReactNode; cargando?: boolean }) {
 	const visibles = promociones.slice(0, MAXIMO);
 	return (
 		<SeccionLanding id="promociones" lote={3} rotulo="Promociones" titulo="Para esta temporada" entradilla="Las propuestas vigentes de la casa.">
-			{error ??
+			{cargando ? (
+				<EsqueletoTarjetas columnas="md:grid-cols-3" cuantas={3} />
+			) : (
+				error ??
 				(visibles.length > 0 ? (
 					<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-xl) p-0 md:grid-cols-3" data-prueba="promociones-landing">
 						{visibles.map((p) => (
@@ -66,8 +70,9 @@ export function PromocionesLanding({ promociones, error }: { promociones: Promot
 					<p className="m-0 text-texto-secundario" data-prueba="promociones-vacias">
 						Ahora mismo no hay promociones vigentes.
 					</p>
-				))}
-			{!error && promociones.length > 0 && (
+				))
+			)}
+			{!cargando && !error && promociones.length > 0 && (
 				<div>
 					<BotonEnlace href="/promociones" variante="secundario">
 						Ver todas las promociones

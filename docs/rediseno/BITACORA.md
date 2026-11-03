@@ -6,6 +6,44 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.10 · `/menu` (2026-11-03) — D-17 y D-20
+
+**Cambios:**
+- **`app/menu/page.tsx`**, reescrita con los componentes del catálogo. Sigue siendo de cliente y pidiendo `/api/menu/categories`, y conserva los enlaces de categoría (`/menu/categoria/{id}?bg=…`) y de plato (`/menu/producto/{id}`).
+  - **`EncabezadoPublico`** (nuevo, en `components/marca`): migas de pan, «Volver» a la sección de origen, el `h1` con el filete doble y la entradilla (D-17: «Recorre la carta por secciones o busca un plato por su nombre.»). Lo reutilizarán las demás páginas públicas.
+  - **Búsqueda:** `Buscador` con `useFiltroLocal` (sin tildes ni mayúsculas, con el número de resultados anunciado).
+    - El dictado por voz pasa a `hooks/useDictado.ts` y `components/pwa/BotonDictado.tsx`: `aria-pressed` y avisos en `role="status"`. Solo aparece si el navegador lo admite.
+    - Sin resultados: `EstadoVacio` con «Ver toda la carta».
+  - **Secciones:** navegación por anclas, foto de la sección (o del primer plato que la tenga, o el respaldo) en la columna estrecha, alternando de lado, hasta cuatro platos con precio tabular y «Ver toda la sección (n)».
+  - **Estados (D-20):**
+    - Cargando: esqueletos del tamaño de lo que viene, sin «Cargando menú…».
+    - Error: «No pudimos traer la carta», con «Reintentar» que vuelve a pedirla y «Llamar al restaurante». Antes era «No se pudo cargar el menú. Intenta más tarde.».
+    - Vacía: un estado honesto.
+    - El error se registra con `registrarError` (2.8).
+  - **Fuera:** la foto de portada repetida de la landing, el «MENÚ» en mayúsculas, la máscara en estilo en línea, el SVG a mano y el texto de relleno («Ya seas un amante…»).
+- **`OnlineOnly`**, compartido por varias páginas: ahora es un `EstadoVacio` con `WifiOff` y otra salida. Su estado «ya montado» se deriva durante el render, sin efecto, que daba un error de lint que ya existía.
+- **Landing:** la portada y las secciones sin datos ya **no esperan al API**.
+  - La página empieza las dos peticiones en paralelo y cada sección con datos (Nosotros, Menú y Promociones) espera en su `Suspense`, con esqueletos (`EsqueletoTarjetas`).
+  - Antes, la precarga de la foto de portada y todo el HTML esperaban hasta 8 s a la carta y las promociones, y la precarga caía fuera del `<head>`. Lo detectó la prueba de imágenes.
+- **«Volver» desde la carta:** «Volver a «Menú»», como las demás secciones.
+- **Retirado:** `components/pwa/VoiceSearch.tsx`, sustituido por `useDictado` y `BotonDictado`.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `carta.spec.ts` (nueva, Chromium contra `next start`, con `/api/menu/categories` simulado): 15/15. Comprueba:
+  - las secciones, los precios, los enlaces de siempre, las migas, «Volver» y el respaldo de la foto que no existe;
+  - la búsqueda y su anuncio;
+  - los esqueletos sin texto de proceso;
+  - el error cálido sin texto técnico, y que «Reintentar» vuelve a pedirla;
+  - la carta vacía;
+  - axe y que no desborda en los 5 anchos, en los dos temas, con texto al 125 % en 360 y 1024.
+- Con `landing.spec.ts` e `imagenes.spec.ts`: 46/46. La precarga de la portada vuelve a estar en el `<head>`, con el recorte.
+- Revisión visual a 1440 px en claro y a 360 px con texto al 125 % en oscuro. Se corrigieron:
+  - la foto de la sección alterna, que ocupaba la columna ancha;
+  - el subrayado grueso de los nombres de plato, que ahora es fino y solo al pasar.
+- Sin procesos abiertos.
+
 ### 4.9 · Visítanos (`#visitanos`) (2026-11-03) — D-19
 
 **Cambios:**

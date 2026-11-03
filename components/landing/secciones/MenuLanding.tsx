@@ -5,6 +5,7 @@ import { formatearPrecio } from "@/lib/formato/precio";
 import type { PlatoDestacado } from "@/lib/publico/seleccion-platos";
 import { SeccionLanding } from "./SeccionLanding";
 import type { ReactNode } from "react";
+import { EsqueletoTarjetas } from "./EsqueletoTarjetas";
 
 /**
  * «Menú» (`#menu`, PLAN 4.5, D-19): una selección de platos reales del API, cada uno con su foto
@@ -12,10 +13,13 @@ import type { ReactNode } from "react";
  * Las tarjetas no enlazan a otra parte: la única salida de la sección es ese botón.
  * Sin datos, el error cálido que recibe en `error`; con la carta vacía, una frase honesta.
  */
-export function MenuLanding({ platos, error }: { platos: PlatoDestacado[]; error?: ReactNode }) {
+export function MenuLanding({ platos, error, cargando = false }: { platos: PlatoDestacado[]; error?: ReactNode; cargando?: boolean }) {
 	return (
 		<SeccionLanding id="menu" lote={2} rotulo="Menú" fondo="cafe" titulo="Platos de la casa" entradilla="Una selección de la carta. El resto te espera en la carta completa.">
-			{error ??
+			{cargando ? (
+				<EsqueletoTarjetas columnas="sm:grid-cols-2 lg:grid-cols-4" />
+			) : (
+				error ??
 				(platos.length > 0 ? (
 					<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-xl) p-0 sm:grid-cols-2 lg:grid-cols-4" data-prueba="platos-menu">
 						{platos.map((p) => {
@@ -44,7 +48,8 @@ export function MenuLanding({ platos, error }: { platos: PlatoDestacado[]; error
 					<p className="m-0 text-texto-secundario" data-prueba="menu-sin-platos">
 						Todavía no hay platos publicados en la carta.
 					</p>
-				))}
+				))
+			)}
 			<div>
 				<BotonEnlace href="/menu" variante="secundario">
 					Ver la carta completa
