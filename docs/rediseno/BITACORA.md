@@ -6,6 +6,45 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.13 · `/menu/pedido` (2026-11-03) — D-20
+
+**Lógica sin cambios:**
+- Los mismos endpoints: `GET /pedidos/usuario` con mesa y con `tipo=domicilio` (con el `Authorization` que ya enviaba), `PATCH /pedidos/cancelar/{id}`, `DELETE /pedidos/item/{id}` y `POST /pedidos/confirmar/{id}`.
+- La mesa sigue en `?mesaQuery` y en `num_mesa`, y «Liberar la mesa» la borra.
+- La ventana de 2 minutos para cancelar.
+- El paso al checkout con `?orderId=`.
+- El proxy sigue exigiendo sesión (2.10).
+
+**Interfaz nueva:**
+- `EncabezadoPublico` («Inicio › Pedir › Tu pedido», «Volver a «Pedir»») con «Liberar la mesa» como acción.
+- **`Pestanas`** del sistema («En mesa» y «A domicilio»), con la pestaña en `?tab=`, como antes.
+- **`TarjetaPedido`:**
+  - título («Lo que llevas» o «Pedido ABCD1234»);
+  - el estado **con palabras e insignia**: «Por confirmar», «En cocina», «En preparación», «En camino», «Entregado» y «Cancelado». Antes se mostraba el valor crudo (`pendiente`, `abierta`);
+  - las líneas con foto o respaldo, «2 × $ 120» y subtotal tabular;
+  - el total en Fraunces;
+  - «Quitar {plato}» con nombre accesible.
+- **`confirm()` → diálogo de confirmación** del sistema, con pregunta y verbos claros: «¿Quitar Croquetas de jamón de tu pedido?» con «Quitar» o «Dejarlo»; «¿Enviar tu pedido a cocina?»; «¿Cancelar este pedido?», destructiva.
+- **`alert()` → notificaciones** con redacción cálida («Tu pedido va a cocina», «No pudimos cancelarlo. Puede que ya esté en preparación. Pregunta en sala.»). Nunca el mensaje del servidor.
+- «Actualizar» (antes un icono sin nombre), esqueletos mientras se comprueba la sesión o se cargan los pedidos, y vacíos del sistema que llevan a la carta.
+- Una comanda que ya no se puede cancelar lo dice con texto («Ya está en cocina: para cambiarlo, avisa en sala.»), en lugar de un botón gris «En preparación».
+- Los errores se registran con `registrarError` (2.8).
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `pedido.spec.ts` (nueva, Chromium contra `next start`, con sesión de cliente y el API simulado): 10/10. Comprueba:
+  - el carrito, la comanda, los precios, los estados con palabras y la mesa;
+  - quitar, enviar a cocina y cancelar con el diálogo, incluido «Dejarlo», que no llama al API, y las llamadas exactas a cada endpoint;
+  - que la página nunca abre `alert()` ni `confirm()`;
+  - la pestaña de domicilio desde la URL y «Continuar al pago» con el mismo enlace;
+  - el paso a `/login` sin sesión;
+  - axe y que no desborda a 360 (al 125 %), 768 y 1440 px, en los dos temas.
+- `almacenamiento.spec.ts` (claves de sesión y `num_mesa`): verde en la misma tanda.
+- Revisión visual a 768 px en oscuro. El título del carrito repetía «Por confirmar» junto a la insignia y pasó a «Lo que llevas».
+- **No verificado:** con el backend real.
+- Sin procesos abiertos.
+
 ### 4.12 · `/menu/producto/[id]` (2026-11-03) — D-20 y D-21
 
 **Lógica sin cambios:**
