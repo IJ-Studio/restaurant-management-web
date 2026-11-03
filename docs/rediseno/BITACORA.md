@@ -6,6 +6,36 @@
 
 ## Fase 5 · Administración
 
+### 5.11 · Reservas en administración (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/reservations/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/admin/reservas/ReservasAdmin.tsx`.
+- **Mismos servicios:**
+  - `getReservations` con sus filtros (`fechaDesde`, `fechaHasta`, `estatus`, `clienteNombre`), que se piden al cambiarlos, como antes;
+  - `updateReservation(id, { estatus })`;
+  - `getNoShowRisk` una vez por cada confirmada.
+  - Se conserva la comprobación de token en el cliente. Mientras tanto se ve `CargadorMarca` («Preparando las reservas…») en lugar de «Verificando sesión...».
+- **Indicadores:** reservas como protagonista, comensales (sin canceladas ni ausencias), confirmadas y pendientes.
+- **Filtros:** campos de fecha con `min` y `max` cruzados, `Selector` de estado y `Buscador` de cliente.
+- **`Tabla` desde `xl`, tarjetas por debajo:**
+  - Columnas: cliente (con correo y teléfono), cuándo («sáb 14 de nov, 21:00»), comensales y mesa («4 · mesa 7»), detalles (ocasión, peticiones y canal), depósito, estado en `Insignia` y riesgo de no venir con texto y porcentaje («Alto · 72 %»).
+  - **Motivo de juntar columnas:** con diez, junto a la barra lateral, el riesgo y las acciones quedaban fuera de la vista.
+- **Estados:** «No Show» pasa a «No se presentó».
+- **Cambio de estado en un diálogo («Cambiar estado»)** con «Guardar estado». Antes era un `<select>` dentro de la fila, que guardaba al instante y avisaba de los errores con `alert()`. Ahora el resultado llega como notificación.
+- **Retirado:** la selección de fila con anillo de acento, que no servía para nada más.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `reservas-admin.spec` (nueva), el inicio y el recorrido de rutas, 112/112. La nueva comprueba:
+  - las cifras, y el riesgo pedido solo para la confirmada (`/reservations/a1/no-show-risk`);
+  - el filtro que llega al API (`?estatus=pendiente`);
+  - el `PATCH /reservations/b2 { estatus: "confirmada" }` desde el diálogo;
+  - la carga fallida;
+  - axe, sin desborde, a 360, 768 y 1440 px, en los dos temas (con el nombre accesible que empieza por el texto visible, WCAG 2.5.3).
+- Capturas revisadas: oscuro a 1440 px, antes y después de juntar columnas, y claro a 360 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.10 · Promociones en administración (2026-11-03)
 
 **Cambios:**
