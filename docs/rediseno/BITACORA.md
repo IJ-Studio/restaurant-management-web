@@ -6,6 +6,51 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.16 · `/reservations` (2026-11-03)
+
+**Lógica sin cambios:**
+- Los cuatro pasos (contacto, cuándo, mesa, confirmación).
+- La sesión que rellena el contacto.
+- `useReservationAvailability` y `getTableMap(fechaHora)`.
+- El **mismo payload** de `createReservation`.
+- Solo se eligen mesas disponibles.
+- El teléfono se queda como hoy: su validación real es del servidor (NP-06).
+
+**Interfaz y protección:**
+- **`ReservationSidebar`** (también lo usa el panel de la landing, D-19):
+  - pasos en lista con `aria-current="step"`, como en el checkout; la barra de progreso tenía un estilo en línea;
+  - **campos del sistema** con etiqueta y `autocomplete` (`name`, `tel`, `email`) e `inputmode`;
+  - `AreaTexto` para las peticiones;
+  - **validación con los esquemas del 3.1** (`esquemaReservaContacto`, `crearEsquemaReservaHorario`, `esquemaReservaMesa`), con los mismos mensajes, ahora junto a cada campo con `aria-invalid`;
+  - resumen en contraetiqueta, con la fecha legible y la hora en 24 h («sábado, 15 de junio, 14:30»).
+- **Envío con `useEnvioFormulario`** (decisión del usuario del 2026-11-01):
+  - campo trampa como defensa principal;
+  - tiempo mínimo de 1 s;
+  - sin envío doble;
+  - anuncio para lectores;
+  - si falla, «No pudimos confirmar tu reserva…», sin el mensaje del servidor.
+- **`TableMap`:**
+  - mesas por área como botones con `aria-pressed` («Libre», «Elegida» u «Ocupada» con texto); la ocupada, deshabilitada y con borde discontinuo;
+  - mientras busca, `CargadorMarca` («Buscando mesas libres…»);
+  - si falla o no hay mesas, un aviso cálido.
+- **`/reservations`:** `EncabezadoPublico`, el formulario en una tarjeta y la salida de llamar con el teléfono de `restaurant.config.ts` (antes estaba escrito en la página).
+- **Fallo corregido de paso:** la página y el panel cambiaban la `key` del formulario en `onSuccess`. El formulario se volvía a montar y la confirmación no llegaba a verse. Ahora la confirmación («Mesa reservada» y el mensaje del API) se ve y el formulario vuelve al primer paso. El payload no cambia.
+- Fuera: «Cargando preferencias de reserva...», «¡Todo Listo!» con el check animado y los colores verdes literales.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `reservas.spec.ts` (nueva, Chromium contra `next start`, con el API simulado) y `landing.spec.ts`, que incluye el panel de la landing: 33/33. Comprueba:
+  - los cuatro pasos, la mesa ocupada deshabilitada, la elegida con `aria-pressed`, el **payload idéntico** y la confirmación visible;
+  - los errores por campo con los mensajes de siempre;
+  - que el campo trampa rechaza sin llamar al API;
+  - axe y que no desborda en el plano a 360 (al 125 %), 768 y 1440 px, en los dos temas;
+  - que no hay `alert()`.
+- La prueba completa espera 1 s antes de confirmar: Playwright recorre los cuatro pasos en menos tiempo y el envío protegido lo rechazaba, como corresponde.
+- Revisión visual a 768 px en claro. Se corrigió «02:30 p.m..», con el punto doble, pasando a 24 h.
+- **No verificado:** reservar con el backend real.
+- Sin procesos abiertos.
+
 ### 4.15 · `/menu/pedido/checkout/exito` (2026-11-03) — D-17 y D-20
 
 **Cambios:**

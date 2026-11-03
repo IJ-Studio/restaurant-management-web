@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
 import { CalendarDays, Phone } from "lucide-react";
 import { Boton } from "@/components/ui/Boton";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
@@ -18,11 +17,10 @@ const FormularioReserva = dynamic(() => import("@/components/reservations/Reserv
 
 /**
  * «Reservar mesa» de la landing (PLAN 4.7, D-19): abre `ReservationSidebar` en un `PanelLateral`
- * amplio dentro de la misma página. Tras reservar, el formulario se reinicia como en
- * `/reservations` (`key` que cambia en `onSuccess`). Sin conexión, la salida es llamar.
+ * amplio dentro de la misma página. Tras reservar, el formulario muestra la confirmación y vuelve
+ * al primer paso. Sin conexión, la salida es llamar.
  */
 export function ReservarEnPanel({ telefono, telefonoHref }: { telefono: string; telefonoHref: string }) {
-	const [vuelta, setVuelta] = useState(0);
 	return (
 		<PanelLateral
 			ancho="amplio"
@@ -42,7 +40,7 @@ export function ReservarEnPanel({ telefono, telefonoHref }: { telefono: string; 
 					</BotonEnlace>
 				}
 			>
-				<FormularioReserva key={vuelta} onSuccess={() => setVuelta((v) => v + 1)} />
+				<FormularioReserva />
 			</OnlineOnly>
 		</PanelLateral>
 	);

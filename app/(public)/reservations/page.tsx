@@ -1,43 +1,42 @@
-'use client';
-import { useState } from 'react';
-import { Phone } from 'lucide-react';
-import ReservationSidebar from '@/components/reservations/ReservationSidebar';
-import OnlineOnly from '@/components/pwa/OnlineOnly';
+"use client";
 
-const RESTAURANT_PHONE = '+52 771 702 8172';
+import { Phone } from "lucide-react";
+import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
+import ReservationSidebar from "@/components/reservations/ReservationSidebar";
+import OnlineOnly from "@/components/pwa/OnlineOnly";
+import { restaurantConfig } from "@/config/restaurant.config";
 
-export default function ReservarPage() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  const handleSuccess = () => {
-    setRefreshTrigger(prev => prev + 1);
-  };
-
-  return (
-    <div className="min-h-screen bg-surface-muted py-12 flex items-center justify-center">
-      <div className="container mx-auto px-4 w-full max-w-2xl">
-        <h1 className="text-4xl font-bold text-text text-center mb-8">Reserva tu mesa</h1>
-
-        {/* El formulario ahora toma el control total de la experiencia centralizada */}
-        {/* Reservar requiere el servidor; sin conexión se ofrece llamar al restaurante. */}
-        <OnlineOnly
-          what="el formulario de reservaciones"
-          className="flex justify-center"
-          extra={
-            <a
-              href={`tel:${RESTAURANT_PHONE.replace(/\s/g, '')}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-brand)] px-5 py-3 text-sm font-bold text-white"
-            >
-              <Phone size={16} /> Llamar para reservar
-            </a>
-          }
-        >
-          <ReservationSidebar
-            key={refreshTrigger}
-            onSuccess={handleSuccess}
-          />
-        </OnlineOnly>
-      </div>
-    </div>
-  );
+/**
+ * Reservar mesa (`/reservations`, PLAN 4.16). La misma página de acción de siempre, con el
+ * formulario real (`ReservationSidebar`), que también se abre desde la landing en un panel (D-19).
+ * Tras reservar, el propio formulario muestra la confirmación y vuelve al primer paso (antes, el
+ * `key` que cambiaba en `onSuccess` lo volvía a montar y la confirmación no llegaba a verse). Sin
+ * conexión, la salida es llamar; el
+ * teléfono sale de `restaurant.config.ts`.
+ */
+export default function PaginaReservar() {
+	const { contact } = restaurantConfig;
+	return (
+		<div className="contenedor-pagina max-w-[48rem] pb-(--espacio-entre-secciones)">
+			<EncabezadoPublico
+				ruta="/reservations"
+				titulo="Reservar mesa"
+				entradilla="Elige el día, la hora y tu mesa en el plano de la sala. Si lo prefieres, también puedes llamarnos."
+			/>
+			<div className="rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg) sm:p-(--espacio-xl)">
+				<OnlineOnly
+					what="el formulario de reservas"
+					className="py-0"
+					extra={
+						<BotonEnlace href={contact.phoneHref} variante="secundario" icono={<Phone />}>
+							{`Llamar al ${contact.phone}`}
+						</BotonEnlace>
+					}
+				>
+					<ReservationSidebar />
+				</OnlineOnly>
+			</div>
+		</div>
+	);
 }
