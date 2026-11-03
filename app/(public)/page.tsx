@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { MenuLanding } from "@/components/landing/secciones/MenuLanding";
 import { Nosotros } from "@/components/landing/secciones/Nosotros";
+import { Pedir } from "@/components/landing/secciones/Pedir";
 import { PromocionesLanding } from "@/components/landing/secciones/PromocionesLanding";
 import { Reservas } from "@/components/landing/secciones/Reservas";
 import { Portada } from "@/components/landing/secciones/Portada";
@@ -55,7 +56,7 @@ export default async function Inicio() {
 
 			<Reservas />
 
-			<SeccionLanding id="pedir" lote={5} rotulo="Pedir" titulo="Pide en tu mesa o en tu casa" entradilla="Elige desde la carta y paga en línea." />
+			<Pedir />
 
 			<SeccionLanding id="visitanos" lote={6} rotulo="Visítanos" fondo="cafe" titulo="Te esperamos" entradilla={contact.address}>
 				<div>

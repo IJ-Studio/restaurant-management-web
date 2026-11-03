@@ -184,3 +184,13 @@ for (const ancho of [360, 1440]) {
 		await expect(abrirReserva).toBeFocused();
 	});
 }
+
+test("pedir: los dos modos con enlace a sus páginas, horario y teléfono de la configuración", async ({ page }) => {
+	await abrir(page);
+	const seccion = page.locator("section#pedir");
+	await expect(seccion.getByRole("heading", { level: 3 })).toHaveText(["En tu mesa", "A domicilio"]);
+	await expect(seccion.getByRole("link", { name: "Pedir desde la carta" })).toHaveAttribute("href", "/menu");
+	await expect(seccion.getByRole("link", { name: "Ver mis pedidos a domicilio" })).toHaveAttribute("href", "/menu/pedido?tab=domicilio");
+	await expect(seccion.locator("dd").first()).toHaveText(/Lunes a Domingo/);
+	await expect(seccion.getByRole("link", { name: /771 702 8172/ })).toHaveAttribute("href", "tel:+527717028172");
+});

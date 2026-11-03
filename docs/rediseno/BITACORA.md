@@ -6,6 +6,24 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.8 · Pedir (`#pedir`) (2026-11-03) — D-19
+
+**Cambios:**
+- **`components/landing/secciones/Pedir.tsx`:** los dos modos que ya existen, cada uno con su icono de Lucide, título en Fraunces, una frase y un enlace a su página:
+  - **En tu mesa:** «Pedir desde la carta» (`/menu`). El número de mesa ya viaja en la URL hasta el pedido.
+  - **A domicilio:** «Ver mis pedidos a domicilio» (`/menu/pedido?tab=domicilio`, la pestaña que ya admite esa página), con pago en línea.
+  - Debajo, en contraetiqueta a dos columnas, el horario y el teléfono de `restaurant.config.ts`.
+  - No se prometen tiempos, zonas de reparto ni costes: no están en ningún dato (D-17).
+- Los botones de las tarjetas pasan a dos líneas si no caben: a 360 px con texto al 125 %, «Ver mis pedidos a domicilio» desbordaba la página. Lo detectó la prueba.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `landing.spec.ts` (Chromium contra `next start`): 23/23.
+  - La primera tanda falló a 360 px con texto al 125 % por el desbordamiento; ya está corregido.
+  - Prueba nueva: los dos modos con sus enlaces, el horario y el teléfono.
+- Sin procesos abiertos.
+
 ### 4.7 · Reservas (`#reservas`) (2026-11-03) — D-19
 
 **Cambios:**
