@@ -6,6 +6,30 @@
 
 ## Fase 5 · Administración
 
+### Cierre de la fase 5: en curso (2026-11-03), resumen para leer al volver
+
+Los pasos 5.1 a 5.20 están hechos, cada uno en su commit (de `92bd7c8` a `be09aa6`). La verificación completa se cortó por el límite de uso.
+
+| Comprobación | Resultado |
+|---|---|
+| Chromium en producción, batería completa | Administración 191/191 · públicas 124 + 90 · recorrido 95/95 |
+| Firefox en producción, batería completa | Administración 191/191 · públicas 120 + 90 · recorrido 95/95 |
+| WebKit en producción | Administración 191/191. **Pendiente:** públicas A1 (se lanzó al cortar; resultado sin leer), A2 y recorrido |
+| Catálogo en dev | Chromium 73 + 68. **Pendiente:** Firefox y WebKit |
+| `revisar:invisibles`, `revisar-bundle`, `pnpm audit` y lint global | **Pendientes** |
+
+**Para retomar:**
+1. Los scripts están en el scratchpad de la sesión: `ciclo-prod.sh` y `e2e-dev.sh` con `grupoA1.txt`, `grupoA2.txt` y `grupoA3.txt`.
+2. Terminar WebKit en producción (A1, A2 y recorrido) y el catálogo en dev en Firefox y WebKit (`dev1.txt` y `dev2.txt`).
+3. Después, invisibles, bundle, audit y lint, y escribir aquí el cierre.
+4. Crear `feature/rediseno-web-pulido` (fase 6).
+
+**Nuevas notas de esta fase:** NP-44 (cifras del inicio que el API no da), NP-45 (caja y facturas sin backend), NP-46 (preset de Cloudinary de marcador; disponibilidad y borrado de platillos solo locales) y NP-47 (`IdleLogout` sin montar).
+
+**No verificado:** lectores de pantalla, dispositivos reales (tableta de caja, móvil de sala, monitor de cocina), Lighthouse (lo lanza el usuario) y el backend real (subidas, importación, exportación).
+
+**Decisiones pendientes del usuario:** 2.5 (aplicar la CSP), NP-43 (posicionamiento) y NP-46/NP-47 (producto o backend).
+
 ### 5.20 · Retirar los alias y las clases heredadas (2026-11-03)
 
 **Cambios:**
