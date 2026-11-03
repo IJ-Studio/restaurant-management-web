@@ -547,3 +547,15 @@
 - **Solución sugerida:** al montar la cabecera en el sitio (4.x), añadir en `MenuMovil` un botón «Cerrar sesión» con `useCerrarSesion`, con el mismo estilo de acción destructiva que `MenuCuenta`.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** a 360 px, con sesión, el menú móvil ofrece «Cerrar sesión» y la prueba de `almacenamiento.spec.ts` pasa también desde ahí.
+
+## NP-43 · Posicionamiento y datos por confirmar con el restaurante (D-17)
+
+- **Archivos y rutas afectados:** `config/restaurant.config.ts` (`tagline`, `description`, `stats`), `app/layout.tsx` (metadatos), `features/shared/data/restaurantData.ts`, los textos de la landing y de `/about`, y el contenido de `/about` y `/settings` en el API.
+- **Problema:**
+  1. **Contradicción de posicionamiento.** D-17 pide describir el restaurante como lo define PRODUCT.md, «cocina española de alta gama con carta de vinos», pero el código dice «cocina mexicana de alta gama» (metadatos y portada), `restaurant.config.ts` dice «Cocina nacional e internacional» y la ubicación es Huejutla de Reyes, Hidalgo. Continúa NP-13. Además, la copia de trabajo de `PRODUCT.md` tiene un cambio sin confirmar (no hecho por el agente) que quita «según el encargo del rediseño: cocina española» de su apartado Positioning; el agente no lo toca ni lo versiona.
+  2. **Datos que el sitio muestra y que nadie ha confirmado:** «16+ años», «80+ platillos» y «4.9★» (`restaurantConfig.stats`), el horario «Lunes a Domingo · 1:00 PM – 11:00 PM», la dirección, el teléfono y las redes. Salen de `restaurant.config.ts`, así que el rediseño los usa tal cual, pero son afirmaciones factuales.
+  3. **Carta de vinos:** PRODUCT.md la cita, pero no hay datos ni vista (NP-14). Los textos nuevos la mencionan sin afirmar referencias, bodegas ni número de etiquetas.
+- **Cómo se redacta mientras tanto (D-17):** los textos nuevos hablan de cocina española de alta gama y carta de vinos sin dar cifras, años, nombres ni premios que no estén en la configuración o en el API, y sin afirmar el origen del producto.
+- **Solución sugerida:** que el restaurante confirme su propuesta (española, mexicana o mixta) y cada dato de la lista; después, ajustar `restaurant.config.ts` y los textos del API.
+- **Prioridad:** Alta.
+- **Criterio de aceptación:** los metadatos, la portada, «Nosotros» y la configuración describen la misma propuesta, y cada cifra mostrada está confirmada por el restaurante.

@@ -4,6 +4,22 @@
 
 ---
 
+## Fase 4 · Páginas públicas
+
+### Decisiones D-17 a D-21 y pasos 4.0.1 y 4.0.2 (2026-11-03)
+
+El usuario aprueba el catálogo completo como referencia de estilo y añade cinco decisiones, registradas en el PLAN:
+
+- **D-17:** se reescriben los textos estáticos públicos (landing, `/about`, `/promociones`, introducciones de `/menu` y `/reservations`, login, registro, pie, páginas de sistema y metadatos) sin inventar datos. La regla 6 del PLAN se actualiza en consecuencia.
+- **D-18:** solo imágenes propias (nube `dcb1tspbj` y archivos locales).
+- **D-19:** landing de una sola página con anclas y contenido real en cada sección.
+- **D-20:** sin textos técnicos; `CargadorMarca`, `Esqueleto` y `EstadoError` cálido; `error.tsx` y `not-found` por segmento.
+- **D-21:** `PaginaEstado` con ilustraciones propias para cada página de sistema.
+
+Se añaden los pasos 4.0.1 y 4.0.2 al inicio de la fase 4 y la nota **NP-43** (contradicción «cocina mexicana» frente a «cocina española» y datos por confirmar). `CLAUDE.md` (local) recoge las mismas reglas.
+
+**Cambio ajeno en la copia de trabajo:** `PRODUCT.md` llega modificado (quita «según el encargo del rediseño: cocina española» de Positioning). No es del agente: no se toca ni se versiona, y se anota en NP-43.
+
 ## Fase 2 · Cabeceras y medidas de seguridad del front
 
 ### Cierre de la fase 2 (2026-11-02): resumen para leer al volver

@@ -10,12 +10,12 @@
 
 | Campo | Valor |
 |---|---|
-| Etapa | **Fase 2 cerrada** (2026-11-02), con el 2.5 pendiente de aprobación. Fases 0, 1, 2 y 3 cerradas; la 4 no se ha empezado. |
-| Rama activa | `feature/rediseno-web-seguridad` (sale de `feature/rediseno-web-componentes`, `2098fa0`, que contiene las fases 1 y 3) |
-| Último paso completado | **Cierre de la fase 2** (2026-11-02): resumen para el usuario en [`BITACORA.md`](BITACORA.md). |
-| Bloqueo | Ninguno. **2.5 (aplicar la CSP) no se ejecuta**: pendiente de la aprobación del usuario (pago con Stripe sin claves ni backend). |
-| Siguiente paso | Decisiones del usuario (2.5 y las del resumen de cierre) y PR de `feature/rediseno-web-seguridad`. **No empezar la fase 4** sin su indicación. |
-| Notas | **Órdenes vigentes del usuario (2026-11-02):** fase 2 del 2.1 al 2.18 en orden y sin añadir nada fuera del PLAN (lo demás va a NOTAS-PENDIENTES); 2.3 solo en modo informe y 2.4 corrige sus violaciones; **no ejecutar 2.5**; en 2.1, si el build o las pruebas fallan tras dos intentos, volver atrás y marcarlo como bloqueado; un paso que falle dos veces se descarta con `git restore` y se marca como bloqueado; sin push, sin `.env`, sin backend, sin dependencias fuera del PLAN, sin Lighthouse ni scripts de rendimiento; al cerrar la fase, no empezar la 4. Decisiones anteriores y lecciones de entorno: [`BITACORA.md`](BITACORA.md). |
+| Etapa | **Fase 4 en curso** (2026-11-03). Fases 0, 1, 2 (salvo 2.5) y 3 cerradas. Catálogo aprobado por el usuario: referencia de estilo obligatoria. |
+| Rama activa | `feature/rediseno-web-publico` (sale de `feature/rediseno-web-seguridad`, `3775918`) |
+| Último paso completado | Registro de D-17 a D-21 y de los pasos 4.0.1 y 4.0.2. |
+| Bloqueo | Ninguno. **2.5 (aplicar la CSP) sigue sin ejecutarse**: pendiente de la aprobación del usuario. |
+| Siguiente paso | 4.0.1 · `CargadorMarca` y estados de carga y error. |
+| Notas | **Órdenes vigentes (2026-11-03):** fases 4 → 5 → 6 → 7 (solo lo comprobable sin el usuario), con ramas `publico` → `admin` → `pulido` → `auditoria`, cada una desde la anterior; D-17 a D-21; excepciones autorizadas fuera del PLAN, cada una en su commit: retirar `firebase-admin` si nada lo importa (NP-38) y que `/api/auth/logout` caduque siempre las cookies (NP-41); nunca `images.unsplash.com`; sin push, pull, fetch, rebase ni fusiones; sin `.env`; sin dependencias fuera del PLAN; sin Lighthouse ni scripts de rendimiento; quedan para el usuario 2.5, 7.3, lectores de pantalla y dispositivos reales. Decisiones anteriores: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
 
@@ -41,6 +41,11 @@
 | D-14 | Referencias de nivel de acabado: The Macallan, TimeSpirit Dining Experience, y Restaurant Fontané. Se usan como **listón de acabado**, guiándose por «Bodega de guarda» (ver DESIGN.md §Overview). | **Resuelta** | 4.x |
 | D-15 | **Exigir un token válido en todo `/api/*`**, salvo una lista explícita y documentada de rutas públicas (`config/seguridad/rutas-api-publicas.ts`), y verificar que el login y la parte pública siguen funcionando. La autorización fina (rol y propietario) va a NOTAS-PENDIENTES (NP-32). | **Aprobada** | 2.10 |
 | D-16 | MCP de Cloudinary autorizado. **Verificación solo lectura hecha en esta etapa** (ESTADO §8.1); no se volverá a usar en las fases de implementación. | **Hecha** | 0.8 ✔ |
+| D-17 | **Textos estáticos de la parte pública reescritos** (2026-11-03): secciones de la landing, `/about`, `/promociones`, introducciones de `/menu` y `/reservations`, login y registro, pie, páginas de sistema y metadatos (título, descripción, palabras clave), con la esencia del catálogo («Bodega de guarda») y PRODUCT.md: cocina española de alta gama, carta de vinos, El Quijote. **Sin datos inventados:** dirección, teléfono, horarios, año, nombres, premios, cifras o precios salen solo de `config/restaurant.config.ts`, `restaurantData.ts` o el API; lo que falte se redacta sin afirmaciones factuales. Los textos legales conservan su redacción (solo cambia el estilo). Los datos del API y todo el contenido del admin no cambian. Contradicción «cocina mexicana» y datos por confirmar: NP-43. | **Aprobada** | 4.x |
+| D-18 | **Solo imágenes propias** (2026-11-03): la nube de Cloudinary `dcb1tspbj` (por el cargador) y archivos locales. Ninguna de Unsplash, pravatar, Google, bancos de fotos ni otro tercero: se retiran de `hosts-permitidos.ts` y `next.config.ts`, y las URL externas de los mocks pasan a recursos propios de ESTADO §8.1 o al respaldo de `Imagen`. Las fotos de la landing salen de ese inventario, sin las inadecuadas de NP-33. Supabase solo si el API sirve fotos de platos desde ahí (NP-36). Cada URL se comprueba con `curl -I` (200) y con el recorrido (0 imágenes rotas). Sin MCP de Cloudinary y sin cambios en Cloudinary. **Nunca** `images.unsplash.com`. | **Aprobada** | 4.x, 5.x |
+| D-19 | **Landing de una sola página** (2026-11-03): la navegación usa solo anclas (Inicio, Nosotros, Menú, Promociones, Reservas, Pedir, Visítanos) con la sección activa resaltada; ningún elemento de ese menú enlaza a otra ruta. Cada sección muestra contenido real: Nosotros con el de `/about` y su galería; Menú con una selección de platos del API y un único «Ver la carta completa» a `/menu`; Promociones con las vigentes del API; Reservas con el flujo real (`ReservationSidebar`) en un `PanelLateral` sin cambiar su lógica ni su payload (si no es viable, sección informativa con botón a `/reservations`, anotado); Pedir y Visítanos con dirección, horario, mapa enlazado y redes. `/about`, `/promociones` y `/reservations` siguen existiendo con migas de pan (D-08). | **Aprobada** | 4.2–4.9, 4.21 |
+| D-20 | **Sin textos técnicos ni de proceso** en la parte pública ni en los paneles («Redirigiendo», «Cargando menú», «Error al…», mensajes de red o de consola). Carga y redirección: `CargadorMarca` (molino y plato, `role="status"`, texto solo para lectores, detenido con movimiento reducido y con la opción del panel) o `Esqueleto`. Errores: `EstadoError` con redacción cálida, sin detalles técnicos y con «Reintentar». Cada segmento (`menu`, `reservations`, `pedido`, `auth` y `dashboard`) tiene su `error.tsx` y su `not-found`. Todo en el catálogo, con axe y contraste numérico. | **Aprobada** | 4.0.1, 4.x, 5.x |
+| D-21 | **Páginas de sistema con un solo `PaginaEstado`** (ilustración, código en Fraunces, título, texto y acciones): 401, 403, 404, 500, error global, mantenimiento, sin conexión, plato o categoría no encontrados. No conservan nada de las actuales. Cada tipo con su ilustración SVG propia en `components/marca/ilustraciones/` (tokens, `aria-hidden`, < 4 KB, animación sutil que respeta el movimiento reducido), con `MolinoAnimado` y `Plato` como referencia de estilo, revisada en capturas a 360 y 1440 px en los dos temas. | **Aprobada** | 4.0.2, 4.23 |
 
 ---
 
@@ -71,7 +76,7 @@
    - La skill **impeccable** se usa en cada paso de UI, y los hallazgos de su hook de diseño se resuelven o se justifican en el mensaje del commit.
    - Las skills `vercel-react-best-practices` y `web-design-guidelines` se aplican como lista de comprobación en los pasos de componentes y páginas.
    - **Solo al cerrar cada fase** (no en cada paso): `pnpm revisar:invisibles` sin hallazgos. Revisa los archivos versionados y los nuevos no ignorados de `app`, `components`, `lib`, `features`, `hooks`, `config`, `tests` y `styles`, y falla ante controles bidireccionales, caracteres de ancho cero o un BOM fuera del inicio. Si una cadena necesita uno de ellos, se escribe como escape.
-6. **Sin regresiones de contenido ni de lógica.** Los textos, los endpoints, los payloads y las URL de ruta no cambian. Si un paso lo necesitara, se detiene y se anota en NOTAS-PENDIENTES.
+6. **Sin regresiones de contenido ni de lógica.** Los endpoints, los payloads y las URL de ruta no cambian. Los textos tampoco, **salvo los textos estáticos de la parte pública que enumera D-17**, que se reescriben con el estilo del catálogo sin inventar datos, y los textos técnicos o de proceso que retira D-20. Los textos legales conservan su redacción; los datos del API y el contenido del admin no cambian. Si un paso necesitara otra cosa, se detiene y se anota en NOTAS-PENDIENTES.
 
 ### ¿Reestructurar carpetas? Decisión y forma de comprobarlo
 
@@ -575,13 +580,19 @@ Cada paso crea el componente en `components/ui/` o `components/marca/` y lo mues
 
 ## Fase 4 · Páginas públicas, una por una — `feature/rediseno-web-publico`
 
-Cada paso conserva textos, endpoints y URL; sustituye los componentes antiguos por los del sistema y elimina los SVG a mano y los estilos en línea de esa página. **Criterio común:**
+Cada paso conserva endpoints, payloads y URL; sustituye los componentes antiguos por los del sistema y elimina los SVG a mano y los estilos en línea de esa página. Se aplican **D-17 a D-21** (textos estáticos reescritos, solo imágenes propias, landing de una sola página, sin textos técnicos y páginas de sistema con `PaginaEstado`). El catálogo (`/catalogo`) es la referencia obligatoria de estilo. **Criterio común:**
 
 - recorrido sin excepciones nuevas;
 - axe con 0 violaciones;
 - objetivos táctiles de 44 px;
 - teclado completo;
 - capturas revisadas en los 5 anchos, en los dos temas y con texto al 125 %.
+
+- [ ] **4.0.1 · `CargadorMarca` y estados de carga y de error** — *D-20*. Animación de marca con el molino y el plato, con `role="status"` y texto solo para lectores, detenida con `prefers-reduced-motion` y con la opción del panel. `EstadoError` con redacción cálida y «Reintentar». Mostrados en el catálogo con sus estados, axe y contraste numérico.
+  - **Commit:** `feat(marca): cargador de marca y estados de carga y error`
+
+- [ ] **4.0.2 · Ilustraciones de marca por tipo de página** — *D-21*. SVG en `components/marca/ilustraciones/` (404 plato con cloche vacío, 401 llave de bodega, 403 puerta con candado, 500 olla humeando, mantenimiento mesa con reloj de arena, sin conexión molino quieto, error genérico copa volcada), solo tokens, `aria-hidden`, < 4 KB, animación sutil y movimiento reducido; `PaginaEstado` que las usa. En el catálogo, revisadas a 360 y 1440 px en los dos temas.
+  - **Commit:** `feat(marca): ilustraciones y página de estado`
 
 - [ ] **4.1 · Layout público.** Sustituir `ClientLayoutWrapper` (`ssr:false`) por `CabeceraSitio` y `PieSitio` renderizados en el servidor; añadir el enlace «Saltar al contenido» y el `<main id="contenido">`.
   - **Aceptación:** la navegación y el pie aparecen en el HTML del servidor.
