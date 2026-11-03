@@ -1,15 +1,6 @@
-// app/(auth)/layout.tsx
-"use client";
+import { MarcoSitio } from "@/components/marca/MarcoSitio";
 
-
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <>
-      <main>{children}</main>
-    </>
-  );
+// Cabecera y pie públicos renderizados en el servidor (PLAN 4.1).
+export default function Layout({ children }: { children: React.ReactNode }) {
+	return <MarcoSitio>{children}</MarcoSitio>;
 }

@@ -12,11 +12,12 @@ import { cn } from "@/lib/utils";
  * fila, los legales y el **acceso del personal**: un enlace discreto en `--texto-tenue` y
  * `--texto-pequeno`, la única puerta del personal en la parte pública.
  *
- * Los datos salen de `config/restaurant.config.ts`; los textos y enlaces son los del pie actual
- * (PLAN, regla 6). `DistanceToRestaurant` no se incluye: lo decide la fase 4.
+ * Los datos salen de `config/restaurant.config.ts`. Los textos se reescribieron con D-17 (PLAN 4.1):
+ * una línea de identidad sin datos inventados y el aviso de derechos sin el año ni la razón social
+ * de una plantilla ajena. `DistanceToRestaurant` no se incluye: lo decide la fase 4.
  */
 const CASA = [
-	{ nombre: "Conócenos", href: "/about" },
+	{ nombre: "Nosotros", href: "/about" },
 	{ nombre: "Información corporativa", href: "/corporativo" },
 ];
 const AYUDA = [
@@ -63,6 +64,9 @@ export function PieSitio({ anio = new Date().getFullYear() }: { anio?: number })
 					>
 						<Logo className="h-10 w-auto" />
 					</Link>
+					<p className="m-0 max-w-[32ch] font-titulos text-(length:--texto-titulo-3) leading-[1.25] text-texto-principal [text-wrap:balance]">
+						Cocina española de alta gama y carta de vinos.
+					</p>
 					<h2 className="solo-lectores">Contacto</h2>
 					<address className="flex flex-col gap-2 not-italic text-texto-secundario [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-[1.5]">
 						<p className="m-0 flex gap-2">
@@ -107,7 +111,7 @@ export function PieSitio({ anio = new Date().getFullYear() }: { anio?: number })
 			<div className="border-t border-borde-sutil">
 				<div className="contenedor-pagina flex flex-col gap-x-6 gap-y-1 py-4 text-texto-tenue md:flex-row md:flex-wrap md:items-center">
 					<p className="m-0 md:me-auto">
-						© 1996-{anio}, {name}, Inc. o sus afiliados
+						© {anio} {name}. Todos los derechos reservados.
 					</p>
 					<ul className="m-0 flex list-none flex-wrap gap-x-6 p-0">
 						{LEGALES.map((e) => (

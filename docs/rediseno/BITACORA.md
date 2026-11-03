@@ -6,6 +6,41 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.1 · Layout público en el servidor (2026-11-03)
+
+**Cambios:**
+- **`components/marca/MarcoSitio.tsx`** (nuevo, de servidor): «Saltar al contenido», `CabeceraSitio`, `<main id="contenido" tabIndex={-1}>` y `PieSitio`.
+  - Lo usan los layouts nuevos de `app/(public)`, `app/menu` y `app/(auth)`. Este último era un componente de cliente con su propio `<main>`.
+  - `.marco-sitio-contenido` deja sitio a la cabecera fija y su zona segura. `.saltar-contenido` está oculto hasta recibir el foco y entonces aparece sobre la cabecera.
+- **`app/page.tsx` → `app/(public)/page.tsx`** (`git mv`): la URL `/` no cambia y la landing entra en el grupo con el marco. Su `<main>` pasa a `<div>` para que haya un único `main`. El 4.2 la rehace.
+- **`app/layout.tsx`:** sin `ClientLayoutWrapper` (que cargaba la barra y el pie con `ssr:false`).
+- **Retirados:** `ClientLayoutWrapper`, `ConditionalNavbar`, `Navbar`, `landing/Footer` y `dropdown`, que se quedaban sin uso. Los cinco están versionados.
+- **Cuenta de la cabecera:** sus islas leen el usuario del store (PLAN 2.15) cuando la cabecera no recibe uno, así que el layout no consulta la sesión y no se queda desfasado al navegar. El catálogo sigue fijándolo.
+- **NP-42 resuelta:** el menú móvil ofrece «Cerrar sesión» con el cierre único.
+- **Pie (D-17):**
+  - una línea de identidad en Fraunces («Cocina española de alta gama y carta de vinos.»);
+  - «Conócenos» pasa a «Nosotros»;
+  - el aviso de derechos pasa a «© {año} El Quijote. Todos los derechos reservados.». Quita el «1996» y el «Inc. o sus afiliados» de una plantilla ajena: no son datos del restaurante.
+
+**Transitorio hasta el 4.23:** el 404 de la raíz y las páginas `/forbidden`, `/unauthorized`, `/maintenance` y `/offline` quedan sin cabecera. Antes las cubría el envoltorio de cliente; el 4.23 las rehace con `PaginaEstado` dentro del marco. No se movieron ahora porque importan sus módulos CSS por ruta relativa y desaparecen en ese paso.
+
+**Verificación:**
+- Typecheck: 0 errores, tras regenerar los tipos de `.next`, que aún apuntaban a `app/page.tsx`. Lint de los archivos tocados: 0 problemas.
+- Build: correcto, con las mismas rutas.
+- Chromium contra `next start`:
+  - batería sin el recorrido: 109 pasan y 2 fallan, ambas pruebas escritas para la barra antigua. Las dos se adaptan a la cabecera nueva:
+    - `almacenamiento.spec.ts`: el cierre desde la cuenta ahora es «Tu cuenta, Prueba» → «Cerrar sesión»;
+    - `marca.spec.ts`: el logo de la cabecera sigue al tema, como el del pie (el blanco sobre la foto es del 4.3).
+  - pruebas nuevas:
+    - en `/`, `/menu`, `/about` y `/login`, el HTML del servidor trae la cabecera, «Saltar al contenido», un único `main#contenido` y el pie;
+    - «Saltar al contenido» es lo primero del tabulador y lleva el foco al `main`;
+    - los paneles no llevan la cabecera pública;
+    - NP-42: «Cerrar sesión» desde el menú móvil a 360 px limpia la sesión.
+  - `marca` y `almacenamiento` con los cambios: 21/21.
+  - recorrido: 95/95.
+- Revisión visual: `/menu` a 1440 px con la cabecera y el pie nuevos. El texto técnico de la página es del 4.10.
+- Sin procesos abiertos.
+
 ### Excepción NP-41 · El cierre de sesión caduca siempre las cookies (2026-11-03)
 
 Autorizada por el usuario fuera del PLAN, en su propio commit. Toca una ruta de servidor, `app/api/auth/logout/route.ts`, solo en lo que pide la nota:

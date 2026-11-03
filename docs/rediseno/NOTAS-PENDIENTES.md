@@ -549,6 +549,7 @@
 - **Solución sugerida:** al montar la cabecera en el sitio (4.x), añadir en `MenuMovil` un botón «Cerrar sesión» con `useCerrarSesion`, con el mismo estilo de acción destructiva que `MenuCuenta`.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** a 360 px, con sesión, el menú móvil ofrece «Cerrar sesión» y la prueba de `almacenamiento.spec.ts` pasa también desde ahí.
+- **Resuelta en el PLAN 4.1 (2026-11-03).**
 
 ## NP-43 · Posicionamiento y datos por confirmar con el restaurante (D-17)
 

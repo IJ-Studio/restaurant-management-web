@@ -311,6 +311,38 @@
     position: relative;
   }
 
+  /* Marco público (PLAN 4.1): el contenido empieza bajo la cabecera fija y su zona segura. */
+  .marco-sitio-contenido {
+    display: block;
+    min-block-size: 100dvh;
+    padding-block-start: calc(var(--alto-cabecera) + env(safe-area-inset-top, 0px));
+  }
+  .marco-sitio-contenido:focus {
+    outline: none;
+  }
+  /* «Saltar al contenido»: oculto hasta recibir el foco; entonces aparece sobre la cabecera. */
+  .saltar-contenido {
+    position: fixed;
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + var(--espacio-xs));
+    inset-inline-start: var(--espacio-xs);
+    z-index: 110;
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    padding-inline: var(--espacio-md);
+    border-radius: var(--radius-control);
+    background-color: var(--color-acento);
+    color: var(--color-texto-sobre-acento);
+    font-weight: 600;
+    text-decoration: none;
+    transform: translateY(calc(-100% - var(--espacio-md) - env(safe-area-inset-top, 0px)));
+  }
+  .saltar-contenido:focus-visible {
+    transform: none;
+    outline: 2px solid var(--color-foco);
+    outline-offset: 2px;
+  }
+
   /* Menús flotantes (Popover de Radix: cuenta y opciones de accesibilidad). Aparecen como los
      diálogos, desde su disparador; con movimiento reducido, las duraciones son 0,01 ms. */
   .menu-flotante {

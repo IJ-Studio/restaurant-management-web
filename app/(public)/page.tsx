@@ -119,7 +119,7 @@ export default function HomePage() {
 
   return (
     <>
-      <main>
+      <div>
         <Hero
           loading={settingsLoading}
           title={
@@ -163,7 +163,7 @@ export default function HomePage() {
         <AboutSection data={about} loading={aboutLoading} />
 
         <ReservationSection /> */}
-      </main>
+      </div>
     </>
   );
 }

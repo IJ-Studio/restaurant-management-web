@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { AppProviders } from "@/components/providers/AppProviders";
-// 👇 1. Importa tu nuevo AuthProvider (Ajusta la ruta si lo guardaste en otra carpeta)
 import { AuthProvider } from "@/providers/AuthProvider";
 import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
-import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
 import { RetirarServiceWorker } from "@/components/pwa/RetirarServiceWorker";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ConnectionStatus from "@/components/pwa/ConnectionStatus";
@@ -69,9 +67,8 @@ export default async function RootLayout({
       </head>
       <body>
         <AppProviders>
-          {/* 👇 2. Colocamos el AuthProvider envolviendo al Layout Wrapper */}
           <AuthProvider>
-            <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
+            {children}
           </AuthProvider>
         </AppProviders>
         <RetirarServiceWorker />

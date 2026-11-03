@@ -20,13 +20,13 @@ import { MarcoCabecera, MenuCuentaConSesion, MenuMovil, NavegacionSecciones, typ
  * comprobación de contraste.
  */
 export interface CabeceraSitioProps {
-	/** Sesión del comensal (en la fase 4, de la capa de datos de sesión del paso 2.11). */
+	/** Sesión del comensal. Sin indicarla (el sitio), la cuenta la leen sus islas del store; el catálogo la fija. */
 	usuario?: UsuarioCabecera | null;
 	/** `false` la deja en el flujo de la página (catálogo). */
 	fija?: boolean;
 }
 
-export function CabeceraSitio({ usuario = null, fija = true }: CabeceraSitioProps) {
+export function CabeceraSitio({ usuario, fija = true }: CabeceraSitioProps) {
 	return (
 		<MarcoCabecera fija={fija}>
 			<div className="contenedor-pagina flex h-(--alto-cabecera) items-center justify-between gap-3">

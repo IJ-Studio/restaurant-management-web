@@ -137,8 +137,24 @@ test.describe("cierre de sesión", () => {
 		await page.goto("/", { waitUntil: "load" });
 		await page.goto("/menu", { waitUntil: "load" });
 		await sembrar(page);
-		await page.getByText("Prueba Cliente").click();
-		await page.getByRole("menuitem", { name: "Cerrar sesión" }).click();
+		// Cabecera del sitio (PLAN 4.1): la cuenta sale del store, hidratado por /api/auth/me.
+		await page.getByRole("button", { name: "Tu cuenta, Prueba" }).click();
+		await page.getByRole("button", { name: "Cerrar sesión" }).click();
+		await comprobarLimpio(page, "/profile");
+		await contexto.close();
+	});
+
+	test("desde el menú móvil a 360 px (cliente, NP-42)", async ({ browser }) => {
+		const contexto = await browser.newContext({ storageState: archivoSesion("cliente"), viewport: { width: 360, height: 800 } });
+		const page = await contexto.newPage();
+		await page.route("**/api/auth/me", (ruta) =>
+			ruta.fulfill({ contentType: "application/json", body: JSON.stringify({ user: { name: "Prueba", lastname: "Cliente", email: "prueba@correo.mx" } }) }),
+		);
+		await page.goto("/", { waitUntil: "load" });
+		await page.goto("/menu", { waitUntil: "load" });
+		await sembrar(page);
+		await page.getByRole("button", { name: "Abrir el menú" }).click();
+		await page.getByRole("dialog").getByRole("button", { name: "Cerrar sesión" }).click();
 		await comprobarLimpio(page, "/profile");
 		await contexto.close();
 	});

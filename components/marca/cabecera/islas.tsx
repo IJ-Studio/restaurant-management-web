@@ -12,6 +12,8 @@ import { CerrarDialogo, PanelLateral } from "@/components/ui/Dialogo";
 import { useRegistroRuta } from "@/components/ui/BotonVolver";
 import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
 import { useCerrarSesion } from "@/lib/sesion/cerrar-sesion";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/index";
 import { ENLACES_CABECERA } from "./enlaces";
 
 /**
@@ -103,6 +105,19 @@ export interface UsuarioCabecera {
 }
 
 /**
+ * Usuario de la cabecera. Si la cabecera recibe uno (el catálogo), se usa ese; si no
+ * (`undefined`), sale del store, que hidrata una sola lectura de `/api/auth/me` por carga
+ * (PLAN 2.15). Así la cuenta no se queda desfasada al navegar dentro del mismo layout.
+ */
+function useUsuarioCabecera(usuario: UsuarioCabecera | null | undefined): UsuarioCabecera | null {
+	const delStore = useSelector((estado: RootState) => estado.auth.user) as { name?: unknown; email?: unknown } | null;
+	if (usuario !== undefined) return usuario;
+	if (!delStore) return null;
+	const nombre = typeof delStore.name === "string" && delStore.name ? delStore.name : "comensal";
+	return { nombre, correo: typeof delStore.email === "string" ? delStore.email : undefined };
+}
+
+/**
  * Cuenta del comensal. Sin sesión, un enlace a «Iniciar sesión». Con sesión, un menú con su
  * nombre, «Tu cuenta» y «Cerrar sesión». El cierre llega como `alCerrarSesion`: la
  * implementación única es del paso 2.14 (`lib/sesion/cerrar-sesion.ts`); sin ella, no se ofrece.
@@ -161,13 +176,15 @@ export function MenuCuenta({ usuario, alCerrarSesion }: { usuario: UsuarioCabece
 
 /** Menú móvil (por debajo de 1024 px): las secciones y la cuenta en un `PanelLateral`. */
 /** `MenuCuenta` con el cierre de sesión único (PLAN 2.14), para la cabecera de servidor. */
-export function MenuCuentaConSesion({ usuario }: { usuario: UsuarioCabecera | null }) {
+export function MenuCuentaConSesion({ usuario }: { usuario?: UsuarioCabecera | null }) {
 	const cerrarSesion = useCerrarSesion();
-	return <MenuCuenta usuario={usuario} alCerrarSesion={cerrarSesion} />;
+	return <MenuCuenta usuario={useUsuarioCabecera(usuario)} alCerrarSesion={cerrarSesion} />;
 }
 
-export function MenuMovil({ usuario, pie }: { usuario: UsuarioCabecera | null; pie?: ReactNode }) {
+export function MenuMovil({ usuario: recibido, pie }: { usuario?: UsuarioCabecera | null; pie?: ReactNode }) {
 	const activa = useSeccionActiva();
+	const usuario = useUsuarioCabecera(recibido);
+	const cerrarSesion = useCerrarSesion();
 	return (
 		<PanelLateral
 			lado="fin"
@@ -209,6 +226,17 @@ export function MenuMovil({ usuario, pie }: { usuario: UsuarioCabecera | null; p
 								<UserRound aria-hidden="true" />
 								Tu cuenta
 							</Link>
+						</CerrarDialogo>
+						{/* NP-42: el cierre de sesión único (PLAN 2.14) también desde el menú móvil. */}
+						<CerrarDialogo asChild>
+							<button
+								type="button"
+								onClick={() => void cerrarSesion()}
+								className="flex min-h-11 items-center gap-3 text-start text-error focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco [&_svg]:size-5 [&_svg]:stroke-[1.5]"
+							>
+								<LogOut aria-hidden="true" />
+								Cerrar sesión
+							</button>
 						</CerrarDialogo>
 					</>
 				) : (
