@@ -6,6 +6,34 @@
 
 ## Fase 5 · Administración
 
+### 5.13 · Usuarios (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/users/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/admin/usuarios/UsuariosAdmin.tsx`.
+- **Mismas llamadas:** `GET /users`, `POST /users` y `PATCH /users/:id`, con el formulario o con `{ isActive }`. Mismo payload: en la edición, la contraseña vacía no se envía.
+- **Indicadores:** personal activo (administración, caja, sala y cocina) como protagonista, usuarios, clientes e inactivos.
+- **Lista:** `Tabla` con buscador, filtro de rol y filtro de estado. Nombre con correo, teléfono, rol y estado en `Insignia`.
+  - Acciones: «Activar» o «Desactivar», con el nombre accesible que empieza por el texto visible, y «Editar».
+- **`DialogoUsuario`:**
+  - Valida con `esquemaUsuarioNuevo` y `esquemaUsuarioEdicion` (paso 3.1): nombre, apellidos, correo, teléfono, contraseña de 8 o más y rol.
+  - Al crear solo ofrece los roles creables, sin administrador, como exige el esquema. Al editar ofrece todos.
+  - La contraseña es opcional al editar y lo dice.
+- **Sin `alert()` ni `confirm()`:**
+  - Activar o desactivar pide confirmación del sistema; desactivar es destructiva y explica que no podrá entrar.
+  - Los resultados llegan como notificación. Antes, `alert()` mostraba el `err.message` del API.
+  - La carga fallida muestra «Reintentar»; antes, `alert()`.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `usuarios.spec` (nueva), 8/8. Comprueba:
+  - los errores del esquema, que no se ofrezca «Administrador» al crear y el `POST /users` exacto;
+  - el `PATCH /users/2` de la edición sin `password`;
+  - el `PATCH { isActive: false }` tras la confirmación;
+  - axe, sin desborde, a 360, 768 y 1440 px, en los dos temas.
+- Captura revisada: claro a 1440 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.12 · Predicción de demanda (2026-11-03)
 
 **Cambios:**
