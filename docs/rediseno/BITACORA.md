@@ -6,6 +6,40 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.18 · `/register` (2026-11-03)
+
+**Lógica sin cambios:**
+- Las reglas de siempre, ya recogidas en `esquemaRegistro` (3.1): nombre y apellido, correo, teléfono de 10 dígitos con +52, la contraseña con sus requisitos, sin secuencias ni datos personales, y aceptar las condiciones.
+- El **contrato exacto** de `POST /api/auth/register` (`aPayloadRegistro`: `name`, `lastname`, `email`, `phone`, `password`, `passwordConfirm`).
+- Los mismos mensajes del API ya filtrados (las listas técnicas y los 5xx no se muestran).
+- La vuelta a `/login` a los 3 s.
+
+**Cambios:**
+- **`useEnvioFormulario`:**
+  - **campo trampa** como defensa principal;
+  - **tiempo mínimo por defecto (1 s)**;
+  - **sin envío doble**;
+  - errores junto a cada campo con `aria-invalid` y un anuncio para lectores, en lugar del botón deshabilitado sin explicación;
+  - un fallo de red da un mensaje cálido.
+- **Campos del sistema** con etiqueta y `autocomplete` (`given-name`, `family-name`, `email`, `tel-national`, `new-password`). La lada fija +52 va en un campo oculto, como exige el esquema, y se dice en la ayuda del teléfono.
+- **Requisitos de la contraseña** visibles bajo el campo, con su estado en texto para lectores («cumplido» o «pendiente»). Sustituyen al botón con ventana y a la barra de colores con estilo en línea.
+- La casilla de las condiciones enlaza a `/condiciones` y `/privacidad`; antes eran textos que parecían enlaces y no lo eran.
+- **Foto de fondo (BITÁCORA 3.1):** solo desde 1024 px, con `sizes` y `preload`, porque a 1440 px es el LCP.
+- `EncabezadoPublico` («Inicio › Iniciar sesión › Crear cuenta») y entradilla nueva (D-17).
+- Éxito en un `Aviso` sin «Redirigiendo» (D-20).
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `registro.spec.ts` (nueva, Chromium contra `next start`, con el API simulado) e `imagenes.spec.ts`: 15/15. Comprueba:
+  - el **payload exacto**, con los espacios del nombre limpiados y la lada, el aviso de éxito y la vuelta a `/login`;
+  - los requisitos con su estado y el aviso de secuencias;
+  - el envío vacío, que marca cada campo sin llamar al API;
+  - que el error de validación del API no muestra texto técnico y que el campo trampa bloquea un segundo envío;
+  - axe y que no desborda a 360 (al 125 %) y 1440 px, en los dos temas.
+- Revisión visual a 360 px con texto al 125 % en claro.
+- Sin procesos abiertos.
+
 ### 4.17 · `/login` (2026-11-03)
 
 **Lógica sin cambios:**
