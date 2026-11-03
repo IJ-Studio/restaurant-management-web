@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 5 en curso** (2026-11-03). Fases 0, 1, 2 (salvo 2.5), 3 y 4 cerradas. Catálogo aprobado por el usuario: referencia de estilo obligatoria. |
 | Rama activa | `feature/rediseno-web-admin` (sale de `feature/rediseno-web-publico`, `e64cc8b`) |
-| Último paso completado | 5.16 · Salud del sistema. |
+| Último paso completado | 5.17 · Caja. |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) sigue sin ejecutarse**: pendiente de la aprobación del usuario. |
-| Siguiente paso | 5.17 · Caja. |
+| Siguiente paso | 5.18 · Mesero. |
 | Notas | **Órdenes vigentes (2026-11-03):** fases 4 → 5 → 6 → 7 (solo lo comprobable sin el usuario), con ramas `publico` → `admin` → `pulido` → `auditoria`, cada una desde la anterior; D-17 a D-21; excepciones autorizadas fuera del PLAN, cada una en su commit: retirar `firebase-admin` si nada lo importa (NP-38) y que `/api/auth/logout` caduque siempre las cookies (NP-41); nunca `images.unsplash.com`; sin push, pull, fetch, rebase ni fusiones; sin `.env`; sin dependencias fuera del PLAN; sin Lighthouse ni scripts de rendimiento; quedan para el usuario 2.5, 7.3, lectores de pantalla y dispositivos reales. Decisiones anteriores: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -730,7 +730,7 @@ Las pruebas usan la API simulada del paso 0.7. Los endpoints no cambian.
 - [x] **5.16 · Rendimiento de BD.** Semáforo de salud con el detalle desplegable; responsivo y con tokens (NP-24).
   - **Commit:** `feat(admin): salud del sistema`
 
-- [ ] **5.17 · Caja.** Pensada primero para tablet: cifras grandes y objetivos de 48 px.
+- [x] **5.17 · Caja.** Pensada primero para tablet: cifras grandes y objetivos de 48 px.
   - **Commit:** `feat(caja): panel de caja`
 
 - [ ] **5.18 · Mesero** (móvil)

@@ -6,6 +6,35 @@
 
 ## Fase 5 · Administración
 
+### 5.17 · Panel de caja (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/cajero/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/cajero/CajaPanel.tsx`, pensada primero para tableta.
+- **Sin endpoint, como antes:** `cajeroMock` en memoria, ahora avisado (D-13).
+- **Indicadores:** por cobrar como protagonista (con los tickets abiertos), cobrado hoy, tickets cerrados y ticket medio.
+- **Por cobrar:** tarjetas grandes, a dos columnas en tableta, con la mesa en Fraunces, el cliente y el ticket, el total como cifra destacada, artículos y espera, y un botón «Cobrar $ X» a todo el ancho de **48 px** de alto.
+- **Cobro en un diálogo:**
+  - Forma de pago como opciones de 48 px (radios con su etiqueta).
+  - En efectivo, «Recibido» con el cambio o lo que falta en vivo; avisa si no alcanza.
+  - El resultado llega como notificación.
+- **Cobrados hoy:** `Tabla`.
+- **Formas de pago:** `GraficaDonut` calculada de los cobros. Antes eran porcentajes fijos del mock.
+- **Buscador** por ticket, mesa o cliente.
+- **Retirados:**
+  - de `cajeroMock`: `PAYMENT_METHODS` y `PAYMENT_STATS` (clases de color fijas);
+  - componentes: `BillingModal`, `PaymentDistribution`, `StatCard` y `TicketRow`.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `caja.spec` (nueva) y el layout de paneles, 19/19. La nueva comprueba:
+  - el botón de cobro de 48 px o más;
+  - efectivo insuficiente («Faltan $ 8.50.»), cambio en vivo («$ 1.50»), el ticket que pasa a cobrados y la notificación;
+  - la tarjeta sin campo de recibido y la búsqueda;
+  - axe, sin desborde, a 360, 768, 1024 y 1440 px, en los dos temas.
+- Captura revisada: oscuro a 1024 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase). Una tableta real.
+
 ### 5.16 · Salud del sistema (rendimiento de BD) (2026-11-03) — NP-24
 
 **Cambios:**
