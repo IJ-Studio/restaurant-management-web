@@ -9,3 +9,15 @@ export function formatearPrecio(valor: number | null | undefined): string | null
 	if (valor === null || valor === undefined || !Number.isFinite(valor) || valor < 0) return null;
 	return `$ ${formato.format(valor)}`;
 }
+
+const formatoImporte = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/**
+ * Importe de los paneles (ventas, totales, facturas): siempre con dos decimales, para que las
+ * cifras se alineen en columnas y se lean como contabilidad. Admite negativos (devoluciones,
+ * egresos) con el signo menos tipográfico. `null` si no hay un número válido.
+ */
+export function formatearImporte(valor: number | null | undefined): string | null {
+	if (valor === null || valor === undefined || !Number.isFinite(valor)) return null;
+	return `${valor < 0 ? "−" : ""}$ ${formatoImporte.format(Math.abs(valor))}`;
+}

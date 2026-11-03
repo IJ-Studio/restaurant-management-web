@@ -55,6 +55,8 @@
 | NP-40 | `console.log` en código de servidor (cron de respaldos) | Backend / registro | Baja |
 | NP-41 | La ruta de cierre de sesión no caduca las cookies si el backend no responde | Backend / sesión | Media |
 | NP-42 | El menú móvil de la cabecera nueva no ofrece «Cerrar sesión» | Front / navegación | Baja |
+| NP-43 | Posicionamiento y datos por confirmar con el restaurante | Producto / contenido | Alta |
+| NP-44 | El API no da las cifras que pide el inicio de administración | Backend / indicadores | Media |
 
 ---
 
@@ -567,3 +569,16 @@
 - **Solución sugerida:** que el restaurante confirme su propuesta (española, mexicana o mixta) y cada dato de la lista; después, ajustar `restaurant.config.ts` y los textos del API.
 - **Prioridad:** Alta.
 - **Criterio de aceptación:** los metadatos, la portada, «Nosotros» y la configuración describen la misma propuesta, y cada cifra mostrada está confirmada por el restaurante.
+
+## NP-44 · El API no da las cifras que pide el inicio de administración
+
+- **Archivos y rutas afectados:** `features/dashboard/admin/inicio/InicioAdmin.tsx` (PLAN 5.2) y el endpoint `GET /dashboard/admin/stats`.
+- **Problema:** el PLAN 5.2 pide ventas de hoy frente al mismo día de la semana anterior, cubiertos, ocupación y ticket medio. `/dashboard/admin/stats` solo devuelve `totalVentas`, `pedidosPendientes`, `pedidosEnPreparacion`, `mesasOcupadas`, `mesasLibres` y `totalMesas`.
+- **Qué se hizo (sin inventar datos):**
+  - **Indicadores:** ventas de hoy (sin comparación), pedidos pendientes, mesas ocupadas y reservas de hoy. Las reservas se cuentan con el endpoint de reservas que ya existía y su filtro de fechas, sin las canceladas ni las no presentadas.
+  - **El componente ya está listo:** `Indicador` muestra la comparación en cuanto haya un dato (`comparacion={{ cambio, referencia: "frente al martes pasado" }}`).
+- **Solución sugerida:**
+  - **Backend:** añadir a `/dashboard/admin/stats` las ventas del mismo día de la semana anterior, los cubiertos del día y el número de tickets cobrados (para el ticket medio).
+  - **Front:** pintar la comparación y sustituir un indicador por el ticket medio.
+- **Prioridad:** Media.
+- **Criterio de aceptación:** el inicio muestra la comparación semanal y el ticket medio con datos del API.

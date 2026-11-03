@@ -6,6 +6,42 @@
 
 ## Fase 5 · Administración
 
+### 5.2 · Inicio de administración (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/page.tsx` pasa a ser de servidor.** Saluda con el nombre del DTO de la sesión: «Hola, Ana», o «Hola» si no lo hay. Antes decía «Buenas noches, Admin» a cualquier hora y con un nombre fijo.
+- **La pantalla es `features/dashboard/admin/inicio/InicioAdmin.tsx`** y usa los mismos cinco endpoints de antes.
+  - **Indicadores (máximo 4):** ventas de hoy como protagonista (más ancha desde `xl`), pedidos pendientes con los que están en preparación, mesas ocupadas («7 de 12», con las libres) y reservas de hoy (sin las canceladas ni las no presentadas).
+    - Las reservas salen del endpoint de reservas que ya existía, con su filtro `fechaDesde`/`fechaHasta`.
+    - La comparación semanal, los cubiertos y el ticket medio no los da el API: no se inventan (NP-44).
+  - **Alerta accionable de inventario:** «N productos en nivel crítico», o «por debajo del mínimo», con «Ver inventario».
+    - Si la petición de existencias falla (la ruta mal apuntada de NP-17), lo dice con «Reintentar». Antes el contador marcaba 0 en silencio.
+  - **Pedidos recientes:**
+    - `Tabla`, que pasa a tarjetas por debajo de 768 px, con el estado en `Insignia` y el filtro en un `Selector`.
+    - «Mostrar N más» de 10 en 10.
+    - Se retiraron «Actualización en tiempo real vía SSE», un texto técnico y además falso (D-20), y «Ver todos», que llevaba a `/dashboard/admin/orders`, una ruta inexistente.
+  - **Ventas de hoy por hora:** `GraficaBarras` con solo las horas con movimiento (mínimo seis barras) y el total del día.
+  - **Estados:** cada bloque tiene los suyos de carga, vacío y error, con «Reintentar», y nunca un cero en lugar de un error.
+- **Piezas comunes para la fase 5:**
+  - **`lib/paneles/api-panel.ts`** (`pedirPanel`, `cabecerasPanel`, `tokenSesion`): la misma lógica de token y URL que copiaba cada pantalla. Si la respuesta no es 2xx, lanza un error.
+  - **`hooks/useCarga.ts`:** estado de cargando, error o listo, y una función para recargar.
+  - **`formatearImporte`** (`lib/formato/precio.ts`): siempre dos decimales, espacio duro y signo menos tipográfico, con su prueba unitaria.
+- **Corrección en las gráficas (`useAncho`, `components/ui/graficas/comun.tsx`):**
+  - **Fallo:** el `ResizeObserver` se enganchaba solo al montar. Una gráfica que empezaba en «cargando» no medía nunca su zona, así que se quedaba en blanco con datos reales. En el catálogo no se veía porque allí los datos son fijos.
+  - **Arreglo:** ahora es una ref de callback.
+- **Retirados** (versionados y sin uso): `RecentOrdersTable`, `HourBarsChart`, `TableStatusGrid` y `StockAlerts`. `KpiCard` sigue en uso en reportes y salud de BD, y se retira en sus pasos.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Pruebas unitarias: 50/50. Build correcto.
+- Chromium en producción, `inicio-admin.spec` (nueva) más `layout-paneles`: 17/17. La nueva comprueba:
+  - las cifras, la alerta con su enlace, la tabla (10 filas, «Mostrar 3 más», filtro) y las barras de la gráfica;
+  - cada bloque con su error y «Reintentar» cuando el API falla, sin un «$» inventado;
+  - axe sin violaciones y sin desborde a 360 px (texto al 125 %), 768 y 1440 px, en los dos temas.
+- Catálogo (dev): `graficas.spec`, 8/8.
+- Capturas revisadas: oscuro y claro a 1440 px, claro a 360 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase). Con el backend real, la forma de las respuestas se toma de lo que ya leía el código.
+
 ### 5.1 · Layout de los paneles (2026-11-03)
 
 **Cambios:**

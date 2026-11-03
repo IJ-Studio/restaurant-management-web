@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Boton } from "../Boton";
 import { Esqueleto } from "../Esqueleto";
@@ -47,18 +47,21 @@ export function marcasEje(maximo: number, divisiones = 4): number[] {
 }
 
 
-/** Ancho del contenedor, medido; 0 hasta el primer pintado (en el servidor no se dibuja). */
+/**
+ * Ancho del contenedor, medido; 0 hasta el primer pintado (en el servidor no se dibuja).
+ * Devuelve una ref de callback: la zona puede montarse más tarde (la gráfica empieza en «cargando»
+ * y la zona llega con los datos), y entonces se empieza a medir (PLAN 5.2).
+ */
 export function useAncho<T extends HTMLElement>() {
-	const ref = useRef<T>(null);
+	const [elemento, setElemento] = useState<T | null>(null);
 	const [ancho, setAncho] = useState(0);
 	useEffect(() => {
-		const elemento = ref.current;
 		if (!elemento) return;
 		const observador = new ResizeObserver(([entrada]) => setAncho(Math.floor(entrada.contentRect.width)));
 		observador.observe(elemento);
 		return () => observador.disconnect();
-	}, []);
-	return [ref, ancho] as const;
+	}, [elemento]);
+	return [setElemento, ancho] as const;
 }
 
 /** Ancho aproximado de un texto de 12 px en DM Sans, para reservar el margen del eje. */

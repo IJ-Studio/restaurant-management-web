@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { seleccionarPlatos } from "../../lib/publico/seleccion-platos";
-import { formatearPrecio } from "../../lib/formato/precio";
+import { formatearImporte, formatearPrecio } from "../../lib/formato/precio";
 import { formatearDia } from "../../lib/formato/fecha";
 import type { CategoriaCarta } from "../../lib/publico/datos-landing";
 
@@ -33,6 +33,14 @@ test("precio con espacio duro, sin decimales si es entero y nunca un cero invent
 	expect(formatearPrecio(null)).toBeNull();
 	expect(formatearPrecio(Number.NaN)).toBeNull();
 	expect(formatearPrecio(-3)).toBeNull();
+});
+
+test("importe de los paneles: siempre dos decimales, espacio duro y signo menos tipográfico", () => {
+	expect(formatearImporte(18420.5)).toBe("$ 18,420.50");
+	expect(formatearImporte(0)).toBe("$ 0.00");
+	expect(formatearImporte(-35)).toBe("−$ 35.00");
+	expect(formatearImporte(undefined)).toBeNull();
+	expect(formatearImporte(Number.POSITIVE_INFINITY)).toBeNull();
 });
 
 test("la vigencia se lee como el día escrito, sin desplazarse por la zona horaria", () => {
