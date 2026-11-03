@@ -33,3 +33,13 @@ export function idCloudinary(origen: string | URL): string | null {
 export function cargadorCloudinary({ src, width }: ImageLoaderProps): string {
 	return `${ENTREGA}f_auto,q_auto,c_limit,w_${width}/${src}`;
 }
+
+/**
+ * Cargador con un recorte previo encadenado (`c_crop,w_0.9,h_0.9,g_north_west`), que se aplica
+ * en la entrega sin modificar el recurso (PLAN 4.3: la marca de agua de la portada). Solo admite
+ * una transformación con la sintaxis de Cloudinary; si no lo es, devuelve el cargador normal.
+ */
+export function cargadorConRecorte(recorte: string) {
+	if (!TRANSFORMACION.test(recorte)) return cargadorCloudinary;
+	return ({ src, width }: ImageLoaderProps) => `${ENTREGA}${recorte}/f_auto,q_auto,c_limit,w_${width}/${src}`;
+}

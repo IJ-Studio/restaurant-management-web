@@ -4,6 +4,7 @@ import Image, { type ImageProps } from "next/image";
 import { useCallback, useMemo, useState, type CSSProperties } from "react";
 import { MOLINO } from "@/components/marca/trazados";
 import { resolverOrigen } from "@/lib/imagen/origen";
+import { cargadorConRecorte } from "@/lib/imagen/cargador-cloudinary";
 import { cn } from "@/lib/utils";
 
 type PropsBase = Omit<ImageProps, "src" | "alt" | "loader" | "sizes" | "onError"> & {
@@ -11,6 +12,8 @@ type PropsBase = Omit<ImageProps, "src" | "alt" | "loader" | "sizes" | "onError"
 	src: string | null | undefined;
 	/** Obligatorio: el ancho que ocupa en cada pantalla, para no descargar de más. */
 	sizes: string;
+	/** Recorte de Cloudinary aplicado en la entrega, antes del ancho (solo imágenes de la nube). */
+	recorte?: string;
 };
 
 export type ImagenProps = PropsBase &
@@ -21,7 +24,7 @@ export type ImagenProps = PropsBase &
  * Si el origen no es válido o la imagen no carga, pinta en la misma caja un panel café con el
  * molino, que conserva el `alt`: nunca una caja vacía ni el icono de imagen rota.
  */
-export function Imagen({ src, alt, decorativa = false, className, style, fill, width, height, ...resto }: ImagenProps) {
+export function Imagen({ src, alt, decorativa = false, className, style, fill, width, height, recorte, ...resto }: ImagenProps) {
 	const origen = useMemo(() => resolverOrigen(src), [src]);
 	// Se guarda qué origen falló: si cambia el src, se vuelve a intentar sin efectos.
 	const [fallido, setFallido] = useState<string | null>(null);
@@ -72,7 +75,7 @@ export function Imagen({ src, alt, decorativa = false, className, style, fill, w
 		<Image
 			{...resto}
 			src={origen.src}
-			loader={origen.loader}
+			loader={origen.loader && recorte ? cargadorConRecorte(recorte) : origen.loader}
 			alt={texto}
 			fill={fill}
 			width={width}

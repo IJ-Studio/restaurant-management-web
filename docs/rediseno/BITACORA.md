@@ -6,6 +6,37 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.3 · Portada (`#inicio`) (2026-11-03)
+
+**Cambios:**
+- **`components/landing/secciones/Portada.tsx`:**
+  - Fotografía a sangre de la nube de la casa (D-18): `Gemini_Generated_Image_2mv3…`, la que fija el PLAN. Se comprobó con `curl -I` (200).
+  - El velo `--velo-portada`, con uno lateral desde 768 px, el titular en Fraunces (`--texto-portada`), el lema y dos anclas de la propia página: «Reservar mesa» (`#reservas`) y «Ver la carta» (`#menu`).
+  - **Marca de agua:** se recorta en la entrega con `c_crop,w_0.9,h_0.9,g_north_west`, sin tocar el recurso. La foto (unos 1426 px tras el recorte) nunca se amplía (`c_limit`).
+  - **LCP:** `preload` (el `priority` de Next 16), `fetchPriority="high"` y `sizes="100vw"`. Es la única imagen precargada de la página.
+- **`cargadorConRecorte()`** y la prop `recorte` de `Imagen`: un recorte de Cloudinary encadenado antes del ancho, validado con la misma expresión que las transformaciones.
+- **Cabecera transparente sobre la portada** (aplazada del 3.11):
+  - `MarcoCabecera` sabe si la foto sigue bajo la cabecera y entonces pone `data-sobre-portada` y `.sobre-fotografia`, sin fondo y con `--velo-cabecera`.
+  - En el servidor ya sale así en `/`, sin parpadeo.
+  - Al pasar la portada vuelve el fondo y la sombra.
+- **Tokens:**
+  - `--velo-portada`, `--velo-portada-lateral` y `--velo-cabecera`;
+  - `.sobre-fotografia`, que redefine en su subárbol los tokens de texto, acento y foco con los valores del tema oscuro: el fondo es siempre la foto bajo un velo oscuro, también en el tema claro.
+  - Bajo el texto pequeño el velo cubre al menos un 64 %, lo que garantiza 4,5:1 sobre cualquier píxel.
+- **DESIGN.md:** la cabecera sobre la portada, el corte de 1280 px y cómo se comprueba el texto sobre fotografía.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `landing.spec.ts`, `marca.spec.ts` e `imagenes.spec.ts` (Chromium contra `next start`): 35/35. Lo nuevo:
+  - **Contraste medido sobre la foto real** a 360, 768 y 1440 px, en los dos temas. La prueba espera a que la foto cargue, oculta el texto (sin transiciones), captura la pantalla y, en un lienzo, busca el píxel más claro bajo cada línea de la portada y de la cabecera. Exige 4,5:1, o 3:1 en texto grande. Axe no puede medirlo sobre imágenes.
+  - La URL de la foto lleva el recorte.
+  - La cabecera deja de ser transparente al pasar la portada.
+- Revisión visual: la página completa a 1440 px en el tema claro, con la portada oscura y el texto claro.
+- **Intermitente:** en una tanda, `imagenes.spec.ts` encontró dos `<img>` iguales del fondo del login. En la siguiente tanda pasó y no se volvió a reproducir. Se vigila en el 4.17, que rehace esa página.
+- **No verificado:** el LCP en móvil (< 2,5 s). La medición la lanza el usuario.
+- Sin procesos abiertos.
+
 ### 4.2 · Estructura de la landing de una sola página (2026-11-03) — D-19
 
 **Cambios:**

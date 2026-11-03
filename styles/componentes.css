@@ -310,6 +310,43 @@
   .cabecera-sitio[data-fija="no"] {
     position: relative;
   }
+  /* Sobre la foto de la portada (PLAN 4.3): sin fondo, con un velo propio que garantiza el
+     contraste del texto claro (`.sobre-fotografia`) en los dos temas. */
+  .cabecera-sitio[data-sobre-portada] {
+    background-color: transparent;
+    background-image: var(--velo-cabecera);
+    background-size: 100% calc(100% + var(--espacio-xl));
+    background-repeat: no-repeat;
+  }
+
+  /* Portada: a sangre bajo la cabecera transparente, del alto de la pantalla (con tope para que
+     en pantallas muy altas no se estire la foto de 1426 px). */
+  .portada {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-end;
+    min-block-size: min(100svh, 60rem);
+    margin-block-start: calc(-1 * (var(--alto-cabecera) + env(safe-area-inset-top, 0px)));
+    padding-block: calc(var(--alto-cabecera) + var(--espacio-3xl)) var(--espacio-3xl);
+    scroll-margin-block-start: 0;
+  }
+  .portada__foto {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .portada__velo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--velo-portada);
+  }
+  @media (min-width: 48rem) {
+    .portada__velo {
+      background-image: var(--velo-portada), var(--velo-portada-lateral);
+    }
+  }
 
   /* Secciones de la landing (PLAN 4.2): ritmo vertical amplio y ancla que la cabecera fija no tapa. */
   .seccion-landing {

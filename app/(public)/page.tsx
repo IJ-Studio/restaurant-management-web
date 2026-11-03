@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { CalendarDays, MapPin, UtensilsCrossed } from "lucide-react";
+import { CalendarDays, MapPin } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { Portada } from "@/components/landing/secciones/Portada";
 import { SeccionLanding } from "@/components/landing/secciones/SeccionLanding";
 import { ReintentarSeccion } from "@/components/landing/secciones/ReintentarSeccion";
 import { obtenerCarta, obtenerPromociones } from "@/lib/publico/datos-landing";
@@ -28,24 +29,7 @@ export default async function Inicio() {
 
 	return (
 		<>
-			<section id="inicio" aria-labelledby="inicio-titulo" className="seccion-landing">
-				<div className="contenedor-pagina flex flex-col items-start gap-(--espacio-lg)">
-					<h1 id="inicio-titulo" className="m-0 max-w-[16ch] font-titulos text-(length:--texto-portada) font-[380] leading-[1.02] [text-wrap:balance]">
-						Cocina española con alma
-					</h1>
-					<p className="m-0 max-w-[48ch] text-(length:--texto-entradilla) leading-[1.6] text-texto-secundario [text-wrap:pretty]">
-						Mesa de alta gama y carta de vinos en el centro de Huejutla. Sabor con alma, sin prisa.
-					</p>
-					<div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-						<BotonEnlace href="#reservas" variante="primario" icono={<CalendarDays />}>
-							Reservar mesa
-						</BotonEnlace>
-						<BotonEnlace href="#menu" variante="secundario" icono={<UtensilsCrossed />}>
-							Ver la carta
-						</BotonEnlace>
-					</div>
-				</div>
-			</section>
+			<Portada />
 
 			<SeccionLanding
 				id="nosotros"

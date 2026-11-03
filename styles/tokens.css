@@ -70,6 +70,11 @@
 
   --sombra-cabecera: 0 1px 0 var(--color-borde-sutil);
   --velo-fotografia: linear-gradient(to top, rgb(20 16 12 / 0.92) 0%, rgb(20 16 12 / 0.6) 45%, rgb(20 16 12 / 0.2) 100%);
+  /* Portada (PLAN 4.3). Bajo el texto el velo cubre al menos un 64 %: con eso, el texto hueso
+     da 4,5:1 sobre cualquier píxel de la foto, incluso blanco. Arriba, el de la cabecera. */
+  --velo-portada: linear-gradient(to top, rgb(20 16 12 / 0.94) 0%, rgb(20 16 12 / 0.8) 38%, rgb(20 16 12 / 0.45) 70%, rgb(20 16 12 / 0.2) 100%);
+  --velo-portada-lateral: linear-gradient(to right, rgb(20 16 12 / 0.7) 0%, rgb(20 16 12 / 0.35) 50%, rgb(20 16 12 / 0) 80%);
+  --velo-cabecera: linear-gradient(to bottom, rgb(20 16 12 / 0.86) 0%, rgb(20 16 12 / 0.7) 70%, rgb(20 16 12 / 0) 100%);
   --velo-dialogo: rgb(10 8 6 / 0.72);
 
   --duracion-instantanea: 100ms;
@@ -110,6 +115,22 @@
 
 :root[data-tamano-texto="grande"] { font-size: 112.5%; }
 :root[data-tamano-texto="muy-grande"] { font-size: 125%; }
+
+/* Texto sobre fotografía (PLAN 4.3): la portada y la cabecera sobre ella usan la tinta del tema
+   oscuro en los dos temas, porque el fondo es siempre la foto bajo un velo oscuro. */
+.sobre-fotografia {
+  color-scheme: dark;
+  --color-superficie-cafe: #2B2119;
+  --color-borde-control: #7D6E5A;
+  --color-texto-principal: #EFE7DA;
+  --color-texto-secundario: #BDB09C;
+  --color-texto-tenue: #978A76;
+  --color-acento: #C9A267;
+  --color-acento-intenso: #DBB97F;
+  --color-texto-sobre-acento: #14100C;
+  --color-foco: #E8C98F;
+  color: var(--color-texto-principal);
+}
 
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-movimiento="completo"]) { --duracion-instantanea: 0.01ms; --duracion-breve: 0.01ms; --duracion-media: 0.01ms; --duracion-pausada: 0.01ms; }

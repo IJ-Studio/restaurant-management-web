@@ -70,3 +70,90 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+// PLAN 4.3: el contraste del texto sobre la foto real de la portada, medido en la captura. Se
+// oculta el texto, se busca el píxel más claro bajo cada línea y se compara con su color.
+for (const tema of ["oscuro", "claro"] as const) {
+	for (const ancho of [360, 768, 1440]) {
+		test(`portada: texto y cabecera con contraste AA sobre la foto, ${ancho} px, tema ${tema}`, async ({ page }) => {
+			await page.setViewportSize({ width: ancho, height: 860 });
+			await abrir(page, { tema });
+			const foto = page.locator(".portada img");
+			await expect.poll(() => foto.evaluate((e: HTMLImageElement) => e.complete && e.naturalWidth > 0), { timeout: 20_000 }).toBe(true);
+			await expect(page.locator("header.cabecera-sitio")).toHaveAttribute("data-sobre-portada", "true");
+			// La marca de agua se recorta en la entrega.
+			expect(await foto.evaluate((e: HTMLImageElement) => e.currentSrc)).toContain("/c_crop,w_0.9,h_0.9,g_north_west/");
+
+			const textos = await page.evaluate(() => {
+				const lum = (c: string) => {
+					const [r, g, b] = (c.match(/[\d.]+/g) ?? []).slice(0, 3).map((v) => {
+						const s = Number(v) / 255;
+						return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+					});
+					return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+				};
+				const elementos = [...document.querySelectorAll<HTMLElement>(".portada h1, .portada p, .portada a, .cabecera-sitio a, .cabecera-sitio button")];
+				return elementos.flatMap((el) => {
+					const estilo = getComputedStyle(el);
+					// Los botones rellenos (primario) tienen su propio fondo de token, ya verificado.
+					if (!/rgba\(0, 0, 0, 0\)|transparent/.test(estilo.backgroundColor)) return [];
+					const andador = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+					const rects: DOMRect[] = [];
+					for (let n = andador.nextNode(); n; n = andador.nextNode()) {
+						// El texto solo para lectores no se pinta: su caja sale del recorte.
+						if (!n.textContent?.trim() || (n.parentElement?.getBoundingClientRect().width ?? 0) <= 1) continue;
+						const r = document.createRange();
+						r.selectNodeContents(n);
+						const caja = r.getBoundingClientRect();
+						if (caja.width > 1 && caja.height > 1 && caja.bottom > 0 && caja.top < innerHeight) rects.push(caja);
+					}
+					if (!rects.length) return [];
+					const x = Math.min(...rects.map((r) => r.left)), y = Math.min(...rects.map((r) => r.top));
+					const w = Math.max(...rects.map((r) => r.right)) - x, h = Math.max(...rects.map((r) => r.bottom)) - y;
+					const grande = parseFloat(estilo.fontSize) >= 24 || (parseFloat(estilo.fontSize) >= 18.66 && Number(estilo.fontWeight) >= 700);
+					return [{ texto: el.textContent!.trim().slice(0, 30), x, y, w, h, lumTexto: lum(estilo.color), minimo: grande ? 3 : 4.5 }];
+				});
+			});
+			expect(textos.length).toBeGreaterThan(3);
+
+			await page.addStyleTag({ content: ".portada *, .cabecera-sitio * { color: transparent !important; text-shadow: none !important; transition: none !important; }" });
+			const captura = (await page.screenshot({ path: `test-results/landing/portada-sin-texto-${tema}-${ancho}.png` })).toString("base64");
+			const resultados = await page.evaluate(
+				async ({ datos, textos }) => {
+					const img = new Image();
+					img.src = `data:image/png;base64,${datos}`;
+					await img.decode();
+					const lienzo = document.createElement("canvas");
+					lienzo.width = img.width;
+					lienzo.height = img.height;
+					const ctx = lienzo.getContext("2d")!;
+					ctx.drawImage(img, 0, 0);
+					const escala = img.width / innerWidth;
+					const canal = (v: number) => {
+						const s = v / 255;
+						return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+					};
+					return textos.map((t) => {
+						const d = ctx.getImageData(Math.floor(t.x * escala), Math.floor(t.y * escala), Math.max(1, Math.ceil(t.w * escala)), Math.max(1, Math.ceil(t.h * escala))).data;
+						let peor = 0;
+						for (let i = 0; i < d.length; i += 4) peor = Math.max(peor, 0.2126 * canal(d[i]) + 0.7152 * canal(d[i + 1]) + 0.0722 * canal(d[i + 2]));
+						const [a, b] = [t.lumTexto, peor].sort((m, n) => n - m);
+						return { texto: t.texto, ratio: Math.round(((a + 0.05) / (b + 0.05)) * 100) / 100, minimo: t.minimo };
+					});
+				},
+				{ datos: captura, textos },
+			);
+			for (const r of resultados) expect(r.ratio, `${r.texto} (${tema}, ${ancho} px)`).toBeGreaterThanOrEqual(r.minimo);
+		});
+	}
+}
+
+test("la cabecera deja de ser transparente al pasar la portada", async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 860 });
+	await abrir(page);
+	const cabecera = page.locator("header.cabecera-sitio");
+	await expect(cabecera).toHaveAttribute("data-sobre-portada", "true");
+	await page.evaluate(() => document.getElementById("nosotros")!.scrollIntoView({ block: "start" }));
+	await expect(cabecera).not.toHaveAttribute("data-sobre-portada");
+	await expect(cabecera).toHaveAttribute("data-desplazada", "true");
+});

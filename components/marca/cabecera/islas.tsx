@@ -21,19 +21,41 @@ import { ENLACES_CABECERA } from "./enlaces";
  * cuenta y el menú móvil. Lo demás de la cabecera se pinta en el servidor.
  */
 
-/** Marco de la cabecera: añade la sombra cuando la página se ha desplazado. */
+const suscribirDesplazamiento = (avisar: () => void) => {
+	window.addEventListener("scroll", avisar, { passive: true });
+	window.addEventListener("resize", avisar);
+	return () => {
+		window.removeEventListener("scroll", avisar);
+		window.removeEventListener("resize", avisar);
+	};
+};
+
+/** ¿Queda la cabecera encima de la foto de la portada (`#inicio[data-portada]`)? */
+function cabeceraSobrePortada() {
+	const portada = document.querySelector<HTMLElement>("#inicio[data-portada]");
+	if (!portada) return false;
+	const cabecera = document.querySelector<HTMLElement>(".cabecera-sitio")?.offsetHeight ?? 64;
+	return portada.getBoundingClientRect().bottom > cabecera;
+}
+
+/**
+ * Marco de la cabecera: añade la sombra cuando la página se ha desplazado y, en la landing,
+ * se vuelve transparente con tinta clara mientras está sobre la foto de la portada (PLAN 4.3).
+ */
 export function MarcoCabecera({ children, fija = true }: { children: ReactNode; fija?: boolean }) {
-	const desplazada = useSyncExternalStore(
-		(avisar) => {
-			window.addEventListener("scroll", avisar, { passive: true });
-			return () => window.removeEventListener("scroll", avisar);
-		},
-		() => window.scrollY > 8,
-		() => false,
-	);
+	const enLanding = usePathname() === "/";
+	const desplazada = useSyncExternalStore(suscribirDesplazamiento, () => window.scrollY > 8, () => false);
+	// En el servidor, la landing empieza arriba del todo: sobre la portada, sin parpadeo al hidratar.
+	const sobrePortada = useSyncExternalStore(suscribirDesplazamiento, cabeceraSobrePortada, () => enLanding);
 	useRegistroRuta();
+	const transparente = fija && enLanding && sobrePortada;
 	return (
-		<header className="cabecera-sitio" data-fija={fija ? undefined : "no"} data-desplazada={(fija && desplazada) || undefined}>
+		<header
+			className={cn("cabecera-sitio", transparente && "sobre-fotografia")}
+			data-fija={fija ? undefined : "no"}
+			data-desplazada={(fija && desplazada && !transparente) || undefined}
+			data-sobre-portada={transparente || undefined}
+		>
 			{children}
 		</header>
 	);

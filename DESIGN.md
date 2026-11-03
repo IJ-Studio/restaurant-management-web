@@ -326,7 +326,7 @@ Calculado con la fórmula de luminancia relativa de WCAG. Mínimos: 4,5:1 para t
 
 El margen más estrecho es la insignia de aviso en claro (4,93:1): no se debe aclarar `--color-aviso` del tema claro ni subir la mezcla del fondo por encima del 12 %.
 
-`--color-borde-sutil` (1,22–1,27:1) es **decorativo a propósito**: nunca delimita por sí solo un control ni transmite información. **Texto sobre fotografía:** se coloca siempre sobre el velo `--velo-fotografia` y se comprueba con axe en la imagen real (criterio de aceptación en el PLAN).
+`--color-borde-sutil` (1,22–1,27:1) es **decorativo a propósito**: nunca delimita por sí solo un control ni transmite información. **Texto sobre fotografía:** se coloca siempre sobre un velo (`--velo-fotografia`, `--velo-portada` y `--velo-cabecera`) que cubre al menos un 64 % bajo el texto pequeño: con eso, el texto hueso da 4,5:1 sobre cualquier píxel de la foto, incluso blanco. Axe no mide el contraste sobre imágenes, así que la prueba de la portada lo mide en la captura real: oculta el texto, busca el píxel más claro bajo cada línea y lo compara con su color (`landing.spec.ts`).
 
 ### Named Rules
 
@@ -523,7 +523,9 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
     - De izquierda a derecha: el logo (enlace al inicio, 2,25rem de alto desde 640 px), las secciones (La casa, La carta, Promociones, Pedir, Visítanos) desde 1024 px, las opciones de accesibilidad y la cuenta (desde 640 px; por debajo, en el menú, para que quepa con texto al 125 %), «Reservar» y el botón de menú (por debajo de 1024 px). El logo mide 2rem de alto en móvil. Todo con 44 px de alto o más; iconos de Lucide.
     - Enlaces de sección en `--texto-pequeno`, peso 500, `--texto-secundario`; el activo en `--texto-principal` con un filete de acento de 1 px debajo. En la landing, la sección activa es la que ocupa el centro de la pantalla (`IntersectionObserver`); en una página de acción, la de su origen (`/menu` → «La carta»).
     - Cuenta: sin sesión, enlace a «Iniciar sesión» (solo el icono por debajo de 1280 px); con sesión, un menú (Popover) con nombre, correo, «Tu cuenta» y «Cerrar sesión», este último solo cuando exista el cierre único del paso 2.14.
-    - Clase `.cabecera-sitio`: fija arriba, `--color-fondo`, relleno de la zona segura superior y `--sombra-cabecera` al desplazar. **La variante transparente sobre la portada queda para el paso 4.3**, con la fotografía real, el velo y su comprobación de contraste.
+    - Clase `.cabecera-sitio`: fija arriba, `--color-fondo`, relleno de la zona segura superior y `--sombra-cabecera` al desplazar.
+    - **Sobre la portada** (PLAN 4.3): mientras la foto queda bajo la cabecera, pierde el fondo, gana `--velo-cabecera` y toma la tinta del tema oscuro en los dos temas (`.sobre-fotografia`, que redefine los tokens de texto, acento y foco para ese subárbol). En el servidor ya sale así en `/`, sin parpadeo.
+    - Las siete secciones (D-19) se ven en la barra desde 1280 px; por debajo, en el menú lateral.
 - **`MigasDePan`:** `<nav aria-label="Migas de pan">` con `<ol>` y `aria-current="page"` en la última miga.
   - Empiezan en «Inicio»; las intermedias salen del mapa `config/navegacion-publica.ts` y la última es la página actual, sin enlace, en `--texto-principal`. Las de rutas con parámetros reciben el nombre (la categoría o el plato).
   - `--texto-pequeno`; enlaces en `--texto-secundario` con subrayado fino y 44 px de alto; separador `ChevronRight` en `--texto-tenue`, oculto a lectores. Pasan de línea si no caben.

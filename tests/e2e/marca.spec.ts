@@ -56,7 +56,7 @@ test.describe("marco público renderizado en el servidor (4.1)", () => {
 	for (const ruta of ["/", "/menu", "/about", "/login"]) {
 		test(`${ruta}: cabecera, main y pie en el HTML sin JavaScript`, async ({ request }) => {
 			const html = await (await request.get(ruta)).text();
-			expect(html).toContain('class="cabecera-sitio"');
+			expect(html).toMatch(/<header class="cabecera-sitio[ "]/);
 			expect(html).toContain('href="#contenido"');
 			expect(html).toMatch(/<main[^>]*id="contenido"/);
 			expect(html).toContain("<footer");
