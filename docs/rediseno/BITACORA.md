@@ -6,6 +6,34 @@
 
 ## Fase 5 · Administración
 
+### 5.19 · Panel de cocina (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/cocina/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/cocina/CocinaPanel.tsx`, para una tableta o un monitor que se lee a distancia.
+- **Misma lógica sobre los servicios locales:** las comandas se leen cada 5 s, y «Empezar» y «Marcar lista» avanzan el estado (nuevo → preparando → listo).
+- **Retirado lo que no era verdad:**
+  - el «12m Avg» fijo;
+  - el botón «Entregado» de las listas, que no cambiaba nada (ahora dicen «Esperando al mesero»);
+  - el «aviso enviado» del inventario, que no avisaba a nadie;
+  - el banner descartable de existencias críticas (pasa a un `Aviso` con «Ver existencias»).
+- **Indicadores:** en cocina (nuevas y en preparación) como protagonista, nuevas, listas para la mesa y existencias bajas.
+- **Tres columnas desde `lg`:** nuevas, en preparación y listas para la mesa, con su cuenta.
+  - Cada comanda lleva la mesa en Fraunces `--texto-titulo-2`, los platos en `--texto-titulo-interfaz` con la cantidad en negrita, y las notas con icono en tono de aviso.
+  - Botón de **56 px** a todo el ancho. Su nombre accesible empieza por el texto visible y nombra la comanda.
+- **Existencias en `PanelLateral`:** primero las bajas, con su nivel en texto.
+- **Retirados:** `InventoryModal`, `KanbanColumn`, `KitchenHeader`, `KitchenStats`, `OrderCard` y `StockAlertBanner`.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `cocina.spec` (nueva), 10/10. Comprueba:
+  - que no queden «Avg» ni «Entregado»;
+  - una comanda de nueva a lista, con su botón de 56 px o más y la notificación;
+  - las existencias en el panel;
+  - axe, sin desborde, a 360, 768, 1024 y 1440 px, en los dos temas.
+- Captura revisada: oscuro a 1440 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase). Lectura a distancia en un monitor real.
+
 ### 5.18 · Panel del mesero (2026-11-03)
 
 **Cambios:**
