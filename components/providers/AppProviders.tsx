@@ -2,7 +2,6 @@
 
 import { Provider as ReduxProvider, useDispatch } from "react-redux";
 import { PreferenciasProvider } from "@/components/providers/PreferenciasProvider";
-import { DesignSystemProvider } from "@/components/providers/DesignSystemProvider";
 import { store, type AppDispatch } from "@/store/index";
 import { useEffect } from "react";
 import { hydrateSession } from "@/store/slices/authSlice";
@@ -33,12 +32,11 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ReduxProvider store={store}>
       <PreferenciasProvider>
-        <DesignSystemProvider>      
-          <AuthInitializer>
-            {/* Notificaciones del sistema en todo el sitio (PLAN 4.12): sustituyen a alert(). */}
-            <ProveedorNotificaciones>{children}</ProveedorNotificaciones>
-          </AuthInitializer>
-        </DesignSystemProvider>
+        {/* Sin DesignSystemProvider (PLAN 5.14, D-12): la apariencia es la de DESIGN.md. */}
+        <AuthInitializer>
+          {/* Notificaciones del sistema en todo el sitio (PLAN 4.12): sustituyen a alert(). */}
+          <ProveedorNotificaciones>{children}</ProveedorNotificaciones>
+        </AuthInitializer>
       </PreferenciasProvider>
     </ReduxProvider>
   );

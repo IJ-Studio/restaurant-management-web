@@ -6,6 +6,37 @@
 
 ## Fase 5 · Administración
 
+### 5.14 · Ajustes (2026-11-03) — D-12
+
+**Cambios:**
+- **`app/dashboard/admin/settings/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/admin/ajustes/AjustesAdmin.tsx`.
+- **D-12:**
+  - **Fuera la sección «Apariencia»** (colores, fuentes y radios) y `DesignSystemProvider`, que se retira de `AppProviders`. Solo fijaba `--radius-standard`, que ya no usaba nadie.
+  - **Pasarelas:** fuera los campos «API Key» y «Secret Key», que eran inputs no controlados y no se leían ni se enviaban. Quedan el estado y el entorno en un diálogo «Ajustes», con un aviso de que las claves se gestionan en el sistema (NP-09).
+  - También se retiraron la URL de *webhook* inventada, «Probar conexión» y el falso «Conexión verificada · hace 5 min».
+- **Marca y textos del área de clientes:** se guardan en este navegador (`SettingsService`), como antes, y ahora lo dice un aviso.
+  - El almacenamiento local se lee al montar, no al pintar en el servidor.
+  - Las categorías destacadas son casillas.
+- **Imagen del inicio de sesión (D-18):** antes el campo sugería «Unsplash, Pixabay». Ahora solo admite fotos propias, comprobadas con `esImagenPermitida`: la nube `dcb1tspbj`, un identificador de esa nube (el valor por defecto lo es) o una ruta del sitio.
+- **Respaldos:** las mismas llamadas (`GET` y `POST /backups`, `DELETE /backups/:id`).
+  - `Tabla` con estado en `Insignia`.
+  - Crear avisa del resultado. Eliminar pide confirmación del sistema; antes borraba sin preguntar y sin comprobar la respuesta.
+  - Se retiró la cifra inventada «Tamaño promedio 41.2 MB».
+  - La programación (automático, frecuencia, hora, nube) era estado local que no se guardaba: va marcada como datos de ejemplo.
+- **Trabajo sin conexión y pasarelas:** datos de ejemplo, marcados como tales, y «Aún sin efecto».
+- **Retirados** (versionados y sin uso): `DesignSystemProvider` y las siete secciones de `components/settings/` (Appearance, Backup, Branding, GatewayModal, GatewaySection, Landscape, Offline). También `SettingRow`, `Toggle`, `SectionCard` y el `STATUS_CFG` de `settingsMock`.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `ajustes.spec` (nueva) más acceso, portada, marca y recorrido de rutas, 145/145. Se incluyen porque `AppProviders` cambia en todo el sitio. La nueva comprueba:
+  - que no queden «Apariencia» ni campos de clave o contraseña en la pasarela;
+  - la imagen: Unsplash rechazada, el valor por defecto válido, y Cloudinary propia guardada en el almacenamiento;
+  - los respaldos: `POST /backups` y `DELETE /backups/4` tras la confirmación;
+  - axe, sin desborde, a 360, 768 y 1440 px, en los dos temas.
+- Captura revisada: oscuro a 1440 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.13 · Usuarios (2026-11-03)
 
 **Cambios:**

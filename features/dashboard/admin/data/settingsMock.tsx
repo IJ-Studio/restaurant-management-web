@@ -58,24 +58,3 @@ export const GATEWAYS_DEFAULT: Gateway[] = [
     methods: ["Visa", "Mastercard"],
   },
 ];
-
-export const STATUS_CFG: Record<
-  string,
-  { label: string; colorClass: string; bgClass: string }
-> = {
-  activo: { 
-    label: "Activo", 
-    colorClass: "text-emerald-600", 
-    bgClass: "bg-emerald-50 border-emerald-100" 
-  },
-  inactivo: { 
-    label: "Inactivo", 
-    colorClass: "text-text-muted", 
-    bgClass: "bg-surface-alt border-border" 
-  },
-  prueba: { 
-    label: "Prueba", 
-    colorClass: "text-amber-600", 
-    bgClass: "bg-amber-50 border-amber-100" 
-  },
-};
