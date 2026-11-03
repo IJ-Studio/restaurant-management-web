@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  * de una plantilla ajena. `DistanceToRestaurant` no se incluye: lo decide la fase 4.
  */
 const CASA = [
-	{ nombre: "Nosotros", href: "/about" },
+	{ nombre: "Conoce la casa", href: "/about" },
 	{ nombre: "Información corporativa", href: "/corporativo" },
 ];
 const AYUDA = [
@@ -103,7 +103,7 @@ export function PieSitio({ anio = new Date().getFullYear() }: { anio?: number })
 						))}
 					</ul>
 				</div>
-				<Columna titulo="La casa" enlaces={CASA} />
+				<Columna titulo="Nosotros" enlaces={CASA} />
 				<Columna titulo="Ayuda" enlaces={AYUDA} />
 			</div>
 

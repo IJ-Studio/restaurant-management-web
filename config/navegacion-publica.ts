@@ -7,13 +7,17 @@
  * la categoría o el plato).
  */
 
-/** Anclas de la landing (DESIGN.md § Composición de la landing). */
+/**
+ * Anclas de la landing (DESIGN.md § Composición de la landing y D-19). `inicio` es la miga de
+ * pan («/»); el enlace de la cabecera a la portada usa `portada` («/#inicio»).
+ */
 export const SECCIONES_LANDING = {
 	inicio: { nombre: "Inicio", href: "/", volver: "Volver al inicio" },
-	laCasa: { nombre: "La casa", href: "/#la-casa", volver: "Volver a «La casa»" },
-	carta: { nombre: "La carta", href: "/#carta", volver: "Volver a la carta" },
+	portada: { nombre: "Inicio", href: "/#inicio", volver: "Volver al inicio" },
+	nosotros: { nombre: "Nosotros", href: "/#nosotros", volver: "Volver a «Nosotros»" },
+	menu: { nombre: "Menú", href: "/#menu", volver: "Volver al menú" },
 	promociones: { nombre: "Promociones", href: "/#promociones", volver: "Volver a promociones" },
-	reservar: { nombre: "Reservar", href: "/#reservar", volver: "Volver a «Reservar»" },
+	reservas: { nombre: "Reservas", href: "/#reservas", volver: "Volver a «Reservas»" },
 	pedir: { nombre: "Pedir", href: "/#pedir", volver: "Volver a «Pedir»" },
 	visitanos: { nombre: "Visítanos", href: "/#visitanos", volver: "Volver a «Visítanos»" },
 } as const;
@@ -36,21 +40,21 @@ export interface RutaPublica {
 	origen: Miga;
 }
 
-const { inicio, laCasa, carta, promociones, reservar, pedir } = SECCIONES_LANDING;
+const { inicio, nosotros, menu, promociones, reservas, pedir } = SECCIONES_LANDING;
 const MENU: Miga = { nombre: "La carta", href: "/menu", volver: "Volver a la carta" };
 const PEDIDO: Miga = { nombre: "Tu pedido", href: "/menu/pedido", volver: "Volver a tu pedido" };
 const ACCESO: Miga = { nombre: "Iniciar sesión", href: "/login", volver: "Volver a iniciar sesión" };
 
 export const RUTAS_PUBLICAS: RutaPublica[] = [
-	{ patron: "/menu", titulo: "La carta", padres: [], origen: carta },
+	{ patron: "/menu", titulo: "La carta", padres: [], origen: menu },
 	{ patron: "/menu/categoria/[slug]", titulo: "Categoría", padres: [MENU], origen: MENU },
 	{ patron: "/menu/producto/[id]", titulo: "Plato", padres: [MENU], origen: MENU },
 	{ patron: "/menu/pedido", titulo: "Tu pedido", padres: [{ nombre: pedir.nombre, href: pedir.href }], origen: pedir },
 	{ patron: "/menu/pedido/checkout", titulo: "Pago", padres: [{ nombre: pedir.nombre, href: pedir.href }, PEDIDO], origen: PEDIDO },
 	{ patron: "/menu/pedido/checkout/exito", titulo: "Pedido confirmado", padres: [{ nombre: pedir.nombre, href: pedir.href }], origen: pedir },
-	{ patron: "/reservations", titulo: "Reservar mesa", padres: [], origen: reservar },
+	{ patron: "/reservations", titulo: "Reservar mesa", padres: [], origen: reservas },
 	{ patron: "/promociones", titulo: "Promociones", padres: [], origen: promociones },
-	{ patron: "/about", titulo: "La casa", padres: [], origen: laCasa },
+	{ patron: "/about", titulo: "Nosotros", padres: [], origen: nosotros },
 	{ patron: "/login", titulo: "Iniciar sesión", padres: [], origen: inicio },
 	{ patron: "/register", titulo: "Crear cuenta", padres: [ACCESO], origen: ACCESO },
 	{ patron: "/reset", titulo: "Recuperar contraseña", padres: [ACCESO], origen: ACCESO },

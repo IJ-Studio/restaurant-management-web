@@ -17,15 +17,15 @@ export const metadata: Metadata = {
     default: INITIAL_SETTINGS.restaurantName,
     template: `%s | ${INITIAL_SETTINGS.restaurantName}`,
   },
+  // Metadatos reescritos con D-17: la propuesta de PRODUCT.md y solo datos de la configuración (NP-43).
   description:
-    INITIAL_SETTINGS.heroSubtitle ||
-    "Sistema de gestión y menú digital de Restaurante El Quijote. Cocina nacional e internacional en Huejutla de Reyes, Hidalgo.",
+    "Restaurante El Quijote: cocina española de alta gama y carta de vinos en Huejutla de Reyes, Hidalgo.",
   keywords: [
     "restaurante",
-    "menú",
+    "cocina española",
+    "carta de vinos",
     "El Quijote",
-    "Huejutla",
-    "comida mexicana",
+    "Huejutla de Reyes",
   ],
   // Iconos locales por convención de archivos: app/icon.svg y app/apple-icon.png.
   appleWebApp: {

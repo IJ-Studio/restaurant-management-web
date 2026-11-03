@@ -10,10 +10,11 @@ import { MarcoCabecera, MenuCuentaConSesion, MenuMovil, NavegacionSecciones, typ
  *
  * - Fija, de `--alto-cabecera` más la zona segura superior, sobre `--color-fondo`; al desplazar
  *   la página gana `--sombra-cabecera`.
- * - Logo (enlace al inicio), enlaces a las secciones de la landing (desde 1024 px), opciones de
+ * - Logo (enlace al inicio), enlaces a las siete secciones de la landing (desde 1280 px: con siete
+ *   no caben antes junto a la cuenta y «Reservar» con texto al 125 %), opciones de
  *   accesibilidad, cuenta y el único llamado persistente: «Reservar» (secundario, compacto,
  *   siempre visible, también en móvil junto al botón de menú).
- * - Por debajo de 1024 px, las secciones van en un `PanelLateral`; por debajo de 640 px, también
+ * - Por debajo de 1280 px, las secciones van en un `PanelLateral`; por debajo de 640 px, también
  *   la cuenta y las opciones de accesibilidad.
  *
  * La variante transparente sobre la portada se hace en el paso 4.3, con la fotografía real y su
@@ -37,7 +38,7 @@ export function CabeceraSitio({ usuario, fija = true }: CabeceraSitioProps) {
 					<Logo className="h-8 w-auto sm:h-9" />
 				</Link>
 
-				<NavegacionSecciones className="hidden lg:block" />
+				<NavegacionSecciones className="hidden xl:block" />
 
 				<div className="flex shrink-0 items-center gap-1">
 					{/* Por debajo de 640 px, accesibilidad y cuenta van en el menú: si no, con texto al 125 % no cabe. */}
@@ -47,7 +48,7 @@ export function CabeceraSitio({ usuario, fija = true }: CabeceraSitioProps) {
 					<div className="hidden sm:block">
 						<MenuCuentaConSesion usuario={usuario} />
 					</div>
-					<BotonEnlace href="/reservations" variante="secundario" tamano="compacto" className="ms-1">
+					<BotonEnlace href="/#reservas" variante="secundario" tamano="compacto" className="ms-1">
 						Reservar
 					</BotonEnlace>
 					<MenuMovil usuario={usuario} />

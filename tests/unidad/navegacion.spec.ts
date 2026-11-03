@@ -4,11 +4,11 @@ import { RUTAS_PUBLICAS, SECCIONES_LANDING, rutaPublica } from "../../config/nav
 // Mapa de rutas públicas → sección de origen (PLAN 3.10). Sin navegador.
 test.describe("navegación pública", () => {
 	test("reconoce rutas fijas y con parámetros, con barra final, consulta o ancla", () => {
-		expect(rutaPublica("/menu")?.origen).toEqual(SECCIONES_LANDING.carta);
+		expect(rutaPublica("/menu")?.origen).toEqual(SECCIONES_LANDING.menu);
 		expect(rutaPublica("/menu/")?.titulo).toBe("La carta");
 		expect(rutaPublica("/menu/categoria/entradas")?.origen.href).toBe("/menu");
 		expect(rutaPublica("/menu/producto/42?variante=2")?.padres.map((m) => m.nombre)).toEqual(["La carta"]);
-		expect(rutaPublica("/reservations#mapa")?.origen.href).toBe("/#reservar");
+		expect(rutaPublica("/reservations#mapa")?.origen.href).toBe("/#reservas");
 		expect(rutaPublica("/menu/pedido/checkout")?.padres.map((m) => m.href)).toEqual(["/#pedir", "/menu/pedido"]);
 	});
 

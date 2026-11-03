@@ -311,6 +311,12 @@
     position: relative;
   }
 
+  /* Secciones de la landing (PLAN 4.2): ritmo vertical amplio y ancla que la cabecera fija no tapa. */
+  .seccion-landing {
+    padding-block: var(--espacio-entre-secciones);
+    scroll-margin-block-start: calc(var(--alto-cabecera) + env(safe-area-inset-top, 0px));
+  }
+
   /* Marco público (PLAN 4.1): el contenido empieza bajo la cabecera fija y su zona segura. */
   .marco-sitio-contenido {
     display: block;

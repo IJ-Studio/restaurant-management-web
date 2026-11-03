@@ -6,6 +6,45 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.2 · Estructura de la landing de una sola página (2026-11-03) — D-19
+
+**Cambios:**
+- **`app/(public)/page.tsx`**, ahora **de servidor**:
+  - Pide la carta y las promociones con `Promise.all`, sin caché.
+  - Monta las siete secciones con sus anclas: `#inicio`, `#nosotros`, `#menu`, `#promociones`, `#reservas`, `#pedir` y `#visitanos`.
+  - Las seis secciones tras la portada llevan `EtiquetaSeccion` con su lote (Nº 01 a 06) y bandas café alternas.
+  - Desaparecen el componente de cliente con sus seis `useFetch` (a endpoints que no existen: NP-17), los handlers vacíos y el carrito simulado.
+- **`lib/publico/datos-landing.ts`** (`server-only`):
+  - Usa los endpoints que ya usaban `/menu` (`/menu/categories/with-products`) y `/promociones`, con un tiempo máximo de 8 s.
+  - Exige respuesta JSON y normaliza los datos.
+  - Nunca lanza: devuelve `{ estado: "error" }` y la sección muestra su error.
+  - El filtro de promociones vigentes (activas, con título y dentro de sus fechas; una fecha de fin sin hora vale todo el día) está en `lib/publico/promociones-vigentes.ts`, que se puede probar sin servidor.
+- **`SeccionLanding`:** etiqueta, ancla con `scroll-margin` para la cabecera fija y fondo alterno.
+- **`ReintentarSeccion`:** `EstadoError` cálido con «Reintentar», que hace `router.refresh()`, y una segunda salida («Llamar al restaurante»).
+- **Navegación (D-19):**
+  - La cabecera enlaza solo anclas: Inicio, Nosotros, Menú, Promociones, Reservas, Pedir y Visítanos.
+  - «Reservar» lleva a `#reservas`.
+  - Con siete secciones, la barra se ve desde 1280 px; por debajo, en el menú lateral. Con texto al 125 % no cabían a 1024 junto a la cuenta y «Reservar».
+  - `SECCIONES_LANDING`, el origen de las migas y de «Volver», y el pie se renombran: «La casa» pasa a «Nosotros» y «La carta» a «Menú» como sección. La página `/menu` sigue siendo «La carta».
+- **Metadatos (D-17):**
+  - el título y la descripción de la portada;
+  - la descripción y las palabras clave globales («cocina española», «carta de vinos»). Retiran «Sistema de gestión», «Cocina nacional e internacional» y «comida mexicana»; la contradicción está en NP-43.
+- **Textos de las secciones (D-17):** sobrios, sin cifras, años ni premios. La dirección sale de `restaurant.config.ts`.
+- **El contenido de cada sección** llega en los pasos siguientes: portada (4.3), Nosotros (4.4), Menú (4.5), Promociones (4.6), Reservas (4.7), Pedir (4.8) y Visítanos (4.9).
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `pnpm test:unidad`: 46/46, con la nueva `promociones.spec.ts`.
+- `landing.spec.ts` (nueva) y `marca.spec.ts`, Chromium contra `next start`: 21/21. Comprueban:
+  - que las siete secciones llegan en el HTML del servidor, en orden y con un solo `h1`;
+  - que la navegación es de anclas, marca la sección visible y la cabecera no tapa su título;
+  - que sin backend la carta y las promociones muestran el error cálido con «Reintentar» y ningún texto técnico;
+  - axe sin violaciones y sin desbordar a 360 (texto al 125 %), 390, 768, 1024 (al 125 %) y 1440 px, en los dos temas.
+- Revisión visual: la página completa a 1440 px en oscuro.
+- Las pruebas del catálogo (`sitio.spec.ts`) y la unitaria de navegación se actualizan a los nombres y al corte de 1280 px; se pasan en el cierre de la fase.
+- Sin procesos abiertos.
+
 ### 4.1 · Layout público en el servidor (2026-11-03)
 
 **Cambios:**

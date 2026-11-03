@@ -18,16 +18,18 @@ test.describe("cabecera y pie del sitio en el catálogo", () => {
 	test.skip(!MODO_DEV, "el catálogo solo existe en next dev");
 	test.describe.configure({ timeout: 180_000 });
 
-	test("desde 1024 px: logo al inicio, secciones, accesibilidad, cuenta y «Reservar»", async ({ page }) => {
+	test("desde 1280 px: logo al inicio, secciones, accesibilidad, cuenta y «Reservar»", async ({ page }) => {
 		await page.setViewportSize({ width: 1280, height: 900 });
 		await abrir(page);
 		const cabecera = prueba(page, "cabecera");
 		await expect(cabecera.getByRole("link", { name: "El Quijote, restaurante" })).toHaveAttribute("href", "/");
 		const secciones = cabecera.getByRole("navigation", { name: "Principal" });
-		await expect(secciones.getByRole("link")).toHaveText(["La casa", "La carta", "Promociones", "Pedir", "Visítanos"]);
-		await expect(secciones.getByRole("link", { name: "La carta" })).toHaveAttribute("href", "/#carta");
+		// D-19: solo anclas de la landing.
+		await expect(secciones.getByRole("link")).toHaveText(["Inicio", "Nosotros", "Menú", "Promociones", "Reservas", "Pedir", "Visítanos"]);
+		for (const href of await secciones.getByRole("link").evaluateAll((e) => e.map((a) => a.getAttribute("href"))))
+			expect(href).toMatch(/^\/#[a-z]+$/);
 		await expect(cabecera.getByRole("button", { name: "Opciones de accesibilidad" })).toBeVisible();
-		await expect(cabecera.getByRole("link", { name: "Reservar" })).toHaveAttribute("href", "/reservations");
+		await expect(cabecera.getByRole("link", { name: "Reservar" })).toHaveAttribute("href", "/#reservas");
 		await expect(prueba(page, "abrir-menu-movil")).toBeHidden();
 		// Sin SVG a mano: todos los iconos son de Lucide (el logo es la pieza de marca).
 		const aMano = await cabecera.locator("svg:not(.lucide)").evaluateAll((s) => s.filter((e) => !e.closest('a[href="/"]')).length);
@@ -53,7 +55,7 @@ test.describe("cabecera y pie del sitio en el catálogo", () => {
 		await expect(prueba(page, "cuenta-sin-sesion").getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute("href", "/login");
 	});
 
-	test("por debajo de 1024 px: menú en panel lateral con trampa de foco y cierre con Esc; «Reservar» sigue visible", async ({ page }) => {
+	test("por debajo de 1280 px: menú en panel lateral con trampa de foco y cierre con Esc; «Reservar» sigue visible", async ({ page }) => {
 		await page.setViewportSize({ width: 390, height: 844 });
 		await abrir(page);
 		const cabecera = prueba(page, "cabecera");
@@ -62,7 +64,7 @@ test.describe("cabecera y pie del sitio en el catálogo", () => {
 		const abrirMenu = prueba(page, "abrir-menu-movil");
 		await abrirMenu.click();
 		const panel = page.getByRole("dialog", { name: "Menú" });
-		await expect(panel.getByRole("navigation", { name: "Principal" }).getByRole("link")).toHaveCount(5);
+		await expect(panel.getByRole("navigation", { name: "Principal" }).getByRole("link")).toHaveCount(7);
 		await expect(panel.getByRole("link", { name: "Tu cuenta" })).toBeVisible();
 		await page.keyboard.press("Escape");
 		await expect(panel).toBeHidden();
@@ -114,7 +116,7 @@ test.describe("cabecera y pie del sitio en el catálogo", () => {
 				// El marco del catálogo recorta: se comprueba que la cabecera misma cabe y que el menú se ve.
 				const cabecera = prueba(page, "cabecera").locator("header");
 				expect(await cabecera.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
-				if (ancho < 1024) {
+				if (ancho < 1280) {
 					// Visible entero: IntersectionObserver tiene en cuenta el recorte del marco.
 					await prueba(page, "abrir-menu-movil").scrollIntoViewIfNeeded();
 					await expect(prueba(page, "abrir-menu-movil")).toBeInViewport({ ratio: 1 });

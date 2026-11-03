@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 4 en curso** (2026-11-03). Fases 0, 1, 2 (salvo 2.5) y 3 cerradas. Catálogo aprobado por el usuario: referencia de estilo obligatoria. |
 | Rama activa | `feature/rediseno-web-publico` (sale de `feature/rediseno-web-seguridad`, `3775918`) |
-| Último paso completado | 4.1 · Layout público en el servidor. |
+| Último paso completado | 4.2 · Estructura de la landing (D-19). |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) sigue sin ejecutarse**: pendiente de la aprobación del usuario. |
-| Siguiente paso | 4.2 · Estructura de la landing (D-19). |
+| Siguiente paso | 4.3 · Portada (`#inicio`). |
 | Notas | **Órdenes vigentes (2026-11-03):** fases 4 → 5 → 6 → 7 (solo lo comprobable sin el usuario), con ramas `publico` → `admin` → `pulido` → `auditoria`, cada una desde la anterior; D-17 a D-21; excepciones autorizadas fuera del PLAN, cada una en su commit: retirar `firebase-admin` si nada lo importa (NP-38) y que `/api/auth/logout` caduque siempre las cookies (NP-41); nunca `images.unsplash.com`; sin push, pull, fetch, rebase ni fusiones; sin `.env`; sin dependencias fuera del PLAN; sin Lighthouse ni scripts de rendimiento; quedan para el usuario 2.5, 7.3, lectores de pantalla y dispositivos reales. Decisiones anteriores: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -598,7 +598,7 @@ Cada paso conserva endpoints, payloads y URL; sustituye los componentes antiguos
   - **Aceptación:** la navegación y el pie aparecen en el HTML del servidor.
   - **Commit:** `feat(publico): cabecera y pie renderizados en el servidor`
 
-- [ ] **4.2 · Estructura de la landing.** Componente de servidor con las peticiones existentes en paralelo (`Promise.all`, `no-store`), anclas y resaltado de la sección activa. Retira los `console.log` y los handlers vacíos.
+- [x] **4.2 · Estructura de la landing.** Componente de servidor con las peticiones existentes en paralelo (`Promise.all`, `no-store`), anclas y resaltado de la sección activa. Retira los `console.log` y los handlers vacíos.
   - **Commit:** `feat(landing): estructura de una sola página con anclas`
 
 - [ ] **4.3 · Portada (`#inicio`).** **Cabecera transparente sobre la portada** (aplazada del 3.11): texto claro en los dos temas y un velo superior propio (tokens nuevos en DESIGN.md), comprobado con axe sobre la imagen real. Fotografía a sangre con `priority` (en Next 16, `preload`; ver BITÁCORA 1.9), velo y titular de portada. **LCP:** la medición del cierre de la fase 1 lo subió de 4339 a 5194 ms (FCP y TBT bajaron): la imagen de portada debe precargarse, pedirse con el ancho ajustado a su hueco (`sizes` real) y no debe haber precargas innecesarias que compitan con ella. La imagen actual (`Gemini_Generated_Image_2mv3…`, 1584×672) muestra en la esquina inferior derecha la **marca de agua de Gemini**: se recorta **en la entrega** con una transformación (`c_crop,w_0.9,h_0.9,g_north_west`) sin modificar el recurso. Como mide 1584 px, se sirve con `sizes="100vw"` y un ancho máximo de 1584 para no ampliarla. Su sustitución es NP-33.

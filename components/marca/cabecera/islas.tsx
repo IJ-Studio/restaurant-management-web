@@ -190,7 +190,7 @@ export function MenuMovil({ usuario: recibido, pie }: { usuario?: UsuarioCabecer
 			lado="fin"
 			titulo="Menú"
 			disparador={
-				<Boton variante="fantasma" soloIcono icono={<Menu />} className="lg:hidden" data-prueba="abrir-menu-movil">
+				<Boton variante="fantasma" soloIcono icono={<Menu />} className="xl:hidden" data-prueba="abrir-menu-movil">
 					Abrir el menú
 				</Boton>
 			}
