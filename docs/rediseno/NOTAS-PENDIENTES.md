@@ -539,6 +539,7 @@
 - **Solución sugerida:** caducar las cookies en todas las salidas de la ruta (también en el `catch`), y que la invalidación en el backend no condicione la limpieza local.
 - **Prioridad:** Media.
 - **Criterio de aceptación:** con el backend apagado, `POST /api/auth/logout` responde con `Set-Cookie` que caduca `session` y `access_token`.
+- **Resuelta (2026-11-03, excepción autorizada por el usuario):** la ruta caduca las dos cookies en todas sus salidas, también en el `catch`. La prueba de `proteccion.spec.ts` lo comprueba sin backend real. **No verificado** con el backend encendido (la salida correcta no cambia de lógica).
 
 ## NP-42 · El menú móvil de la cabecera nueva no ofrece «Cerrar sesión»
 

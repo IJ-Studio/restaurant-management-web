@@ -6,6 +6,30 @@
 
 ## Fase 4 · Páginas públicas
 
+### Excepción NP-41 · El cierre de sesión caduca siempre las cookies (2026-11-03)
+
+Autorizada por el usuario fuera del PLAN, en su propio commit. Toca una ruta de servidor, `app/api/auth/logout/route.ts`, solo en lo que pide la nota:
+
+- `caducarCookiesDeSesion()` caduca `access_token` y `session` (`maxAge: 0`, `path: "/"`) en la salida correcta y en el `catch`. Antes, si la llamada a `/auth/sign-out` lanzaba, la respuesta 500 salía **sin** caducarlas.
+- El endpoint, el método, el payload enviado al backend y los cuerpos de respuesta no cambian.
+- De paso, y por la regla del 2.16:
+  - el respaldo `http://localhost:10000` pasa a `?? ""`;
+  - el registro del error solo escribe el tipo de la excepción, no su contenido (regla del 2.8).
+
+**Verificación:**
+
+| Comprobación | Resultado |
+|---|---|
+| Typecheck | 0 errores |
+| Lint de los dos archivos | 0 problemas |
+| Build | Correcto |
+| `proteccion.spec.ts` y `almacenamiento.spec.ts` (Chromium contra `next start`) | 28/28 |
+| Procesos abiertos | Ninguno |
+
+La prueba nueva de `proteccion.spec.ts` comprueba que, sin backend real, la respuesta trae `Set-Cookie` con las dos cookies vacías y caducadas, y que el cuerpo no expone trazas.
+
+**No verificado:** con el backend encendido.
+
 ### Excepción NP-38 · Retirar `firebase-admin` (2026-11-03)
 
 Autorizada por el usuario fuera del PLAN, en su propio commit.

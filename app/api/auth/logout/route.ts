@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+
+/**
+ * Caduca las cookies de sesión en la respuesta. Se aplica en todas las salidas de la ruta, también
+ * cuando el backend falla o no responde: la limpieza local no depende de la invalidación remota
+ * (NP-41, excepción autorizada por el usuario el 2026-11-03).
+ */
+function caducarCookiesDeSesion(res: NextResponse) {
+  res.cookies.set("access_token", "", { path: "/", maxAge: 0 });
+  res.cookies.set("session", "", { path: "/", maxAge: 0 });
+  return res;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,21 +35,14 @@ export async function POST(req: NextRequest) {
       headers: headersToSend,
     });
 
-    // 3. Crear la respuesta del proxy
+    // 3. Crear la respuesta del proxy y 4. caducar las cookies locales
     const responseData = response.ok ? { success: true } : await response.json();
-    const res = NextResponse.json(responseData, { status: response.status });
-
-    // 4. LIMPIEZA ABSOLUTA DE LAS COOKIES LOCALES
-    // Esto destruye los identificadores de sesión en el navegador inmediatamente
-    res.cookies.set("access_token", "", { path: "/", maxAge: 0 });
-    res.cookies.set("session", "", { path: "/", maxAge: 0 });
-
-    return res;
-  } catch (error: any) {
-    console.error("Logout proxy error:", error);
-    return NextResponse.json(
-      { error: "Error al procesar el cierre de sesión" },
-      { status: 500 }
+    return caducarCookiesDeSesion(NextResponse.json(responseData, { status: response.status }));
+  } catch (error: unknown) {
+    console.error("Logout proxy error:", error instanceof Error ? error.name : "desconocido");
+    // Aunque el backend falle, el navegador queda sin sesión.
+    return caducarCookiesDeSesion(
+      NextResponse.json({ error: "Error al procesar el cierre de sesión" }, { status: 500 }),
     );
   }
 }

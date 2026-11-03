@@ -127,3 +127,24 @@ for (const [rol, destino] of Object.entries(DESTINO_POR_ROL) as [Rol, string][])
 		await contexto.close();
 	});
 }
+
+// NP-41: el cierre de sesión caduca las cookies aunque el backend no responda bien. En las pruebas
+// no hay backend real (NEXT_PUBLIC_API_URL apunta al propio servidor), así que la llamada a
+// /auth/sign-out no devuelve lo que espera la ruta.
+test("logout caduca session y access_token aunque falle el backend", async ({ request }) => {
+	const r = await request.fetch("/api/auth/logout", {
+		method: "POST",
+		headers: { Cookie: "session=abc; access_token=def" },
+		maxRedirects: 0,
+		failOnStatusCode: false,
+	});
+	const cookies = r.headersArray().filter((h) => h.name.toLowerCase() === "set-cookie").map((h) => h.value);
+	for (const nombre of ["access_token", "session"]) {
+		const c = cookies.find((v) => v.startsWith(`${nombre}=`));
+		expect(c, nombre).toBeDefined();
+		expect(c!, nombre).toMatch(new RegExp(`^${nombre}=;`));
+		expect(c!.toLowerCase(), nombre).toMatch(/max-age=0|expires=thu, 01 jan 1970/);
+	}
+	// El cuerpo no expone detalles del fallo.
+	expect(await r.text()).not.toMatch(/stack|ECONNREFUSED|at \w+ \(/);
+});
