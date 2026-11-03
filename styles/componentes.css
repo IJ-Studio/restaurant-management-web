@@ -50,7 +50,7 @@
     display: grid;
     /* El rótulo ocupa lo que necesita, hasta el 55 %, y se parte en líneas si es largo; antes, con
        `auto`, un rótulo largo con texto al 125 % dejaba la cifra sin sitio y se montaban (PLAN 5.3). */
-    grid-template-columns: fit-content(55%) minmax(0, 1fr);
+    grid-template-columns: fit-content(55%) minmax(min-content, 1fr);
     margin: 0;
   }
   .contraetiqueta > dt,
@@ -89,7 +89,7 @@
   /* Dos pares por fila desde 768 px; el margen corta el filete entre las dos columnas. */
   @media (min-width: 48rem) {
     .contraetiqueta[data-columnas="2"] {
-      grid-template-columns: fit-content(30%) minmax(0, 1fr) fit-content(30%) minmax(0, 1fr);
+      grid-template-columns: fit-content(30%) minmax(min-content, 1fr) fit-content(30%) minmax(min-content, 1fr);
     }
     .contraetiqueta[data-columnas="2"] > dd:nth-of-type(odd) {
       margin-inline-end: var(--espacio-xl);
@@ -105,6 +105,15 @@
     font-weight: 500;
     line-height: 1;
     font-variant-numeric: lining-nums tabular-nums;
+  }
+  /* Indicador (PLAN 5.4): la tarjeta es un contenedor y su cifra no pasa del 15 % de su ancho. En
+     tarjetas estrechas (cuatro por fila junto a la barra lateral) un importe como «$ 6,140.00»
+     encoge lo justo para caber; en móvil y en la protagonista manda el token. */
+  .indicador {
+    container-type: inline-size;
+  }
+  .indicador-cifra {
+    font-size: min(var(--texto-cifra-destacada), 15cqi);
   }
 
   .numeros-tabulares {

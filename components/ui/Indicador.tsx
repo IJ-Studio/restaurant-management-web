@@ -62,7 +62,7 @@ export function Indicador({
 			aria-labelledby={`${id}-rotulo`}
 			aria-busy={estado === "cargando" || undefined}
 			data-estado={estado}
-			className={cn("flex min-w-0 flex-col gap-3 rounded-tarjeta border border-borde-sutil bg-superficie p-6 text-texto-principal", className)}
+			className={cn("indicador flex min-w-0 flex-col gap-3 rounded-tarjeta border border-borde-sutil bg-superficie p-6 text-texto-principal", className)}
 			{...resto}
 		>
 			<div className="flex flex-wrap items-start justify-between gap-2">
@@ -98,7 +98,7 @@ export function Indicador({
 				</div>
 			) : (
 				<>
-					<p className="texto-cifra-destacada m-0 text-texto-principal">{valor}</p>
+					<p className="texto-cifra-destacada indicador-cifra m-0 text-texto-principal">{valor}</p>
 					{comparacion && (
 						<p
 							className={cn(

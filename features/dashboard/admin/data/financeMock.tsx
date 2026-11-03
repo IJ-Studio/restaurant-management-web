@@ -1,6 +1,3 @@
-import React from "react";
-import { Banknote, CreditCard, Smartphone } from "lucide-react";
-
 export type MvType = "ingreso" | "egreso";
 export type PayMethod = "efectivo" | "tarjeta" | "transferencia";
 
@@ -57,18 +54,6 @@ export const EGRESO_CATS = [
   "Papelería",
   "Otro gasto",
 ];
-
-export const PAY_ICONS: Record<PayMethod, React.ReactNode> = {
-  efectivo: <Banknote size={13} />,
-  tarjeta: <CreditCard size={13} />,
-  transferencia: <Smartphone size={13} />,
-};
-
-export const PAY_CFG: Record<PayMethod, { label: string; textClass: string; bgClass: string; borderClass: string; hex: string }> = {
-  efectivo: { label: "Efectivo", textClass: "text-emerald-600", bgClass: "bg-emerald-50", borderClass: "border-emerald-600", hex: "#059669" },
-  tarjeta: { label: "Tarjeta", textClass: "text-blue-600", bgClass: "bg-blue-50", borderClass: "border-blue-600", hex: "#2563eb" },
-  transferencia: { label: "Transferencia", textClass: "text-purple-600", bgClass: "bg-purple-50", borderClass: "border-purple-600", hex: "#7c3aed" },
-};
 
 export const MOCK_MOVEMENTS: CashMovement[] = [
   {

@@ -6,6 +6,41 @@
 
 ## Fase 5 · Administración
 
+### 5.4 · Finanzas: caja y propinas (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/finance/page.tsx` pasa a ser de servidor** (lee `?vista=`). La pantalla es `features/dashboard/admin/finanzas/Finanzas.tsx`.
+- **Sin endpoint, como antes:** trabaja con `financeMock` en memoria. Ahora lo dice: un aviso «Pantalla con datos de ejemplo» explica que lo registrado no se guarda, y cada bloque lleva su insignia (D-13).
+- **Indicadores:**
+  - Balance del día como protagonista, ingresos, egresos y propinas por repartir.
+  - Toman el último día con movimientos y lo nombran («Resumen del 4 de marzo»). Antes usaban «hoy», que con datos de ejemplo de otra fecha daba siempre $0.00.
+- **Caja abierta:** `Aviso` con «Cerrar caja», en lugar del banner verde hecho a mano.
+- **Pestañas (`?vista=caja|cierres|propinas`)**, todas con `Tabla`, que pasa a tarjetas por debajo de 768 px:
+  - **Caja chica:** movimientos con filtro de fecha y «Ver todas las fechas». El importe va con su signo (+ o −), no solo con color.
+  - **Cierres:** cada sesión con su estado en `Insignia`.
+  - **Propinas por mesero:** «Repartir $ X» pide confirmación del sistema (`useConfirmacion`).
+  - Se retiraron los emojis de las pestañas.
+- **Diálogos** (`DialogosFinanzas.tsx`): `Dialogo` con `Campo`, `Selector` y `AreaTexto`. Sustituyen a `MovementModal`, `CloseSessionModal` y `TipModal` con la misma lógica.
+  - Validan al enviar y marcan el error en cada campo. Antes el botón quedaba deshabilitado sin explicar por qué.
+  - El cierre de caja muestra la diferencia en vivo («Faltan $ X», «Sobran», «Cuadra exacto») en una región `aria-live`.
+  - Cada registro avisa con una notificación.
+- **Retirados:** los tres modales, y de `financeMock` las configuraciones `PAY_CFG` y `PAY_ICONS` con sus hex, ya sin uso.
+- **Componentes, por lo que salió al verlo con importes reales:**
+  - **`Indicador`:** pasa a contenedor (`container-type: inline-size`) y su cifra mide `min(token, 15cqi)`. Con cuatro por fila junto a la barra lateral, «$ 6,140.00» se salía de la tarjeta. Ahora encoge lo justo; en móvil y en la protagonista manda el token.
+  - **`Contraetiqueta`:** la columna del valor no baja de su ancho mínimo de contenido (`minmax(min-content, 1fr)`), así una insignia («Repartido») no se sale de la tarjeta.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: 75 pasan. Incluye `finanzas.spec` (nueva), reportes, inicio y las páginas públicas con `Contraetiqueta`. La nueva comprueba:
+  - el aviso de ejemplo;
+  - el registro de un ingreso con su validación y su notificación;
+  - el cierre de caja con la diferencia;
+  - el reparto de propinas con la confirmación del sistema, sin `alert()` ni `confirm()`;
+  - axe, sin desborde de página ni de cifras dentro de indicadores y tarjetas, en las tres pestañas, a 360, 768 y 1440 px, en los dos temas.
+- Catálogo (dev): gráficas, landing, componentes de marca, panel de accesibilidad y tabla, 35/35.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.3 · Reportes (2026-11-03)
 
 **Cambios:**
