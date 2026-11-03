@@ -27,8 +27,6 @@ export interface PaymentDist {
   method: string;
   pct: number;
   amount: number;
-  /** Solo lo usa `DonutChart` (salud de BD) hasta 5.16; los reportes toman el color de los tokens. */
-  color?: string;
 }
 
 export const WEEKLY_SALES: SalesData[] = [

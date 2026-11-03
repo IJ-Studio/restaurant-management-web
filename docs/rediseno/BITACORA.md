@@ -6,6 +6,46 @@
 
 ## Fase 5 · Administración
 
+### 5.16 · Salud del sistema (rendimiento de BD) (2026-11-03) — NP-24
+
+**Cambios:**
+- **`app/dashboard/admin/db-performance/page.tsx`:** pasaba de 1504 líneas con paleta hex propia, estilos en línea y gráficas SVG hechas a mano a una página de servidor. La pantalla es `features/dashboard/admin/salud/SaludSistema.tsx`.
+- **Mismos endpoints:** los ocho de `/db-metrics/*` (cpu, rw-ratio, autovacuum, storage, hot-tables, latency, connections, wait-events), pedidos a la vez cada 10 s, y `POST /db-metrics/vacuum-manual`.
+  - Al refrescar no se borra lo que hay.
+  - Si una lectura falla después de la primera, se conservan los datos.
+- **Semáforo (NP-24):** un estado general, el peor de seis comprobaciones con los umbrales que ya usaba la pantalla:
+  - procesador: 60 y 85 %;
+  - conexiones: 60 y 80 %;
+  - respuesta de consultas (p95): 50 y 100 ms;
+  - esperas por bloqueo: 10 y 20 %;
+  - limpieza: 30 % de datos viejos, o más de un día sin limpiar;
+  - crecimiento: más de 100 MB en 24 h.
+  - Cada comprobación va con su valor, su estado en texto y qué mide, en palabras de la casa: «Tiempo de respuesta», no «Latencia SELECT p95»; «Limpieza interna», no «Autovacuum» (D-20).
+- **Indicadores:** procesador (protagonista), conexiones («14 de 100»), respuesta y espacio.
+- **Detalle desplegable por área (`<details>`):**
+  - procesador, con `GraficaLinea`;
+  - lecturas y escrituras, con `GraficaDonut`;
+  - limpieza por tabla;
+  - espacio, con su gráfica;
+  - tablas con más movimiento;
+  - tiempos por operación (consultar, añadir, cambiar, borrar);
+  - conexiones, con su gráfica;
+  - causas de espera, traducidas.
+- **«Limpiar ahora»** pide confirmación del sistema y avisa con notificaciones. Antes eran `alert()` con el error crudo.
+- **Retirados** (sin uso): `KpiCard` y `charts/DonutChart`, y con ellos el campo `color` de `PAYMENT_DIST`. `features/dashboard/admin/components/` queda vacía.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `salud-sistema.spec` (nueva) y reportes, 24/24. La nueva comprueba:
+  - «Todo en orden» con las seis comprobaciones y el desplegable que se abre;
+  - el procesador al 90 %, que pone el semáforo en «Necesita atención»;
+  - la limpieza con confirmación y su `POST`;
+  - el error con «Reintentar»;
+  - axe con todos los desplegables abiertos, sin desborde, a 360, 768 y 1440 px, en los dos temas.
+- Captura revisada: oscuro a 1440 px, con todo abierto.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase). Los umbrales con datos reales de producción.
+
 ### 5.15 · Acerca del restaurante (panel) (2026-11-03)
 
 **Cambios:**
