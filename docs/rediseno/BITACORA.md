@@ -6,6 +6,47 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.14 · `/menu/pedido/checkout` (2026-11-03)
+
+**Lógica sin cambios:**
+- La misma carga: sesión (o login con `callbackUrl`), pedido, direcciones y métodos guardados, con su preselección.
+- Las mismas llamadas y payloads: `/direcciones`, `/metodos-pago/setup-intent`, `/metodos-pago`, `/pagos/crear-intento` y `/facturas`.
+- Las mismas llamadas a Stripe: `confirmCardSetup` y `confirmCardPayment`, salvo si el backend devuelve `succeeded`.
+- La misma redirección al éxito y los cinco pasos.
+
+**Interfaz nueva:**
+- `EncabezadoPublico` («Inicio › Pedir › Tu pedido › Pago», «Volver a tu pedido»).
+- Pasos en una lista con `aria-current="step"`. Por debajo de 640 px, solo los filetes y «Paso 2 de 5 · Entrega».
+- Cada paso con su título en Fraunces.
+- Direcciones y tarjetas guardadas como **radios nativos** en una etiqueta de 56 px.
+- **Campos del sistema con etiqueta**, `autocomplete` (`address-line1`, `address-line2`, `address-level1` a `address-level3`, `postal-code`, `organization`, `email`), `inputmode` numérico o de correo y `codigo` en RFC y códigos postales. Casillas del sistema.
+- **Validación con los esquemas del 3.1** (`esquemaDireccionEnvio`, `esquemaDatosFiscales`): los mismos mensajes, ahora **por campo** (`aria-invalid`) y con un resumen. El correo fiscal se comprueba si se escribe (decisión del usuario del 2026-11-01).
+- **`CardElement` con los tokens del tema:** Stripe pinta dentro de su iframe y no lee variables CSS, así que los colores se leen en el navegador y se vuelven a leer al cambiar de tema. Sin los hex de antes. Fuente del sistema: la propia no carga dentro del iframe de Stripe.
+- **Redacción (D-20):** errores del servidor cálidos y sin su mensaje. Los de Stripe sí se muestran porque son para la persona («Tu tarjeta fue rechazada»).
+- Una nota de confianza: «Los datos de tu tarjeta los recibe Stripe directamente…».
+- Estados: esqueletos al cargar; si falla, `EstadoError` con «Reintentar»; si no hay pedido, salida a tu pedido.
+
+**`solo-lectores` pasa a `@utility`** en `styles/componentes.css`. Como clase del bloque de componentes, Tailwind v4 no generaba sus variantes:
+- `max-sm:solo-lectores` (los nombres de los pasos) se veía en móvil;
+- `max-xl:solo-lectores` (el «Iniciar sesión» de la cabecera desde el 3.11) seguía visible por debajo de 1280 px.
+
+Comprobado en el CSS compilado.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `checkout.spec.ts` (nueva, Chromium contra `next start`, con sesión de cliente y el API simulado): 8/8. Comprueba:
+  - los cinco pasos con la dirección y la tarjeta guardadas, el **payload idéntico** de `/pagos/crear-intento` y la redirección;
+  - la dirección nueva (etiquetas, `autocomplete`, `inputmode`, errores por campo y el payload de `/direcciones`);
+  - la factura (RFC y correo fiscal inválidos marcados; el correo vacío vale);
+  - el pedido inexistente;
+  - axe y que no desborda a 360 (al 125 %) y 1440 px, en los dos temas;
+  - que no hay `alert()` ni `confirm()`.
+- Con `landing.spec.ts` y `marca.spec.ts`: 40/40.
+- Revisión visual a 360 px en oscuro, que mostró los nombres de los pasos cortados (el problema de `solo-lectores`), y a 1440 px en claro.
+- **No verificado:** pagar con tarjeta nueva, guardarla, 3-D Secure y el `CardElement` real con sus colores. Hace falta una clave de prueba de Stripe y backend (ver el 2.5).
+- Sin procesos abiertos.
+
 ### 4.13 · `/menu/pedido` (2026-11-03) — D-20
 
 **Lógica sin cambios:**
