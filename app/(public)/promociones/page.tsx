@@ -1,80 +1,82 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Tag } from "lucide-react";
-import PromosSection from "@/components/landing/PromosSection";
+import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { EstadoError } from "@/components/ui/EstadoError";
+import { EstadoVacio } from "@/components/ui/EstadoVacio";
+import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
+import { EsqueletoTarjetas } from "@/components/landing/secciones/EsqueletoTarjetas";
+import { TarjetaPromocion } from "@/components/landing/secciones/PromocionesLanding";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { type Promotion, type PromotionRow, mapPromotionRow } from "@/features/shared/data/promotions";
+import { promocionesVigentes } from "@/lib/publico/promociones-vigentes";
+import { registrarError } from "@/lib/registro/registrar-error";
 
-const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL?.trim();
-const API = (RAW_API_BASE && RAW_API_BASE.length > 0 ? RAW_API_BASE : "/api").replace(/\/$/, "");
+/**
+ * Promociones (`/promociones`, PLAN 4.21, D-08): la página se conserva con su URL y sus migas.
+ * Pide `${API}/promociones` como siempre y muestra las **vigentes** (activas y dentro de sus
+ * fechas), igual que la landing (D-19), con la misma tarjeta. Si el API falla, lo dice con
+ * «Reintentar» (antes se quedaba en «no hay promociones», un vacío falso: PRODUCT.md, principio 3).
+ */
+const API = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
-function PromocionesList() {
-  const [promos, setPromos] = useState<Promotion[]>([]);
-  const [loading, setLoading] = useState(true);
+function Lista() {
+	const [promos, setPromos] = useState<Promotion[]>([]);
+	const [estado, setEstado] = useState<"cargando" | "error" | "lista">("cargando");
 
-  useEffect(() => {
-    let isMounted = true;
-    (async () => {
-      try {
-        const res = await fetch(`${API}/promociones`, { cache: "no-store" });
-        if (!res.ok) return;
-        const data: PromotionRow[] = await res.json();
-        if (!isMounted) return;
-        setPromos(
-          (Array.isArray(data) ? data : []).map(mapPromotionRow).sort((a, b) => a.order - b.order)
-        );
-      } catch (e) {
-        console.error("No se pudieron cargar las promociones", e);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    })();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+	const cargar = useCallback(async () => {
+		setEstado("cargando");
+		try {
+			const res = await fetch(`${API}/promociones`, { cache: "no-store" });
+			if (!res.ok) throw new Error(`promociones ${res.status}`);
+			const data: PromotionRow[] = await res.json();
+			setPromos(promocionesVigentes((Array.isArray(data) ? data : []).map(mapPromotionRow)));
+			setEstado("lista");
+		} catch (e) {
+			registrarError(e, "promociones");
+			setEstado("error");
+		}
+	}, []);
 
-  return loading ? (
-    <PromosSection promos={[]} loading />
-  ) : promos.length === 0 ? (
-    <section className="px-8 lg:px-24">
-      <div className="max-w-4xl mx-auto text-center border border-[var(--color-border)] bg-surface rounded-3xl p-16">
-        <Tag size={28} className="mx-auto mb-4 text-[var(--color-text-sec)]" />
-        <p className="text-lg font-bold">No hay promociones activas por el momento</p>
-        <p className="text-sm text-[var(--color-text-sec)] mt-2">
-          Vuelve pronto, publicamos nuevas ofertas con frecuencia.
-        </p>
-      </div>
-    </section>
-  ) : (
-    <PromosSection promos={promos} />
-  );
+	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial
+		void cargar();
+	}, [cargar]);
+
+	if (estado === "cargando") return <EsqueletoTarjetas columnas="md:grid-cols-2 lg:grid-cols-3" cuantas={3} />;
+	if (estado === "error") return <EstadoError titulo="No pudimos traer las promociones" descripcion="Vuelve a intentarlo en un momento." alReintentar={cargar} />;
+	if (promos.length === 0)
+		return (
+			<EstadoVacio
+				icono={<Tag />}
+				titulo="Ahora mismo no hay promociones vigentes"
+				descripcion="Mientras tanto, la carta completa te espera."
+				accion={
+					<BotonEnlace href="/menu" variante="secundario">
+						Ver la carta
+					</BotonEnlace>
+				}
+			/>
+		);
+	return (
+		<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-xl) p-0 md:grid-cols-2 lg:grid-cols-3" aria-label="Promociones vigentes">
+			{promos.map((p) => (
+				<li key={p.id}>
+					<TarjetaPromocion promocion={p} nivelTitulo={2} />
+				</li>
+			))}
+		</ul>
+	);
 }
 
-export default function PromocionesPage() {
-  return (
-    <div className="w-full bg-background text-[var(--color-text)] transition-colors duration-200 pb-20">
-      {/* Encabezado */}
-      <section className="relative px-8 lg:px-24 pt-36 pb-16">
-        <div className="max-w-4xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--color-brand)]/20 bg-[var(--color-brand)]/5 text-[var(--color-brand)] text-xs font-bold uppercase tracking-widest mb-6">
-            <Tag size={12} /> Ofertas especiales
-          </div>
-          <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-black leading-[0.95] tracking-tighter mb-6">
-            Nuestras <span className="text-[var(--color-brand)]">Promociones</span>
-          </h1>
-          <p className="text-[var(--color-text-sec)] text-lg max-w-2xl leading-relaxed">
-            Descubre los descuentos y combos vigentes en El Quijote. Actualizamos esta sección
-            constantemente, ¡no te quedes sin probarlos!
-          </p>
-        </div>
-      </section>
-
-      {/* Las promociones vienen del servidor: sin conexión se muestra un aviso. */}
-      <OnlineOnly what="las promociones vigentes" className="px-8 lg:px-24 flex justify-center">
-        <PromocionesList />
-      </OnlineOnly>
-    </div>
-  );
+export default function PaginaPromociones() {
+	return (
+		<div className="contenedor-pagina pb-(--espacio-entre-secciones)">
+			<EncabezadoPublico ruta="/promociones" titulo="Promociones" entradilla="Las propuestas vigentes de la casa, con su precio y hasta cuándo." />
+			<OnlineOnly what="las promociones vigentes">
+				<Lista />
+			</OnlineOnly>
+		</div>
+	);
 }

@@ -100,21 +100,19 @@ test.describe("imágenes en las páginas", () => {
 		await expect(page.locator('img[src*="res.cloudinary.com"]')).toHaveCount(0);
 	});
 
-	test("la fachada de /about muestra el respaldo con su alt y no pide la foto de Google", async ({ page }) => {
+	// PLAN 4.21 y D-18: /about ya no lleva la foto de Google de la fachada ni el mapa incrustado.
+	test("/about no pide la foto de Google ni incrusta el mapa", async ({ page }) => {
 		const google: string[] = [];
 		page.on("request", (r) => {
-			if (r.url().includes("googleusercontent.com")) google.push(r.url());
+			if (/googleusercontent\.com|google\.com\/maps\/embed/.test(r.url())) google.push(r.url());
 		});
 		await simularApi(page);
 		await page.goto("/about", { waitUntil: "load" });
-		const fachada = page.getByRole("img", { name: "Fachada Adaptada El Quijote" });
-		await expect(fachada).toBeVisible();
-		await expect(fachada).toHaveAttribute("data-respaldo-imagen", "");
-		const caja = await fachada.boundingBox();
-		expect(caja!.width).toBeGreaterThan(150);
-		expect(caja!.height).toBeGreaterThan(150);
+		await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+		await expect(page.locator("iframe")).toHaveCount(0);
 		expect(google).toEqual([]);
 	});
+
 
 	// PLAN 4.3 y 4.10: la foto de portada vive ahora solo en la landing (/menu ya no la repite).
 	test("la portada de la landing se precarga desde Cloudinary con el cargador y el recorte", async ({ page }) => {

@@ -6,6 +6,42 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.21 · `/about` y `/promociones` (2026-11-03) — D-08, D-17, D-18 y D-19
+
+**`/about`**, ahora **de servidor**:
+- Se conserva con su URL y sus migas («Inicio › Nosotros», «Volver a «Nosotros»»).
+- Texto reescrito (D-17), el mismo de la sección de la landing, y el molino de la casa.
+- **Visítanos:** dirección, horario y teléfono de `restaurant.config.ts` en contraetiqueta, «Cómo llegar» al mapa en otra pestaña y «Reservar mesa».
+- **Se retiran:**
+  - **las opiniones del carrusel**, inventadas (nombres, estrellas y «Google» o «Facebook» como fuente), que PRODUCT.md prohíbe;
+  - la misión y la visión de plantilla («líder e innovador en la región»);
+  - **la foto de la fachada de Google** (D-18; se mostraba con el respaldo);
+  - **el mapa incrustado de Google**: según DESIGN.md, el mapa se enlaza y no carga terceros sin pedirlo;
+  - el gancho `useTheme` y los colores escritos a mano.
+- **`DistanceToRestaurant`** se conserva porque es una función real (geolocalización).
+  - Pasa a los botones del sistema («¿A qué distancia estoy?», «Ver la ruta»).
+  - Su comprobación de soporte se lee sin efecto (`useSyncExternalStore`).
+  - La lógica, el cálculo y la URL de la ruta no cambian.
+
+**`/promociones`:**
+- Se conserva con sus migas.
+- Pide `${API}/promociones` como siempre.
+- Muestra las **vigentes** (activas y dentro de sus fechas) con la misma `TarjetaPromocion` de la landing (D-19).
+- **Si el API falla, lo dice** con «Reintentar». Antes se quedaba en «No hay promociones activas», un vacío falso (PRODUCT.md, principio 3).
+- Sin vigentes, un vacío honesto con salida a la carta.
+- Fuera: el texto de relleno («¡no te quedes sin probarlos!») y la insignia con gradiente.
+- **Retirado** `landing/PromosSection.tsx`, que se quedaba sin uso.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas. `DistanceToRestaurant` tenía un error previo de `setState` en un efecto, corregido al tocarlo.
+- Build: correcto.
+- `informativas.spec.ts` (nueva) e `imagenes.spec.ts`, con la prueba de `/about` actualizada (ni la foto de Google ni el `iframe` del mapa): 13/13. Comprueba:
+  - en `/about`, las migas, que no quedan las opiniones ni la misión y la visión, los datos de la configuración y el mapa enlazado;
+  - en `/promociones`, el error con «Reintentar» y, al reintentar, solo la vigente (fuera la caducada y la inactiva);
+  - axe y que no desborda a 360 px con texto al 125 % en los dos temas.
+- Revisión visual de `/about` a 360 px en oscuro.
+- Sin procesos abiertos.
+
 ### 4.20 · `/profile` (2026-11-03)
 
 **Lógica sin cambios:**
