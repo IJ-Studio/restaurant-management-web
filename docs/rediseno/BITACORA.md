@@ -6,6 +6,23 @@
 
 ## Fase 4 · Páginas públicas
 
+### Excepción NP-38 · Retirar `firebase-admin` (2026-11-03)
+
+Autorizada por el usuario fuera del PLAN, en su propio commit.
+
+- **Comprobación:** ningún archivo de `app`, `components`, `features`, `hooks`, `lib`, `config` ni `scripts` importa `firebase-admin`. Solo aparece en `package.json`; `/reset` y `/frm_reset` tienen un import comentado de un `lib/firebaseConfig` que no existe.
+- **Cambio:** `pnpm remove firebase-admin`, que toca `package.json` y `pnpm-lock.yaml`.
+
+**Verificación:**
+
+| Comprobación | Resultado |
+|---|---|
+| Typecheck | 0 errores |
+| Build | Correcto, con las mismas rutas |
+| `pnpm audit` | 0 críticas / 19 altas / 13 moderadas / 0 bajas (antes 3 / 45 / 31 / 6) |
+| Chromium contra `next start` (`recorrido` y `cabeceras`) | 113/113 |
+| Procesos abiertos | Ninguno |
+
 ### 4.0.2 · Ilustraciones de marca y `PaginaEstado` (2026-11-03) — D-21
 
 **Cambios:**

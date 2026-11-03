@@ -510,6 +510,7 @@
 - **Solución sugerida:** actualizar `firebase-admin` a una versión que arrastre las dependencias corregidas, o fijarlas con `pnpm.overrides`, y comprobar el servidor (respaldos, almacenamiento) tras el cambio.
 - **Prioridad:** Alta.
 - **Criterio de aceptación:** `pnpm audit` sin avisos críticos.
+- **Resuelta (2026-11-03, excepción autorizada por el usuario):** ningún archivo importa `firebase-admin` (solo dos comentarios de `/reset` y `/frm_reset` citan un `lib/firebaseConfig` que no existe), así que se retira. `pnpm audit` pasa de 3 críticas / 45 altas / 31 moderadas / 6 bajas a **0 / 19 / 13 / 0**.
 
 ## NP-39 · `revisar:invisibles` no detecta otros caracteres de control
 
