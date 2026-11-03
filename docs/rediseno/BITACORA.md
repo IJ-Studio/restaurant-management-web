@@ -6,6 +6,35 @@
 
 ## Fase 5 · Administración
 
+### 5.12 · Predicción de demanda (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/predictive/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/admin/prediccion/Prediccion.tsx`.
+- **Mismas llamadas:** el ranking (`GET /inventory/predictive/ranking?dias=7`) al entrar y el detalle (`GET /inventory/predictive/:id?dias=7`) al elegir un platillo. Cada uno con su carga, su error con «Reintentar» y el motivo del API cuando no hay datos.
+- **Indicadores en palabras de la casa (D-20):**
+  - **Margen de error** (protagonista; antes «WAPE»), con «La estimación simple falla un X %» (antes «baseline ingenuo»).
+  - **Mejora sobre la estimación simple.**
+  - **Crece más** y **Cae más**, con el nombre del platillo.
+- **Previsión por platillo:** `Tabla` (tarjetas por debajo de 1024 px) con categoría, últimos y próximos 7 días, cambio y demanda en `Insignia`.
+  - El nombre es un botón con `aria-pressed` («Ver la curva de…»), y la fila elegida se marca con `filaSeleccionada`.
+  - Se retiró el texto «click en un platillo…».
+- **Curva:** `CurvaPronostico.tsx` con Recharts **cargado con `next/dynamic`** (lo pide 5.12) y solo al elegir un platillo.
+  - Tokens `--color-grafica-1/2` en lugar de `#f97316` y `#3b82f6`. La previsión va discontinua y con leyenda escrita, así que no depende solo del color.
+  - Globo propio con clases en lugar de `contentStyle` en línea.
+  - Oculta a los lectores y sin foco de teclado; los mismos datos están en la tabla «Vendido y previsto» de al lado.
+- **Retirados de la página:** `CLASIFICACION_CONFIG` con colores fijos y la celda `Td` con `style`.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `prediccion.spec` (nueva), 8/8. Comprueba:
+  - las cifras («18.3 %», «26.4 %») y que no queden «WAPE» ni «baseline»;
+  - que solo se pida el ranking al entrar, y que al elegir la paella se pida su detalle, se dibuje la curva y aparezca su tabla;
+  - el motivo del API cuando no hay datos;
+  - axe, sin desborde, a 360, 768 y 1440 px, en los dos temas, con la curva abierta.
+- Captura revisada: oscuro a 1440 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.11 · Reservas en administración (2026-11-03)
 
 **Cambios:**
