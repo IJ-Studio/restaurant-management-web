@@ -6,6 +6,34 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.0.1 · `CargadorMarca` y estados de carga y de error (2026-11-03) — D-20
+
+**Cambios:**
+- **`components/marca/CargadorMarca.tsx`** (nuevo, de servidor):
+  - Un plato visto desde arriba (ala y fondo en acento, el fondo al 60 %) con un molino de trazo fino en `currentColor`, en el estilo de línea de `MolinoAnimado`. Trazos de 1,5 px a cualquier tamaño.
+  - Las aspas giran una vuelta cada 4,8 s (`.cargador-marca__aspas` en `styles/componentes.css`) y se detienen con `prefers-reduced-motion` y con «Movimiento: reducido» del panel, igual que el esqueleto.
+  - `role="status"` con el texto solo para lectores; el SVG lleva `aria-hidden`.
+  - Tamaños `compacto`, `normal` y `amplio`; `pagina` lo centra en la pantalla menos la cabecera, para `loading.tsx` y las redirecciones (4.23).
+- **`EstadoError`:** los textos por defecto pasan a «No pudimos mostrar esta parte» y «Suele arreglarse al volver a intentarlo.», sin jerga de red.
+- **Catálogo (`#estados`):** el cargador en sus tres tamaños, sobre la banda café y como página; el error con redacción cálida y una segunda salida humana («Llamar al restaurante», con el teléfono de `restaurant.config.ts` en lugar del número ficticio de antes).
+- **DESIGN.md:** `CargadorMarca`, la redacción de los errores (D-20) y la única excepción a «sin bucles» de § Motion.
+
+**Revisión visual:** el SVG renderizado a 40, 64 y 112 px en los dos temas. La primera versión tenía el molino pequeño y las aspas amontonadas; se agrandaron la torre y las aspas, y se rehízo la captura.
+
+**Inventario de textos técnicos (D-20)**, para sustituirlos al rehacer cada página. Una búsqueda de «Cargando», «Redirigiendo», «Intenta más tarde», «Error al…» y mensajes de red los encuentra en:
+- **Parte pública:** `/menu`, la categoría, el producto, el pedido, el checkout y su confirmación, login y perfil.
+- **Paneles:** inventario y proveedores, rendimiento de BD, reservas, promociones, nómina, carta, `RecentOrdersTable`, `HourBarsChart`, `ExportModal` e `Importpreviewmodal`.
+- Además, varias pantallas pintan `err.message` del API: se sustituye por la redacción del sistema en su paso.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los cuatro archivos: 0 problemas.
+- `estados.spec.ts` y `catalogo.spec.ts` (Chromium contra `next dev`): 23/23 con la primera versión y 10/10 en `estados.spec.ts` tras el retoque. Comprueban:
+  - `role="status"`, el texto oculto a la vista y el SVG con `aria-hidden`;
+  - el giro de las aspas, que se detienen con «Movimiento: reducido» y con `reducedMotion: "reduce"` del sistema;
+  - un contraste de 3:1 o más entre el plato y el molino y su fondo, en el fondo y en la banda café, en los dos temas;
+  - axe sin violaciones a 360 px con texto al 125 % en los dos temas.
+- Sin procesos abiertos.
+
 ### Decisiones D-17 a D-21 y pasos 4.0.1 y 4.0.2 (2026-11-03)
 
 El usuario aprueba el catálogo completo como referencia de estilo y añade cinco decisiones, registradas en el PLAN:

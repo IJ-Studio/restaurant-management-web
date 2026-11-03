@@ -610,6 +610,12 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   - Lógica en `hooks/useBusqueda.ts`:
     - `useFiltroLocal`: lista en memoria con `useDeferredValue`, sin tildes ni mayúsculas, y todas las palabras en cualquier orden.
     - `useBusquedaRemota`: busca en el API 300 ms después de dejar de escribir, con un mínimo de 2 caracteres. Cancela con `AbortController` la petición anterior, y mantiene los últimos resultados atenuados mientras llegan los nuevos, sin esqueleto ni salto.
+- **`CargadorMarca`** (`components/marca/`, PLAN 4.0.1, D-20): sustituye a todo texto de proceso visible («Cargando…», «Redirigiendo…»).
+  - Dibujo: un plato visto desde arriba (ala y fondo con trazo de acento, el fondo al 60 %) y un molino de trazo fino en `currentColor` (texto principal), con trazos de 1,5 px a cualquier tamaño (`vector-effect: non-scaling-stroke`). Plato y molino ≥ 3:1 sobre el fondo y la banda café en los dos temas (medido en el catálogo).
+  - Las aspas giran una vuelta cada 4,8 s, lineal. Con `prefers-reduced-motion` o «Movimiento: reducido» quedan quietas; «completo» en el panel las devuelve.
+  - `role="status"` con el texto **solo para lectores** (cálido: «Preparando la carta…», «Te llevamos a tu cuenta…»); el SVG va con `aria-hidden`.
+  - Tamaños `compacto` (2,5rem, en línea), `normal` (4rem) y `amplio` (6–7rem). `pagina` lo centra en la pantalla menos la cabecera, para `loading.tsx` y las redirecciones. Dentro de un bloque con forma conocida se prefiere `Esqueleto`.
+- **Redacción de los errores (D-20):** cálida, en primera persona del restaurante y sin jerga: nunca códigos, mensajes de red, el texto de la excepción ni «Error al…». Por defecto, `EstadoError` dice «No pudimos mostrar esta parte» y «Suele arreglarse al volver a intentarlo.»; en la parte pública conviene una segunda salida humana («Llamar al restaurante», con el teléfono de `restaurant.config.ts`).
 - **`PanelAccesibilidad`**: ver más abajo.
 
 ### Iconos
@@ -653,7 +659,7 @@ El movimiento es sobrio: confirma, nunca adorna.
 - **Qué se anima:** solo `transform` y `opacity`, con las propiedades listadas. Nunca `transition: all`.
 - **Aparición de secciones:** opacidad 0→1 y `translateY(12px)` → 0, una vez, con `IntersectionObserver`. Si JavaScript no llega, el contenido es visible.
 - **Diálogos:** opacidad con escala 0,98 → 1.
-- **Prohibido:** sin parallax, sin vídeo en autoplay y sin animaciones en bucle.
+- **Prohibido:** sin parallax, sin vídeo en autoplay y sin animaciones en bucle. **Única excepción:** las aspas de `CargadorMarca`, que solo existen mientras algo carga y se detienen con movimiento reducido.
 - **Movimiento reducido:** con `prefers-reduced-motion: reduce` o `data-movimiento="reducido"`, todas las duraciones pasan a `0.01ms`, desaparecen los desplazamientos (solo cambios de opacidad instantáneos) y el `scroll-behavior` deja de ser `smooth`.
 
 ## Tokens (`styles/tokens.css`) — el único lugar donde se definen valores

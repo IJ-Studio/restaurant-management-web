@@ -29,7 +29,7 @@ test.describe("estados vacío, de carga y de error del catálogo", () => {
 		const reintentar = estado.locator("button");
 		await reintentar.click();
 		await expect(reintentar).toHaveAttribute("aria-busy", "true");
-		await expect(alerta).toContainText("Intento 2", { timeout: 5_000 });
+		await expect(alerta).toContainText("Sigue sin llegar", { timeout: 5_000 });
 		await estado.getByRole("button", { name: /Reintentar/ }).click();
 		await expect(prueba(page, "estado-cargado")).toContainText("148", { timeout: 5_000 });
 	});
@@ -63,6 +63,64 @@ test.describe("estados vacío, de carga y de error del catálogo", () => {
 				return [color('[data-prueba="esqueleto-fondo"] .esqueleto'), color('[data-prueba="zona-cargando"] .esqueleto')];
 			});
 			expect(fondo, tema).not.toBe(superficie);
+		}
+	});
+
+	test("CargadorMarca: role=status con el texto solo para lectores, dibujo oculto y aspas que giran", async ({ page }) => {
+		await abrir(page);
+		const cargadores = prueba(page, "cargadores").locator("[data-cargador-marca]");
+		await expect(cargadores).toHaveCount(3);
+		for (const [i, texto] of ["Buscando platillos…", "Preparando la carta…", "Preparando tu reserva…"].entries()) {
+			const c = cargadores.nth(i);
+			await expect(c).toHaveAttribute("role", "status");
+			await expect(c).toHaveText(texto);
+			await expect(c.locator("svg")).toHaveAttribute("aria-hidden", "true");
+			// El texto no se ve: solo lo oye el lector.
+			expect(await c.locator(".sr-only").evaluate((e) => e.getBoundingClientRect().width <= 1)).toBe(true);
+		}
+		expect(await animacion(page, '[data-prueba="cargadores"] .cargador-marca__aspas')).toBe("cargador-aspas");
+	});
+
+	test("CargadorMarca: quieto con movimiento reducido en el panel y en el sistema", async ({ page, browser }) => {
+		await abrir(page, { movimiento: "reducido" });
+		expect(await animacion(page, '[data-prueba="cargadores"] .cargador-marca__aspas')).toBe("none");
+		const contexto = await browser.newContext({ reducedMotion: "reduce" });
+		const otra = await contexto.newPage();
+		await abrir(otra);
+		expect(await animacion(otra, '[data-prueba="cargadores"] .cargador-marca__aspas')).toBe("none");
+		await contexto.close();
+	});
+
+	test("CargadorMarca: plato y molino con 3:1 o más sobre el fondo y la banda café, en los dos temas", async ({ page }) => {
+		for (const tema of ["oscuro", "claro"] as const) {
+			await abrir(page, { tema });
+			const ratios = await page.evaluate(() => {
+				const canal = (v: number) => {
+					const s = v / 255;
+					return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+				};
+				const lum = (c: string) => {
+					const [r, g, b] = (c.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number).map(canal);
+					return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+				};
+				const ratio = (a: string, b: string) => {
+					const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
+					return (x + 0.05) / (y + 0.05);
+				};
+				const fondoDe = (e: Element) => {
+					for (let n: Element | null = e; n; n = n.parentElement) {
+						const c = getComputedStyle(n).backgroundColor;
+						if (c && c !== "transparent" && !/,\s*0\)$/.test(c)) return c;
+					}
+					return getComputedStyle(document.body).backgroundColor;
+				};
+				return ['[data-prueba="cargadores"]', '[data-prueba="cargador-cafe"]'].flatMap((sel) => {
+					const svg = document.querySelector(`${sel} svg`)!;
+					const fondo = fondoDe(svg);
+					return [ratio(getComputedStyle(svg.querySelector("circle")!).stroke, fondo), ratio(getComputedStyle(svg).color, fondo)];
+				});
+			});
+			for (const r of ratios) expect(r, tema).toBeGreaterThanOrEqual(3);
 		}
 	});
 

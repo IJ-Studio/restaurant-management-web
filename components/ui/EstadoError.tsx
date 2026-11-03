@@ -12,6 +12,7 @@ import { Boton } from "./Boton";
  * - El mensaje va en `role="alert"`: se anuncia al aparecer, sin leer el botón.
  * - `alReintentar` puede devolver una promesa: mientras dura, el botón carga y no admite otro clic.
  * - El icono y el título van en el color de error; la descripción, en el secundario.
+ * - Redacción cálida y sin jerga (D-20): nunca un código, un mensaje de red ni el texto de la excepción.
  */
 export interface EstadoErrorProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
 	titulo?: ReactNode;
@@ -25,8 +26,8 @@ export interface EstadoErrorProps extends Omit<HTMLAttributes<HTMLDivElement>, "
 }
 
 export function EstadoError({
-	titulo = "No se pudo cargar",
-	descripcion = "Revisa la conexión e inténtalo de nuevo.",
+	titulo = "No pudimos mostrar esta parte",
+	descripcion = "Suele arreglarse al volver a intentarlo.",
 	alReintentar,
 	textoReintentar = "Reintentar",
 	accion,

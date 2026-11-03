@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { CalendarX2, Plus, SearchX } from "lucide-react";
 import { Boton, BotonEnlace, Esqueleto, EsqueletoLineas, EstadoError, EstadoVacio, ZonaCargando } from "@/components/ui";
+import { CargadorMarca } from "@/components/marca/CargadorMarca";
+import { restaurantConfig } from "@/config/restaurant.config";
 import { Muestra } from "./Muestra";
 
 const esperar = (ms: number) => new Promise((resolver) => window.setTimeout(resolver, ms));
@@ -25,7 +27,7 @@ function DemoReintentoEstado() {
 		<EstadoError
 			data-prueba="estado-error"
 			titulo="No se pudieron cargar las reservas"
-			descripcion={intentos > 0 ? `Intento ${intentos + 1}. Revisa la conexión e inténtalo de nuevo.` : undefined}
+			descripcion={intentos > 0 ? "Sigue sin llegar. Dale un momento y vuelve a intentarlo." : undefined}
 			alReintentar={async () => {
 				await esperar(900);
 				if (intentos === 0) setIntentos(1);
@@ -123,6 +125,36 @@ export function DemosEstados() {
 			</div>
 
 			<div className="flex flex-col gap-4">
+				<h3 className="m-0 text-(length:--texto-titulo-interfaz) font-semibold">CargadorMarca</h3>
+				<p className="m-0 max-w-[65ch] text-(length:--texto-pequeno) text-texto-secundario">
+					Sustituye a cualquier texto de proceso visible. El texto solo lo oye el lector de pantalla; las aspas se detienen con
+					movimiento reducido.
+				</p>
+				<div className="grid gap-6 md:grid-cols-3">
+					<div className="flex flex-col gap-2">
+						<Rotulo>compacto · normal · amplio</Rotulo>
+						<div className="flex items-end gap-6" data-prueba="cargadores">
+							<CargadorMarca tamano="compacto" texto="Buscando platillos…" />
+							<CargadorMarca texto="Preparando la carta…" />
+							<CargadorMarca tamano="amplio" texto="Preparando tu reserva…" />
+						</div>
+					</div>
+					<div className="flex flex-col gap-2">
+						<Rotulo>sobre la banda café</Rotulo>
+						<div className="flex items-center justify-center rounded-tarjeta bg-superficie-cafe p-6" data-prueba="cargador-cafe">
+							<CargadorMarca texto="Un momento, por favor…" />
+						</div>
+					</div>
+					<div className="flex flex-col gap-2">
+						<Rotulo>pagina: loading.tsx y redirecciones</Rotulo>
+						<div className="overflow-hidden rounded-tarjeta border border-borde-sutil" data-prueba="cargador-pagina">
+							<CargadorMarca pagina tamano="amplio" texto="Te llevamos a tu cuenta…" className="min-h-64" />
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div className="flex flex-col gap-4">
 				<h3 className="m-0 text-(length:--texto-titulo-interfaz) font-semibold">EstadoError</h3>
 				<div className="grid gap-6 md:grid-cols-2">
 					<div className="flex flex-col gap-2">
@@ -135,10 +167,12 @@ export function DemosEstados() {
 						<Rotulo>con otra salida</Rotulo>
 						<Muestra ancho>
 							<EstadoError
-								titulo="No se pudo cargar la carta"
+								data-prueba="estado-error-publico"
+								titulo="No pudimos traer la carta"
+								descripcion="A veces tarda un poco más de la cuenta. Vuelve a intentarlo o llámanos y te la contamos."
 								alReintentar={() => undefined}
 								accion={
-									<BotonEnlace href="tel:+527711234567" variante="fantasma">
+									<BotonEnlace href={restaurantConfig.contact.phoneHref} variante="fantasma">
 										Llamar al restaurante
 									</BotonEnlace>
 								}

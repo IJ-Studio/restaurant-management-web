@@ -344,6 +344,24 @@
   }
 }
 
+/* Cargador de marca (PLAN 4.0.1, D-20): las aspas giran despacio alrededor del eje. Es el único
+   bucle permitido (DESIGN.md § Motion) y se detiene con movimiento reducido, salvo que la persona
+   elija «completo» en el panel. */
+.cargador-marca__aspas {
+  transform-box: view-box;
+  transform-origin: 50px 40px;
+  animation: cargador-aspas 4.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-movimiento="completo"]) .cargador-marca__aspas {
+    animation: none;
+  }
+}
+:root[data-movimiento="reducido"] .cargador-marca__aspas {
+  animation: none;
+}
+@keyframes cargador-aspas { to { transform: rotate(360deg); } }
+
 @keyframes velo-entra { from { opacity: 0; } }
 @keyframes velo-sale { to { opacity: 0; } }
 @keyframes dialogo-entra { from { opacity: 0; transform: scale(0.98); } }
