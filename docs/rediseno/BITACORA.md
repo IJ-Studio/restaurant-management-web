@@ -6,6 +6,28 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.19 · `/reset` y `/frm_reset` (2026-11-03) — D-17
+
+**Cambios:**
+- **`components/auth/RecuperacionNoDisponible.tsx`** (nuevo, de servidor), que comparten las dos páginas:
+  - `EncabezadoPublico` («Inicio › Iniciar sesión › Recuperar contraseña» y «Volver a iniciar sesión»);
+  - un `Aviso` informativo **en español**: «Todavía no puedes hacerlo desde aquí. La recuperación de contraseña en línea no está disponible por ahora. Llámanos y te ayudamos a recuperar el acceso a tu cuenta.»;
+  - **salidas reales:** «Llamar al +52 771 702 8172», con el teléfono de la configuración, e «Ir a iniciar sesión».
+- **`/frm_reset` y `/reset`** pasan a ser componentes de servidor de una línea, con su título en los metadatos.
+- Fuera:
+  - los avisos en inglés («Password Reset… disabled… handled by Supabase»);
+  - el nombre de la empresa escrito con un hex;
+  - el estado y la validación de un formulario que no existía;
+  - todo el código comentado de Firebase.
+- La funcionalidad sigue pendiente en NP-16.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `recuperacion.spec.ts` (nueva, Chromium contra `next start`): 2/2. En cada página comprueba el título, el aviso, el teléfono, el enlace al login, que no queda texto en inglés y axe sin violaciones.
+- La primera tanda falló porque el botón y el «Volver» de las migas tenían el mismo nombre. El botón pasó a «Ir a iniciar sesión».
+- Sin procesos abiertos.
+
 ### 4.18 · `/register` (2026-11-03)
 
 **Lógica sin cambios:**
