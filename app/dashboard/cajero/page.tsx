@@ -58,7 +58,7 @@ export default function CajeroDashboard() {
   const totalDia = cobrados.reduce((s, t) => s + t.total, 0);
 
   return (
-    <main className="p-8 md:p-10 min-w-0 max-w-[1400px]">
+    <div className="p-8 md:p-10 min-w-0 max-w-[1400px]">
       
       {/* Header Section */}
       <header className="flex justify-between items-center mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -215,6 +215,6 @@ export default function CajeroDashboard() {
           onConfirm={confirmarCobro} 
         />
       )}
-    </main>
+    </div>
   );
 }

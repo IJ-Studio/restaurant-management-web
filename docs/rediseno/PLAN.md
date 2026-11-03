@@ -11,10 +11,10 @@
 | Campo | Valor |
 |---|---|
 | Etapa | **Fase 5 en curso** (2026-11-03). Fases 0, 1, 2 (salvo 2.5), 3 y 4 cerradas. Catálogo aprobado por el usuario: referencia de estilo obligatoria. |
-| Rama activa | `feature/rediseno-web-publico` (sale de `feature/rediseno-web-seguridad`, `3775918`) |
-| Último paso completado | Cierre de la fase 4 (verificación completa en los tres motores). |
+| Rama activa | `feature/rediseno-web-admin` (sale de `feature/rediseno-web-publico`, `e64cc8b`) |
+| Último paso completado | 5.1 · Layout de los paneles. |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) sigue sin ejecutarse**: pendiente de la aprobación del usuario. |
-| Siguiente paso | 5.1 · Layout del panel, en `feature/rediseno-web-admin`. |
+| Siguiente paso | 5.2 · Inicio admin. |
 | Notas | **Órdenes vigentes (2026-11-03):** fases 4 → 5 → 6 → 7 (solo lo comprobable sin el usuario), con ramas `publico` → `admin` → `pulido` → `auditoria`, cada una desde la anterior; D-17 a D-21; excepciones autorizadas fuera del PLAN, cada una en su commit: retirar `firebase-admin` si nada lo importa (NP-38) y que `/api/auth/logout` caduque siempre las cookies (NP-41); nunca `images.unsplash.com`; sin push, pull, fetch, rebase ni fusiones; sin `.env`; sin dependencias fuera del PLAN; sin Lighthouse ni scripts de rendimiento; quedan para el usuario 2.5, 7.3, lectores de pantalla y dispositivos reales. Decisiones anteriores: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -680,7 +680,7 @@ Cada paso conserva endpoints, payloads y URL; sustituye los componentes antiguos
 
 Las pruebas usan la API simulada del paso 0.7. Los endpoints no cambian.
 
-- [ ] **5.1 · Layout de paneles.** `NavegacionPanel` por rol, drawer y barra superior con el cierre de sesión único. Se retira el margen calculado de `AdminSidebar`.
+- [x] **5.1 · Layout de paneles.** `NavegacionPanel` por rol, drawer y barra superior con el cierre de sesión único. Se retira el margen calculado de `AdminSidebar`.
   - **Aceptación:** en 360 px el contenido ocupa todo el ancho; un mesero no ve las entradas de admin.
   - **Commit:** `feat(paneles): layout responsivo con navegación por rol`
 

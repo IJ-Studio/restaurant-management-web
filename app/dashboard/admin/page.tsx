@@ -80,7 +80,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className="p-8 md:p-10 min-w-0 flex flex-col">
+    <div className="p-8 md:p-10 min-w-0 flex flex-col">
       <div className="mb-5 text-text">
         <h1 className="font-display font-black text-3xl tracking-tight leading-none mb-1">
           Buenas noches, {user.name}
@@ -151,6 +151,6 @@ export default function AdminDashboardPage() {
         {/* <TableStatusGrid />
         <StockAlerts /> */}
       </div>
-    </main>
+    </div>
   );
 }

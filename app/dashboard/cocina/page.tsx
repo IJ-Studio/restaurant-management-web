@@ -52,7 +52,7 @@ export default function CocinaDashboard() {
   const criticosCount = inventario.filter((i) => i.stock <= i.minStock).length;
 
   return (
-    <main className="p-8 md:p-10 min-w-0 max-w-[1600px] mx-auto animate-in fade-in duration-700">
+    <div className="p-8 md:p-10 min-w-0 max-w-[1600px] mx-auto animate-in fade-in duration-700">
       
       <StockAlertBanner 
         criticosCount={criticosCount} 
@@ -99,6 +99,6 @@ export default function CocinaDashboard() {
         onClose={() => setVistaInv(false)} 
       />
 
-    </main>
+    </div>
   );
 }

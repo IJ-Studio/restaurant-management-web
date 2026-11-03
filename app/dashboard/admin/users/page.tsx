@@ -137,7 +137,7 @@ export default function UsersPage() {
   };
 
   return (
-    <main className="p-6 md:p-10 min-w-0">
+    <div className="p-6 md:p-10 min-w-0">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
@@ -441,6 +441,6 @@ export default function UsersPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

@@ -120,9 +120,9 @@ test.describe("cierre de sesión", () => {
 			await page.goto("/", { waitUntil: "load" });
 			await page.goto(ROLES[rol].ruta, { waitUntil: "load" });
 			await sembrar(page);
-			// El panel de mesero tiene además su propio botón (el segundo); también usa el cierre único.
-			const botones = page.getByRole("button", { name: "Cerrar Sesión" });
-			await (rol === "mesero" ? botones.last() : botones.first()).click();
+			// Cierre único en la cuenta de la barra superior del panel (PLAN 5.1), para todos los roles.
+			await page.locator('[data-prueba="abrir-cuenta-panel"]').click();
+			await page.getByRole("button", { name: "Cerrar sesión" }).click();
 			await comprobarLimpio(page, ROLES[rol].ruta);
 			await contexto.close();
 		});

@@ -392,6 +392,22 @@
     outline-offset: 2px;
   }
 
+  /* Marco de los paneles (PLAN 5.1): barra lateral de 16rem desde 1024 px, fija a la altura de la
+     ventana con su propio scroll; el contenido ocupa el resto. Sin márgenes medidos en JavaScript. */
+  .marco-panel {
+    display: flex;
+    min-block-size: 100dvh;
+    background-color: var(--color-fondo);
+  }
+  .marco-panel-lateral {
+    position: sticky;
+    inset-block-start: 0;
+    flex-direction: column;
+    flex-shrink: 0;
+    inline-size: 16rem;
+    block-size: 100dvh;
+  }
+
   /* Menús flotantes (Popover de Radix: cuenta y opciones de accesibilidad). Aparecen como los
      diálogos, desde su disparador; con movimiento reducido, las duraciones son 0,01 ms. */
   .menu-flotante {

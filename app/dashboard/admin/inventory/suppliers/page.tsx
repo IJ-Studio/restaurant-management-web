@@ -331,7 +331,7 @@ export default function SuppliersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-surface-muted p-6 md:p-10" onClick={() => setOpenMenu(null)}>
+    <div className="min-h-screen bg-surface-muted p-6 md:p-10" onClick={() => setOpenMenu(null)}>
       {actionError && (
         <div className="flex justify-between items-center p-3 rounded-xl bg-red-50 dark:bg-red-400/10 border border-red-200 dark:border-red-400/30 mb-5">
           <span className="text-sm text-red-600 dark:text-red-400">{actionError}</span>
@@ -482,6 +482,6 @@ export default function SuppliersPage() {
           onClose={() => { setOrderModal(null); setPreselSupp(null); }} onSave={handleSaveOrder}
           initialSuppId={orderModal === "new" ? (preselSupp ?? undefined) : undefined} />
       )}
-    </main>
+    </div>
   );
 }

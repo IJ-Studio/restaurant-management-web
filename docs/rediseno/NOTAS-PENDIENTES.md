@@ -49,7 +49,7 @@
 | NP-33 | Calidad y metadatos de las imágenes en Cloudinary | Contenido | Media |
 | NP-34 | Retirar el limpiador de service workers antiguos | Deuda técnica | Baja |
 | NP-36 | Orígenes de imagen y de terceros por confirmar con datos reales | Seguridad / contenido | Media |
-| NP-37 | El mesero no tiene navegación de panel configurada | Producto / navegación | Baja |
+| NP-37 | Mesero, caja y cocina sin navegación de panel válida | Producto / navegación | Baja |
 | NP-38 | Avisos críticos de dependencias transitivas de `firebase-admin` | Dependencias del servidor | Alta |
 | NP-39 | `revisar:invisibles` no detecta otros caracteres de control | Herramientas / idea | Baja |
 | NP-40 | `console.log` en código de servidor (cron de respaldos) | Backend / registro | Baja |
@@ -497,6 +497,10 @@
 - **Solución sugerida:** definir con el usuario qué vistas tiene el mesero (mesas, comandas, llamadas…) y crear `config/navigation/mesero.nav.ts` con el mismo formato; si solo tiene una vista, confirmar que no necesita navegación.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** `navegacionDeRol(ROLES.MESERO)` devuelve sus secciones, o hay una decisión escrita de que no las necesita.
+- **Ampliación (5.1, 2026-11-03):**
+  - **Caja y cocina tienen el mismo problema.** `cajero.nav.ts` y `cocina.nav.ts` apuntan a rutas que no existen (`/dashboard/cajero/report`, `/methods`; `/dashboard/cocina/stats`, `/history`, `/settings`). Sus consultas (`?filter=`, `?view=`) tampoco las lee ninguna página.
+  - **Qué hace hoy el layout:** solo pinta navegación al admin (`MarcoPanel`). Caja, cocina y sala son una sola pantalla con barra superior: nombre del panel, accesibilidad y cuenta con «Cerrar sesión». Esas configuraciones solo se ven en el catálogo.
+  - **Para cerrar la nota:** decidir con el usuario si esas vistas se crean (sería backend o producto) o si se recortan las configuraciones.
 
 ## NP-38 · Avisos críticos de dependencias transitivas de `firebase-admin`
 

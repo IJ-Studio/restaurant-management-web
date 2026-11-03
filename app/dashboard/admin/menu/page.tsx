@@ -554,7 +554,7 @@ function saveItem(catId: string, data: Partial<MenuItem>) {
   };
 
   return (
-    <main className="p-8 md:p-10 min-w-0" onClick={() => setIoOpen(null)}>
+    <div className="p-8 md:p-10 min-w-0" onClick={() => setIoOpen(null)}>
       {/* Preview Modal for Imports */}
       {preview && (
         <ImportPreviewModal
@@ -739,6 +739,6 @@ function saveItem(catId: string, data: Partial<MenuItem>) {
           onSave={saveItem}
         />
       )}
-    </main>
+    </div>
   );
 }

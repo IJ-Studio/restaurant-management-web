@@ -173,7 +173,7 @@ export default function ReportsPage() {
   ];
 
   return (
-    <main className="p-8 md:p-10 min-w-0">
+    <div className="p-8 md:p-10 min-w-0">
         {/* Export modal */}
         {exportModalOpen && (
           <ExportModal onClose={() => setExportModalOpen(false)} />
@@ -610,6 +610,6 @@ export default function ReportsPage() {
             </div>
           </div>
         )}
-    </main>
+    </div>
   );
 }

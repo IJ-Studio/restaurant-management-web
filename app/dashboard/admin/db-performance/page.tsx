@@ -1320,7 +1320,7 @@ export default function DBPerformancePage() {
   );
 
   return (
-    <main style={{ minHeight: "100vh", fontFamily: T.fontB, background: T.bg, color: T.text, padding: "32px 44px", minWidth: 0 }}>
+    <div style={{ minHeight: "100vh", fontFamily: T.fontB, background: T.bg, color: T.text, padding: "32px 44px", minWidth: 0 }}>
 
         {/* ── Header ── */}
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
@@ -1499,6 +1499,6 @@ export default function DBPerformancePage() {
           Rendimiento BD · El Quijote Admin · Polling cada {pollInterval / 1000}s
         </p>
 
-    </main>
+    </div>
   );
 }

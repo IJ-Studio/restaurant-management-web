@@ -71,7 +71,7 @@ export default function AboutPage() {
   }
 
   return (
-    <main className="p-8 md:p-10 min-w-0 max-w-[1200px]">
+    <div className="p-8 md:p-10 min-w-0 max-w-[1200px]">
         {/* Header */}
         <header className="flex justify-between items-start mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
           <div>
@@ -176,6 +176,6 @@ export default function AboutPage() {
             onClose={() => setPreview(false)}
           />
         )}
-    </main>
+    </div>
   );
 }

@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useCerrarSesion } from '@/lib/sesion/cerrar-sesion';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store/index';
 import { 
-  Table2, ClipboardList, LogOut, 
+  Table2, ClipboardList, 
   Bell, CheckCircle2 
 } from 'lucide-react';
 
@@ -46,7 +45,6 @@ export default function MeseroDashboard() {
   }, []);
 
   // Cierre de sesión único (PLAN 2.14).
-  const handleLogout = useCerrarSesion();
 
   const handleCallCajero = (id: string | number) => {
     setCallingId(id);
@@ -101,7 +99,7 @@ export default function MeseroDashboard() {
       )}
 
       {/* SLIM SIDEBAR */}
-      <aside className="w-20 border-r border-border bg-surface-alt flex flex-col items-center py-8 gap-6 fixed h-full z-40">
+      <aside className="w-20 shrink-0 self-start sticky top-(--alto-cabecera) h-[calc(100dvh-var(--alto-cabecera))] border-r border-border bg-surface-alt flex flex-col items-center py-8 gap-6">
         <div className="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center font-display font-black text-white text-xl shadow-lg shadow-brand/20 mb-4 animate-bounce-slow">
           {settings.shortName || 'R'}
         </div>
@@ -119,19 +117,11 @@ export default function MeseroDashboard() {
           label="Pedidos"
         />
 
-        <div className="flex-1"/>
-        
-        <button 
-          onClick={handleLogout} 
-          className="p-3.5 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-2xl transition-all group relative"
-        >
-          <LogOut size={20}/>
-          <span className="absolute left-full ml-4 px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Cerrar Sesión</span>
-        </button>
+        {/* El cierre de sesión es el único de la barra superior del panel (PLAN 5.1). */}
       </aside>
 
       {/* CONTENT AREA */}
-      <main className="flex-1 ml-20 p-8 md:p-12 max-w-[1400px] mx-auto">
+      <div className="flex-1 min-w-0 p-8 md:p-12 max-w-[1400px] mx-auto">
         
         {/* Header Section */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
@@ -200,7 +190,7 @@ export default function MeseroDashboard() {
           callingId={callingId}
         />
 
-      </main>
+      </div>
     </div>
   );
 }

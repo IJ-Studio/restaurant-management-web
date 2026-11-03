@@ -394,7 +394,7 @@ export default function InventoryPage() {
   }
 
   return (
-    <main className="min-h-screen bg-surface-muted p-6 md:p-10" onClick={() => setOpenMenu(null)}>
+    <div className="min-h-screen bg-surface-muted p-6 md:p-10" onClick={() => setOpenMenu(null)}>
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
@@ -648,6 +648,6 @@ export default function InventoryPage() {
       {adjustModal && (
         <AdjustModal product={adjustModal} onClose={() => setAdjustModal(null)} onSave={adjustStock} />
       )}
-    </main>
+    </div>
   );
 }

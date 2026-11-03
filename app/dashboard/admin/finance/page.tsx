@@ -102,7 +102,7 @@ export default function FinancePage() {
   }
 
   return (
-    <main className="p-8 md:p-10 min-w-0">
+    <div className="p-8 md:p-10 min-w-0">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
         <div>
@@ -449,6 +449,6 @@ export default function FinancePage() {
           onSave={(t) => setTips([t, ...tips])}
         />
       )}
-    </main>
+    </div>
   );
 }

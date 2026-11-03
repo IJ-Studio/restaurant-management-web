@@ -4,6 +4,38 @@
 
 ---
 
+## Fase 5 · Administración
+
+### 5.1 · Layout de los paneles (2026-11-03)
+
+**Cambios:**
+- **Marco nuevo:** `components/paneles/MarcoPanel.tsx`, montado por `app/dashboard/layout.tsx` con el DTO de la DAL (rol, nombre y apellidos).
+  - Enlace «Saltar al contenido».
+  - Desde 1024 px, barra lateral de 16rem, fija a la altura de la ventana y con su propio scroll, con el logo y `NavegacionPanel`.
+  - Barra superior fija (`BarraSuperiorPanel`): por debajo de 1024 px abre el drawer; la cuenta lleva el «Cerrar sesión» único (2.14).
+  - El contenido va en el único `<main id="contenido-panel">`.
+  - Ya no se mide el ancho de la barra con `ResizeObserver`, ni hay `--sidebar-width` ni `style={{ marginLeft }}`: el reparto lo hace el flex (`.marco-panel`, `.marco-panel-lateral` en `styles/componentes.css`).
+- **Navegación por rol:**
+  - **Admin:** `navegacionDeRol(ROLES.ADMIN)`. A `admin.nav.ts` le faltaban Reservaciones, Promociones y Predicción, y ahora están las 15 pantallas. Las etiquetas son las de la barra anterior. Predicción usa `TrendingUp` y deja de repetir el icono de base de datos.
+  - **Caja, cocina y sala:** sin navegación, porque sus configuraciones apuntan a rutas inexistentes (NP-37 ampliada). Ningún rol que no sea admin ve entradas de admin.
+  - **Nombre del panel:** «Administración», «Caja», «Cocina» o «Sala».
+- **`AdminSidebar` retirado** (estaba versionado). Era la barra con hex, `text-[Npx]`, estilos en línea, el rol «Administrador» fijo para todos y las entradas de admin para cualquier rol.
+- **Un solo `<main>`:** las 17 páginas de `app/dashboard` pintaban el suyo, y ahora es un `div`, así que no quedan `main` anidados. Cada pantalla se rehace en 5.2–5.19.
+- **Mesero:** su barra fija de 80 px tapaba el inicio de la barra superior, y pasa a `sticky` bajo ella. Pierde su botón de cerrar sesión: queda solo el de la cuenta, el único. El resto de la pantalla, en 5.18.
+
+**Verificación:**
+- Typecheck limpio. Lint limpio en los archivos nuevos, y en las páginas tocadas no sube la cuenta (mesero 3/0, como antes).
+- Build correcto.
+- Chromium en producción: `layout-paneles.spec` (nueva, 9 pruebas), recorrido y protección, más almacenamiento, sistema, marca y cabeceras: 129 + 50 pasan. Las 4 de almacenamiento que buscaban el botón de la barra antigua se corrigieron y se repitieron: el cierre de sesión de los cuatro roles ahora pasa por la cuenta.
+- Las pruebas nuevas comprueban:
+  - **Admin a 1440 px:** la entrada activa y que el contenido empieza donde acaba la barra.
+  - **Admin a 360 px:** `main` a x = 0 y 360 px de ancho; el drawer navega y se cierra.
+  - **Mesero, caja y cocina:** sin entradas de admin y con «Cerrar sesión» en la cuenta.
+  - **Axe:** sin violaciones en el marco, a 360 y 1440 px, en los dos temas. El contenido de cada pantalla se mide en su paso.
+- Capturas revisadas: oscuro a 1440 px y claro a 360 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ## Fase 4 · Páginas públicas
 
 ### Cierre de la fase 4 (2026-11-03)

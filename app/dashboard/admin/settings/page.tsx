@@ -73,7 +73,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="p-8 md:p-10 min-w-0">
+    <div className="p-8 md:p-10 min-w-0">
         {/* Header Section */}
         <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
@@ -145,6 +145,6 @@ export default function SettingsPage() {
             onClose={() => setGwModal(null)}
           />
         )}
-    </main>
+    </div>
   );
 }

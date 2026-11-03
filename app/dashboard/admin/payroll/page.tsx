@@ -117,7 +117,7 @@ export default function PayrollPage() {
   }, [entries, search]);
 
   return (
-    <main className="p-8 md:p-10 min-w-0">
+    <div className="p-8 md:p-10 min-w-0">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8 min-w-0">
         <div className="min-w-0">
@@ -312,6 +312,6 @@ export default function PayrollPage() {
           onSave={handleSave}
         />
       )}
-    </main>
+    </div>
   );
 }

@@ -192,7 +192,7 @@ export default function ModeloPredictivoPage() {
 
   // ── Renderizado ─────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-surface-muted p-6 md:p-10">
+    <div className="min-h-screen bg-surface-muted p-6 md:p-10">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
@@ -423,6 +423,6 @@ export default function ModeloPredictivoPage() {
         </>
       )}
       */}
-    </main>
+    </div>
   );
 }

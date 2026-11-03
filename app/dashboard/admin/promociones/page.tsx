@@ -148,7 +148,7 @@ export default function AdminPromocionesPage() {
   ];
 
   return (
-    <main className="p-8 md:p-10 min-w-0">
+    <div className="p-8 md:p-10 min-w-0">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10">
         <div>
@@ -321,6 +321,6 @@ export default function AdminPromocionesPage() {
           onSave={savePromo}
         />
       )}
-    </main>
+    </div>
   );
 }

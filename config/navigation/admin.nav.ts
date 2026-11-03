@@ -20,6 +20,9 @@ import {
   Info,
   Database,
   Wallet,
+  CalendarDays,
+  Tag,
+  TrendingUp,
 } from "lucide-react";
 import type { SidebarSection } from "./tipos";
 
@@ -45,6 +48,18 @@ export const ADMIN_NAV_SECTIONS: SidebarSection[] = [
         label: "Catálogo Menú",
         icon:  icon(UtensilsCrossed),
         href:  "/dashboard/admin/menu",
+      },
+      {
+        key:   "reservations",
+        label: "Reservaciones",
+        icon:  icon(CalendarDays),
+        href:  "/dashboard/admin/reservations",
+      },
+      {
+        key:   "promociones",
+        label: "Promociones",
+        icon:  icon(Tag),
+        href:  "/dashboard/admin/promociones",
       },
       {
         key:   "users",
@@ -107,6 +122,12 @@ export const ADMIN_NAV_SECTIONS: SidebarSection[] = [
   {
     label: "Sistema",
     items: [
+      {
+        key:   "predictive",
+        label: "Predicción",
+        icon:  icon(TrendingUp),
+        href:  "/dashboard/admin/predictive",
+      },
       {
         key:   "performance",
         label: "Base de datos",

@@ -59,7 +59,7 @@ export default function InvoicesPage() {
   }
 
   return (
-    <main className="p-8 md:p-10 min-w-0">
+    <div className="p-8 md:p-10 min-w-0">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 mb-5 text-[13px] text-text-muted">
           <button
@@ -221,6 +221,6 @@ export default function InvoicesPage() {
             onStatusChange={changeStatus}
           />
         )}
-    </main>
+    </div>
   );
 }
