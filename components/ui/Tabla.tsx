@@ -46,8 +46,21 @@ export interface TablaProps<T> {
 	vacio?: ReactNode;
 	/** Sustituye el contenido si la carga falló (un `EstadoError`). */
 	error?: ReactNode;
+	/**
+	 * Desde qué ancho se ve como tabla; por debajo, tarjetas apiladas. `md` (768 px) por defecto;
+	 * `xl` (1280 px) para tablas con muchas columnas y acciones, que en tableta y junto a la barra
+	 * lateral dejarían las acciones fuera de la vista (PLAN 5.7).
+	 */
+	tablaDesde?: "md" | "lg" | "xl";
 	className?: string;
 }
+
+// Clases literales para que Tailwind las genere.
+const VISTAS: Record<"md" | "lg" | "xl", { tabla: string; tarjetas: string }> = {
+	md: { tabla: "hidden md:block", tarjetas: "md:hidden" },
+	lg: { tabla: "hidden lg:block", tarjetas: "lg:hidden" },
+	xl: { tabla: "hidden xl:block", tarjetas: "xl:hidden" },
+};
 
 const CLASE_CABECERA =
 	"px-4 py-3 text-start align-bottom font-texto text-(length:--texto-etiqueta) font-semibold uppercase leading-[1.2] tracking-[0.16em] text-texto-secundario";
@@ -66,6 +79,7 @@ export function Tabla<T>({
 	estado = "listo",
 	vacio,
 	error,
+	tablaDesde = "md",
 	className,
 }: TablaProps<T>) {
 	const cargando = estado === "cargando";
@@ -103,7 +117,7 @@ export function Tabla<T>({
 			{cargando && <span className="solo-lectores">Cargando…</span>}
 
 			{/* Desde 768 px: tabla. */}
-			<RegionDesplazable aria-label={leyenda} className="hidden rounded-tarjeta border border-borde-sutil bg-superficie md:block">
+			<RegionDesplazable aria-label={leyenda} className={cn("rounded-tarjeta border border-borde-sutil bg-superficie", VISTAS[tablaDesde].tabla)}>
 				<table className="w-full border-collapse text-(length:--texto-pequeno) leading-[1.5]">
 					<caption className="solo-lectores">{leyenda}</caption>
 					<thead>
@@ -167,7 +181,7 @@ export function Tabla<T>({
 			</RegionDesplazable>
 
 			{/* Por debajo de 768 px: tarjetas con contraetiqueta. */}
-			<ul aria-label={leyenda} className="m-0 flex list-none flex-col gap-3 p-0 md:hidden">
+			<ul aria-label={leyenda} className={cn("m-0 flex list-none flex-col gap-3 p-0", VISTAS[tablaDesde].tarjetas)}>
 				{cargando
 					? Array.from({ length: FILAS_ESQUELETO }, (_, i) => (
 							<li key={i} aria-hidden="true" className="flex flex-col gap-3 rounded-tarjeta border border-borde-sutil bg-superficie p-4">

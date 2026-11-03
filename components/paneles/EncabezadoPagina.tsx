@@ -20,8 +20,9 @@ export interface EncabezadoPaginaProps {
 
 export function EncabezadoPagina({ titulo, descripcion, acciones, antetitulo, className }: EncabezadoPaginaProps) {
 	return (
-		<header className={cn("flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-8", className)}>
-			<div className="flex min-w-0 flex-col gap-2">
+		<header className={cn("flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between md:gap-x-8 md:gap-y-4", className)}>
+			{/* El título pide 20rem: si las acciones no caben a su lado, bajan a la línea siguiente (PLAN 5.7). */}
+			<div className="flex min-w-0 flex-col gap-2 md:flex-[1_1_20rem]">
 				{antetitulo && <div className="text-(length:--texto-pequeno) text-texto-secundario">{antetitulo}</div>}
 				<h1 className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] text-texto-principal [text-wrap:balance]">
 					{titulo}

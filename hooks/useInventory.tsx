@@ -147,6 +147,13 @@ export function useInventory() {
     fetchData();
   }, [fetchData]);
 
+  /** Vuelve a pedir todo mostrando la carga (botón «Reintentar», PLAN 5.7). */
+  const recargar = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    await fetchData();
+  }, [fetchData]);
+
   // Mutations
   const saveProduct = async (p: Product) => {
     const method = p.id && p.id !== 0 ? "PUT" : "POST";
@@ -241,5 +248,6 @@ export function useInventory() {
     saveOrder,
     deleteOrder,
     refreshInventory: fetchData,
+    recargar,
   };
 }

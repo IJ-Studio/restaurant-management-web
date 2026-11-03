@@ -25,6 +25,7 @@ import {
 	type Tip,
 } from "@/features/dashboard/admin/data/financeMock";
 import { formatearDia } from "@/lib/formato/fecha";
+import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
 import { DialogoCerrarCaja, DialogoMovimiento, DialogoPropina, FORMAS_PAGO } from "./DialogosFinanzas";
 
@@ -254,8 +255,8 @@ export function Finanzas({ vistaInicial }: { vistaInicial?: string }) {
 			<BloquePanel titulo={ultimoDia ? `Resumen del ${formatearDia(ultimoDia)}` : "Resumen del día"} datosDeEjemplo>
 				<div className={REJILLA_INDICADORES}>
 					<Indicador rotulo="Balance del día" valor={importe(ingresos - egresos)} detalle="Ingresos menos egresos" className={INDICADOR_PROTAGONISTA} />
-					<Indicador rotulo="Ingresos" valor={importe(ingresos)} detalle={`${delDia.filter((m) => m.type === "ingreso").length} movimientos`} />
-					<Indicador rotulo="Egresos" valor={importe(egresos)} detalle={`${delDia.filter((m) => m.type === "egreso").length} movimientos`} />
+					<Indicador rotulo="Ingresos" valor={importe(ingresos)} detalle={contar(delDia.filter((m) => m.type === "ingreso").length, "movimiento")} />
+					<Indicador rotulo="Egresos" valor={importe(egresos)} detalle={contar(delDia.filter((m) => m.type === "egreso").length, "movimiento")} />
 					<Indicador rotulo="Propinas por repartir" valor={importe(porRepartir)} />
 				</div>
 			</BloquePanel>

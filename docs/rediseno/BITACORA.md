@@ -6,6 +6,44 @@
 
 ## Fase 5 · Administración
 
+### 5.7 · Inventario (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/inventory/page.tsx` pasa a ser de servidor** (lee `?vista=productos|mermas`). La pantalla es `features/dashboard/admin/inventario/Inventario.tsx`.
+- **Mismo hook** (`useInventory`) y mismas rutas `/api/inventory/*`, con los mismos cuerpos. El hook gana `recargar` para «Reintentar»: antes, si la carga fallaba, el error se quedaba para siempre y mostraba «Failed to fetch inventory data».
+- **Indicadores:** valor en bodega como protagonista, productos, en nivel crítico y pérdida por mermas. «Mermas del mes» pasa a «Pérdida por mermas», porque sumaba todas, no solo las del mes.
+- **Alerta accionable:** críticos y bajos, con «Ver solo esos», que aplica el filtro, y «Ver proveedores».
+- **Productos:** `Buscador`, filtros de categoría y estado, y `Tabla`.
+  - El filtro de estado estaba mal: «Bajo stock» devolvía además los inactivos. Ahora las opciones son «Todos», «Activos», «Inactivos» y «Bajos o críticos».
+  - **Nivel de existencias:** `Insignia` con texto (Correcto, Bajo, Crítico, Exceso), barra en SVG con tokens `fill-*` y mínimo y máximo. Antes era solo color, con hex en estilo en línea.
+  - **Acciones con nombre** (ajustar, editar, eliminar) en lugar del menú «⋮» hecho a mano.
+- **Mermas:** `Tabla` con motivo, qué pasó, quién lo reporta, fecha y pérdida; la pérdida acumulada va en la descripción del bloque.
+- **Diálogos** (`DialogosInventario.tsx`): sustituyen a `ProductModal`, `MermaModal` y `AdjustModal`.
+  - Validan al enviar: nombre, números ≥ 0, máximo ≥ mínimo; existencias que no queden negativas; merma con cantidad y explicación.
+  - Esperan la respuesta y avisan si falla. Antes se cerraban sin saber si se había guardado.
+  - El ajuste muestra «Ahora» y «Quedará»; la merma, la pérdida estimada.
+- **Eliminar pide confirmación del sistema, destructiva.** Antes borraba al primer clic.
+- **Sin emojis ni hex:** las categorías y los motivos van como texto.
+- **Componentes:**
+  - **`Tabla`:** nueva prop `tablaDesde` (`md` por defecto, `lg` o `xl`). El inventario usa `xl`, porque con siete columnas y acciones, en tableta y junto a la barra lateral las acciones quedaban fuera de la vista; ahí ahora van tarjetas.
+  - **`EncabezadoPagina`:** el título pide 20rem y las acciones bajan a su línea si no caben. A 768 px, tres botones comprimían el título palabra a palabra.
+  - **`lib/formato/plural.ts` (`contar`):** «1 registro», «2 movimientos». Se aplica también en finanzas.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos nuevos. `useInventory` mantiene sus 11 errores previos, sin ninguno nuevo. Build correcto.
+- Chromium en producción: `inventario.spec` (nueva) más las otras cinco pantallas de administración, 68/68; repetidas inventario y finanzas tras el plural, 28/28. La nueva comprueba:
+  - las cifras, la alerta y «Ver solo esos», con el nivel dicho con texto;
+  - el ajuste: validación y `POST /api/inventory/products/adjust` con `{ id, stock }` exacto;
+  - el producto nuevo: mínimo y máximo, y el `POST` con el cuerpo de siempre;
+  - la merma: pérdida calculada y su `POST`;
+  - eliminar con confirmación y error avisado;
+  - la carga fallida;
+  - axe, sin desborde, en productos (360, 768 y 1440 px) y mermas (360 y 1440 px), en los dos temas.
+- Catálogo (dev): tabla y paneles, 15/15.
+- Capturas revisadas: productos en oscuro a 1440 px y en claro a 768 px, antes y después del ajuste.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.6 · Nómina (2026-11-03)
 
 **Cambios:**
