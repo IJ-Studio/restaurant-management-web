@@ -6,6 +6,22 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.22 · Páginas legales (2026-11-03) — D-17
+
+**Cambios:**
+- **Grupo de rutas `app/(public)/(legales)/`** (`git mv`; las URL no cambian) con su layout: ancho de lectura de 52rem y el ritmo de pie.
+  - Contiene `/ayuda`, `/condiciones`, `/corporativo`, `/devoluciones`, `/privacidad` y `/seguridad`.
+- **Las seis páginas pasan a ser de servidor** (antes `"use client"`), con su título en los metadatos.
+- **`components/marca/PaginaLegal.tsx`** (nuevo): `PaginaLegal` (`EncabezadoPublico` con migas y «Volver al inicio») y `SeccionLegal` (cada apartado con su `h2` en Fraunces, filete sutil, ancho de lectura y enlaces con el subrayado del sistema).
+- **La redacción legal no cambia (D-17):** solo el estilo. Se quitaron los iconos de cabecera, las tarjetas con sombra y los colores de los enlaces escritos a mano.
+- **Retirado** `landing/InfoPageLayout.tsx`, que se quedaba sin uso.
+
+**Verificación:**
+- Typecheck: 0 errores, tras regenerar los tipos de `.next`, que aún apuntaban a las rutas sin el grupo. Lint de los archivos tocados: 0 problemas.
+- Build: correcto, con las mismas seis rutas.
+- `legales.spec.ts` (nueva) y el recorrido de las seis rutas en Chromium contra `next start`: 37/37. Comprueban que el `h1` y el título vienen en el HTML del servidor, las migas, las secciones, axe sin violaciones y que se conserva la redacción del aviso de privacidad.
+- Sin procesos abiertos.
+
 ### 4.21 · `/about` y `/promociones` (2026-11-03) — D-08, D-17, D-18 y D-19
 
 **`/about`**, ahora **de servidor**:
