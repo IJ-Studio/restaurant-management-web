@@ -6,6 +6,45 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.23 · Páginas de sistema (2026-11-03) — D-20 y D-21
+
+**Cambios:**
+- **Todas sobre `PaginaEstado`, con su ilustración** (D-21). No conservan nada de las anteriores: ni los módulos CSS, ni la sartén animada, ni el «404» gigante de fondo, ni el naranja.
+
+  | Página | Ilustración | Código | Salidas |
+  |---|---|---|---|
+  | 404 de la raíz (`app/not-found.tsx`) | plato con campana | 404 | inicio y carta |
+  | `/unauthorized` | llave | 401 | iniciar sesión y crear cuenta |
+  | `/forbidden` | puerta con candado | 403 | tu panel e inicio |
+  | `/maintenance` | mesa con reloj de arena | — | llamar |
+  | `/offline` | molino quieto | — | «Reintentar» |
+  | Límite de error con `digest` (del servidor) | olla humeante | 500 | «Reintentar» y la salida del segmento |
+  | Límite de error sin `digest` (del navegador) | copa volcada | — | «Reintentar» y la salida del segmento |
+  | `global-error` | copa volcada | — | «Reintentar» e inicio |
+
+  - El 404 de la raíz va dentro de `MarcoSitio` y responde 404.
+  - **`/offline`:** «Reintentar» es un `<form>` nativo que funciona sin JavaScript; se conserva la recarga al volver la conexión. Sin estilos en línea.
+  - Los límites de error conservan lo del 2.17: nunca `error.message` ni la pila, el `digest` como código para soporte y `registrarError`.
+- **Las páginas de sistema entran en el grupo `app/(public)/(sistema)/`** (`git mv`; las URL no cambian), así que ya tienen cabecera y pie. Era el transitorio anotado en el 4.1.
+- **`app/loading.tsx`:** `CargadorMarca` a pantalla completa, en lugar de la sartén con `styles/loading.css`.
+- **Límites por segmento (D-20):** además de los del 2.17 (`(auth)`, `(public)`, `menu`, `dashboard`), nuevos `error.tsx` y `not-found.tsx` en `reservations` y `menu/pedido`. La salida de `menu` pasa a «Ver la carta».
+- **Retirados:**
+  - `app/{error,forbidden,maintenance,not-found,unauthorized}.module.css` y `styles/loading.css`;
+  - la excepción de pruebas «was preloaded using link preload», que la producían esos módulos CSS que Next precargaba en todas las rutas (anotada en la fase 1 para resolverla aquí).
+
+**Verificación:**
+- Typecheck: 0 errores, tras regenerar los tipos de `.next`. Lint de los archivos tocados: 0 problemas.
+- Build: correcto, con las mismas rutas.
+- `pnpm test:unidad`: 49/49. `error-global.spec.tsx` actualizada: el texto nuevo y la ilustración de la copa, sin mensaje, `SELECT` ni pila.
+- `sistema.spec.ts` (nueva, Chromium contra `next start`): 11/11. Comprueba:
+  - en las cinco páginas, la página de estado con su ilustración (`aria-hidden`), el código con su nombre para lectores («Código 404»), la salida, el marco público, un solo `main`, nada del diseño anterior ni texto técnico, y axe sin violaciones;
+  - que el 404 responde 404;
+  - que `/offline` funciona sin JavaScript;
+  - capturas de las cinco a 360 y 1440 px en los dos temas, sin desbordar.
+- `limites-error.spec.ts` (solo en `next dev`) se actualiza a los textos nuevos y a la ilustración; se pasa al cerrar la fase.
+- Revisión visual de las capturas (403 a 360 px en claro y sin conexión a 1440 px en oscuro): las ilustraciones se leen bien a los dos tamaños.
+- Sin procesos abiertos.
+
 ### 4.22 · Páginas legales (2026-11-03) — D-17
 
 **Cambios:**

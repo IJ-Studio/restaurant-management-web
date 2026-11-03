@@ -1,70 +1,12 @@
-'use client';
-import { useEffect, useTransition } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import styles from './error.module.css';
-import { registrarError } from '@/lib/registro/registrar-error';
+"use client";
 
-// Límite de error de la raíz (PLAN 2.17): mensaje genérico, «Intentar de nuevo», salida y solo el
-// digest; nunca error.message ni la pila. El diseño nuevo de esta página es del paso 4.23.
-export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-    const router = useRouter();
-    const [, iniciar] = useTransition();
-    useEffect(() => {
-        // Solo el mensaje y el digest, sin la pila ni datos (PLAN 2.8).
-        registrarError(error, 'error de página');
-    }, [error]);
+import { LimiteError } from "@/components/errores/LimiteError";
 
-    return (
-        <div className="relative flex h-screen w-full flex-col items-center justify-center bg-gray-50 overflow-hidden">
-            {/* Background Text */}
-            <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10rem] md:text-[20rem] font-black text-red-50 select-none z-0 whitespace-nowrap opacity-80">
-                500
-            </h1>
-
-            {/* Content Wrapper */}
-            <div className="relative z-10 flex flex-col items-center gap-8">
-
-                {/* Animation: Boiling Pot */}
-                <div className={`${styles.potContainer} ${styles.shakingPot}`}>
-                    <div className={styles.bubble}></div>
-                    <div className={styles.bubble}></div>
-                    <div className={styles.bubble}></div>
-                    <div className={styles.bubble}></div>
-
-                    <div className={styles.potBody}>
-                        <div className={styles.potRim}></div>
-                    </div>
-                    <div className={styles.potHandle}></div>
-                </div>
-
-                {/* Text and Action */}
-                <div className="text-center space-y-4 px-4">
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-                        ¡Se nos quemó la cocina!
-                    </h2>
-                    <p className="text-gray-600 max-w-md mx-auto">
-                        Hubo un error inesperado en nuestro servidor. Nuestros chefs digitales ya están trabajando para limpiarlo.
-                    </p>
-
-                    <button
-                        onClick={() => iniciar(() => { router.refresh(); reset(); })}
-                        className="inline-block mt-4 px-8 py-3 bg-[#c0392b] text-white rounded-xl font-semibold hover:bg-[#a93226] transition-all shadow-lg hover:shadow-xl"
-                    >
-                        Intentar de nuevo
-                    </button>
-                    <div>
-                        <Link href="/" className="inline-block mt-2 px-4 py-3 text-gray-800 underline underline-offset-4">
-                            Ir al inicio
-                        </Link>
-                    </div>
-                    {error.digest && (
-                        <p className="text-sm text-gray-600">
-                            Código para soporte: <code className="font-mono [overflow-wrap:anywhere]">{error.digest}</code>
-                        </p>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+// Límite de error de la raíz (PLAN 2.17 y 4.23): el mismo diseño de página de estado (D-21).
+export default function ErrorRaiz({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+	return (
+		<main id="contenido">
+			<LimiteError error={error} reset={reset} contexto="raíz" salida={{ href: "/", texto: "Ir al inicio" }} pantallaCompleta />
+		</main>
+	);
 }

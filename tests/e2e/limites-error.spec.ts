@@ -7,7 +7,7 @@ test.skip(process.env.E2E_MODO !== "dev", "las páginas de prueba solo existen e
 test.describe.configure({ timeout: 120_000 });
 
 const SEGMENTOS = [
-	{ ruta: "/menu/prueba-limites", salida: { texto: "Ver el menú", href: "/menu" } },
+	{ ruta: "/menu/prueba-limites", salida: { texto: "Ver la carta", href: "/menu" } },
 	{ ruta: "/prueba-limites-publico", salida: { texto: "Ir al inicio", href: "/" } },
 	{ ruta: "/prueba-limites-auth", salida: { texto: "Ir al inicio", href: "/" } },
 	{ ruta: "/dashboard/admin/prueba-limites", salida: { texto: "Ir al panel", href: "/dashboard" }, rol: "admin" as const },
@@ -35,7 +35,9 @@ for (const { ruta, salida, rol } of SEGMENTOS) {
 				await page.waitForLoadState("load");
 				expect(new URL(page.url()).pathname).toBe(ruta);
 				await expect(limite).toBeVisible({ timeout: 60_000 });
-				await expect(limite.getByRole("heading", { name: "Algo salió mal" })).toBeVisible();
+				// D-21 (4.23): página de estado; el error del servidor (con digest) es el 500, el del navegador, el genérico.
+				await expect(limite.getByRole("heading", { level: 1 })).toHaveText(/Algo se nos ha pasado en la cocina|Disculpa, algo no salió como esperábamos/);
+				await expect(limite.locator("svg[data-ilustracion]")).toHaveAttribute("aria-hidden", "true");
 				await expect(limite.getByRole("button", { name: "Reintentar" })).toBeVisible();
 				await expect(limite.getByRole("link", { name: salida.texto })).toHaveAttribute("href", salida.href);
 				await sinDetalles(page);
@@ -49,7 +51,8 @@ for (const { ruta, salida, rol } of SEGMENTOS) {
 			await page.goto(`${ruta}?tipo=no-encontrado`);
 			const nf = page.locator("[data-no-encontrado]");
 			await expect(nf).toBeVisible({ timeout: 60_000 });
-			await expect(nf.getByRole("heading", { name: "No encontramos esta página" })).toBeVisible();
+			await expect(nf.getByRole("heading", { name: "Aquí no hay nada servido" })).toBeVisible();
+			await expect(nf.locator('svg[data-ilustracion="plato-cloche"]')).toBeVisible();
 			await expect(nf.getByRole("link", { name: salida.texto })).toHaveAttribute("href", salida.href);
 			await sinDetalles(page);
 		});

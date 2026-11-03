@@ -40,7 +40,4 @@ export const EXCEPCIONES: Excepcion[] = [
 	{ tipo: "consola", contiene: "Error en Fetch Menu", resuelve: "0.7 (API simulada)" },
 	{ tipo: "consola", contiene: "status of 401", resuelve: "0.7 (API simulada); /api/auth/me sin sesión" },
 	{ tipo: "consola", contiene: "status of 404", resuelve: "0.7 (API simulada)" },
-	// Next precarga en todas las rutas el CSS de los módulos de app/error.tsx y app/not-found.tsx
-	// (comprobado en producción al cerrar la fase 1; en dev, además, el CSS de desarrollo).
-	{ tipo: "consola", contiene: "was preloaded using link preload", resuelve: "2.17 y 4.23 (límites de error y páginas de sistema sin módulo CSS)" },
 ];

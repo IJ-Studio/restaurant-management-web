@@ -6,7 +6,8 @@ import { ErrorGlobal } from "../../components/errores/ErrorGlobal";
 test("global-error no muestra el mensaje ni la pila, solo el digest", () => {
 	const error = Object.assign(new Error("detalle-interno: SELECT * FROM usuarios"), { digest: "1234567890" });
 	const html = renderToStaticMarkup(<ErrorGlobal error={error} reset={() => {}} />);
-	expect(html).toContain("Algo salió mal");
+	expect(html).toContain("Disculpa, algo no salió como esperábamos");
+	expect(html).toContain('data-ilustracion="copa-volcada"');
 	expect(html).toContain("1234567890");
 	expect(html).toContain('href="/"');
 	expect(html).not.toContain("detalle-interno");
