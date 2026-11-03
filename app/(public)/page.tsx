@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CalendarDays, MapPin } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { MenuLanding } from "@/components/landing/secciones/MenuLanding";
 import { Nosotros } from "@/components/landing/secciones/Nosotros";
 import { Portada } from "@/components/landing/secciones/Portada";
 import { SeccionLanding } from "@/components/landing/secciones/SeccionLanding";
@@ -36,16 +37,14 @@ export default async function Inicio() {
 
 			<Nosotros galeria={seleccion.galeria} />
 
-			<SeccionLanding id="menu" lote={2} rotulo="Menú" titulo="Platos de la casa" entradilla="Una selección de la carta. El resto te espera en la carta completa.">
-				{carta.estado === "error" ? (
-					<ReintentarSeccion titulo="No pudimos traer la carta" descripcion="A veces tarda un poco más de la cuenta. Vuelve a intentarlo o llámanos." accion={llamar} />
-				) : null}
-				<div>
-					<BotonEnlace href="/menu" variante="secundario">
-						Ver la carta completa
-					</BotonEnlace>
-				</div>
-			</SeccionLanding>
+			<MenuLanding
+				platos={seleccion.menu}
+				error={
+					carta.estado === "error" ? (
+						<ReintentarSeccion titulo="No pudimos traer la carta" descripcion="A veces tarda un poco más de la cuenta. Vuelve a intentarlo o llámanos." accion={llamar} />
+					) : undefined
+				}
+			/>
 
 			<SeccionLanding id="promociones" lote={3} rotulo="Promociones" fondo="cafe" titulo="Para esta temporada" entradilla="Las propuestas vigentes de la casa.">
 				{promociones.estado === "error" ? (

@@ -1,5 +1,6 @@
 "use client";
 
+import { MenuLanding } from "@/components/landing/secciones/MenuLanding";
 import { Nosotros } from "@/components/landing/secciones/Nosotros";
 import type { PlatoDestacado } from "@/lib/publico/seleccion-platos";
 
@@ -20,6 +21,12 @@ export function DemosLanding() {
 		<div className="flex flex-col gap-10">
 			<div className="overflow-hidden rounded-tarjeta border border-borde-sutil" data-prueba="demo-nosotros">
 				<Nosotros galeria={PLATOS_EJEMPLO} />
+			</div>
+			<div className="overflow-hidden rounded-tarjeta border border-borde-sutil" data-prueba="demo-menu">
+				<MenuLanding platos={PLATOS_EJEMPLO} />
+			</div>
+			<div className="overflow-hidden rounded-tarjeta border border-borde-sutil" data-prueba="demo-menu-vacio">
+				<MenuLanding platos={[]} />
 			</div>
 		</div>
 	);

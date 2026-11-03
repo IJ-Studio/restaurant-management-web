@@ -39,6 +39,20 @@ test.describe("secciones de la landing en el catálogo", () => {
 		expect(await nombre()).toBe("none");
 	});
 
+	test("Menú: platos con foto o respaldo y contraetiqueta, sin enlaces en las tarjetas y un solo botón", async ({ page }) => {
+		await abrir(page);
+		const demo = prueba(page, "demo-menu");
+		const platos = demo.locator('[data-prueba="platos-menu"] > li');
+		await expect(platos).toHaveCount(3);
+		await expect(platos.first().getByRole("heading", { level: 3 })).toHaveText("Parrillada de la casa");
+		await expect(platos.first().locator("dd").last()).toHaveText("$ 420");
+		await expect(platos.nth(2).locator("[data-respaldo-imagen]")).toHaveCount(1);
+		await expect(platos.locator("a")).toHaveCount(0);
+		await expect(demo.getByRole("link")).toHaveCount(1);
+		await expect(demo.getByRole("link", { name: "Ver la carta completa" })).toHaveAttribute("href", "/menu");
+		await expect(prueba(page, "demo-menu-vacio")).toContainText("Todavía no hay platos publicados en la carta.");
+	});
+
 	for (const tema of ["oscuro", "claro"] as const) {
 		for (const ancho of [360, 1440]) {
 			test(`axe y sin desbordar a ${ancho} px, tema ${tema}`, async ({ page }, info) => {

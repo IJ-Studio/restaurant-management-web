@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as Popover from "@radix-ui/react-popover";
@@ -65,27 +65,23 @@ export function MarcoCabecera({ children, fija = true }: { children: ReactNode; 
  * Sección activa: en la landing, la que ocupa el centro de la pantalla; en una página de acción,
  * la de su origen (`/menu` → «La carta»).
  */
+/** Sección de la landing que cruza la línea media de la pantalla, o `null` (fuera de la landing). */
+function seccionEnElCentro(): string | null {
+	const linea = window.innerHeight * 0.475;
+	for (const e of ENLACES_CABECERA) {
+		const s = document.getElementById(e.href.split("#")[1]);
+		const r = s?.getBoundingClientRect();
+		if (r && r.top <= linea && r.bottom > linea) return e.href;
+	}
+	return null;
+}
+
 function useSeccionActiva(): string | null {
 	const ruta = usePathname();
-	const [visible, setVisible] = useState<string | null>(null);
 	const esLanding = ruta === "/";
-
-	useEffect(() => {
-		if (!esLanding) return;
-		const secciones = ENLACES_CABECERA.map((e) => document.getElementById(e.href.split("#")[1])).filter(
-			(e): e is HTMLElement => e !== null,
-		);
-		if (!secciones.length) return;
-		const observador = new IntersectionObserver(
-			(entradas) => {
-				for (const entrada of entradas) if (entrada.isIntersecting) setVisible(`/#${entrada.target.id}`);
-			},
-			{ rootMargin: "-45% 0px -50% 0px" },
-		);
-		secciones.forEach((s) => observador.observe(s));
-		return () => observador.disconnect();
-	}, [esLanding]);
-
+	// Se recalcula en cada desplazamiento: es determinista aunque el desplazamiento sea suave o
+	// salte varias secciones (con IntersectionObserver dependía de cómo se agrupaban los avisos).
+	const visible = useSyncExternalStore(suscribirDesplazamiento, seccionEnElCentro, () => null);
 	if (esLanding) return visible;
 	return rutaPublica(ruta)?.origen.href ?? null;
 }

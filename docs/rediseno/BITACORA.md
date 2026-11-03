@@ -6,6 +6,30 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.5 · Menú (`#menu`) (2026-11-03) — D-19 y D-20
+
+**Cambios:**
+- **`components/landing/secciones/MenuLanding.tsx`:** hasta cuatro platos reales del API, uno por categoría y primero los que tienen foto (`seleccionarPlatos`).
+  - Cada tarjeta lleva la foto 4:5 (o el respaldo), el nombre en Fraunces, la descripción y una contraetiqueta con la sección y el precio. Sin emoji.
+  - **Un único botón**, «Ver la carta completa», hacia `/menu` (D-19). Las tarjetas no enlazan a otra parte.
+  - Sin datos: el error cálido con «Reintentar» y «Llamar al restaurante». Con la carta vacía: «Todavía no hay platos publicados en la carta.», sin inventar nada.
+- **`lib/formato/precio.ts`:** `$` con espacio duro y sin decimales si es entero. Devuelve `null` si el precio no es válido: nunca se muestra «$ 0» en lugar de un precio que falta.
+- **Sección activa de la cabecera:** se calcula en cada desplazamiento con la sección que cruza la línea media de la pantalla. Con `IntersectionObserver` dependía de cómo se agrupaban los avisos en un desplazamiento suave: la prueba de navegación falló una vez al crecer la sección.
+- **Retirados por quedarse sin uso:** `landing/MenuSection.tsx` y `landing/CategoriesSection.tsx`.
+- **Catálogo:** «Menú» con tres platos de ejemplo (uno sin foto) y con la carta vacía.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 errores. El único aviso es de `PromosSection.tsx`, que no se tocó y rehace el 4.6.
+- `pnpm test:unidad`: 48/48, con el formato del precio.
+- `landing-catalogo.spec.ts`, Chromium contra `next dev`: 7/7. Comprueba:
+  - las tarjetas, el precio «$ 420» con espacio duro y el respaldo del plato sin foto;
+  - que no hay enlaces en las tarjetas y que el único botón lleva a `/menu`;
+  - el texto con la carta vacía;
+  - axe y que no desborda a 360 y 1440 px en los dos temas.
+- Build: correcto. `landing.spec.ts` y `navegacion.spec.ts` contra `next start`: 20/20, 5 omitidas (solo en `dev`).
+- Revisión visual: el catálogo a 360 px en oscuro; las tarjetas se apilan.
+- Sin procesos abiertos.
+
 ### 4.4 · Nosotros (`#nosotros`) (2026-11-03) — D-17, D-18 y D-19
 
 **Cambios:**

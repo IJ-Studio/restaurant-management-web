@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { seleccionarPlatos } from "../../lib/publico/seleccion-platos";
+import { formatearPrecio } from "../../lib/formato/precio";
 import type { CategoriaCarta } from "../../lib/publico/datos-landing";
 
 // Selección de platos de la landing (PLAN 4.4 y 4.5). Las secciones con datos se ven en el catálogo.
@@ -23,4 +24,12 @@ test("el menú toma un plato por categoría, primero con foto, y la galería no 
 	expect(galeria.map((p) => p.id)).toEqual([22]);
 	expect(galeria.every((p) => p.imagenUrl)).toBe(true);
 	expect(seleccionarPlatos([])).toEqual({ menu: [], galeria: [] });
+});
+
+test("precio con espacio duro, sin decimales si es entero y nunca un cero inventado", () => {
+	expect(formatearPrecio(420)).toBe("$ 420");
+	expect(formatearPrecio(1250.5)).toBe("$ 1,250.5");
+	expect(formatearPrecio(null)).toBeNull();
+	expect(formatearPrecio(Number.NaN)).toBeNull();
+	expect(formatearPrecio(-3)).toBeNull();
 });
