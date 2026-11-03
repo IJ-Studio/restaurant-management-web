@@ -6,6 +6,39 @@
 
 ## Fase 4 · Páginas públicas
 
+### 4.20 · `/profile` (2026-11-03)
+
+**Lógica sin cambios:**
+- Los datos salen de la sesión; sin sesión se va a `/login?redirect=/profile`.
+- «Guardar cambios» solo se activa si algo cambió.
+- Se pide confirmación.
+- Se envía el mismo `PUT /usuarios/perfil/actualizar/{id}` con el formulario completo y el `Authorization` de siempre.
+- «Cancelar» restaura los valores del bloque.
+
+**Cambios:**
+- `EncabezadoPublico` («Inicio › Tu cuenta», «Volver al inicio») con «Guardar cambios» como acción (`form="formulario-cuenta"`).
+- **Dos bloques** («Datos personales» y «Dirección de entrega») con «Editar …» o «Cancelar».
+  - Sin editar, los campos se leen como **texto sin caja** (`readOnly`), así que se distinguen a simple vista de los editables. La primera versión los mostraba iguales y se corrigió tras la revisión visual.
+  - Campos del sistema con `autocomplete` (`given-name`, `family-name`, `tel`, `address-line1`, `address-level2`, `address-level3`, `postal-code`).
+- **Confirmación:** el diálogo del sistema, en lugar del banner ámbar.
+- **Validación con `esquemaPerfil` (3.1)**, con el error en cada campo, sin enviar.
+- **Resultado:** notificación cálida («Tu cuenta está al día» o «No pudimos guardar los cambios»), sin el mensaje del servidor.
+- **Carga:** esqueletos, en lugar de «Sincronizando perfil...».
+- Errores registrados con `registrarError`.
+
+**Verificación:**
+- Typecheck: 0 errores. Lint de los archivos tocados: 0 problemas.
+- Build: correcto.
+- `cuenta.spec.ts` (nueva, Chromium contra `next start`, con sesión de cliente y el API simulado) junto con `almacenamiento.spec.ts`: 19/19 y luego 6/6 tras el retoque. Comprueba:
+  - «Guardar» inactivo sin cambios y los campos de solo lectura;
+  - editar, el diálogo, el **PUT idéntico** y la notificación;
+  - que un nombre vacío se marca sin enviar y que «Cancelar» restaura;
+  - axe y que no desborda a 360 (al 125 %) y 1440 px, en los dos temas;
+  - que no hay `alert()`.
+- Revisión visual a 1440 px en los dos temas.
+- **No verificado:** guardar con el backend real.
+- Sin procesos abiertos.
+
 ### 4.19 · `/reset` y `/frm_reset` (2026-11-03) — D-17
 
 **Cambios:**
