@@ -194,7 +194,7 @@ export function Tabla<T>({
 							<li
 								key={claveFila(fila)}
 								data-seleccionada={marca(fila)}
-								className="flex flex-col gap-2 rounded-tarjeta border border-borde-sutil bg-superficie px-4 pt-4 pb-3 data-seleccionada:border-borde-control data-seleccionada:bg-superficie-cafe"
+								className="flex flex-col gap-2 rounded-tarjeta border border-borde-sutil bg-superficie px-4 pt-4 pb-3 [container-type:inline-size] data-seleccionada:border-borde-control data-seleccionada:bg-superficie-cafe"
 							>
 								<p className="m-0 font-texto text-(length:--texto-titulo-interfaz) font-semibold leading-[1.35] text-texto-principal">
 									{principal.celda(fila)}

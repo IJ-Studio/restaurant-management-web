@@ -6,6 +6,40 @@
 
 ## Fase 5 · Administración
 
+### 5.10 · Promociones en administración (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/promociones/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/admin/promociones/PromocionesAdmin.tsx`.
+- **Mismas llamadas y mismo cuerpo:** `GET /promociones/admin`, `POST /promociones`, `PATCH` y `DELETE /promociones/:id`. Activar sigue siendo optimista y se deshace si falla.
+- **Indicadores:** «En la web ahora» (activas y dentro de sus fechas, con `promocionesVigentes` de la parte pública) como protagonista, activas y en total.
+- **Lista:** `Tabla` (tarjetas por debajo de 1024 px) con buscador y filtro (todas, en la web, activas e inactivas).
+  - Precio de la promoción con el normal tachado, con «Antes» para lectores.
+  - Vigencia escrita.
+  - Estado: «En la web», «Fuera de fechas» o «Inactiva».
+- **`DialogoPromocion` sustituye a `PromoModal`:**
+  - Valida con `esquemaPromocion` (3.1): título obligatorio, precios ≥ 0 y **la fecha de inicio no posterior a la de fin**, lo que pide 5.10. Además, `min` y `max` cruzados en los campos de fecha.
+  - La imagen se sube con el mismo widget, limitado a JPG, PNG, WebP o AVIF de 5 MB (la firma antes de subir, en NP-46).
+  - El color y el emoji siguen en el cuerpo porque son datos del API, pero ya no se muestran muestras de gradiente. Cada campo explica que la web no los usa.
+- **Errores y confirmaciones:** eliminar pide confirmación del sistema, destructiva. Los errores van como notificación, sin texto del API; antes eran `alert()`. La carga fallida muestra «Reintentar»; antes la lista se quedaba vacía.
+- **Retirado:** `PromoModal`.
+- **`Contraetiqueta` en tarjetas estrechas:**
+  - Con menos de 16rem (móvil con el texto al 125 %), cada rótulo va encima de su valor.
+  - Las tarjetas de `Tabla` son contenedores (`container-type: inline-size`).
+  - **Motivo:** una insignia ancha («Fuera de fechas») o un rango de fechas desbordaban la página a 360 px.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `promociones-admin.spec` (nueva), las demás pantallas de administración y las públicas con tarjetas (pedido, producto, reservas y checkout), 141/141. La nueva comprueba:
+  - los tres estados y el filtro «En la web»;
+  - la validación del título y de las fechas, y el `POST` con el cuerpo de siempre (color incluido);
+  - el `PATCH { activa: true }`;
+  - eliminar con confirmación y error avisado, y la carga fallida;
+  - axe en la página y en el diálogo, sin desborde, a 360, 768 y 1440 px, en los dos temas.
+- Catálogo (dev): tabla, componentes de marca y catálogo, 27/27 (1 omitida).
+- Capturas revisadas: claro a 360 px y oscuro a 1440 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase).
+
 ### 5.9 · Carta en administración (2026-11-03)
 
 **Cambios:**

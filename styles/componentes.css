@@ -86,6 +86,23 @@
   .contraetiqueta[data-sin-filete-final] > :nth-last-child(-n + 2) {
     border-block-end: 0;
   }
+  /* En una tarjeta estrecha (menos de 16rem: móvil con el texto al 125 %), cada rótulo va encima de
+     su valor; si no, un valor ancho (una insignia, un rango de fechas) no cabría al lado (PLAN 5.10).
+     Hace falta un contenedor por encima: las tarjetas de `Tabla` lo son. */
+  @container (max-width: 16rem) {
+    .contraetiqueta {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .contraetiqueta > dt {
+      padding-block-end: 0;
+      border-block-end: 0;
+    }
+    .contraetiqueta > dd {
+      justify-content: flex-start;
+      padding-block-start: var(--espacio-2xs);
+      text-align: start;
+    }
+  }
   /* Dos pares por fila desde 768 px; el margen corta el filete entre las dos columnas. */
   @media (min-width: 48rem) {
     .contraetiqueta[data-columnas="2"] {

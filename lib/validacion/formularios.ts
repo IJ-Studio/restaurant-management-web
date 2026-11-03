@@ -201,7 +201,7 @@ export const esquemaPlatillo = z.looseObject({
 });
 
 /**
- * Promoción (`PromoModal`). Además de las reglas de hoy, la fecha de inicio no puede ser
+ * Promoción (`DialogoPromocion`, PLAN 5.10). Además de las reglas de hoy, la fecha de inicio no puede ser
  * posterior a la de fin: lo exige el paso 5.10 del PLAN.
  */
 export const esquemaPromocion = z
