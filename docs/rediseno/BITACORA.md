@@ -6,6 +6,36 @@
 
 ## Fase 5 · Administración
 
+### 5.6 · Nómina (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/payroll/page.tsx` pasa a ser de servidor.** La pantalla es `features/dashboard/admin/nomina/Nomina.tsx`.
+- **Mismas llamadas** (`GET`, `POST`, `PATCH` y `DELETE` sobre `/payroll`, con los mismos cuerpos) y la misma actualización optimista al activar o quitar, que se deshace si falla.
+- **Indicadores:** nómina semanal como protagonista, al mes aproximado (×4, como antes), personal activo (de cuántos) y pago medio. Cargan con esqueleto; si la carga falla, muestran «Reintentar» y nunca un cero.
+- **Gasto semanal por área:** `GraficaBarras`, que sustituye a las barras hechas a mano. Agrupa igual («Chef 1» → «Chef»).
+- **Personal:** `Tabla`, que pasa a tarjetas por debajo de 768 px, con `Buscador` e insignia de estado.
+  - Acciones: «Activar» o «Desactivar», con el nombre en `aria-label`, «Editar» y «Quitar», con iconos que llevan su nombre.
+- **`DialogoEmpleado`** sustituye a `PayrollModal`: valida al enviar, con `Interruptor` para «Activo en la nómina», y no se cierra mientras guarda.
+- **Sin `alert()` ni `confirm()`:**
+  - Quitar pide confirmación del sistema, destructiva.
+  - Los errores llegan como notificación genérica, sin el texto del API (D-20); antes era `alert(err.message)`.
+- **Rejilla común de la primera fila** (`components/paneles/rejilla.ts`), aplicada al inicio, reportes, finanzas, facturas y nómina:
+  - **Por debajo de 1280 px:** la protagonista ocupa su fila y las otras tres van juntas debajo. Con 2 + 2 la cuarta quedaba huérfana en tableta.
+  - **Desde `xl`:** las cuatro en una fila.
+  - **Con tres indicadores:** su propia variante.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. Build correcto.
+- Chromium en producción: `nomina.spec` (nueva) más inicio, reportes, finanzas, facturas y el layout, 62/62. La nueva comprueba:
+  - los totales del personal activo y el alta con el mismo `POST` exacto;
+  - la búsqueda y el `PATCH` exacto al activar;
+  - quitar con confirmación, un error sin texto del API y el borrado deshecho;
+  - la carga fallida;
+  - axe, sin desborde, a 360, 768 y 1440 px, en los dos temas.
+- Capturas revisadas: oscuro a 1440 px, claro y oscuro a 768 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase). Con el backend real, la forma de las respuestas se toma de lo que ya leía el código.
+
 ### 5.5 · Facturas (2026-11-03)
 
 **Cambios:**

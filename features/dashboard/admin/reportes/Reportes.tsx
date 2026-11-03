@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Users } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
 import { Contraetiqueta } from "@/components/marca/Contraetiqueta";
 import { Dialogo } from "@/components/ui/Dialogo";
@@ -99,12 +100,12 @@ function VistaVentas() {
 	return (
 		<div className="flex flex-col gap-(--espacio-xl)">
 			<BloquePanel titulo="Resumen del periodo" datosDeEjemplo acciones={<SelectorPeriodo periodo={periodo} alCambiar={setPeriodo} />}>
-				<div className="grid grid-cols-1 gap-(--espacio-md) sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
+				<div className={REJILLA_INDICADORES}>
 					<Indicador
 						rotulo="Ventas"
 						valor={importe(s.ventas)}
 						comparacion={{ cambio: s.growth / 100, referencia: "frente al periodo anterior" }}
-						className="sm:col-span-2 xl:col-span-1"
+						className={INDICADOR_PROTAGONISTA}
 					/>
 					<Indicador rotulo="Pedidos" valor={entero.format(s.pedidos)} />
 					<Indicador rotulo="Ticket medio" valor={importe(s.ticket)} />

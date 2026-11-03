@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ClipboardList } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
@@ -132,13 +133,13 @@ function Indicadores() {
 	const estado = estadisticas.estado;
 	const comun = { estado, alReintentar: recargarEstadisticas } as const;
 	return (
-		<div className="grid grid-cols-1 gap-(--espacio-md) sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
+		<div className={REJILLA_INDICADORES}>
 			<Indicador
 				{...comun}
 				rotulo="Ventas de hoy"
 				valor={e ? formatearImporte(num(e.totalVentas)) : undefined}
 				detalle="Desde la apertura"
-				className="sm:col-span-2 xl:col-span-1"
+				className={INDICADOR_PROTAGONISTA}
 				data-prueba="indicador-ventas"
 			/>
 			<Indicador

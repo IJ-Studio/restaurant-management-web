@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Coins, Lock, Plus, ReceiptText, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
@@ -251,8 +252,8 @@ export function Finanzas({ vistaInicial }: { vistaInicial?: string }) {
 			</Aviso>
 
 			<BloquePanel titulo={ultimoDia ? `Resumen del ${formatearDia(ultimoDia)}` : "Resumen del día"} datosDeEjemplo>
-				<div className="grid grid-cols-1 gap-(--espacio-md) sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))]">
-					<Indicador rotulo="Balance del día" valor={importe(ingresos - egresos)} detalle="Ingresos menos egresos" className="sm:col-span-2 xl:col-span-1" />
+				<div className={REJILLA_INDICADORES}>
+					<Indicador rotulo="Balance del día" valor={importe(ingresos - egresos)} detalle="Ingresos menos egresos" className={INDICADOR_PROTAGONISTA} />
 					<Indicador rotulo="Ingresos" valor={importe(ingresos)} detalle={`${delDia.filter((m) => m.type === "ingreso").length} movimientos`} />
 					<Indicador rotulo="Egresos" valor={importe(egresos)} detalle={`${delDia.filter((m) => m.type === "egreso").length} movimientos`} />
 					<Indicador rotulo="Propinas por repartir" valor={importe(porRepartir)} />

@@ -6,6 +6,7 @@ import { Contraetiqueta } from "@/components/marca/Contraetiqueta";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
 import { MigasPanel } from "@/components/paneles/MigasPanel";
+import { PROTAGONISTA_DE_TRES, REJILLA_TRES_INDICADORES } from "@/components/paneles/rejilla";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Buscador } from "@/components/ui/Buscador";
@@ -135,8 +136,8 @@ export function Facturas() {
 			</Aviso>
 
 			<BloquePanel titulo="Resumen" datosDeEjemplo>
-				<div className="grid grid-cols-1 gap-(--espacio-md) sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_repeat(2,minmax(0,1fr))]">
-					<Indicador rotulo="Facturado" valor={importe(facturado)} detalle="Sin contar las canceladas" className="sm:col-span-2 xl:col-span-1" />
+				<div className={REJILLA_TRES_INDICADORES}>
+					<Indicador rotulo="Facturado" valor={importe(facturado)} detalle="Sin contar las canceladas" className={PROTAGONISTA_DE_TRES} />
 					<Indicador rotulo="Cobrado" valor={importe(cobrado)} />
 					<Indicador rotulo="Por cobrar" valor={importe(porCobrar)} detalle="Emitidas y pendientes" />
 				</div>
