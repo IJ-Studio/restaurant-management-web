@@ -28,6 +28,8 @@ export interface PorcionDonut {
 export interface GraficaDonutProps extends Pick<MarcoGraficaProps, "titulo" | "descripcion" | "estado" | "alReintentar" | "datosDeEjemplo" | "textoVacio" | "className"> {
 	porciones: PorcionDonut[];
 	formatoValor?: (n: number) => string;
+	/** Formato de la cifra del centro, que tiene poco sitio («$ 68 mil»); por defecto, `formatoValor`. */
+	formatoTotal?: (n: number) => string;
 	/** Rótulo del total, en el centro. */
 	rotuloTotal?: string;
 	tituloCategoria?: string;
@@ -63,6 +65,7 @@ function arco(cx: number, cy: number, r: number, grosor: number, inicio: number,
 export function GraficaDonut({
 	porciones,
 	formatoValor = formatoPorDefecto,
+	formatoTotal,
 	rotuloTotal = "Total",
 	tituloCategoria = "Parte",
 	...marco
@@ -139,7 +142,7 @@ export function GraficaDonut({
 									/>
 								))}
 								<text x={r} y={r - 6} textAnchor="middle" fontSize={20} fontWeight={600} fill="var(--color-texto-principal)" className="numeros-tabulares">
-									{formatoValor(total)}
+									{(formatoTotal ?? formatoValor)(total)}
 								</text>
 								<text x={r} y={r + 14} textAnchor="middle" fontSize={12} fill="var(--color-texto-secundario)">
 									{rotuloTotal}
@@ -162,12 +165,16 @@ export function GraficaDonut({
 						<li
 							key={p.nombre}
 							data-activa={activo === i || undefined}
-							className="flex items-center gap-3 border-b border-borde-sutil py-2 last:border-b-0 data-activa:text-texto-principal"
+							className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-borde-sutil py-2 last:border-b-0 data-activa:text-texto-principal"
 						>
-							<span aria-hidden="true" className="size-2.5 shrink-0 rounded-[2px]" style={{ background: p.color }} />
-							<span className="min-w-0 flex-1 text-texto-secundario">{p.nombre}</span>
-							<span className="font-medium text-texto-principal numeros-tabulares">{formatoValor(p.valor)}</span>
-							<span className="min-w-11 text-end whitespace-nowrap text-texto-secundario numeros-tabulares">{porcentaje.format(p.valor / total)}</span>
+							<span className="flex min-w-24 flex-1 items-center gap-3">
+								<span aria-hidden="true" className="size-2.5 shrink-0 rounded-[2px]" style={{ background: p.color }} />
+								<span className="min-w-0 text-texto-secundario [overflow-wrap:anywhere]">{p.nombre}</span>
+							</span>
+							<span className="ms-auto flex items-center gap-3">
+								<span className="font-medium whitespace-nowrap text-texto-principal numeros-tabulares">{formatoValor(p.valor)}</span>
+								<span className="min-w-11 text-end whitespace-nowrap text-texto-secundario numeros-tabulares">{porcentaje.format(p.valor / total)}</span>
+							</span>
 						</li>
 					))}
 				</ul>

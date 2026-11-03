@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-
 export interface SalesData {
   day?: string;
   mes?: string;
@@ -29,7 +27,8 @@ export interface PaymentDist {
   method: string;
   pct: number;
   amount: number;
-  color: string;
+  /** Solo lo usa `DonutChart` (salud de BD) hasta 5.16; los reportes toman el color de los tokens. */
+  color?: string;
 }
 
 export const WEEKLY_SALES: SalesData[] = [
@@ -69,9 +68,9 @@ export const STAFF_METRICS: StaffMetric[] = [
 ];
 
 export const PAYMENT_DIST: PaymentDist[] = [
-  { method: "Efectivo", pct: 48, amount: 32640, color: "#059669" },
-  { method: "Tarjeta", pct: 34, amount: 23120, color: "#2563eb" },
-  { method: "Transferencia", pct: 18, amount: 12240, color: "#7c3aed" },
+  { method: "Efectivo", pct: 48, amount: 32640 },
+  { method: "Tarjeta", pct: 34, amount: 23120 },
+  { method: "Transferencia", pct: 18, amount: 12240 },
 ];
 
 export const PERIOD_STATS = {

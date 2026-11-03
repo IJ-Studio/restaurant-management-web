@@ -48,7 +48,9 @@
      sus filetes quedan siempre a la misma altura. */
   .contraetiqueta {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    /* El rótulo ocupa lo que necesita, hasta el 55 %, y se parte en líneas si es largo; antes, con
+       `auto`, un rótulo largo con texto al 125 % dejaba la cifra sin sitio y se montaban (PLAN 5.3). */
+    grid-template-columns: fit-content(55%) minmax(0, 1fr);
     margin: 0;
   }
   .contraetiqueta > dt,
@@ -87,7 +89,7 @@
   /* Dos pares por fila desde 768 px; el margen corta el filete entre las dos columnas. */
   @media (min-width: 48rem) {
     .contraetiqueta[data-columnas="2"] {
-      grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+      grid-template-columns: fit-content(30%) minmax(0, 1fr) fit-content(30%) minmax(0, 1fr);
     }
     .contraetiqueta[data-columnas="2"] > dd:nth-of-type(odd) {
       margin-inline-end: var(--espacio-xl);

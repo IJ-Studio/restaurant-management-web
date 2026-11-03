@@ -6,6 +6,44 @@
 
 ## Fase 5 · Administración
 
+### 5.3 · Reportes (2026-11-03)
+
+**Cambios:**
+- **`app/dashboard/admin/reports/page.tsx` pasa a ser de servidor** y lee `?vista=` para la primera pintura.
+- **La pantalla es `features/dashboard/admin/reportes/Reportes.tsx`,** con tres pestañas (`Pestanas`, `?vista=ventas|equipo|clientes`). El contenido solo se monta en la pestaña activa, así que la segmentación solo se pide al abrir «Clientes», como antes.
+- **Ventas (datos de ejemplo de `reportsMock`, con su insignia, D-13):**
+  - Cuatro indicadores, con «Ventas» como protagonista y el periodo en un grupo de botones con `aria-pressed`.
+  - `GraficaBarras` de ventas por día y de ingresos por mes, `GraficaDonut` de formas de pago y `Tabla` de platos más vendidos.
+  - **Sin cifras escritas a mano:** «Mejor día: Sábado $9,400», «+3.1% MoM» y la frase sobre el efectivo se calculan ahora de los mismos datos. Se retiró «Proyección $148k», que no salía de ningún dato. También se retiraron los sparklines con valores fijos y el botón de fila que no hacía nada.
+- **Equipo:** `Tabla` con datos de ejemplo.
+- **Clientes, segmentación real (`/reports/customer-segments`, sin cambios):**
+  - Tiene sus estados: esqueleto, error con «Reintentar» y «no disponible» con el motivo del API.
+  - Tres indicadores. «Índice de silueta» pasa a «Separación entre segmentos», con su escala explicada.
+  - El mapa de clientes usa Recharts cargado con `next/dynamic`, colores `--color-grafica-*` en vez de hex, y no recibe el foco porque está oculto a los lectores.
+  - Tarjetas de segmento con `Contraetiqueta` y su lista de clientes en un `Dialogo` con `Tabla`, en lugar del modal hecho a mano.
+  - Se retiraron los textos técnicos «K-Means», «PCA» y «Reportes → Segmentación (nueva pestaña)» (D-20).
+- **Exportar:** `DialogoExportar` sustituye a `components/admin/ExportModal` (46 hex, `text-[Npx]` y estilos en línea).
+  - Hace la misma petición `GET /export?type&format&startDate&endDate&limit` y la misma descarga.
+  - Añade campos del catálogo y la validación «Hasta» ≥ «Desde».
+  - El error ya no muestra el texto crudo de la respuesta.
+- **Comunes:** `components/paneles/BloquePanel.tsx` (sección con `h2`, acciones e insignia de datos de ejemplo), que ya usa también el inicio.
+- **Ajustes de componentes** que salieron al montar la pantalla a 360 px con el texto al 125 %:
+  - **`Contraetiqueta`:** el rótulo pasa de `auto` a `fit-content(55 %)`, porque un rótulo largo dejaba la cifra sin sitio. Afecta también a las páginas públicas, que se repitieron.
+  - **`GraficaDonut`:** en la leyenda, el nombre se parte y las cifras bajan juntas a su línea. Nueva prop `formatoTotal` para la cifra del centro («$ 68 k»).
+- **Retirados** (versionados y sin uso): `ExportModal`, `charts/BarChart` y `charts/Sparkline`. `DonutChart` y `KpiCard` siguen en salud de BD hasta 5.16. Los hex de `PAYMENT_DIST` también se retiraron.
+
+**Verificación:**
+- Typecheck limpio y lint limpio en los archivos tocados. `DonutChart` conserva su error previo y no se ha tocado. Build correcto.
+- Chromium en producción: 62 pasan. Incluye `reportes.spec` (nueva), `inicio-admin` y las páginas públicas con `Contraetiqueta`: producto, reservas, checkout y pedido. La nueva comprueba:
+  - las insignias, el periodo y que no queden frases inventadas;
+  - que la segmentación no se pida hasta abrir su pestaña;
+  - la exportación: validación de fechas, la URL exacta y el nombre del archivo;
+  - los segmentos con su diálogo, el error y «no disponible»;
+  - axe sin violaciones y sin desborde en ventas (360, 768 y 1440 px) y en clientes (360 y 1440 px), en los dos temas.
+- Capturas revisadas: ventas en oscuro a 1440 y 360 px, ventas en claro a 360 px y clientes en claro a 1440 px.
+
+**No verificado:** Firefox y WebKit (al cierre de la fase). La exportación con el backend real.
+
 ### 5.2 · Inicio de administración (2026-11-03)
 
 **Cambios:**

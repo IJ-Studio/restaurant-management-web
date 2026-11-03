@@ -12,9 +12,9 @@
 |---|---|
 | Etapa | **Fase 5 en curso** (2026-11-03). Fases 0, 1, 2 (salvo 2.5), 3 y 4 cerradas. Catálogo aprobado por el usuario: referencia de estilo obligatoria. |
 | Rama activa | `feature/rediseno-web-admin` (sale de `feature/rediseno-web-publico`, `e64cc8b`) |
-| Último paso completado | 5.2 · Inicio de administración. |
+| Último paso completado | 5.3 · Reportes. |
 | Bloqueo | Ninguno. **2.5 (aplicar la CSP) sigue sin ejecutarse**: pendiente de la aprobación del usuario. |
-| Siguiente paso | 5.3 · Reportes. |
+| Siguiente paso | 5.4 · Finanzas. |
 | Notas | **Órdenes vigentes (2026-11-03):** fases 4 → 5 → 6 → 7 (solo lo comprobable sin el usuario), con ramas `publico` → `admin` → `pulido` → `auditoria`, cada una desde la anterior; D-17 a D-21; excepciones autorizadas fuera del PLAN, cada una en su commit: retirar `firebase-admin` si nada lo importa (NP-38) y que `/api/auth/logout` caduque siempre las cookies (NP-41); nunca `images.unsplash.com`; sin push, pull, fetch, rebase ni fusiones; sin `.env`; sin dependencias fuera del PLAN; sin Lighthouse ni scripts de rendimiento; quedan para el usuario 2.5, 7.3, lectores de pantalla y dispositivos reales. Decisiones anteriores: [`BITACORA.md`](BITACORA.md). |
 
 > Este bloque se actualiza **en el mismo commit** que cierra cada paso.
@@ -687,7 +687,7 @@ Las pruebas usan la API simulada del paso 0.7. Los endpoints no cambian.
 - [x] **5.2 · Inicio admin.** Ventas de hoy frente al mismo día de la semana anterior, cubiertos y ocupación, ticket medio, reservas de hoy y alertas accionables. El saludo usa el nombre del DTO; la ruta errónea del stock se muestra como error (NP-17).
   - **Commit:** `feat(admin): inicio con indicadores clave`
 
-- [ ] **5.3 · Reportes**
+- [x] **5.3 · Reportes**
   - **Commit:** `feat(admin): reportes con una cifra protagonista`
 
 - [ ] **5.4 · Finanzas**

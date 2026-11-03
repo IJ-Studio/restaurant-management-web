@@ -1,7 +1,8 @@
 "use client";
 
-import { useId, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { ClipboardList } from "lucide-react";
+import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
@@ -80,24 +81,6 @@ const OPCIONES_FILTRO = [
 	{ valor: "cancelada", texto: "Cancelados" },
 ];
 const POR_PAGINA = 10;
-
-function Bloque({ titulo, descripcion, acciones, children }: { titulo: string; descripcion?: string; acciones?: ReactNode; children: ReactNode }) {
-	const id = useId();
-	return (
-		<section aria-labelledby={id} className="flex min-w-0 flex-col gap-(--espacio-md)">
-			<div className="flex flex-wrap items-end justify-between gap-(--espacio-sm)">
-				<div className="flex min-w-0 flex-col gap-1">
-					<h2 id={id} className="m-0 font-titulos text-(length:--texto-titulo-3) font-normal leading-[1.2] text-texto-principal">
-						{titulo}
-					</h2>
-					{descripcion && <p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">{descripcion}</p>}
-				</div>
-				{acciones}
-			</div>
-			{children}
-		</section>
-	);
-}
 
 function Alertas() {
 	const [inventario, recargar] = useCarga(() => pedirPanel<ProductoInventario[]>("/api/inventory/products"), "inicio admin: inventario");
@@ -207,7 +190,7 @@ function PedidosRecientes() {
 	];
 
 	return (
-		<Bloque
+		<BloquePanel
 			titulo="Pedidos recientes"
 			acciones={
 				<Selector
@@ -245,7 +228,7 @@ function PedidosRecientes() {
 					{`Mostrar ${Math.min(POR_PAGINA, filtrados.length - visibles)} más`}
 				</Boton>
 			)}
-		</Bloque>
+		</BloquePanel>
 	);
 }
 
