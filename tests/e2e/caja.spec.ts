@@ -79,6 +79,8 @@ test("cobrar en efectivo: método del API, cambio en vivo, faltante avisado y el
 test("con tarjeta no pide lo recibido y envía la propina; la búsqueda filtra", async ({ browser }) => {
 	const { contexto, page, cobros } = await abrir(browser);
 	const main = page.locator("main");
+	// Primero la lista del API: escribir antes de que hidrate el panel se pierde en WebKit.
+	await expect(main.getByRole("list", { name: "Cuentas por cobrar" }).getByRole("listitem")).toHaveCount(2);
 	await main.getByRole("searchbox", { name: "Buscar por cuenta, mesa o cliente" }).fill("luis");
 	await expect(main.getByRole("list", { name: "Cuentas por cobrar" }).getByRole("listitem")).toHaveCount(1);
 	await main.getByRole("button", { name: /^Cobrar .* de Mesa 7$/ }).click();

@@ -154,8 +154,11 @@ export function useEnvioFormulario<E extends z.ZodType>({
 	}, []);
 
 	return {
-		/** Para el `<form>`: `<form {...propsFormulario}>`. `noValidate` deja los mensajes al sistema. */
-		propsFormulario: { onSubmit, onInput, onChange: onInput, noValidate: true },
+		/**
+		 * Para el `<form>`: `<form {...propsFormulario}>`. `noValidate` deja los mensajes al sistema y
+		 * `method="post"` evita que un envío antes de hidratar ponga los campos (contraseñas incluidas) en la URL.
+		 */
+		propsFormulario: { method: "post", onSubmit, onInput, onChange: onInput, noValidate: true },
 		errores,
 		errorGeneral,
 		enviando,

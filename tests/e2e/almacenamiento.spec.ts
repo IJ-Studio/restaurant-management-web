@@ -172,6 +172,10 @@ test.describe("datos del usuario", () => {
 			}),
 		);
 		await page.goto("/login", { waitUntil: "load" });
+		// En WebKit, pulsar antes de que React hidrate el formulario lo envía de forma nativa y recarga /login.
+		await page.waitForLoadState("networkidle");
+		// Un envío antes de hidratar nunca pone la contraseña en la URL: el formulario es POST.
+		expect(await page.locator("main form").first().getAttribute("method")).toBe("post");
 		// Desde el 4.17 las etiquetas están asociadas a sus campos.
 		await page.getByLabel("Correo").fill("prueba@correo.mx");
 		await page.getByLabel("Contraseña", { exact: true }).fill("contrasena-de-prueba");
