@@ -8,9 +8,9 @@
 |---|---|
 | Fecha | 2026-11-03 |
 | Rama activa | `feature/rediseno-web-admin` (cierre de la fase 5 y frontend de la ampliación) |
-| Paquete en curso | **P0 · Cierre de la fase 5** (WebKit en curso) y **P2** (hecho en este commit) |
-| Último paso completado | P2: clasificación D-38 (265 elementos), `INVENTARIO-API.md` y comprobación del menú de la landing. P1 en `44b7eae`. |
-| Siguiente paso | P0 (WebKit, catálogo en dev, invisibles, bundle, audit, lint) y después P3 (D-22, D-23). |
+| Paquete en curso | **P3 · Identidad e imágenes** |
+| Último paso completado | P0: fase 5 cerrada (WebKit, catálogo en Firefox y WebKit, invisibles, bundle, audit y lint global en la bitácora). P1 `44b7eae`, P2 `f9b5028`. |
+| Siguiente paso | P3 (D-22, D-23) y después P4 (D-30, D-27, D-29, D-28). |
 | Bloqueos | Ninguno. 2.5 (aplicar la CSP) y NP-47 siguen sin ejecutarse por orden del usuario. |
 | Avisos | Repo del API con `HEAD` dañado en la copia local (se diagnostica en P7, sin reescribir nada). |
 | Decisiones del usuario pendientes | Ver § Pendientes para el usuario. |
@@ -55,10 +55,10 @@ Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6
 
 ### P0 · Cierre de la fase 5 — `feature/rediseno-web-admin`
 
-- [ ] P0.1 WebKit en producción: públicas y recorrido.
-- [ ] P0.2 Catálogo en dev en Firefox y WebKit.
-- [ ] P0.3 `pnpm revisar:invisibles`, revisión del bundle, `pnpm audit` y lint global.
-- [ ] P0.4 Entrada de cierre en la bitácora.
+- [x] P0.1 WebKit en producción: públicas y recorrido.
+- [x] P0.2 Catálogo en dev en Firefox y WebKit.
+- [x] P0.3 `pnpm revisar:invisibles`, revisión del bundle, `pnpm audit` y lint global.
+- [x] P0.4 Entrada de cierre en la bitácora.
 - **Aceptación:** las cuatro baterías en verde en los tres motores o cada fallo explicado; el recuento de lint y audit queda en la bitácora.
 
 ### P1 · Seguridad de la documentación

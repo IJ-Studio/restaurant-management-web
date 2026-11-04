@@ -161,7 +161,7 @@ export async function subirImportacion(archivo: File, filas: Fila[], api: string
 		};
 		const csv = [cabecera.join(","), ...filas.map((f) => cabecera.map((h) => escapar(f[h])).join(","))].join("\n");
 		const datos = new FormData();
-		datos.append("file", new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }), archivo.name);
+		datos.append("file", new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }), archivo.name);
 		res = await fetch(`${api}/platillos/import.csv?mode=upsert`, { cache: "no-store", method: "POST", headers: autorizacion, body: datos });
 	}
 	if (!res.ok) throw new Error(`importación respondió ${res.status}`);

@@ -31,29 +31,26 @@
 
 ## Fase 5 · Administración
 
-### Cierre de la fase 5: en curso (2026-11-03), resumen para leer al volver
+### Cierre de la fase 5 (2026-11-03)
 
-Los pasos 5.1 a 5.20 están hechos, cada uno en su commit (de `92bd7c8` a `be09aa6`). La verificación completa se cortó por el límite de uso.
+Los pasos 5.1 a 5.20 están hechos, cada uno en su commit (de `92bd7c8` a `be09aa6`). Verificación completa (las tandas de WebKit y del catálogo se hicieron al retomar, ya con la ampliación en marcha):
 
 | Comprobación | Resultado |
 |---|---|
 | Chromium en producción, batería completa | Administración 191/191 · públicas 124 + 90 · recorrido 95/95 |
 | Firefox en producción, batería completa | Administración 191/191 · públicas 120 + 90 · recorrido 95/95 |
-| WebKit en producción | Administración 191/191. **Pendiente:** públicas A1 (se lanzó al cortar; resultado sin leer), A2 y recorrido |
-| Catálogo en dev | Chromium 73 + 68. **Pendiente:** Firefox y WebKit |
-| `revisar:invisibles`, `revisar-bundle`, `pnpm audit` y lint global | **Pendientes** |
+| WebKit en producción | Administración 191/191 · públicas 170 + 82 · recorrido 95/95. Un fallo en `sistema.spec` (`/unauthorized`) lo causó el cambio de nombre de la ilustración (P3) hecho en la prueba mientras la tanda corría contra el build anterior; con el build nuevo, ver P3. |
+| Catálogo en dev | Chromium 73 + 68 · Firefox 73 + 48 · WebKit 74 + 48. Firefox tuvo un fallo por el mismo motivo (un plato de ejemplo renombrado en P3); repetida la prueba, pasa. |
+| `revisar:invisibles` | 1 hallazgo: un BOM literal en `features/dashboard/admin/carta/importacion.ts:164` (prefijo del CSV). Pasa a escape `﻿`; después, 0 en 397 archivos. |
+| Revisión del bundle | Limpio: 657 archivos, sin contenido de desarrollo, 0 secretos y 0 mapas. **Comprobado:** zod sí entra en el bundle de login y registro (era «no verificado» en 3.1); es un dato de peso, no de seguridad (P5.9). |
+| `pnpm audit` | 0 críticas · 19 altas · 13 moderadas · 0 bajas (igual que tras retirar `firebase-admin`). Por origen: `googleapis` (jws, brace-expansion, qs, glob) y `drizzle-orm`, que salen con D-32; `xlsx` (NP-31); la cadena de `@tailwindcss/postcss` y `@tailwindcss/cli` (postcss, nanoid, picomatch) y las transitivas de `next` (postcss, source-map-js, browserslist), herramientas de build; `next-cloudinary` (zod 3). |
+| Lint global | 49 errores y 10 avisos (`no-explicit-any` 36, `no-require-imports` 8, `set-state-in-effect` 3, `prefer-const` 2; avisos de variables sin uso y `exhaustive-deps`). Están en las rutas internas de BD, los scripts de la raíz, `useInventory` y `dataService` (se retiran con D-32 y D-24) y en `lib/api.ts`, `useFetch`, `useLockout`, `useAsyncAction`, `useReservationAvailability`, `reservations.service`, `authSlice`, `types/ButtonProps`, `IdleLogout` y `public/preferencias.js` (P5.9). |
 
-**Para retomar:**
-1. Los scripts están en el scratchpad de la sesión: `ciclo-prod.sh` y `e2e-dev.sh` con `grupoA1.txt`, `grupoA2.txt` y `grupoA3.txt`.
-2. Terminar WebKit en producción (A1, A2 y recorrido) y el catálogo en dev en Firefox y WebKit (`dev1.txt` y `dev2.txt`).
-3. Después, invisibles, bundle, audit y lint, y escribir aquí el cierre.
-4. Crear `feature/rediseno-web-pulido` (fase 6).
-
-**Nuevas notas de esta fase:** NP-44 (cifras del inicio que el API no da), NP-45 (caja y facturas sin backend), NP-46 (preset de Cloudinary de marcador; disponibilidad y borrado de platillos solo locales) y NP-47 (`IdleLogout` sin montar).
+**Nuevas notas de esta fase:** NP-44, NP-45, NP-46 y NP-47.
 
 **No verificado:** lectores de pantalla, dispositivos reales (tableta de caja, móvil de sala, monitor de cocina), Lighthouse (lo lanza el usuario) y el backend real (subidas, importación, exportación).
 
-**Decisiones pendientes del usuario:** 2.5 (aplicar la CSP), NP-43 (posicionamiento) y NP-46/NP-47 (producto o backend).
+**Decisiones pendientes del usuario:** 2.5 (aplicar la CSP) y NP-47. NP-43 y NP-46 quedan resueltas por D-22 y D-31 (`PLAN-AMPLIACION.md`).
 
 ### 5.20 · Retirar los alias y las clases heredadas (2026-11-03)
 
