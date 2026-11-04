@@ -10,9 +10,8 @@ export default function CorporativoPage() {
       <SeccionLegal titulo="Identidad del establecimiento">
         <p>
           Restaurante El Quijote opera en Plaza Hidalgo #5-1, Colonia Centro, Huejutla de Reyes,
-          Hidalgo, México, C.P. 43000. Somos un negocio local dedicado a la gastronomía
-          internacional con inspiración española, en operación continua desde nuestra apertura en
-          el centro de la ciudad.
+          Hidalgo, México, C.P. 43000. Somos un negocio local de comida mexicana, en
+          operación continua desde nuestra apertura en el centro de la ciudad.
         </p>
       </SeccionLegal>
 

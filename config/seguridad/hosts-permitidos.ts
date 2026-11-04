@@ -47,8 +47,6 @@ export const HOSTS_ENLACE: readonly string[] = [
 
 /** Orígenes que se pueden incrustar en un marco. */
 export const HOSTS_MARCO: readonly string[] = [
-	// Mapa de /about (google.com/maps/embed).
-	"https://www.google.com",
 	// Widget de subida de CldUploadButton.
 	"https://upload-widget.cloudinary.com",
 ];

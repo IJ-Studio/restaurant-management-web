@@ -8,7 +8,7 @@ test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de produ
 const CLAVE = "elquijote:preferencias";
 const PAGINAS = [
 	{ ruta: "/no-existe-esta-pagina", tipo: "no-encontrado", ilustracion: "plato-cloche", codigo: "404", salida: "/" },
-	{ ruta: "/unauthorized", tipo: "sin-sesion", ilustracion: "llave-bodega", codigo: "401", salida: "/login" },
+	{ ruta: "/unauthorized", tipo: "sin-sesion", ilustracion: "llave-casa", codigo: "401", salida: "/login" },
 	{ ruta: "/forbidden", tipo: "prohibido", ilustracion: "puerta-candado", codigo: "403", salida: "/dashboard" },
 	{ ruta: "/maintenance", tipo: "mantenimiento", ilustracion: "mesa-reloj", codigo: null, salida: "tel:+527717028172" },
 	{ ruta: "/offline", tipo: "sin-conexion", ilustracion: "molino-quieto", codigo: null, salida: null },

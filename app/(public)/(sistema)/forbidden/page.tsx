@@ -6,7 +6,7 @@ import { TEXTOS_ESTADO } from "@/components/marca/textos-estado";
 
 export const metadata: Metadata = { title: "Sin acceso", robots: { index: false, follow: false } };
 
-// 403 (PLAN 4.23, D-21): la puerta de la bodega con candado. Las salidas son las de siempre: el panel y el inicio.
+// 403 (PLAN 4.23, D-21): la puerta de la casa con candado. Las salidas son las de siempre: el panel y el inicio.
 export default function PaginaProhibido() {
 	return (
 		<PaginaEstado

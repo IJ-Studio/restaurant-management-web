@@ -16,8 +16,8 @@ import { restaurantConfig } from "@/config/restaurant.config";
 
 // Metadatos de la portada (D-17): la propuesta de PRODUCT.md, sin datos que no estén en la configuración.
 export const metadata: Metadata = {
-	title: { absolute: `${restaurantConfig.name} · Cocina española de alta gama` },
-	description: "Cocina española de alta gama y carta de vinos en el centro de Huejutla de Reyes. Consulta la carta, las promociones vigentes y reserva tu mesa.",
+	title: { absolute: `${restaurantConfig.name} · Comida mexicana en Huejutla de Reyes` },
+	description: "Comida mexicana en el centro de Huejutla de Reyes, Hidalgo. Consulta la carta, las promociones vigentes y reserva tu mesa.",
 };
 
 /**

@@ -13,7 +13,7 @@ const CARTA = [
 		nombre: "Arroces",
 		descripcion: "Arroces secos y melosos, para compartir.",
 		platillos: [
-			{ id: 71, nombre: "Paella de mariscos", descripcion: "Bomba, sofrito y caldo de pescado.", precio: "380.00", imagenUrl: "food-3955317_1280_zstvf7.jpg" },
+			{ id: 71, nombre: "Paella de mariscos", descripcion: "Bomba, sofrito y caldo de pescado.", precio: "380.00", imagenUrl: "image_l57jar" },
 			{ id: 72, name: "Arroz negro", price: 340, available: false },
 		],
 	},

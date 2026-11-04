@@ -1,6 +1,6 @@
 ---
-name: El Quijote — Bodega de guarda
-description: Sistema visual clásico de alta gama para el sitio y los paneles de El Quijote; mezcla el estándar de la alta cocina con la gramática de la etiqueta de un vino de guarda.
+name: El Quijote — Etiqueta de la casa
+description: Sistema visual clásico para el sitio y los paneles de El Quijote, restaurante de comida mexicana; mezcla el estándar de la alta cocina con la gramática de una etiqueta clásica de la casa.
 colors:
   fondo: "#14100C"
   superficie: "#1C1712"
@@ -156,7 +156,7 @@ components:
     padding: "1.25rem 1.5rem"
 ---
 
-# Design System: El Quijote — Bodega de guarda
+# Design System: El Quijote — Etiqueta de la casa
 
 > **Fuente única de verdad del diseño.** Los valores normativos están en el frontmatter y en el bloque de tokens CSS (§ Tokens). El código **no** define colores, tipografías, radios, sombras ni duraciones fuera de `styles/tokens.css`. Si algo no está aquí, se añade aquí primero.
 >
@@ -164,19 +164,19 @@ components:
 
 ## Overview
 
-**Concepto: «Bodega de guarda».** Es una fusión aprobada por el usuario entre dos referencias:
+**Concepto: «Etiqueta de la casa»** (antes «Bodega de guarda»; renombrado con la decisión D-22: el restaurante es de comida mexicana y el vino es solo una bebida más). Es una fusión aprobada por el usuario entre dos referencias:
 
 - **El estándar de la alta cocina:** fondo oscuro, titulares serif, fotografía a sangre, mucho aire y un solo dorado.
-- **La gramática de la etiqueta de un vino de guarda:** etiqueta y contraetiqueta, filetes finos, numeración de añada y sello de la casa.
+- **La gramática de una etiqueta clásica:** etiqueta y contraetiqueta, filetes finos, número de lote y sello de la casa. Es solo estilo visual: ningún texto del sitio habla de vinos, bodega ni maridajes.
 
 El resultado debe sentirse como abrir la carta de un restaurante exclusivo de noche: papel oscuro, tinta hueso, oro apagado, todo en su sitio.
 
 **Cómo se reparten las dos referencias:**
 
 - **La alta cocina pone el escenario.** En la parte pública: portada con fotografía a sangre y velo cálido, titulares en Fraunces con mucho aire, una sola llamada a la acción por pantalla y ritmo vertical amplio.
-- **La etiqueta de vino pone la gramática:**
+- **La etiqueta clásica pone la gramática:**
   - Cada sección se abre con una **etiqueta de sección**: número de lote («Nº 03»), nombre en versalitas espaciadas, **filete doble** ocre y título serif.
-  - Los datos se leen como una **contraetiqueta**: pares rótulo/valor separados por filetes finos y cifras tabulares (origen, maridaje, alérgenos, precio; en el admin: periodo, comparación, fuente).
+  - Los datos se leen como una **contraetiqueta**: pares rótulo/valor separados por filetes finos y cifras tabulares (origen, acompañamiento, alérgenos, precio; en el admin: periodo, comparación, fuente).
   - Un **sello de la casa**, el molino del logo dentro de un círculo con filete, aparece **una vez por página** como firma, nunca como decoración repetida.
 
 **Modo por superficie:**
@@ -189,10 +189,10 @@ El resultado debe sentirse como abrir la carta de un restaurante exclusivo de no
 - Los estados cambian el relleno y el filete, no solo el tinte.
 - Los filetes y motivos se repiten en unidades enteras, nunca cortados.
 - Las cifras van en columnas fijas tabulares, para que no bailen al actualizarse.
-- Cada plato o vino muestra siempre sus datos clave al lado.
+- Cada plato muestra siempre sus datos clave al lado.
 - El foco es lo más luminoso de la pantalla.
 
-**Referencias de nivel de acabado** (decisión D-14 del usuario). Marcan el listón de calidad; no son maquetas que copiar. El mundo lo manda «Bodega de guarda».
+**Referencias de nivel de acabado** (decisión D-14 del usuario). Marcan el listón de calidad; no son maquetas que copiar. El mundo lo manda «Etiqueta de la casa».
 
 - **The Macallan, TimeSpirit Dining Experience** (`themacallan.com`): imagen cinematográfica oscura y cálida, ritmo pausado, pocas palabras por pantalla y una sola invitación clara a reservar. *Su página bloquea las descargas automáticas (403); la referencia se toma del conocimiento general de la marca y debe contrastarla una persona en el navegador.*
 - **Restaurant Fontané** (`restaurantfontane.com`, del grupo El Celler de Can Roca): contención extrema. Un logotipo, una frase de identidad («Honest, noble, with a touch of sophistication»), la carta y la reserva siempre a un clic, y un pie con dirección, teléfono y condiciones.
@@ -218,7 +218,7 @@ Tema **oscuro por defecto**; tema **claro** disponible desde el panel de accesib
 
 ### Primary
 
-- **`--color-acento`** (oscuro `#C9A267` / claro `#835E25`): oro apagado u ocre de bodega. Se usa en filetes de sección, botón primario, número de lote, enlace activo y sello. **Como mucho una superficie rellena de acento por pantalla**, que es el botón primario; el resto son trazos y texto.
+- **`--color-acento`** (oscuro `#C9A267` / claro `#835E25`): oro apagado u ocre. Se usa en filetes de sección, botón primario, número de lote, enlace activo y sello. **Como mucho una superficie rellena de acento por pantalla**, que es el botón primario; el resto son trazos y texto.
 - **`--color-acento-intenso`** (`#DBB97F` / `#6C4C1B`): hover y estado pulsado del acento.
 - **`--color-texto-sobre-acento`** (`#14100C` / `#FBF8F2`): texto e iconos sobre relleno de acento.
 - **`--color-foco`** (`#E8C98F` / `#6C4C1B`): anillo de foco. Es lo más luminoso de la pantalla en el tema oscuro.
@@ -230,7 +230,7 @@ Tema **oscuro por defecto**; tema **claro** disponible desde el panel de accesib
 | `--color-fondo` | `#14100C` negro cálido | `#F4EEE3` hueso | Fondo de página |
 | `--color-superficie` | `#1C1712` | `#FBF8F2` | Tarjetas, campos, tablas |
 | `--color-superficie-elevada` | `#262019` | `#FFFFFF` | Diálogos, menús, paneles laterales |
-| `--color-superficie-cafe` | `#2B2119` | `#EBE1D0` | Bandas destacadas (bodega, reserva), fila seleccionada |
+| `--color-superficie-cafe` | `#2B2119` | `#EBE1D0` | Bandas destacadas (menú, reservas, visítanos), fila seleccionada |
 | `--color-borde-sutil` | `#2E261F` | `#E2D8C8` | Separadores decorativos (no transmiten información) |
 | `--color-borde-control` | `#7D6E5A` | `#8C7C66` | Bordes de campos, casillas y controles (≥ 3:1) |
 | `--color-texto-principal` | `#EFE7DA` blanco hueso | `#1E1813` | Texto principal, logo |
@@ -402,7 +402,7 @@ La landing tiene una sola columna narrativa con alternancia de fondos (`fondo` y
 6. **Pedir** (`#pedir`): pedir en mesa o a domicilio, con enlaces a las páginas de acción.
 7. **Visítanos** (`#visitanos`): dirección, horario, mapa enlazado (sin iframe) y redes sociales.
 
-**Bodega:** no existe todavía contenido de vinos. La sección queda reservada en el diseño, pero no se pinta hasta que el API exponga los datos (ver NOTAS-PENDIENTES).
+**Sin sección de vinos** (D-22): no hay bodega, carta de vinos ni maridajes en la landing ni en ninguna otra página.
 
 **Navegación pública:**
 
@@ -564,7 +564,7 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
   5. Entradilla opcional.
 
   Clase: `.etiqueta-seccion`. Componente `EtiquetaSeccion` (`components/marca/`): el lote se escribe «Nº 03» y va oculto a los lectores (es ornamento); el rótulo, en `--texto-secundario`; el título, en Fraunces `--texto-titulo-2` con `text-wrap: balance` y un máximo de 24ch, lleva `id` para el `aria-labelledby` de su sección. Alineada al inicio o centrada (bandas como `#reservar`).
-- **`Contraetiqueta`:** lista de definiciones (`<dl>`) con pares rótulo/valor separados por filetes sutiles y cifras tabulares, a una o dos columnas. Se usa en el detalle de plato, la ficha de vino futura, el resumen de pedido, el resumen de reserva y el detalle en paneles. Clase: `.contraetiqueta`. Componente `Contraetiqueta` (`components/marca/`):
+- **`Contraetiqueta`:** lista de definiciones (`<dl>`) con pares rótulo/valor separados por filetes sutiles y cifras tabulares, a una o dos columnas. Se usa en el detalle de plato, el resumen de pedido, el resumen de reserva y el detalle en paneles. Clase: `.contraetiqueta`. Componente `Contraetiqueta` (`components/marca/`):
   - Valor de tipo `cifra` (`--texto-cifra-tabla`, peso 500, tabular) o `texto` (mismo tamaño, peso normal).
   - Rótulo y valor ocupan la misma fila de la rejilla y centran su contenido en vertical, así que sus filetes quedan siempre a la misma altura aunque el valor ocupe dos líneas.
   - `columnas={2}`: dos pares por fila desde 768 px, separados por `--espacio-xl`.
@@ -621,7 +621,7 @@ Todos los componentes viven en `components/ui/` (primitivas) y `components/marca
 - **`PaginaEstado`** (`components/marca/`, PLAN 4.0.2, D-21): el único diseño de las páginas de sistema (401, 403, 404, 500, error de segmento y global, mantenimiento, sin conexión, plato o categoría no encontrados).
   - De arriba abajo, centrado y con `--ancho` máximo de 44rem: la ilustración del tipo (16rem, 18rem desde 768 px), el código en Fraunces itálica de acento a `--texto-titulo-2` (como un número de lote, con «Código» para lectores), el filete doble, el título en Fraunces `--texto-titulo-1` (máx. 22ch), el texto en `--texto-entradilla` y `--texto-secundario` (máx. 48ch) y las acciones: en móvil apiladas a todo el ancho; desde 640 px, en fila.
   - Ocupa la pantalla menos la cabecera (`pantallaCompleta`) o solo su contenido dentro de un límite de error. Los textos están en `components/marca/textos-estado.ts`.
-- **Ilustraciones de marca** (`components/marca/ilustraciones/`): una por tipo, de línea en `currentColor` con un solo detalle en acento, lienzo de 160 × 120, trazo de 1,5 px que no escala, `aria-hidden` y menos de 4 KB. Plato con la campana levantada (404), llave de bodega con su etiqueta (401), puerta de bodega con candado (403), olla humeante (500), copa volcada (error), mesa a medio preparar con reloj de arena (mantenimiento) y molino con las aspas quietas (sin conexión). Cada una hace un gesto breve (flotar, mecerse, vapor, arena, viento, gota) que se repite dos o tres veces, con `--duracion-ilustracion`, y vuelve a su sitio; con movimiento reducido no se mueve nada.
+- **Ilustraciones de marca** (`components/marca/ilustraciones/`): una por tipo, de línea en `currentColor` con un solo detalle en acento, lienzo de 160 × 120, trazo de 1,5 px que no escala, `aria-hidden` y menos de 4 KB. Plato con la campana levantada (404), llave de la casa con su etiqueta (401), puerta de la casa con candado (403), olla humeante (500), copa volcada (error), mesa a medio preparar con reloj de arena (mantenimiento) y molino con las aspas quietas (sin conexión). Cada una hace un gesto breve (flotar, mecerse, vapor, arena, viento, gota) que se repite dos o tres veces, con `--duracion-ilustracion`, y vuelve a su sitio; con movimiento reducido no se mueve nada.
 - **`PanelAccesibilidad`**: ver más abajo.
 
 ### Iconos
@@ -805,7 +805,7 @@ El movimiento es sobrio: confirma, nunca adorna.
 
 - **Do** abrir cada sección pública con `EtiquetaSeccion` y numerarlas en orden («Nº 01» … «Nº 07»).
 - **Do** usar una sola llamada a la acción rellena por pantalla; la secundaria va en `secundario` o `fantasma`.
-- **Do** mostrar los datos de un plato, vino, pedido o reserva como `Contraetiqueta`, con cifras tabulares.
+- **Do** mostrar los datos de un plato, pedido o reserva como `Contraetiqueta`, con cifras tabulares.
 - **Do** etiquetar como «Datos de ejemplo» cualquier cifra que no venga del API.
 - **Do** mostrar un error como error («No se pudo cargar», con Reintentar), nunca como cero.
 - **Do** probar cada pantalla en 360, 390, 768, 1024 y 1440 px, en los dos temas y con texto al 125 %.

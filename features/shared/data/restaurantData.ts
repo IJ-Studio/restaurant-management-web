@@ -337,8 +337,8 @@ export const INITIAL_SETTINGS: SystemSettings = {
     fontBody: "DM Sans",
     borderRadius: "medium",
   },
-  loginBgImageUrl: "food-3955317_1280_zstvf7.jpg",
-  registerBgImageUrl: "meal-4840665_1280_azmrqq.jpg",
+  loginBgImageUrl: "image_l57jar",
+  registerBgImageUrl: "image_l57jar",
 };
 
 export const INITIAL_ROLES: Role[] = [

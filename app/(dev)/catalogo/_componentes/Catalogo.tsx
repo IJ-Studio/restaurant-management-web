@@ -524,7 +524,7 @@ export function Catalogo() {
 			<Seccion
 				id="marca"
 				titulo="Piezas de marca"
-				reglas="La etiqueta de sección abre cada sección como la etiqueta de un vino: lote, rótulo en versalitas, filete doble de acento y título serif. La contraetiqueta da los datos en pares rótulo/valor con filetes finos, a una o dos columnas. El sello aparece una vez por página, como firma."
+				reglas="La etiqueta de sección abre cada sección como una etiqueta clásica: lote, rótulo en versalitas, filete doble de acento y título serif. La contraetiqueta da los datos en pares rótulo/valor con filetes finos, a una o dos columnas. El sello aparece una vez por página, como firma."
 			>
 				<DemosMarca />
 			</Seccion>

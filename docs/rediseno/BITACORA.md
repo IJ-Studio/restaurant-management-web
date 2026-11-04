@@ -6,6 +6,25 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### P3 · Identidad mexicana e imágenes propias (D-22, D-23) (2026-11-03)
+
+**Textos (D-22):**
+- **PRODUCT.md:** integra el cambio sin confirmar del usuario en «Positioning» (sin «según el encargo del rediseño: cocina española») y lo corrige con D-22: comida mexicana en Huejutla de Reyes, el vino como una bebida más, sin bodega ni maridajes. También «Users», «Capabilities», «Brand Commitments» y «Evidence on Hand».
+- **DESIGN.md (solo textos, sin tokens):** el concepto pasa a llamarse «Etiqueta de la casa» (antes «Bodega de guarda»). La gramática de etiqueta (lote, filete doble, contraetiqueta) se describe como estilo visual. Fuera la sección «Bodega», la ficha de vino futura y los maridajes. Ilustraciones de 401 y 403: «llave de la casa» y «puerta de la casa».
+- **Sitio:** portada («Cocina mexicana con alma»), Nosotros y `/about` (entradilla y texto; la carta «reúne cocina nacional e internacional, con la comida mexicana al centro», según `restaurant.config.ts`), pie, metadatos de la raíz y de la portada (título, descripción y palabras clave), marcador del buscador de la carta («Nombre del plato…», sin platos inventados) y la frase de identidad de `/corporativo` (el resto del texto legal se rehace en D-36).
+- **Código:** `LlaveBodega` pasa a `LlaveCasa` (`git mv`), y los comentarios de `Contraetiqueta`, `EtiquetaSeccion`, 401 y 403 ya no hablan de vino ni de bodega. En el inventario del admin, «bodega» (almacén) pasa a «almacén» para evitar la ambigüedad; la ayuda de proveedores dice «bebidas» en lugar de «vinos». En el catálogo (dev), la demo de promociones y la contraetiqueta de ejemplo sin vinos.
+- **Sin datos inventados:** solo se usan el nombre, la ciudad, la dirección y la descripción de la carta de `restaurant.config.ts`. «Alta gama» se retira de los textos públicos (no está confirmado); las cifras de `restaurantConfig.stats` no se muestran.
+
+**Imágenes (D-23):**
+- Fondos de login y registro: `image_l57jar` de la nube `dcb1tspbj` (versión desenfocada de la foto de la casa; sin marca de agua visible). `curl -I` → 200 `image/png`. Fuera `food-3955317_1280_zstvf7` y `meal-4840665_1280_azmrqq` (nombres de banco de fotos) del código, del catálogo y de los datos simulados de las pruebas.
+- `hosts-permitidos.ts`: fuera `https://www.google.com` de los marcos (no queda ningún `iframe`). Imágenes: la nube de la casa y el almacenamiento de Supabase del proyecto, que se conserva hasta confirmar con datos reales si el API sirve fotos desde ahí (NP-36, (c)).
+- Pruebas: los casos de rechazo de hosts ajenos usan dominios `example.*`; la prueba del fondo del login comprueba que ninguna imagen sale de otro host; se retiran las tolerancias de CSP de Unsplash (ningún dato las pide ya).
+- **Decisión conservadora:** la portada sigue usando la foto principal de la nube con la marca de agua recortada en la entrega (PLAN 4.3). NP-33 la marca por calidad; sustituirla por la versión desenfocada empobrecería la portada y es una decisión visual del usuario (anotada en «Pendientes para el usuario»).
+
+**Verificación:** typecheck y lint de los 33 archivos tocados sin errores; build correcto; Chromium contra `next start` en las rutas afectadas (imágenes, sistema, páginas de estado, landing, texto enriquecido, CSP, carta, categoría, pedido, producto, legales, informativas y recorrido): 203/203; WebKit `sistema.spec` (el que falló en el cierre por la prueba renombrada): 11/11; catálogo en dev, la prueba de la galería de Nosotros en Firefox: verde. Detector de impeccable sobre los archivos y sobre `/`, `/about`, `/login` y `/unauthorized` servidos: sin hallazgos. `curl -I` de `image_l57jar`: 200.
+
+**No verificado:** el texto en pantalla a 360–1440 px con texto al 125 % se comprobó solo con las pruebas de desbordes existentes (sin capturas nuevas): los textos nuevos tienen una longitud parecida a los anteriores.
+
 ### P2 · Clasificación de pendientes, inventario del API y menú de la landing (2026-11-03)
 
 - **Clasificación D-38** en `PLAN-AMPLIACION.md`: todas las NP (NP-01 a NP-47), los pasos del PLAN sin ejecutar, las decisiones abiertas, los «no verificado» de esta bitácora (agrupados), el resumen y las §1–16 de ESTADO y los 192 hallazgos de los anexos A–D, comprobados uno por uno contra el código actual (99 resueltos, 39 abiertos, 22 parciales y 32 que pedían ejecutar algo).

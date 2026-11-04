@@ -6,7 +6,7 @@ import { TEXTOS_ESTADO } from "@/components/marca/textos-estado";
 
 export const metadata: Metadata = { title: "Inicia sesión", robots: { index: false, follow: false } };
 
-// 401 (PLAN 4.23, D-21): la llave de la bodega. Las salidas son las de siempre: iniciar sesión o crear una cuenta.
+// 401 (PLAN 4.23, D-21): la llave de la casa. Las salidas son las de siempre: iniciar sesión o crear una cuenta.
 export default function PaginaSinSesion() {
 	return (
 		<PaginaEstado

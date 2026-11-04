@@ -12,14 +12,14 @@ import type { PlatoDestacado } from "@/lib/publico/seleccion-platos";
  * tercera no tiene foto y muestra el respaldo de `Imagen`.
  */
 export const PLATOS_EJEMPLO: PlatoDestacado[] = [
-	{ id: 1, nombre: "Parrillada de la casa", categoria: "Carnes", precio: 420, imagenUrl: "food-3955317_1280_zstvf7.jpg", descripcion: "Para compartir." },
-	{ id: 2, nombre: "Empanadas al horno", categoria: "Entrantes", precio: 140, imagenUrl: "meal-4840665_1280_azmrqq.jpg" },
+	{ id: 1, nombre: "Parrillada de la casa", categoria: "Carnes", precio: 420, imagenUrl: "image_l57jar", descripcion: "Para compartir." },
+	{ id: 2, nombre: "Enchiladas de la casa", categoria: "Platos fuertes", precio: 140, imagenUrl: "image_l57jar" },
 	{ id: 3, nombre: "Plato sin foto", categoria: "Postres", precio: 110 },
 ];
 
 export const PROMOCIONES_EJEMPLO: Promotion[] = [
 	{ id: 1, title: "Menú de mediodía", description: "Entrante, principal y postre de la carta del día.", badge: "De la casa", color: "", originalPrice: 480, discountedPrice: 390, endDate: "2026-11-30", active: true, order: 1 },
-	{ id: 2, title: "Maridaje de temporada", description: "Una copa de la carta de vinos con cada principal.", color: "", active: true, order: 2, imageUrl: "meal-4840665_1280_azmrqq.jpg" },
+	{ id: 2, title: "Comida en familia", description: "Platos para compartir al centro de la mesa.", color: "", active: true, order: 2, imageUrl: "image_l57jar" },
 ];
 
 /** Contenido de la sección «Landing» del catálogo. */

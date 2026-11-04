@@ -13,8 +13,8 @@ test.describe("origen de las imágenes", () => {
 	test("acepta solo rutas locales, la nube de la casa y los hosts permitidos", () => {
 		const casos: Array<[string, { src: string; cloudinary: boolean } | null]> = [
 			["/icons/icon-192.png", { src: "/icons/icon-192.png", cloudinary: false }],
-			["food-3955317_1280_zstvf7", { src: "food-3955317_1280_zstvf7", cloudinary: true }],
-			["food-3955317_1280_zstvf7.jpg", { src: "food-3955317_1280_zstvf7.jpg", cloudinary: true }],
+			["image_l57jar", { src: "image_l57jar", cloudinary: true }],
+			["image_l57jar.jpg", { src: "image_l57jar.jpg", cloudinary: true }],
 			["ElQuijote/menu/paella.jpg", { src: "ElQuijote/menu/paella.jpg", cloudinary: true }],
 			[".oculto", null],
 			["ElQuijote/.oculto", null],
@@ -29,9 +29,9 @@ test.describe("origen de las imágenes", () => {
 			["https://res.cloudinary.com:8443/dcb1tspbj/image/upload/a.jpg", null],
 			["https://usuario:clave@res.cloudinary.com/dcb1tspbj/image/upload/a.jpg", null],
 			[`${NUBE}a.jpg?x=1`, null],
-			["https://lh3.googleusercontent.com/gps-cs-s/abc", null],
-			["https://images.unsplash.com/photo-1", null],
-			["https://i.pravatar.cc/150", null],
+			["https://fotos.example.com/abc", null],
+			["https://images.example.org/photo-1", null],
+			["https://avatares.example.net/150", null],
 			["javascript:alert(1)", null],
 			["data:image/svg+xml,<svg/>", null],
 			["//res.cloudinary.com/dcb1tspbj/image/upload/a.jpg", null],
@@ -53,24 +53,24 @@ test.describe("imágenes en las páginas", () => {
 	test.describe.configure({ timeout: 90_000 });
 	test.use({ viewport: { width: 1440, height: 900 } });
 
-	test("el fondo del login sale de Cloudinary con el cargador y el ID correcto", async ({ page }) => {
+	test("el fondo del login es una imagen propia de la nube, con el cargador", async ({ page }) => {
 		const pedidas: string[] = [];
 		page.on("request", (r) => pedidas.push(r.url()));
 		await simularApi(page);
 		await page.goto("/login", { waitUntil: "load" });
-		const fondo = page.locator('img[src*="food-3955317_1280_zstvf7"]');
+		const fondo = page.locator('img[src*="image_l57jar"]');
 		await expect(fondo).toBeVisible();
 		await expect.poll(() => fondo.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
 		expect(await fondo.getAttribute("src")).toMatch(CARGADOR);
 		expect(await fondo.getAttribute("alt")).toBe("");
 		expect(await fondo.getAttribute("sizes")).toBe("(min-width: 1024px) 50vw, 100vw");
-		// Ya no se pide el ID sin sufijo que daba 404 (NP-33).
-		expect(pedidas.filter((u) => /food-3955317_1280(?!_zstvf7)/.test(u))).toEqual([]);
+		// Solo imágenes propias (D-23): ninguna petición a otro host de imágenes.
+		expect(pedidas.filter((u) => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u) && !u.includes("res.cloudinary.com/dcb1tspbj/") && !u.startsWith("http://localhost"))).toEqual([]);
 	});
 
 	for (const [ruta, id] of [
-		["/login", "food-3955317_1280_zstvf7.jpg"],
-		["/register", "meal-4840665_1280_azmrqq.jpg"],
+		["/login", "image_l57jar"],
+		["/register", "image_l57jar"],
 	] as const) {
 		test(`el fondo de ${ruta} no cambia de foto al leer los ajustes tras hidratar`, async ({ page }) => {
 			const ids = new Set<string>();

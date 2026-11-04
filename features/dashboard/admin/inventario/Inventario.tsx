@@ -232,7 +232,7 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 			<EncabezadoPagina
 				antetitulo="Inventario"
 				titulo="Productos y existencias"
-				descripcion="Lo que hay en bodega, su nivel y las mermas."
+				descripcion="Lo que hay en almacén, su nivel y las mermas."
 				acciones={
 					<>
 						<BotonEnlace href="/dashboard/admin/inventory/suppliers" variante="secundario" icono={<Truck />}>
@@ -248,7 +248,7 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 			/>
 
 			<div className={REJILLA_INDICADORES}>
-				<Indicador {...indicador} rotulo="Valor en bodega" valor={importe(valor)} detalle="Existencias por su costo" className={INDICADOR_PROTAGONISTA} />
+				<Indicador {...indicador} rotulo="Valor en almacén" valor={importe(valor)} detalle="Existencias por su costo" className={INDICADOR_PROTAGONISTA} />
 				<Indicador {...indicador} rotulo="Productos" valor={entero.format(productos.length)} detalle={`${entero.format(productos.filter((p) => p.active).length)} activos`} />
 				<Indicador {...indicador} rotulo="En nivel crítico" valor={entero.format(criticos)} detalle={`${entero.format(bajos)} en nivel bajo`} />
 				<Indicador {...indicador} rotulo="Pérdida por mermas" valor={importe(perdida)} detalle={contar(mermas.length, "registro")} />

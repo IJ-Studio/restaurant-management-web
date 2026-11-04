@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { CopaVolcada, LlaveBodega, MesaReloj, MolinoQuieto, OllaHumeante, PlatoCloche, PuertaCandado } from "./ilustraciones";
+import { CopaVolcada, LlaveCasa, MesaReloj, MolinoQuieto, OllaHumeante, PlatoCloche, PuertaCandado } from "./ilustraciones";
 
 /**
  * Página de estado (PLAN 4.0.2 y 4.23, D-21): un solo diseño para 401, 403, 404, 500, el error de
@@ -21,7 +21,7 @@ export type TipoEstado =
 
 const ILUSTRACION: Record<TipoEstado, (p: { className?: string }) => ReactNode> = {
 	"no-encontrado": PlatoCloche,
-	"sin-sesion": LlaveBodega,
+	"sin-sesion": LlaveCasa,
 	prohibido: PuertaCandado,
 	"error-servidor": OllaHumeante,
 	error: CopaVolcada,

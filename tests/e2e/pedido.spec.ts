@@ -13,7 +13,7 @@ const MESA = () => [
 		id: "carrito-1",
 		estatus: "pendiente",
 		ordenItems: [
-			{ id: 501, cantidad: 2, precioUnitario: "120.00", platillo: { nombre: "Croquetas de jamón", imagenUrl: "food-3955317_1280_zstvf7.jpg" } },
+			{ id: 501, cantidad: 2, precioUnitario: "120.00", platillo: { nombre: "Croquetas de jamón", imagenUrl: "image_l57jar" } },
 			{ id: 502, cantidad: 1, precioUnitario: "380.00", platillo: { nombre: "Paella de mariscos", imagenUrl: null } },
 		],
 	},

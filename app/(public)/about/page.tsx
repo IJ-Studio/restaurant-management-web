@@ -9,7 +9,7 @@ import { restaurantConfig } from "@/config/restaurant.config";
 
 export const metadata: Metadata = {
 	title: "Nosotros",
-	description: "El Quijote: cocina española de alta gama y carta de vinos en el centro de Huejutla de Reyes.",
+	description: "El Quijote: comida mexicana en el centro de Huejutla de Reyes, Hidalgo.",
 };
 
 /**
@@ -30,15 +30,15 @@ export default function PaginaNosotros() {
 			<EncabezadoPublico
 				ruta="/about"
 				titulo="Una casa con nombre de caballero andante"
-				entradilla="Cocina española de alta gama en el centro de Huejutla de Reyes, servida sin prisa."
+				entradilla="Comida mexicana en el centro de Huejutla de Reyes, servida sin prisa."
 			/>
 			<div className="grid items-center gap-(--espacio-2xl) md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
 				<div className="flex max-w-(--ancho-lectura) flex-col gap-(--espacio-md) text-(length:--texto-entradilla) leading-[1.6] text-texto-secundario [text-wrap:pretty]">
 					<p className="m-0">
-						En El Quijote cocinamos con calma y servimos con cuidado. La carta reúne platos de la tradición española, y la carta de
-						vinos está pensada para acompañarlos.
+						En El Quijote cocinamos con calma y servimos con cuidado. La carta reúne cocina nacional e internacional, con la comida
+						mexicana al centro de la mesa.
 					</p>
-					<p className="m-0">Queremos que cada visita sea una sobremesa que apetezca alargar: la mesa bien puesta, el plato a su tiempo y una copa para cada ocasión.</p>
+					<p className="m-0">Queremos que cada visita sea una sobremesa que apetezca alargar: la mesa bien puesta y cada plato a su tiempo.</p>
 				</div>
 				<MolinoAnimado className="mx-auto max-w-[20rem] text-acento md:max-w-[24rem]" />
 			</div>

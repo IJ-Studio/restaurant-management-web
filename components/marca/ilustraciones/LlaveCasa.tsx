@@ -1,9 +1,9 @@
 import { Lienzo, T } from "./Lienzo";
 
-/** 401: la llave de la bodega colgada de su clavo, con su etiqueta. */
-export function LlaveBodega({ className }: { className?: string }) {
+/** 401: la llave de la casa colgada de su clavo, con su etiqueta. */
+export function LlaveCasa({ className }: { className?: string }) {
 	return (
-		<Lienzo nombre="llave-bodega" className={className}>
+		<Lienzo nombre="llave-casa" className={className}>
 			<path d="M68 12h24" className="opacity-50" {...T} />
 			<g className="ilus-mece ilus-mece--llave">
 				<circle cx="80" cy="18" r="4" {...T} />

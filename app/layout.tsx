@@ -17,13 +17,13 @@ export const metadata: Metadata = {
     default: INITIAL_SETTINGS.restaurantName,
     template: `%s | ${INITIAL_SETTINGS.restaurantName}`,
   },
-  // Metadatos reescritos con D-17: la propuesta de PRODUCT.md y solo datos de la configuración (NP-43).
+  // Metadatos con D-22: comida mexicana y solo datos de la configuración.
   description:
-    "Restaurante El Quijote: cocina española de alta gama y carta de vinos en Huejutla de Reyes, Hidalgo.",
+    "Restaurante El Quijote: comida mexicana en el centro de Huejutla de Reyes, Hidalgo.",
   keywords: [
     "restaurante",
-    "cocina española",
-    "carta de vinos",
+    "comida mexicana",
+    "restaurante en Huejutla",
     "El Quijote",
     "Huejutla de Reyes",
   ],

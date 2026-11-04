@@ -21,7 +21,7 @@ test.describe("secciones de la landing en el catálogo", () => {
 		await abrir(page);
 		const galeria = prueba(page, "galeria-nosotros");
 		await expect(galeria.getByRole("listitem")).toHaveCount(3);
-		await expect(galeria.locator("figcaption")).toHaveText(["Parrillada de la casa", "Empanadas al horno", "Plato sin foto"]);
+		await expect(galeria.locator("figcaption")).toHaveText(["Parrillada de la casa", "Enchiladas de la casa", "Plato sin foto"]);
 		const fotos = galeria.locator("img");
 		await expect(fotos).toHaveCount(2);
 		for (const src of await fotos.evaluateAll((e) => e.map((i) => (i as HTMLImageElement).currentSrc || (i as HTMLImageElement).src)))

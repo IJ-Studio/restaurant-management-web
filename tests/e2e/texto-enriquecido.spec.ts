@@ -40,7 +40,7 @@ test("la portada no pinta el marcado del API ni ejecuta nada", async ({ page }) 
 	// Desde el 4.2 la portada es de servidor y su titular es un texto estático (D-17): el marcado de
 	// los ajustes del API ya no llega a la página. La conversión segura la cubre la prueba unitaria.
 	const titulo = page.locator("h1").first();
-	await expect(titulo).toHaveText("Cocina española con alma");
+	await expect(titulo).toHaveText("Cocina mexicana con alma");
 	await expect(page.locator("main img[src='x'], main script:not([nonce]), [onclick]")).toHaveCount(0);
 	await expect(page.locator('a[href^="javascript:"], svg[onload], [onmouseover]')).toHaveCount(0);
 	await page.waitForTimeout(500);

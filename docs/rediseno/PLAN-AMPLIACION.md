@@ -8,9 +8,9 @@
 |---|---|
 | Fecha | 2026-11-03 |
 | Rama activa | `feature/rediseno-web-admin` (cierre de la fase 5 y frontend de la ampliación) |
-| Paquete en curso | **P3 · Identidad e imágenes** |
-| Último paso completado | P0: fase 5 cerrada (WebKit, catálogo en Firefox y WebKit, invisibles, bundle, audit y lint global en la bitácora). P1 `44b7eae`, P2 `f9b5028`. |
-| Siguiente paso | P3 (D-22, D-23) y después P4 (D-30, D-27, D-29, D-28). |
+| Paquete en curso | **P4 · Estructura del administrador** |
+| Último paso completado | P3: identidad de comida mexicana (PRODUCT, DESIGN, sitio y metadatos) e imágenes propias (fondos de login y registro). P0 `664f1e6`. |
+| Siguiente paso | P4.1 (D-30: retirar «Sistema»), después D-27, D-29 y D-28. |
 | Bloqueos | Ninguno. 2.5 (aplicar la CSP) y NP-47 siguen sin ejecutarse por orden del usuario. |
 | Avisos | Repo del API con `HEAD` dañado en la copia local (se diagnostica en P7, sin reescribir nada). |
 | Decisiones del usuario pendientes | Ver § Pendientes para el usuario. |
@@ -79,9 +79,9 @@ Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6
 
 ### P3 · Identidad e imágenes (D-22, D-23)
 
-- [ ] P3.1 PRODUCT.md (integra el cambio del usuario en Positioning) y textos de DESIGN.md sin vinos ni cocina española.
-- [ ] P3.2 Landing, `/about`, `/promociones`, introducciones de `/menu` y `/reservations`, login, registro, pie, páginas de sistema, metadatos y `restaurant.config.ts`: comida mexicana, sin «Bodega», carta de vinos ni maridajes. Ilustración `LlaveBodega` renombrada si su texto o nombre habla de bodega.
-- [ ] P3.3 Fondos de login y registro con imagen propia de la nube (`image_l57jar`, comprobada con `curl -I`); fuera `food-3955317` y `meal-4840665` (nombres de banco de fotos) del código, los mocks, las pruebas y el catálogo; `hosts-permitidos.ts` y `next.config.ts` sin terceros.
+- [x] P3.1 PRODUCT.md (integra el cambio del usuario en Positioning) y textos de DESIGN.md sin vinos ni cocina española.
+- [x] P3.2 Landing, `/about`, `/promociones`, introducciones de `/menu` y `/reservations`, login, registro, pie, páginas de sistema, metadatos y `restaurant.config.ts`: comida mexicana, sin «Bodega», carta de vinos ni maridajes. Ilustración `LlaveBodega` renombrada si su texto o nombre habla de bodega.
+- [x] P3.3 Fondos de login y registro con imagen propia de la nube (`image_l57jar`, comprobada con `curl -I`); fuera `food-3955317` y `meal-4840665` (nombres de banco de fotos) del código, los mocks, las pruebas y el catálogo; `hosts-permitidos.ts` y `next.config.ts` sin terceros.
 - **Aceptación:** `rg -i "españ|vino|bodega|marida|sommelier|pixabay|unsplash|pravatar|googleusercontent|food-3955317|meal-4840665"` en `app components features lib config` solo devuelve el nombre del sistema de diseño en DESIGN.md o tokens; 0 imágenes rotas.
 
 ### P4 · Estructura del administrador (D-30, D-29, D-27, D-28)

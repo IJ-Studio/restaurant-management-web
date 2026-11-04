@@ -119,7 +119,7 @@ function Carta() {
 					etiqueta="Buscar en la carta"
 					valor={consulta}
 					alCambiar={setConsulta}
-					marcador="Croquetas, paella, vino…"
+					marcador="Nombre del plato…"
 					ocupado={pendiente}
 					anuncio={
 						buscando

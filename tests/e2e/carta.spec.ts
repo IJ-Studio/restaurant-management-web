@@ -13,7 +13,7 @@ const CARTA = [
 		id: 1,
 		nombre: "Entrantes",
 		platillos: [
-			{ id: 11, nombre: "Croquetas de jamón", descripcion: "Bechamel cremosa y jamón curado.", precio: "120.00", imagenUrl: "food-3955317_1280_zstvf7.jpg" },
+			{ id: 11, nombre: "Croquetas de jamón", descripcion: "Bechamel cremosa y jamón curado.", precio: "120.00", imagenUrl: "image_l57jar" },
 			{ id: 12, nombre: "Pan con tomate", precio: 60 },
 			{ id: 13, nombre: "Pimientos de padrón", precio: 90 },
 			{ id: 14, nombre: "Tortilla de patatas", precio: 110 },

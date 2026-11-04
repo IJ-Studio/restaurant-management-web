@@ -17,7 +17,7 @@ const PLATO = {
 	categoria: { nombre: "Arroces" },
 	disponible: true,
 	esNuevo: true,
-	imagenUrl: "food-3955317_1280_zstvf7.jpg",
+	imagenUrl: "image_l57jar",
 };
 const COMBO = { disponible: true, confianza: 42, precioCombo: 90, sugerido: { id: 9, nombre: "Crema catalana", precio: 110 } };
 

@@ -23,8 +23,6 @@ export function cubre(e: Excepcion, tipo: string, detalle: string): boolean {
 }
 
 export const EXCEPCIONES: Excepcion[] = [
-	// Fotos de muestra (aboutMock.ts) del editor de «Acerca de»: origen fuera de la CSP.
-	{ tipo: "csp", contiene: "img-src https://images.unsplash.com/", resuelve: "NP-36: decisión del usuario antes del 2.5" },
 	// WebKit avisa en consola de que una CSP solo de informe sin report-to no tiene efecto: es el modo
 	// que pidió el usuario hasta aprobar el 2.5, que la aplica.
 	{ tipo: "consola", contiene: "was delivered in report-only mode, but does not specify a 'report-to'", resuelve: "2.5 (aplicar la CSP, pendiente de la aprobación del usuario)" },

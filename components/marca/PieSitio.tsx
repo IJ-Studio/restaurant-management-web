@@ -65,7 +65,7 @@ export function PieSitio({ anio = new Date().getFullYear() }: { anio?: number })
 						<Logo className="h-10 w-auto" />
 					</Link>
 					<p className="m-0 max-w-[32ch] font-titulos text-(length:--texto-titulo-3) leading-[1.25] text-texto-principal [text-wrap:balance]">
-						Cocina española de alta gama y carta de vinos.
+						Comida mexicana en el centro de Huejutla de Reyes.
 					</p>
 					<h2 className="solo-lectores">Contacto</h2>
 					<address className="flex flex-col gap-2 not-italic text-texto-secundario [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-[1.5]">

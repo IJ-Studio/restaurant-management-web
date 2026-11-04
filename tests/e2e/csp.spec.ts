@@ -13,11 +13,8 @@ test.describe.configure({ timeout: 120_000 });
 const SALIDA = join("test-results", "csp");
 
 /** Violaciones que se toleran de forma temporal, con el paso del PLAN que las retira. */
-const JUSTIFICADAS = [
-	// Fotos de muestra de aboutMock.ts en el editor de «Acerca de». Sustituirlas cambia contenido y
-	// permitir el origen amplía la CSP: decisión del usuario antes del 2.5 (NP-36).
-	{ directiva: "img-src", bloqueado: "https://images.unsplash.com/", resuelve: "NP-36, antes del 2.5" },
-];
+// Ninguna desde D-23: solo imágenes propias.
+const JUSTIFICADAS: { directiva: string; bloqueado: string; resuelve: string }[] = [];
 
 test("la cabecera de informe lleva un nonce distinto en cada petición y Next lo pone en sus scripts", async ({ request }) => {
 	const politicaDe = async () => (await request.get("/")).headers()["content-security-policy-report-only"] ?? "";

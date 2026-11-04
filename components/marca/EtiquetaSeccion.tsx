@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Etiqueta de sección (DESIGN.md § Signature components): el sello de identidad que abre cada
- * sección de la landing, como la etiqueta de un vino de guarda. De arriba abajo: número de lote
+ * sección de la landing, como una etiqueta clásica de la casa. De arriba abajo: número de lote
  * («Nº 03», Fraunces itálica en acento), rótulo en versalitas espaciadas, filete doble de acento
  * de 3rem, título y entradilla opcional.
  *

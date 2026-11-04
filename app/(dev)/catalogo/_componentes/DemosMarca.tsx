@@ -50,7 +50,7 @@ export function DemosMarca() {
 						<Contraetiqueta
 							pares={[
 								{ rotulo: "Origen", valor: "Huejutla de Reyes, Hidalgo", tipo: "texto" },
-								{ rotulo: "Maridaje", valor: "Tinto joven de Querétaro o agua de jamaica con un toque de chile", tipo: "texto" },
+								{ rotulo: "Para acompañar", valor: "Agua de jamaica con un toque de chile", tipo: "texto" },
 								{ rotulo: "Alérgenos", valor: "Ninguno declarado", tipo: "texto" },
 								{ rotulo: "Tiempo", valor: "25 min" },
 								{ rotulo: "Precio", valor: "$ 320" },

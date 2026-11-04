@@ -1,6 +1,6 @@
 import { Lienzo, T } from "./Lienzo";
 
-/** 403: la puerta de la bodega bajo su arco de piedra, cerrada con candado. */
+/** 403: la puerta de la casa bajo su arco de piedra, cerrada con candado. */
 export function PuertaCandado({ className }: { className?: string }) {
 	return (
 		<Lienzo nombre="puerta-candado" className={className}>

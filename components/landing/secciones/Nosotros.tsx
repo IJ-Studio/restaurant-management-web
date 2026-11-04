@@ -17,13 +17,13 @@ export function Nosotros({ galeria }: { galeria: PlatoDestacado[] }) {
 			lote={1}
 			rotulo="Nosotros"
 			titulo="Una casa con nombre de caballero andante"
-			entradilla="Cocina española de alta gama en el centro de Huejutla de Reyes, servida sin prisa."
+			entradilla="Comida mexicana en el centro de Huejutla de Reyes, servida sin prisa."
 		>
 			<div className="grid items-center gap-(--espacio-2xl) md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
 				<div className="flex max-w-(--ancho-lectura) flex-col gap-(--espacio-md) text-texto-secundario [text-wrap:pretty]">
 					<p className="m-0">
-						En El Quijote cocinamos con calma y servimos con cuidado. La carta reúne platos de la tradición española, y la carta de
-						vinos está pensada para acompañarlos.
+						En El Quijote cocinamos con calma y servimos con cuidado. La carta reúne cocina nacional e internacional, con la comida
+						mexicana al centro de la mesa.
 					</p>
 					<p className="m-0">Queremos que cada visita sea una sobremesa que apetezca alargar.</p>
 					<div className="pt-(--espacio-xs)">

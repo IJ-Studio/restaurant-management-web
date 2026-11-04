@@ -109,7 +109,7 @@ export function DialogoProveedor({ proveedor, disparador, alGuardar }: { proveed
 					<Campo etiqueta="Persona de contacto" opcional value={f.contact} onChange={(e) => setF({ ...f, contact: e.target.value })} maxLength={120} autoComplete="off" />
 					<Campo etiqueta="Correo" opcional type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} error={d.errores.email} autoComplete="off" />
 					<Campo etiqueta="Teléfono" opcional type="tel" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} maxLength={20} autoComplete="off" />
-					<Campo etiqueta="Categoría" opcional value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })} maxLength={60} ayuda="Carnes, verduras, vinos…" />
+					<Campo etiqueta="Categoría" opcional value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })} maxLength={60} ayuda="Carnes, verduras, bebidas…" />
 					<Campo etiqueta="Sitio web" opcional type="url" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} maxLength={200} autoComplete="off" />
 					<Selector etiqueta="Términos de pago" opciones={TERMINOS.map((t) => ({ valor: t, texto: t }))} value={f.paymentTerms} onChange={(e) => setF({ ...f, paymentTerms: e.target.value })} />
 					<Campo etiqueta="Días de entrega" type="number" inputMode="numeric" min={0} value={f.deliveryDays} onChange={(e) => setF({ ...f, deliveryDays: e.target.value })} error={d.errores.deliveryDays} />

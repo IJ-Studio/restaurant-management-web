@@ -3,12 +3,12 @@ import { cn } from "@/lib/utils";
 
 /**
  * Contraetiqueta (DESIGN.md § Signature components): los datos se leen como la contraetiqueta
- * de un vino. Lista de definiciones (`<dl>`) con pares rótulo/valor separados por filetes
+ * de una etiqueta clásica. Lista de definiciones (`<dl>`) con pares rótulo/valor separados por filetes
  * sutiles, a una o dos columnas (la segunda, desde 768 px).
  *
  * - Rótulo en versalitas (`--texto-etiqueta`, secundario); valor al final.
  * - `tipo: "cifra"` (por defecto): `--texto-cifra-tabla` con cifras tabulares (precios, horas).
- *   `tipo: "texto"`: el mismo tamaño en peso normal (origen, maridaje, mesa).
+ *   `tipo: "texto"`: el mismo tamaño en peso normal (origen, acompañamiento, mesa).
  * - Los filetes de rótulo y valor quedan siempre a la misma altura, aunque el valor ocupe dos líneas.
  */
 export interface ParContraetiqueta {

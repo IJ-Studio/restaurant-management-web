@@ -4,7 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 // Páginas de estado e ilustraciones de marca en el catálogo (PLAN 4.0.2, D-21). Solo en next dev.
 const MODO_DEV = process.env.E2E_MODO === "dev";
 const CLAVE = "elquijote:preferencias";
-const ILUSTRACIONES = ["plato-cloche", "llave-bodega", "puerta-candado", "olla-humeante", "copa-volcada", "mesa-reloj", "molino-quieto"];
+const ILUSTRACIONES = ["plato-cloche", "llave-casa", "puerta-candado", "olla-humeante", "copa-volcada", "mesa-reloj", "molino-quieto"];
 
 async function abrir(page: Page, preferencias: Record<string, string> = {}) {
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);

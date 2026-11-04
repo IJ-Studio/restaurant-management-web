@@ -34,10 +34,10 @@ export function Portada() {
 					id="inicio-titulo"
 					className="m-0 max-w-[14ch] font-titulos text-(length:--texto-portada) font-[380] leading-[1.02] text-texto-principal [font-variation-settings:'SOFT'_30] [text-wrap:balance]"
 				>
-					Cocina española con alma
+					Cocina mexicana con alma
 				</h1>
 				<p className="m-0 max-w-[44ch] text-(length:--texto-entradilla) leading-[1.6] text-texto-principal [text-wrap:pretty]">
-					Mesa de alta gama y carta de vinos en el centro de Huejutla. Sabor con alma, sin prisa.
+					Comida mexicana en el centro de Huejutla, servida a su tiempo. Sabor con alma, sin prisa.
 				</p>
 				<div className="flex w-full flex-col gap-3 pt-(--espacio-xs) sm:w-auto sm:flex-row">
 					<BotonEnlace href="#reservas" variante="primario" icono={<CalendarDays />}>
