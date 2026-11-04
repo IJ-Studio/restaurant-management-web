@@ -6,6 +6,28 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### Resumen de la tanda de ampliación (2026-11-04)
+
+**Hecho (web, rama `feature/rediseno-web-admin`, sin push):** P1 seguridad de la documentación (`44b7eae`) · P2 clasificación e inventario del API (`f9b5028`) · P0 cierre de la fase 5 (`664f1e6`) · P3 identidad mexicana e imágenes propias (`5d2bd64`) · P4 estructura del administrador (`2c40068`) · P5 datos reales, emojis, subida firmada y QR (`0ced1df`), landing (`0dd5fec`), legal y reportes (`42719fa`) · P6 paridad (`f27be98`) · P5.9 pendientes (a) (`0104145`) · formularios por POST (`326db62`) · P8 retirada de rutas internas (`7820880`).
+
+**Hecho (API, sin push):** `chore/autoria-irving` (API-1) y `fix/api-correcciones` (API-2: platillos, firma de imágenes, reportes de problemas, mínimo de existencias; 342/342 pruebas). La copia del API vuelve a su rama de trabajo (`feat/movil-pedidos-cobros`) con su cambio local ajeno intacto.
+
+**Verificación del cierre del frontend:** build correcto; baterías completas contra `next start`: Chromium 515/515, Firefox 511/511 y WebKit 509 + 3 que fallaban por carreras de hidratación en las pruebas (corregidas: en verde al repetir); el catálogo en `next dev`: Chromium 121/121, Firefox 121/121 y WebKit 120 + 1 intermitente de subpíxel en `dialogos.spec` (342,0000076 px frente a 342; 13/13 al repetir). `revisar:invisibles` y `revisar:emojis` en verde; bundle sin secretos; `pnpm audit`: 0 críticas, 12 altas, 5 moderadas (`xlsx`, `drizzle-orm` y las herramientas de build).
+
+**Recuento de pendientes por etiqueta (sobre los 265 de P2 más los nuevos):**
+- **(a) frontend, pendientes: 14.** Fase 6 (6.1–6.4) y fase 7 (7.1, 7.2, 7.4 sin dispositivos, 7.5, 7.6 sin PR); archivos grandes que mezclan datos y UI; dos fuentes de sesión (`AuthProvider` y `authSlice`); lint restante fuera de las rutas internas (`useLockout`, `useAsyncAction`, `useReservationAvailability`, `lib/session`, `public/preferencias.js`); registro centralizado de `console.error`; comprobar la regla de nombre con apóstrofo o guion, los atributos de las cookies de cierre, `innerHTML`, las llamadas a `/api/auth/me` por carga, los colores forzados y el `autocomplete` del checkout; y lo que la web puede tomar de la móvil (`PARIDAD-MOVIL-WEB.md` §4).
+- **(b) API, pendientes: 10 grupos.** Promociones (no hay tabla), listado de facturas, CRUD de inventario, proveedores y órdenes (después, retirar `/api/inventory/*`, `lib/db`, Drizzle y `pg` de la web), registro de consentimientos, cifras de NP-44, factura por webhook (NP-11), validación de cupones (NP-20), creación de reservas (DT-11) y los abiertos del API sin impacto en la móvil (borde HTTP, validación de configuración, fórmulas en CSV y XLSX). Detalle fuera del repo.
+- **(c) del usuario o con coordinación: 38 de P2, más** `trust proxy` en el API, las variables de Cloudinary del API, rellenar `config/legal.ts`, publicar ramas e historial y lo que cambia lo que ve la móvil (sesiones, mensajes de bloqueo, validación global, formato de errores e importes).
+- **(d) obsoletos o resueltos: 139 de P2, más** lo cerrado en esta tanda (D-22 a D-37 en su lado web, NP-17, NP-19, NP-22, NP-25, NP-35 parcial, NP-39, D-31, D-34 y D-36 con su endpoint).
+
+**Bloqueado:** nada. API-1 necesitó un segundo intento (anotado).
+
+**No verificado:** el API real (ninguna petición contra él), la subida real a Cloudinary, el pago con Stripe, lectores de pantalla, dispositivos reales y Lighthouse.
+
+**Datos por confirmar con el restaurante:** razón social, RFC, domicilio fiscal, correos de contacto y de privacidad, horario de atención, reembolsos (contacto y plazo), portal CFDI, `restaurantConfig.stats`, historia y fotos propias (NP-33).
+
+**Decisiones pendientes del usuario:** 2.5 (CSP); NP-47; publicar las ramas `feature/rediseno-web*` (las ya publicadas conservan las versiones anteriores de ESTADO y NOTAS); publicar o no `chore/autoria-irving` y `fix/api-correcciones`; `trust proxy`; la portada con la foto generada recortada (NP-33); la cookie HttpOnly (NP-04) y lo demás que pide coordinación con la móvil.
+
 ### P8 · Retirada de rutas internas con BD (D-32) (2026-11-04)
 
 - Borradas con `git rm` las rutas internas que ya no usa ninguna pantalla y cuyo reemplazo existe en el API: `/api/admin/users` (la pantalla usa `/users`), `/api/settings` (Ajustes desapareció con D-30), `/api/backups` (el API tiene `/backups`), `/api/cron/backups` y su cron de `vercel.json` (el API ya respalda a diario con su propio cron), `/api/mesas` y `/api/public/*` (sin consumidores). Fuera también el emulador de cron de `lib/db.ts` y su entrada en la lista de rutas públicas.

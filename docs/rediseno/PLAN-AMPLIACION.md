@@ -8,9 +8,9 @@
 |---|---|
 | Fecha | 2026-11-03 |
 | Rama activa | `feature/rediseno-web-admin` (cierre de la fase 5 y frontend de la ampliación) |
-| Paquete en curso | **P7 · API** |
-| Último paso completado | P5.9 (pendientes (a)) y P6 (`PARIDAD-MOVIL-WEB.md`). P5: `0ced1df`, `0dd5fec`, `42719fa`. |
-| Siguiente paso | P7: endpoints aditivos del API (firma de imágenes, platillos, reportes) con pruebas; después P8 y el cierre en Firefox y WebKit. |
+| Paquete en curso | Tanda cerrada (2026-11-04): ver «Resumen de la tanda de ampliación» en la bitácora |
+| Último paso completado | P7 parcial (API-1 y endpoints aditivos de API-2) y P8 parcial (fuera las rutas internas con reemplazo). Frontend verificado en Chromium, Firefox y WebKit. |
+| Siguiente paso | P7 (b) pendientes: promociones, facturas e inventario en el API; después P8 (retirar `/api/inventory/*` y la BD de la web) y P9 (fases 6 y 7). |
 | Bloqueos | Ninguno. 2.5 (aplicar la CSP) y NP-47 siguen sin ejecutarse por orden del usuario. |
 | Avisos | Repo del API con `HEAD` dañado en la copia local (se diagnostica en P7, sin reescribir nada). |
 | Decisiones del usuario pendientes | Ver § Pendientes para el usuario. |
@@ -115,8 +115,8 @@ Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6
 
 ### P7 · API (`restaurant-management-api`)
 
-- [ ] P7.0 Diagnóstico de la copia local (`HEAD` dañado) sin reescribir nada.
-- [ ] API-1 Autoría (rama nueva; solo los commits del autor que indicó el usuario, si es inequívoco; sin push).
+- [x] P7.0 Diagnóstico de la copia local (`HEAD` dañado) sin reescribir nada.
+- [x] API-1 Autoría (rama nueva; solo los commits del autor que indicó el usuario, si es inequívoco; sin push).
 - [ ] API-2 Correcciones de los documentos de entrada y pendientes (b), aditivas y compatibles con la móvil, cada una con pruebas y commit; migraciones como archivos con su reversa, sin aplicar.
 - [ ] P7.x Endpoints aditivos de D-31 (firma de subida), D-34 (reportes), promociones y lo que marque `INVENTARIO-API.md`.
 - **Aceptación:** pruebas del API en verde; `/ponytail-review` al cerrar cada paquete; nada contra la BD real.
@@ -124,7 +124,7 @@ Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6
 ### P8 · Conexión de la web con el API (D-32)
 
 - [ ] P8.1 Cada pantalla contra el API real (sin mocks).
-- [ ] P8.2 Retirada de `app/api` con BD, `lib/db`, `drizzle/`, `pg`, `drizzle-orm`, `drizzle-kit`, `bcrypt` y `googleapis`, solo con su reemplazo probado.
+- [ ] P8.2 (parcial: fuera admin/users, settings, backups, cron, mesas y public; quedan las de inventario) Retirada de `app/api` con BD, `lib/db`, `drizzle/`, `pg`, `drizzle-orm`, `drizzle-kit`, `bcrypt` y `googleapis`, solo con su reemplazo probado.
 
 ### P9 · Fases 6 y 7 del PLAN (solo lo comprobable sin el usuario)
 
