@@ -27,14 +27,15 @@ test.describe("secciones de la landing en el catálogo", () => {
 		for (const src of await fotos.evaluateAll((e) => e.map((i) => (i as HTMLImageElement).currentSrc || (i as HTMLImageElement).src)))
 			expect(src).toMatch(/^https:\/\/res\.cloudinary\.com\/dcb1tspbj\//);
 		await expect(galeria.locator("[data-respaldo-imagen]")).toHaveCount(1);
-		await expect(prueba(page, "demo-nosotros").getByRole("link", { name: "Conoce la casa" })).toHaveAttribute("href", "/about");
+		// D-35: la sección no enlaza a otra ruta; su contenido ya está aquí.
+		await expect(prueba(page, "demo-nosotros").getByRole("link")).toHaveCount(0);
 	});
 
-	test("el molino de Nosotros gira dos veces y se queda quieto con movimiento reducido", async ({ page }) => {
+	test("el molino de Nosotros gira sin parar y se queda quieto con movimiento reducido (D-35)", async ({ page }) => {
 		await abrir(page);
 		const nombre = () => prueba(page, "demo-nosotros").locator(".molino-animado__aspas").evaluate((e) => getComputedStyle(e).animationName);
 		expect(await nombre()).toBe("molino-aspas");
-		expect(await prueba(page, "demo-nosotros").locator(".molino-animado__aspas").evaluate((e) => getComputedStyle(e).animationIterationCount)).toBe("2");
+		expect(await prueba(page, "demo-nosotros").locator(".molino-animado__aspas").evaluate((e) => getComputedStyle(e).animationIterationCount)).toBe("infinite");
 		await page.emulateMedia({ reducedMotion: "reduce" });
 		expect(await nombre()).toBe("none");
 	});
@@ -62,7 +63,7 @@ test.describe("secciones de la landing en el catálogo", () => {
 		await expect(primera.getByRole("heading", { level: 3 })).toHaveText("Menú de mediodía");
 		await expect(primera.locator("dd")).toHaveText(["$ 480", "$ 390", "30 de noviembre"]);
 		await expect(primera.locator("s")).toHaveCount(1);
-		await expect(demo.getByRole("link", { name: "Ver todas las promociones" })).toHaveAttribute("href", "/promociones");
+		await expect(demo.getByRole("link", { name: "Ver todas las promociones" })).toHaveCount(0);
 		expect(await demo.textContent()).not.toMatch(/\p{Extended_Pictographic}/u);
 		await expect(prueba(page, "demo-promociones-vacias")).toContainText("Ahora mismo no hay promociones vigentes.");
 		await expect(prueba(page, "demo-promociones-vacias").getByRole("link")).toHaveCount(0);

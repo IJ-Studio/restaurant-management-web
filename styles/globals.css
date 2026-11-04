@@ -87,7 +87,9 @@
    que va; las aspas y el viento se mueven dos veces y se paran, y nada con movimiento reducido. */
 .molino-animado { --molino-relleno: var(--color-fondo); }
 .molino-animado--cafe { --molino-relleno: var(--color-superficie-cafe); }
-.molino-animado__aspas { transform-box: view-box; transform-origin: 300px 280px; animation: molino-aspas var(--duracion-molino-aspas) linear 2; }
+/* D-35: las aspas giran sin parar, despacio, mientras el movimiento esté permitido (se paran con
+   el movimiento reducido del sistema o con la opción del panel de accesibilidad). */
+.molino-animado__aspas { transform-box: view-box; transform-origin: 300px 280px; animation: molino-aspas var(--duracion-molino-aspas) linear infinite; }
 .molino-animado__viento { animation: molino-viento var(--duracion-molino-viento) linear 2; }
 @keyframes molino-aspas { to { transform: rotate(360deg); } }
 @keyframes molino-viento { from { transform: translateX(300px); } to { transform: translateX(-300px); } }

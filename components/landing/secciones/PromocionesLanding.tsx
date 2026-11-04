@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { Imagen } from "@/components/ui/Imagen";
 import { Insignia } from "@/components/ui/Insignia";
 import { Contraetiqueta, type ParContraetiqueta } from "@/components/marca/Contraetiqueta";
@@ -71,13 +70,6 @@ export function PromocionesLanding({ promociones, error, cargando = false }: { p
 						Ahora mismo no hay promociones vigentes.
 					</p>
 				))
-			)}
-			{!cargando && !error && promociones.length > 0 && (
-				<div>
-					<BotonEnlace href="/promociones" variante="secundario">
-						Ver todas las promociones
-					</BotonEnlace>
-				</div>
 			)}
 		</SeccionLanding>
 	);

@@ -1,4 +1,3 @@
-import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { Imagen } from "@/components/ui/Imagen";
 import { MolinoAnimado } from "@/components/marca/MolinoAnimado";
 import type { PlatoDestacado } from "@/lib/publico/seleccion-platos";
@@ -26,11 +25,6 @@ export function Nosotros({ galeria }: { galeria: PlatoDestacado[] }) {
 						mexicana al centro de la mesa.
 					</p>
 					<p className="m-0">Queremos que cada visita sea una sobremesa que apetezca alargar.</p>
-					<div className="pt-(--espacio-xs)">
-						<BotonEnlace href="/about" variante="secundario">
-							Conoce la casa
-						</BotonEnlace>
-					</div>
 				</div>
 				<MolinoAnimado className="mx-auto max-w-[18rem] text-acento md:max-w-[22rem]" />
 			</div>

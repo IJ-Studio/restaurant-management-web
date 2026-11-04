@@ -215,3 +215,36 @@ test("visítanos: dirección, horario y teléfono; mapa enlazado sin iframe y re
 	for (const red of ["Facebook", "Instagram"])
 		await expect(seccion.getByRole("link", { name: `${red} de El Quijote (abre en otra pestaña)` })).toHaveAttribute("rel", "noopener noreferrer");
 });
+
+// D-35: ajuste suave entre secciones y molino girando, solo con movimiento permitido; el menú y
+// las secciones no llevan a otras rutas salvo «Ver la carta completa» y las acciones de «Pedir».
+test("ajuste por proximidad y molino en marcha solo con movimiento permitido", async ({ page }) => {
+	await abrir(page);
+	const ajuste = () => page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType);
+	const giro = () => page.locator(".molino-animado__aspas").first().evaluate((e) => getComputedStyle(e).animationIterationCount);
+	// «proximity» es el valor por defecto: el navegador lo serializa como «y».
+	expect(await ajuste()).toMatch(/^y( proximity)?$/);
+	expect(await page.locator("#nosotros").evaluate((e) => getComputedStyle(e).scrollSnapAlign)).toBe("start");
+	expect(await giro()).toBe("infinite");
+	// La tecla «Avanzar página» desplaza con normalidad: el ajuste no la devuelve a la sección anterior.
+	await page.keyboard.press("PageDown");
+	await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	expect(await ajuste()).toBe("none");
+	expect(await page.locator(".molino-animado__aspas").first().evaluate((e) => getComputedStyle(e).animationName)).toBe("none");
+});
+
+test("con «Reducir movimiento» del panel no hay ajuste aunque el sistema lo permita", async ({ page }) => {
+	await abrir(page, { movimiento: "reducido" });
+	expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("none");
+	expect(await page.locator(".molino-animado__aspas").first().evaluate((e) => getComputedStyle(e).animationName)).toBe("none");
+});
+
+test("el menú es de anclas y las secciones solo salen a la carta completa y a las páginas de pedir", async ({ page }) => {
+	await abrir(page);
+	const cabecera = page.getByRole("navigation").first();
+	for (const href of await cabecera.getByRole("link").evaluateAll((es) => es.map((e) => e.getAttribute("href") ?? "")))
+		expect(href === "/" || href.startsWith("/#") || href.startsWith("#") || href === "/login").toBe(true);
+	const fuera = await page.locator("main section a[href^='/']").evaluateAll((es) => es.map((e) => e.getAttribute("href")));
+	expect(fuera.filter((h) => !["/menu", "/menu/pedido?tab=domicilio"].includes(h ?? ""))).toEqual([]);
+});

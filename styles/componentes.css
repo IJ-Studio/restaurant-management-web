@@ -519,3 +519,19 @@
 @keyframes notificacion-entra { from { opacity: 0; transform: translateY(0.5rem); } }
 @keyframes notificacion-sale { to { opacity: 0; } }
 @keyframes esqueleto-pulso { 50% { opacity: 0.5; } }
+
+/* Landing (D-35): ajuste suave entre secciones por proximidad, solo con movimiento permitido. Con
+   «proximity» el navegador solo ajusta cerca de un borde de sección: el teclado, la rueda y el
+   tacto se desplazan con normalidad y las secciones más altas que la ventana no se traban. */
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-movimiento="reducido"]):has(.portada[data-portada]) {
+    scroll-snap-type: y proximity;
+  }
+}
+:root[data-movimiento="completo"]:has(.portada[data-portada]) {
+  scroll-snap-type: y proximity;
+}
+.portada[data-portada],
+.seccion-landing {
+  scroll-snap-align: start;
+}

@@ -1,6 +1,5 @@
 import { SelloCasa } from "@/components/marca/SelloCasa";
 import { Contraetiqueta } from "@/components/marca/Contraetiqueta";
-import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { restaurantConfig } from "@/config/restaurant.config";
 import { ReservarEnPanel } from "./ReservarEnPanel";
 import { SeccionLanding } from "./SeccionLanding";
@@ -35,9 +34,6 @@ export function Reservas() {
 				/>
 				<div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
 					<ReservarEnPanel telefono={contact.phone} telefonoHref={contact.phoneHref} />
-					<BotonEnlace href="/reservations" variante="fantasma">
-						Abrir en su propia página
-					</BotonEnlace>
 				</div>
 			</div>
 		</SeccionLanding>
