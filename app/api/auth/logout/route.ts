@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { resultadoCierre } from "@/lib/sesion/resultado-cierre";
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 /**
@@ -29,15 +31,12 @@ export async function POST(req: NextRequest) {
       headersToSend["Authorization"] = `Bearer ${cookieToken}`;
     }
 
-    // 2. Notificar al backend de NestJS para invalidar la sesión en la base de datos/redis
-    const response = await fetch(`${BACKEND_URL}/auth/sign-out`, {
-      method: "POST",
-      headers: headersToSend,
-    });
-
-    // 3. Crear la respuesta del proxy y 4. caducar las cookies locales
-    const responseData = response.ok ? { success: true } : await response.json();
-    return caducarCookiesDeSesion(NextResponse.json(responseData, { status: response.status }));
+    // Sin token no hay sesión que invalidar en el backend (estado null): solo se limpian las cookies.
+    const response = headersToSend["Authorization"]
+      ? await fetch(`${BACKEND_URL}/auth/sign-out`, { method: "POST", headers: headersToSend })
+      : null;
+    const { status, cuerpo } = resultadoCierre(response?.status ?? null);
+    return caducarCookiesDeSesion(NextResponse.json(cuerpo, { status }));
   } catch (error: unknown) {
     console.error("Logout proxy error:", error instanceof Error ? error.name : "desconocido");
     // Aunque el backend falle, el navegador queda sin sesión.
