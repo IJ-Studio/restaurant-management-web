@@ -19,25 +19,17 @@ async function pedir(request: APIRequestContext, metodo: string, ruta: string, s
 	return request.fetch(ruta, { method: metodo, headers: cookieDe(sujeto), maxRedirects: 0, failOnStatusCode: false, data: metodo === "GET" ? undefined : {} });
 }
 
-/** Inventario de app/api (2026-11-02): ruta y métodos que exporta cada route.ts. */
+/** Inventario de app/api (2026-11-04, tras D-32): ruta y métodos que exporta cada route.ts. */
 const API: [string, string[]][] = [
-	["/api/admin/users", ["GET", "POST"]],
-	["/api/admin/users/1", ["PUT", "DELETE"]],
 	["/api/auth/login", ["POST"]],
 	["/api/auth/logout", ["POST"]],
 	["/api/auth/me", ["GET"]],
 	["/api/auth/register", ["POST"]],
-	["/api/backups", ["GET", "POST", "DELETE"]],
-	["/api/cron/backups", ["GET"]],
 	["/api/inventory/mermas", ["GET", "POST"]],
 	["/api/inventory/orders", ["GET", "POST", "PUT", "DELETE"]],
 	["/api/inventory/products", ["GET", "POST", "PUT", "DELETE"]],
 	["/api/inventory/products/adjust", ["POST"]],
 	["/api/inventory/suppliers", ["GET", "POST", "PUT", "DELETE"]],
-	["/api/mesas", ["GET"]],
-	["/api/public/combos", ["GET"]],
-	["/api/public/cupones", ["GET"]],
-	["/api/settings", ["GET", "POST"]],
 ];
 
 const publica = (ruta: string, metodo: string) => RUTAS_API_PUBLICAS.some((r) => r.ruta === ruta && r.metodos.includes(metodo));
@@ -67,10 +59,11 @@ test("una ruta pública con otro método exige token", async ({ request }) => {
 });
 
 test("un token inválido equivale a no tener token", async ({ request }) => {
-	const r = await request.get("/api/settings", { headers: { Cookie: "session=no-es-un-jwt" }, maxRedirects: 0 });
+	const r = await request.get("/api/inventory/products", { headers: { Cookie: "session=no-es-un-jwt" }, maxRedirects: 0 });
 	expect(r.status()).toBe(401);
 });
 
+// Las rutas se borraron con D-32, pero el proxy conserva la regla: si alguien las recrea, exigen admin.
 test("/api/admin y /api/backups exigen el rol de administrador", async ({ request }) => {
 	for (const sujeto of ["cliente", "cajero", "mesero", "cocina"] as const) {
 		for (const [metodo, ruta] of [["GET", "/api/admin/users"], ["GET", "/api/backups"], ["DELETE", "/api/admin/users/1"]] as const) {

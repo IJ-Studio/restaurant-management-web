@@ -28,17 +28,3 @@ if (process.env.NODE_ENV !== "production") {
 
 export const db = drizzle(pool);
 export const pgClient = pool;
-
-// Emulador local de Vercel Cron
-if (process.env.NODE_ENV !== "production") {
-  const globalLocalCron = globalThis as unknown as { cronStarted: boolean };
-  if (!globalLocalCron.cronStarted) {
-    globalLocalCron.cronStarted = true;
-    console.log("CRON: Emulador local iniciado (revisando cada 15 segundos para pruebas)");
-    setInterval(() => {
-      fetch('http://localhost:3000/api/cron/backups', {
-        headers: { 'x-forwarded-proto': 'http', 'host': 'localhost:3000' }
-      }).catch((e) => console.error("Error Cron Local:", e.message));
-    }, 15000);
-  }
-}

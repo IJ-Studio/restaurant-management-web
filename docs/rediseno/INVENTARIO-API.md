@@ -1,6 +1,6 @@
 # Inventario de llamadas de la web al API (D-32)
 
-> Generado el 2026-11-03 sobre `feature/rediseno-web-admin` (lectura del código de los tres repos, sin ejecutar nada contra el API real). Rutas del API leídas de los controladores de `restaurant-management-api/src` (sin prefijo global). «Móvil» indica si `restaurant-management-mobile/src` llama a la misma ruta. Se actualiza al conectar cada pantalla (P8 de [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md)).
+> Generado el 2026-11-03 y actualizado el 2026-11-04 (P5.9, P7 y P8) sobre `feature/rediseno-web-admin` (lectura del código de los tres repos, sin ejecutar nada contra el API real). Rutas del API leídas de los controladores de `restaurant-management-api/src` (sin prefijo global). «Móvil» indica si `restaurant-management-mobile/src` llama a la misma ruta. Se actualiza al conectar cada pantalla (P8 de [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md)).
 >
 > Leyenda de «Qué falta»: **—** nada · **FALTA** el API no tiene la ruta (se crea de forma aditiva en P7) · **Ajuste** la ruta existe con otro método, forma o nombre · **D-30** la pantalla se elimina.
 
@@ -11,7 +11,7 @@
 | Método | Ruta que llama la web | Origen en la web | Ruta en el API | Móvil | Qué falta |
 |---|---|---|---|---|---|
 | GET | `/users/:id` | `lib/sesion/dal.ts` (servidor) | `GET /users/:id` | sí | — |
-| PUT | `/usuarios/perfil/actualizar/:id` | `app/(auth)/profile/page.tsx` | `PATCH /users/:id` | sí (`PATCH`) | **Ajuste:** la web debe usar `PATCH /users/:id` |
+| PATCH | `/users/:id` y `/direcciones` | `app/(auth)/profile/page.tsx` | igual | `PATCH`: sí | — (corregido en P5.9) |
 | GET | `/promociones` | `app/(public)/promociones/page.tsx`, `lib/publico/datos-landing.ts` | — | no | **FALTA** (lectura pública de promociones vigentes) |
 | GET | `/menu/categories/with-products` | `lib/publico/datos-landing.ts`, `app/menu/categoria/[slug]/page.tsx` | igual | sí | — |
 | GET | `/menu/items/:id` | `app/menu/producto/[id]/page.tsx` | igual | sí | — |
@@ -48,11 +48,11 @@
 | GET | `/promociones/admin` | `features/dashboard/admin/promociones/PromocionesAdmin.tsx` | — | no | **FALTA** |
 | POST, PATCH, DELETE | `/promociones`, `/promociones/:id` | idem | — | no | **FALTA** |
 | GET | `/platillos/export.json`, `/platillos/export/dishes/excel`, `/platillos/template.csv` | `features/dashboard/admin/carta/useCartaAdmin.ts` | igual | no | — |
-| POST | `/platillos` | idem | — | no | **FALTA** (alta) |
-| PATCH | `/platillos/:id` | idem | — | no | **FALTA** (edición, disponibilidad; D-31) |
-| DELETE | `/platillos/:id` | (hoy solo local) | — | no | **FALTA** (D-31) |
+| POST | `/platillos` | idem | igual (P7, rama local del API) | no | — |
+| PATCH | `/platillos/:id` | idem | igual (P7) | no | — |
+| DELETE | `/platillos/:id` | idem | igual (P7; 409 si tiene pedidos) | no | — |
 | POST | `/platillos/import.json`, `/platillos/import.csv`, `/import/platillos/excel` | `features/dashboard/admin/carta/importacion.ts` | igual | no | — |
-| — | Firma de subida de imágenes | (hoy preset de marcador) | — | — | **FALTA** (D-31) |
+| POST | `/imagenes/firma` | `SubidaImagen` | igual (P7) | no | Variables de Cloudinary en el API |
 | GET, POST, DELETE | `/backups`, `/backups/:id` | `features/dashboard/admin/ajustes/AjustesAdmin.tsx` | igual | no | **D-30** |
 | GET | `/db-metrics/*` (8 rutas) | `features/dashboard/admin/salud/SaludSistema.tsx` | igual | no | **D-30** |
 | POST | `/db-metrics/vacuum-manual` | idem | — | no | **D-30** |
@@ -66,18 +66,18 @@
 | `/api/auth/register` | POST | no | registro | `POST /auth/sign-up` | no | — |
 | `/api/auth/logout` | POST | no | cierre de sesión | `POST /auth/sign-out` | sí | — |
 | `/api/auth/me` | GET | no | sesión del cliente, perfil | `GET /users/:id` | sí | — |
-| `/api/menu/categories` | GET | no | `app/menu/page.tsx` | `GET /menu/categories/with-products` | sí | Llamar al API directamente |
-| `/api/admin/users`, `/api/admin/users/[id]` | GET, POST, PUT, DELETE | sí | ninguna pantalla | `/users`, `/users/:id` (`PATCH`, `DELETE`) | no | Borrar (la pantalla ya usa el API) |
-| `/api/backups` | GET, POST, DELETE | sí | ninguna (la pantalla usa el API) | `/backups` | no | Borrar (D-30, D-32) |
-| `/api/cron/backups` | GET | sí | cron de `vercel.json` | — | no | **FALTA:** respaldo programado en el API |
+| ~~`/api/menu/categories`~~ | — | — | — | `GET /menu/categories/with-products` | sí | **Borrada (P5.9):** `/menu` llama al API |
+| ~~`/api/admin/users`~~ | — | — | — | `/users`, `/users/:id` | no | **Borrada (P8)** |
+| ~~`/api/backups`~~ | — | — | — | `/backups` | no | **Borrada (P8)** |
+| ~~`/api/cron/backups`~~ | — | — | — | el API ya respalda a diario (`@Cron`) | no | **Borrada (P8)**, con el cron de `vercel.json` |
 | `/api/inventory/products` | GET, POST, PUT, DELETE | sí | `hooks/useInventory.tsx`, inicio | `GET /inventario/productos` | sí (GET) | **FALTA:** alta, edición y borrado |
 | `/api/inventory/products/adjust` | POST | sí | `useInventory` | — | no | **FALTA** |
 | `/api/inventory/mermas` | GET, POST | sí | `useInventory` | `/inventario/mermas` | sí | — |
 | `/api/inventory/suppliers` | GET, POST, PUT, DELETE | sí | `useInventory` | — | no | **FALTA** |
 | `/api/inventory/orders` | GET, POST, PUT, DELETE | sí | `useInventory` | — | no | **FALTA** |
-| `/api/settings` | GET, POST | sí | ninguna | — | no | Borrar (D-30) |
-| `/api/mesas` | GET | sí | ninguna | `GET /mesas` | sí | Borrar |
-| `/api/public/combos`, `/api/public/cupones` | GET | sí | ninguna | — | no | Borrar; cupones: validación en el API (NP-20) |
+| ~~`/api/settings`~~ | — | — | — | — | no | **Borrada (P8)** |
+| ~~`/api/mesas`~~ | — | — | — | `GET /mesas` | sí | **Borrada (P8)** |
+| ~~`/api/public/*`~~ | — | — | — | — | no | **Borradas (P8)**; cupones: validación en el API (NP-20) |
 | `/api/logout` | — | — | `components/IdleLogout.tsx` (sin montar) | — | — | No existe (NP-47) |
 
 ## 3. Rutas del API que usa la móvil y no la web

@@ -3,7 +3,8 @@
  * sin un token válido. La lista es explícita y cada entrada lleva su motivo; se verificó con el
  * inventario del 2026-10-31 (qué rutas llama el front).
  *
- * `/api/public/combos`, `/api/public/cupones` y `/api/mesas` no se llaman desde el front: exigen token.
+ * Desde D-32 ya no existen `/api/public/*`, `/api/mesas`, `/api/admin/*`, `/api/settings`, `/api/backups` ni el cron:
+ * se borraron porque sus pantallas usan el API (o desaparecieron con D-30) y el API hace el respaldo diario.
  */
 export interface RutaApiPublica {
 	ruta: string;
@@ -16,11 +17,6 @@ export const RUTAS_API_PUBLICAS: readonly RutaApiPublica[] = [
 	{ ruta: "/api/auth/register", metodos: ["POST"], motivo: "Registro de clientes" },
 	{ ruta: "/api/auth/logout", metodos: ["POST"], motivo: "Cerrar sesión debe funcionar aunque el token haya caducado" },
 	{ ruta: "/api/auth/me", metodos: ["GET"], motivo: "La parte pública pregunta si hay sesión; ya responde 401 sin token" },
-	{
-		ruta: "/api/cron/backups",
-		metodos: ["GET"],
-		motivo: "Excepción temporal: el cron de Vercel no envía token de usuario; pendiente de endurecer en el API (NP-10)",
-	},
 ];
 
 /** Ruta exacta y método incluido en la lista: el resto de métodos de una ruta pública exige token. */

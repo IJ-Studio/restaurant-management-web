@@ -6,6 +6,21 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### P8 · Retirada de rutas internas con BD (D-32) (2026-11-04)
+
+- Borradas con `git rm` las rutas internas que ya no usa ninguna pantalla y cuyo reemplazo existe en el API: `/api/admin/users` (la pantalla usa `/users`), `/api/settings` (Ajustes desapareció con D-30), `/api/backups` (el API tiene `/backups`), `/api/cron/backups` y su cron de `vercel.json` (el API ya respalda a diario con su propio cron), `/api/mesas` y `/api/public/*` (sin consumidores). Fuera también el emulador de cron de `lib/db.ts` y su entrada en la lista de rutas públicas.
+- NP-25: fuera los scripts de BD de la raíz (`check_backups.ts`, `delete_cron_date.cjs` y los tres `setup_settings.*`); quedan en el historial.
+- Dependencias retiradas: `googleapis` y `bcrypt` (solo las usaban esas rutas). `pnpm audit` pasa de 18 a 12 altas y de 13 a 5 moderadas.
+- **Siguen** `/api/inventory/*` (y con ellas `lib/db`, `drizzle-orm`, `drizzle-kit` y `pg`): el API todavía no tiene el CRUD de inventario, proveedores y órdenes. Se retiran cuando exista (pendiente (b)).
+- `INVENTARIO-API.md` al día con lo borrado y lo creado en el API.
+
+### P7 · API (`restaurant-management-api`, sin push) (2026-11-04)
+
+- Copia local reparada: `.git/HEAD` contenía el texto del reflog; se restauró la referencia a la rama en la que se trabajaba (copia del archivo dañado fuera del repo).
+- **API-1:** rama `chore/autoria-irving` desde `develop` con los commits de José a nombre del usuario. El primer intento (`rebase -r --exec`) chocó al recrear merges; el segundo resolvió cada conflicto con el árbol original. Verificado: mismo árbol que `develop`, mismos 127 commits y 37 merges, mismos mensajes. Publicar o no lo decide el usuario.
+- **API-2:** rama `fix/api-correcciones` desde la anterior, con los dos commits locales de la rama que usa la móvil. Endpoints aditivos con pruebas: alta, edición y borrado de platillos; firma de subida de imágenes; reportes de problemas (tabla nueva, migración y reversa sin aplicar) y el mínimo de existencias. 342/342 pruebas; `/ponytail-review` con dos hallazgos corregidos.
+- La comprobación del documento de correcciones contra el código, lo que cambia lo que ve la móvil (requiere coordinación) y lo que queda pendiente se anotan fuera del repo.
+
 ### P6 · Paridad móvil-web (D-33) (2026-11-03)
 
 - Nuevo `PARIDAD-MOVIL-WEB.md`: navegación por rol, pantallas equivalentes (resumen del día, pedidos y estados, cobro, caja, sala, reservaciones, perfil), formatos (dinero, hora, mesa), los cambios que tendría que adoptar la móvil (reportar un problema, aviso del personal, nombres de estado, formato de dinero, subida firmada, existencias) y los que la web podría tomar de la móvil (cuenta separada, notas por platillo, incidencias y mermas, aviso de demora, cambio de contraseña).
