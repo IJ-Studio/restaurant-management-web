@@ -32,6 +32,7 @@ async function abrir(page: Page, ruta: string, preferencias: Record<string, stri
 			const url = new URL(p.url());
 			if (p.method() !== "GET") {
 				llamadas.push(`${p.method()} ${url.pathname}`);
+				if (p.postData()) llamadas.push(`cuerpo ${p.postData()}`);
 				return r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
 			}
 			let cuerpo: unknown = [];
@@ -88,8 +89,15 @@ test("quitar, enviar a cocina y cancelar piden confirmación en un diálogo, nun
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Tu pedido va a cocina");
 
 	await page.getByRole("button", { name: "Cancelar pedido" }).click();
-	await page.getByRole("alertdialog", { name: "¿Cancelar este pedido?" }).getByRole("button", { name: "Cancelar pedido" }).click();
+	// Prioridad 3.3: el API exige el motivo; sin él no se envía.
+	const cancelar = page.getByRole("dialog", { name: "¿Cancelar este pedido?" });
+	await cancelar.getByRole("button", { name: "Cancelar pedido" }).click();
+	await expect(cancelar.getByText("Escribe el motivo (al menos 3 letras).")).toBeVisible();
+	expect(llamadas).not.toContain("PATCH /pedidos/cancelar/abcd1234-comanda");
+	await cancelar.getByLabel("¿Por qué lo cancelas?").fill("Pedí otro platillo");
+	await cancelar.getByRole("button", { name: "Cancelar pedido" }).click();
 	await expect.poll(() => llamadas).toContain("PATCH /pedidos/cancelar/abcd1234-comanda");
+	expect(llamadas).toContain('cuerpo {"motivo":"Pedí otro platillo"}');
 	await contexto.close();
 });
 

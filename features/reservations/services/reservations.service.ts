@@ -101,6 +101,18 @@ export async function getReservations(filters?: {
     : datos;
 }
 
+/** Si la predicción de ausencias está activa en el API (Prioridad 3.5). Ante un fallo, no se muestra. */
+export async function getNoShowEstado(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/reservations/no-show-model/estado`, { cache: "no-store", headers: getHeaders(true) });
+    if (!res.ok) return false;
+    const datos = (await res.json()) as { activa?: unknown };
+    return datos.activa === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function getNoShowRisk(id: string): Promise<{ probabilidad: number; clasificacion: 'Alto' | 'Medio' | 'Bajo' }> {
   const res = await fetch(`${API_URL}/reservations/${id}/no-show-risk`, { cache: "no-store",
     headers: getHeaders(true),

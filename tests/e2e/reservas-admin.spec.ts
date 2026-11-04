@@ -21,9 +21,9 @@ const reserva = (id: string, nombre: string, estatus: string, extra: Record<stri
 	estatus,
 	...extra,
 });
-const RESERVAS = [reserva("a1", "Ana López", "confirmada"), reserva("b2", "Luis Pérez", "pendiente", { numComensales: 2, mesaNumero: null }), reserva("c3", "Eva Ruiz", "cancelada")];
+const RESERVAS = [reserva("a1", "Ana López", "confirmada"), reserva("b2", "Luis Pérez", "pendiente", { numComensales: 2, mesaNumero: null }), reserva("c3", "Eva Ruiz", "cancelada", { motivoCancelacion: "NO LLEGÓ EL GRUPO" })];
 
-async function abrir(browser: Browser, opciones: { ancho?: number; falla?: boolean; preferencias?: Record<string, string> } = {}) {
+async function abrir(browser: Browser, opciones: { ancho?: number; falla?: boolean; prediccion?: boolean; preferencias?: Record<string, string> } = {}) {
 	const contexto = await browser.newContext({ storageState: archivoSesion("admin"), viewport: { width: opciones.ancho ?? 1440, height: 900 } });
 	const page = await contexto.newPage();
 	await page.addInitScript(
@@ -45,6 +45,7 @@ async function abrir(browser: Browser, opciones: { ancho?: number; falla?: boole
 			if (!["fetch", "xhr"].includes(p.resourceType()) || p.headers()["rsc"]) return r.fallback();
 			const url = new URL(p.url());
 			pedidos.push({ metodo: p.method(), ruta: url.pathname + url.search, cuerpo: p.postData() ? JSON.parse(p.postData()!) : null });
+			if (url.pathname.endsWith("/no-show-model/estado")) return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ activa: opciones.prediccion ?? true }) });
 			if (url.pathname.endsWith("/no-show-risk")) return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ probabilidad: 0.72, clasificacion: "Alto" }) });
 			if (opciones.falla && p.method() === "GET") return r.fulfill({ status: 500, body: "{}" });
 			if (p.method() === "GET") return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(RESERVAS) });
@@ -79,6 +80,33 @@ test("cambiar el estado en un diálogo envía el mismo PATCH", async ({ browser 
 	const cambio = pedidos.find((p) => p.metodo !== "GET");
 	expect(cambio).toMatchObject({ ruta: "/reservations/b2", cuerpo: { estatus: "confirmada" } });
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Estado guardado");
+	await contexto.close();
+});
+
+test("cancelar exige el motivo, lo envía y se muestra en la tabla (Prioridad 3.3)", async ({ browser }) => {
+	const { contexto, page, pedidos } = await abrir(browser);
+	const main = page.locator("main");
+	await main.getByRole("button", { name: "Cambiar estado de Luis Pérez" }).filter({ visible: true }).click();
+	const dialogo = page.getByRole("dialog", { name: "Estado de Luis Pérez" });
+	await dialogo.getByLabel("Estado").selectOption("cancelada");
+	await dialogo.getByRole("button", { name: "Guardar estado" }).click();
+	await expect(dialogo.getByText("Escribe el motivo de la cancelación.")).toBeVisible();
+	expect(pedidos.filter((p) => p.metodo !== "GET")).toHaveLength(0);
+	await dialogo.getByLabel("Motivo de la cancelación").fill("Llamó para cancelar");
+	await dialogo.getByRole("button", { name: "Guardar estado" }).click();
+	await expect(dialogo).toBeHidden();
+	expect(pedidos.find((p) => p.metodo !== "GET")).toMatchObject({ ruta: "/reservations/b2", cuerpo: { estatus: "cancelada", motivoCancelacion: "Llamó para cancelar" } });
+	// El motivo de una reserva ya cancelada se ve en su fila.
+	await expect(main.getByText("No llegó el grupo").filter({ visible: true }).first()).toBeVisible();
+	await contexto.close();
+});
+
+test("con la predicción desactivada en el API no hay columna de riesgo ni peticiones (Prioridad 3.5)", async ({ browser }) => {
+	const { contexto, page, pedidos } = await abrir(browser, { prediccion: false });
+	const main = page.locator("main");
+	await expect(main.getByRole("table", { name: "Reservas" }).locator("tbody tr")).toHaveCount(3);
+	await expect(main.getByRole("columnheader", { name: "Riesgo de no venir" })).toHaveCount(0);
+	expect(pedidos.filter((p) => p.ruta.endsWith("/no-show-risk"))).toEqual([]);
 	await contexto.close();
 });
 

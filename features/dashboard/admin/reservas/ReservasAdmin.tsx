@@ -17,7 +17,8 @@ import { Indicador } from "@/components/ui/Indicador";
 import { Insignia, type TonoInsignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { Tabla, type ColumnaTabla } from "@/components/ui/Tabla";
-import { getNoShowRisk, getReservations, updateReservation } from "@/features/reservations/services/reservations.service";
+import { getNoShowEstado, getNoShowRisk, getReservations, updateReservation } from "@/features/reservations/services/reservations.service";
+import { primeraMayuscula } from "@/lib/formato/caja";
 import { tokenSesion } from "@/lib/paneles/api-panel";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
@@ -44,6 +45,7 @@ interface Reserva {
 	peticionesEspeciales?: string;
 	depositoPagado?: number | string | null;
 	estatus: string;
+	motivoCancelacion?: string | null;
 }
 type Riesgo = { probabilidad: number; clasificacion: "Alto" | "Medio" | "Bajo" } | "cargando" | "error";
 
@@ -63,9 +65,13 @@ const escribirFecha = (iso: string) => {
 	return Number.isNaN(d.getTime()) ? "—" : fechaHora.format(d);
 };
 
-function DialogoEstado({ reserva, alGuardar }: { reserva: Reserva; alGuardar: (id: string, estatus: string) => Promise<boolean> }) {
+function DialogoEstado({ reserva, alGuardar }: { reserva: Reserva; alGuardar: (id: string, estatus: string, motivo?: string) => Promise<boolean> }) {
 	const [abierto, setAbierto] = useState(false);
 	const [valor, setValor] = useState(reserva.estatus);
+	// Cancelar exige motivo (Prioridad 3.3): lo pide el API y lo ve el administrador.
+	const [motivo, setMotivo] = useState("");
+	const [errorMotivo, setErrorMotivo] = useState<string | undefined>();
+	const cancela = valor === "cancelada";
 	const [guardando, setGuardando] = useState(false);
 	const nombre = reserva.clienteNombre || "la reserva";
 	return (
@@ -73,7 +79,11 @@ function DialogoEstado({ reserva, alGuardar }: { reserva: Reserva; alGuardar: (i
 			abierto={abierto}
 			alCambiarAbierto={(a) => {
 				setAbierto(a);
-				if (a) setValor(reserva.estatus);
+				if (a) {
+					setValor(reserva.estatus);
+					setMotivo("");
+					setErrorMotivo(undefined);
+				}
 			}}
 			cerrable={!guardando}
 			disparador={
@@ -93,8 +103,12 @@ function DialogoEstado({ reserva, alGuardar }: { reserva: Reserva; alGuardar: (i
 						textoCargando="Guardando…"
 						deshabilitado={valor === reserva.estatus}
 						onClick={async () => {
+							if (cancela && motivo.trim().length < 3) {
+								setErrorMotivo("Escribe el motivo de la cancelación.");
+								return;
+							}
 							setGuardando(true);
-							const ok = await alGuardar(reserva.id, valor);
+							const ok = await alGuardar(reserva.id, valor, cancela ? motivo.trim() : undefined);
 							setGuardando(false);
 							if (ok) setAbierto(false);
 						}}
@@ -104,7 +118,22 @@ function DialogoEstado({ reserva, alGuardar }: { reserva: Reserva; alGuardar: (i
 				</>
 			}
 		>
-			<Selector etiqueta="Estado" opciones={ESTADOS.map(({ valor: v, texto }) => ({ valor: v, texto }))} value={valor} onChange={(e) => setValor(e.target.value)} />
+			<div className="flex flex-col gap-(--espacio-md)">
+				<Selector etiqueta="Estado" opciones={ESTADOS.map(({ valor: v, texto }) => ({ valor: v, texto }))} value={valor} onChange={(e) => setValor(e.target.value)} />
+				{cancela && (
+					<Campo
+						etiqueta="Motivo de la cancelación"
+						value={motivo}
+						onChange={(e) => {
+							setMotivo(e.target.value);
+							if (errorMotivo) setErrorMotivo(undefined);
+						}}
+						error={errorMotivo}
+						maxLength={300}
+						autoComplete="off"
+					/>
+				)}
+			</div>
 		</Dialogo>
 	);
 }
@@ -116,7 +145,13 @@ export function ReservasAdmin() {
 	const [carga, setCarga] = useState<"cargando" | "error" | "listo">("cargando");
 	const [filtros, setFiltros] = useState({ fechaDesde: "", fechaHasta: "", estatus: "", clienteNombre: "" });
 	const [riesgos, setRiesgos] = useState<Record<string, Riesgo>>({});
+	// La predicción de ausencias puede estar desactivada en el API: entonces no hay columna ni peticiones.
+	const [prediccion, setPrediccion] = useState(false);
 	const { notificar } = useNotificaciones();
+
+	useEffect(() => {
+		void getNoShowEstado().then(setPrediccion);
+	}, []);
 
 	// Misma comprobación que antes: sin token legible, a iniciar sesión.
 	useEffect(() => {
@@ -144,6 +179,7 @@ export function ReservasAdmin() {
 
 	// Riesgo de no presentarse: solo para las confirmadas, una vez por reserva, como antes.
 	useEffect(() => {
+		if (!prediccion) return;
 		const pendientes = reservas.filter((r) => r.estatus === "confirmada" && !(r.id in riesgos));
 		if (pendientes.length === 0) return;
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- marca las que se están pidiendo
@@ -152,11 +188,11 @@ export function ReservasAdmin() {
 			getNoShowRisk(r.id)
 				.then((d) => setRiesgos((prev) => ({ ...prev, [r.id]: d })))
 				.catch(() => setRiesgos((prev) => ({ ...prev, [r.id]: "error" })));
-	}, [reservas, riesgos]);
+	}, [reservas, riesgos, prediccion]);
 
-	async function guardarEstado(id: string, estatus: string) {
+	async function guardarEstado(id: string, estatus: string, motivo?: string) {
 		try {
-			await updateReservation(id, { estatus });
+			await updateReservation(id, motivo ? { estatus, motivoCancelacion: motivo } : { estatus });
 			notificar({ tono: "exito", titulo: "Estado guardado", descripcion: estado(estatus).texto });
 			void cargar();
 			return true;
@@ -213,11 +249,23 @@ export function ReservasAdmin() {
 			},
 		},
 		{ clave: "deposito", titulo: "Depósito", numerica: true, celda: (r) => (r.depositoPagado != null ? (formatearImporte(Number(r.depositoPagado)) ?? "—") : "—") },
-		{ clave: "estado", titulo: "Estado", celda: (r) => <Insignia tono={estado(r.estatus).tono} className="whitespace-nowrap">{estado(r.estatus).texto}</Insignia> },
+		{
+			clave: "estado",
+			titulo: "Estado",
+			celda: (r) => (
+				<span className="flex flex-col items-start gap-1">
+					<Insignia tono={estado(r.estatus).tono} className="whitespace-nowrap">{estado(r.estatus).texto}</Insignia>
+					{r.estatus === "cancelada" && r.motivoCancelacion && <span className="text-(length:--texto-pequeno) text-texto-secundario">{primeraMayuscula(r.motivoCancelacion)}</span>}
+				</span>
+			),
+		},
+		// Solo si la predicción de ausencias está activa en el API (Prioridad 3.5).
+		...(prediccion
+			? [
 		{
 			clave: "riesgo",
 			titulo: "Riesgo de no venir",
-			celda: (r) => {
+			celda: (r: Reserva) => {
 				const x = riesgos[r.id];
 				if (r.estatus !== "confirmada" || !x) return "—";
 				if (x === "cargando") return <span className="text-texto-secundario">Calculando…</span>;
@@ -229,6 +277,8 @@ export function ReservasAdmin() {
 				);
 			},
 		},
+				] satisfies ColumnaTabla<Reserva>[]
+			: []),
 	];
 
 	if (!verificada) return <CargadorMarca pagina texto="Preparando las reservas…" />;

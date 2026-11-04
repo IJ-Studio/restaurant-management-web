@@ -6,6 +6,7 @@ import { RotateCw, Send, UtensilsCrossed, X } from "lucide-react";
 import { Boton } from "@/components/ui/Boton";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
+import { DialogoMotivo } from "@/components/ui/DialogoMotivo";
 import { Esqueleto, ZonaCargando } from "@/components/ui/Esqueleto";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Imagen } from "@/components/ui/Imagen";
@@ -52,6 +53,12 @@ function Pedido() {
 	const searchParams = useSearchParams();
 	const { notificar } = useNotificaciones();
 	const { confirmar, dialogo } = useConfirmacion();
+	const [cancelando, setCancelando] = useState<string | null>(null);
+	// El API exige la sesión en todas las rutas de pedidos (DT-04); antes varias llamadas iban sin token.
+	const conSesion = (extra: Record<string, string> = {}) => {
+		const token = localStorage.getItem("authToken");
+		return { ...extra, ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+	};
 	const [activeTab, setActiveTab] = useState<"mesa" | "domicilio">(searchParams?.get("tab") === "domicilio" ? "domicilio" : "mesa");
 
 	const [dbOrders, setDbOrders] = useState<any[]>([]);
@@ -73,7 +80,7 @@ function Pedido() {
 	const fetchOrdersFromDB = async (targetMesa: string, userId: string) => {
 		setLoadingDb(true);
 		try {
-			const res = await fetch(`${API}/pedidos/usuario?mesaId=${targetMesa}&usuarioId=${userId}`, { cache: "no-store" });
+			const res = await fetch(`${API}/pedidos/usuario?mesaId=${targetMesa}&usuarioId=${userId}`, { cache: "no-store", headers: conSesion() });
 			if (!res.ok) throw new Error(`comandas ${res.status}`);
 			setDbOrders(await res.json());
 		} catch (error) {
@@ -130,24 +137,25 @@ function Pedido() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- mismas dependencias que antes del rediseño
 	}, [searchParams]);
 
-	// Cancelar una comanda ya enviada (ventana de dos minutos).
-	const handleCancelarOrden = async (ordenId: string) => {
-		const ok = await confirmar({
-			titulo: "¿Cancelar este pedido?",
-			descripcion: "Avisaremos a la cocina para que no lo prepare.",
-			textoConfirmar: "Cancelar pedido",
-			textoCancelar: "Mantenerlo",
-			destructiva: true,
-		});
-		if (!ok) return;
+	// Cancelar una comanda ya enviada (ventana de dos minutos). El API pide el motivo (Prioridad 3.3).
+	const handleCancelarOrden = (ordenId: string) => setCancelando(ordenId);
+	const cancelarConMotivo = async (motivo: string) => {
+		if (!cancelando) return false;
 		try {
-			const res = await fetch(`${API}/pedidos/cancelar/${ordenId}`, { cache: "no-store", method: "PATCH", headers: { "Content-Type": "application/json" } });
+			const res = await fetch(`${API}/pedidos/cancelar/${cancelando}`, {
+				cache: "no-store",
+				method: "PATCH",
+				headers: conSesion({ "Content-Type": "application/json" }),
+				body: JSON.stringify({ motivo }),
+			});
 			if (!res.ok) throw new Error(`cancelar ${res.status}`);
 			notificar({ tono: "exito", titulo: "Pedido cancelado", descripcion: "La cocina ya lo sabe." });
 			if (mesaId && usuarioId) fetchOrdersFromDB(mesaId, usuarioId);
+			return true;
 		} catch (error) {
 			registrarError(error, "pedido: cancelar");
 			notificar({ tono: "error", titulo: "No pudimos cancelarlo", descripcion: "Puede que ya esté en preparación. Pregunta en sala." });
+			return false;
 		}
 	};
 
@@ -162,7 +170,7 @@ function Pedido() {
 		});
 		if (!ok) return;
 		try {
-			const res = await fetch(`${API}/pedidos/item/${itemId}`, { cache: "no-store", method: "DELETE" });
+			const res = await fetch(`${API}/pedidos/item/${itemId}`, { cache: "no-store", method: "DELETE", headers: conSesion() });
 			if (!res.ok) throw new Error(`quitar ${res.status}`);
 			if (tipo === "mesa" && mesaId && usuarioId) fetchOrdersFromDB(mesaId, usuarioId);
 			else if (tipo === "domicilio" && usuarioId) fetchDeliveryOrders(usuarioId);
@@ -182,7 +190,7 @@ function Pedido() {
 		});
 		if (!ok) return;
 		try {
-			const res = await fetch(`${API}/pedidos/confirmar/${ordenId}`, { cache: "no-store", method: "POST" });
+			const res = await fetch(`${API}/pedidos/confirmar/${ordenId}`, { cache: "no-store", method: "POST", headers: conSesion() });
 			if (!res.ok) throw new Error(`confirmar ${res.status}`);
 			notificar({ tono: "exito", titulo: "Tu pedido va a cocina", descripcion: "Te lo llevamos a la mesa en cuanto esté." });
 			if (mesaId && usuarioId) fetchOrdersFromDB(mesaId, usuarioId);
@@ -314,6 +322,17 @@ function Pedido() {
 	return (
 		<div className="contenedor-pagina max-w-[48rem] pb-(--espacio-entre-secciones)">
 			{dialogo}
+			<DialogoMotivo
+				abierto={cancelando !== null}
+				alCambiarAbierto={(a) => !a && setCancelando(null)}
+				titulo="¿Cancelar este pedido?"
+				descripcion="Avisaremos a la cocina para que no lo prepare."
+				etiqueta="¿Por qué lo cancelas?"
+				ayuda="Nos ayuda a mejorar; lo ve el restaurante."
+				textoConfirmar="Cancelar pedido"
+				textoCancelar="Mantenerlo"
+				alConfirmar={cancelarConMotivo}
+			/>
 			<EncabezadoPublico
 				ruta="/menu/pedido"
 				titulo="Tu pedido"
