@@ -8,9 +8,9 @@
 |---|---|
 | Fecha | 2026-11-03 |
 | Rama activa | `feature/rediseno-web-admin` (cierre de la fase 5 y frontend de la ampliación) |
-| Paquete en curso | **P1 · Seguridad de la documentación** (hecho en este commit) |
-| Último paso completado | P1.1 a P1.3: detalle sensible fuera del repo; NOTAS, ESTADO, PLAN y un comentario de configuración en texto genérico. |
-| Siguiente paso | P0 · terminar la verificación de la fase 5 (WebKit público en curso) y escribir su cierre en la bitácora. |
+| Paquete en curso | **P0 · Cierre de la fase 5** (WebKit en curso) y **P2** (hecho en este commit) |
+| Último paso completado | P2: clasificación D-38 (265 elementos), `INVENTARIO-API.md` y comprobación del menú de la landing. P1 en `44b7eae`. |
+| Siguiente paso | P0 (WebKit, catálogo en dev, invisibles, bundle, audit, lint) y después P3 (D-22, D-23). |
 | Bloqueos | Ninguno. 2.5 (aplicar la CSP) y NP-47 siguen sin ejecutarse por orden del usuario. |
 | Avisos | Repo del API con `HEAD` dañado en la copia local (se diagnostica en P7, sin reescribir nada). |
 | Decisiones del usuario pendientes | Ver § Pendientes para el usuario. |
@@ -71,9 +71,11 @@ Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6
 
 ### P2 · Clasificación, inventario del API y menú de la landing
 
-- [ ] P2.1 Clasificación de todos los pendientes (§ Clasificación D-38).
-- [ ] P2.2 [`INVENTARIO-API.md`](INVENTARIO-API.md): cada llamada de la web, su ruta en el API, si la usa la móvil y qué falta.
-- [ ] P2.3 Comprobación del menú de la landing (D-35).
+- [x] P2.1 Clasificación de todos los pendientes (§ Clasificación D-38).
+- [x] P2.2 [`INVENTARIO-API.md`](INVENTARIO-API.md): cada llamada de la web, su ruta en el API, si la usa la móvil y qué falta.
+- [x] P2.3 Comprobación del menú de la landing (D-35).
+  - **Resultado:** los siete enlaces de la cabecera (`ENLACES_CABECERA`) son anclas `/#…`; ninguno lleva a otra ruta. Dentro de las secciones sí hay enlaces a otras rutas: Nosotros → `/about`, Promociones → `/promociones`, Reservas → «Abrir en su propia página» (`/reservations`) y Pedir → `/menu` y `/menu/pedido?tab=domicilio`, además de «Ver la carta completa» → `/menu`.
+  - **Decisión conservadora (se ejecuta en P5.6):** se retiran los enlaces de Nosotros, Promociones y Reservas, porque la sección ya muestra ese contenido o su flujo (`ReservarEnPanel`). Se conservan las dos acciones de Pedir, que son páginas de acción (PRODUCT.md, principio 1: las acciones viven en páginas propias); si el usuario prefiere quitarlas, es una línea por botón. Las páginas `/about`, `/promociones` y `/reservations` siguen existiendo (D-08).
 
 ### P3 · Identidad e imágenes (D-22, D-23)
 
@@ -340,4 +342,4 @@ Abiertos, parciales y por comprobar:
 
 ### Recuento por etiqueta
 
-Se completa al cerrar P2 en la bitácora.
+265 elementos clasificados (2026-11-03): **(a) 51 · (b) 37 · (c) 38 · (d) 139** (40 en las tablas y los 99 hallazgos resueltos de los anexos). Cuenta la primera etiqueta de cada fila; las filas con dos etiquetas reparten su trabajo entre paquetes como indica su columna «Dónde».

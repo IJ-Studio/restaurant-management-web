@@ -6,6 +6,14 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### P2 · Clasificación de pendientes, inventario del API y menú de la landing (2026-11-03)
+
+- **Clasificación D-38** en `PLAN-AMPLIACION.md`: todas las NP (NP-01 a NP-47), los pasos del PLAN sin ejecutar, las decisiones abiertas, los «no verificado» de esta bitácora (agrupados), el resumen y las §1–16 de ESTADO y los 192 hallazgos de los anexos A–D, comprobados uno por uno contra el código actual (99 resueltos, 39 abiertos, 22 parciales y 32 que pedían ejecutar algo).
+- **Recuento por etiqueta:** (a) 51 · (b) 37 · (c) 38 · (d) 139, sobre 265 elementos.
+- **`INVENTARIO-API.md`:** cada llamada de la web (directa o por `app/api`), su ruta en el API, si la usa la móvil y qué falta. Faltan en el API: promociones (pública y admin), alta, edición y borrado de platillos y la firma de subida, el CRUD de inventario, proveedores y órdenes, el respaldo programado, los reportes de problemas y las cifras de NP-44/45. En la web hay tres ajustes de ruta (perfil con `PATCH /users/:id`, existencias del inicio y la carta por la ruta interna).
+- **Menú de la landing:** la cabecera solo tiene anclas. Dentro de las secciones hay enlaces a `/about`, `/promociones` y `/reservations` que se retiran en P5.6 (decisión conservadora anotada en el PLAN); se conservan las acciones de «Pedir» y «Ver la carta completa».
+- Inventarios de solo lectura hechos por subagentes de exploración; sus resultados se comprobaron con búsquedas dirigidas.
+
 ### P1 · Seguridad de la documentación (2026-11-03)
 
 **Qué se hizo:**
