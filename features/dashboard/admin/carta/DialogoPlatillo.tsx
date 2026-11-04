@@ -1,27 +1,19 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ImageUp, Trash2 } from "lucide-react";
-import { CldUploadButton } from "next-cloudinary";
 import { Boton } from "@/components/ui/Boton";
 import { AreaTexto, Campo } from "@/components/ui/Campo";
 import { Casilla, Interruptor } from "@/components/ui/Casilla";
 import { Dialogo } from "@/components/ui/Dialogo";
-import { Imagen } from "@/components/ui/Imagen";
-import { clasesBoton } from "@/components/ui/estilos-boton";
-import type { MenuItem } from "@/features/shared/data/restaurantData";
-import { TAMANO_MAXIMO } from "@/lib/validacion/archivos";
+import { SubidaImagen } from "@/features/dashboard/admin/comun/SubidaImagen";
+import type { MenuItem } from "./tipos";
 import { esquemaPlatillo } from "@/lib/validacion/formularios";
 
 /**
- * Platillo nuevo o en edición (PLAN 5.9). Sustituye a `ItemModal` con la misma lógica: el mismo
- * formulario parcial de `MenuItem` y la misma subida de imagen con el widget de Cloudinary
- * (`CldUploadButton`, mismo preset). La página decide qué se guarda en el servidor.
- *
- * La subida limita en el widget los formatos (JPG, PNG, WebP, AVIF) y el tamaño (5 MB, el de
- * `TAMANO_MAXIMO.imagen`). La comprobación de la firma de bytes **antes** de abrir la subida
- * necesita un cargador propio con un preset firmado: queda en NP-46 (el preset actual,
- * `tu_upload_preset`, es un marcador y no sube).
+ * Platillo nuevo o en edición (PLAN 5.9; PLAN-AMPLIACION D-31): el formulario parcial de
+ * `MenuItem`, con la miniatura de la imagen actual y la subida firmada de `SubidaImagen` (tipo,
+ * tamaño y firma de bytes comprobados antes de subir). El diálogo solo se cierra cuando el API
+ * confirma el guardado.
  */
 
 export const ETIQUETAS: Record<string, string> = {
@@ -42,7 +34,7 @@ export function DialogoPlatillo({
 	platillo?: MenuItem;
 	categoria: string;
 	disparador: ReactNode;
-	alGuardar: (datos: Partial<MenuItem>) => void;
+	alGuardar: (datos: Partial<MenuItem>) => Promise<boolean>;
 }) {
 	const inicial = () => ({
 		name: platillo?.name ?? "",
@@ -58,9 +50,10 @@ export function DialogoPlatillo({
 	const [abierto, setAbierto] = useState(false);
 	const [f, setF] = useState(inicial);
 	const [errores, setErrores] = useState<Record<string, string>>({});
+	const [guardando, setGuardando] = useState(false);
 	const id = platillo ? `platillo-${platillo.id}` : `platillo-nuevo-${categoria}`;
 
-	function guardar() {
+	async function guardar() {
 		const e: Record<string, string> = {};
 		// Nombre y descripción con el esquema del paso 3.1 (saneados); los números, con mensajes propios
 		// para el campo vacío, que el esquema daría por «negativo».
@@ -71,7 +64,8 @@ export function DialogoPlatillo({
 		if (!(num(f.calories) >= 0)) e.calories = "Escribe un número igual o mayor que cero.";
 		setErrores(e);
 		if (Object.keys(e).length) return;
-		alGuardar({
+		setGuardando(true);
+		const ok = await alGuardar({
 			...(platillo ? { id: platillo.id } : {}),
 			name: texto.success ? texto.data.name : f.name.trim(),
 			description: texto.success ? (texto.data.description ?? "") : f.description.trim(),
@@ -83,7 +77,8 @@ export function DialogoPlatillo({
 			imageUrl: f.imageUrl,
 			imagePublicId: f.imagePublicId,
 		});
-		setAbierto(false);
+		setGuardando(false);
+		if (ok) setAbierto(false);
 	}
 
 	return (
@@ -103,7 +98,7 @@ export function DialogoPlatillo({
 					<Boton variante="secundario" onClick={() => setAbierto(false)}>
 						Cancelar
 					</Boton>
-					<Boton type="submit" form={id}>
+					<Boton type="submit" form={id} cargando={guardando}>
 						{platillo ? "Guardar cambios" : "Añadir platillo"}
 					</Boton>
 				</>
@@ -115,7 +110,7 @@ export function DialogoPlatillo({
 				className="flex flex-col gap-(--espacio-md)"
 				onSubmit={(ev) => {
 					ev.preventDefault();
-					guardar();
+					void guardar();
 				}}
 			>
 				<Campo etiqueta="Nombre" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} error={errores.name} maxLength={120} autoComplete="off" />
@@ -126,35 +121,12 @@ export function DialogoPlatillo({
 					<Campo etiqueta="Calorías" type="number" inputMode="numeric" min={0} value={f.calories} onChange={(e) => setF({ ...f, calories: e.target.value })} error={errores.calories} />
 				</div>
 
-				<fieldset className="m-0 flex min-w-0 flex-col gap-(--espacio-sm) border-0 p-0">
-					<legend className="mb-(--espacio-xs) p-0 font-semibold text-texto-principal">Imagen</legend>
-					{f.imageUrl ? (
-						<div className="flex flex-wrap items-end gap-(--espacio-md)">
-							<div className="relative aspect-[4/3] w-48 overflow-hidden rounded-tarjeta border border-borde-sutil">
-								<Imagen src={f.imageUrl} alt={`Foto de ${f.name || "el platillo"}`} fill sizes="12rem" className="object-cover" />
-							</div>
-							<Boton variante="secundario" tamano="compacto" icono={<Trash2 />} onClick={() => setF({ ...f, imageUrl: "", imagePublicId: "" })}>
-								Quitar la imagen
-							</Boton>
-						</div>
-					) : (
-						<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">Sin imagen. JPG, PNG, WebP o AVIF de hasta {TAMANO_MAXIMO.imagen / (1024 * 1024)} MB.</p>
-					)}
-					<CldUploadButton
-						uploadPreset="tu_upload_preset"
-						options={{ maxFiles: 1, clientAllowedFormats: ["jpg", "jpeg", "png", "webp", "avif"], maxFileSize: TAMANO_MAXIMO.imagen, sources: ["local"] }}
-						onSuccess={(resultado) => {
-							const info = resultado?.info;
-							if (info && typeof info === "object" && "secure_url" in info) {
-								setF((x) => ({ ...x, imageUrl: String(info.secure_url), imagePublicId: String(info.public_id ?? "") }));
-							}
-						}}
-						className={clasesBoton({ variante: "secundario", tamano: "compacto", className: "self-start" })}
-					>
-						<ImageUp aria-hidden="true" />
-						{f.imageUrl ? "Cambiar la imagen" : "Subir una imagen"}
-					</CldUploadButton>
-				</fieldset>
+				<SubidaImagen
+					destino="platillos"
+					valor={{ url: f.imageUrl, publicId: f.imagePublicId }}
+					alCambiar={(v) => setF((x) => ({ ...x, imageUrl: v.url, imagePublicId: v.publicId }))}
+					textoAlternativo={`Foto de ${f.name || "el platillo"}`}
+				/>
 
 				<fieldset className="m-0 flex min-w-0 flex-col gap-(--espacio-sm) border-0 p-0">
 					<legend className="mb-(--espacio-xs) p-0 font-semibold text-texto-principal">Etiquetas</legend>

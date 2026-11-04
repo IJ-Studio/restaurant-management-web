@@ -1,6 +1,7 @@
 import "server-only";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { mapPromotionRow, type Promotion, type PromotionRow } from "@/features/shared/data/promotions";
+import { normalizarCarta, type CategoriaCarta } from "./carta";
 import { promocionesVigentes } from "./promociones-vigentes";
 
 /**
@@ -10,19 +11,7 @@ import { promocionesVigentes } from "./promociones-vigentes";
  */
 export type Resultado<T> = { estado: "ok"; datos: T } | { estado: "error" };
 
-export interface PlatoCarta {
-	id: number;
-	nombre: string;
-	descripcion?: string;
-	precio: number | null;
-	imagenUrl?: string;
-}
-
-export interface CategoriaCarta {
-	id: number;
-	nombre: string;
-	platillos: PlatoCarta[];
-}
+export type { CategoriaCarta, PlatoCarta } from "./carta";
 
 // Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
 const API = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
@@ -44,31 +33,12 @@ async function pedirJson(ruta: string, contexto: string): Promise<Resultado<unkn
 	}
 }
 
-const texto = (v: unknown) => (typeof v === "string" ? v.trim() : "");
-const cifra = (v: unknown) => {
-	const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
-	return Number.isFinite(n) ? n : null;
-};
 
 /** Categorías con sus platos: el mismo endpoint que usa la ruta `/api/menu/categories`. */
 export async function obtenerCarta(): Promise<Resultado<CategoriaCarta[]>> {
 	const r = await pedirJson("/menu/categories/with-products", "landing: carta");
 	if (r.estado === "error" || !Array.isArray(r.datos)) return { estado: "error" };
-	const categorias = r.datos.flatMap((c): CategoriaCarta[] => {
-		if (!c || typeof c !== "object") return [];
-		const categoria = c as Record<string, unknown>;
-		const platillos = (Array.isArray(categoria.platillos) ? categoria.platillos : []).flatMap((p): PlatoCarta[] => {
-			if (!p || typeof p !== "object") return [];
-			const plato = p as Record<string, unknown>;
-			const nombre = texto(plato.nombre);
-			const id = cifra(plato.id);
-			if (!nombre || id === null) return [];
-			return [{ id, nombre, descripcion: texto(plato.descripcion) || undefined, precio: cifra(plato.precio), imagenUrl: texto(plato.imagenUrl) || undefined }];
-		});
-		const id = cifra(categoria.id);
-		const nombre = texto(categoria.nombre);
-		return id === null || !nombre ? [] : [{ id, nombre, platillos }];
-	});
+	const categorias = normalizarCarta(r.datos);
 	return { estado: "ok", datos: categorias };
 }
 

@@ -5,7 +5,6 @@ import { CircleAlert, Minus, RotateCcw, TrendingDown, TrendingUp } from "lucide-
 import { cn } from "@/lib/utils";
 import { Boton } from "./Boton";
 import { Esqueleto } from "./Esqueleto";
-import { Insignia } from "./Insignia";
 import { formatoPorcentaje } from "./graficas/formato";
 
 /**
@@ -37,7 +36,6 @@ export interface IndicadorProps extends Omit<HTMLAttributes<HTMLElement>, "title
 	detalle?: ReactNode;
 	estado?: "listo" | "cargando" | "error";
 	alReintentar?: () => void | Promise<unknown>;
-	datosDeEjemplo?: boolean;
 }
 
 
@@ -48,7 +46,6 @@ export function Indicador({
 	detalle,
 	estado = "listo",
 	alReintentar,
-	datosDeEjemplo = false,
 	className,
 	...resto
 }: IndicadorProps) {
@@ -72,7 +69,6 @@ export function Indicador({
 				>
 					{rotulo}
 				</h3>
-				{datosDeEjemplo && <Insignia tono="aviso">Datos de ejemplo</Insignia>}
 			</div>
 
 			{estado === "cargando" ? (

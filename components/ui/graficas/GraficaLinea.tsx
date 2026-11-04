@@ -23,7 +23,7 @@ import {
  * puntero y se ajusta al punto más cercano; el tooltip lista todas las series en ese punto. Los
  * puntos llevan un anillo de 2 px del color de la superficie para leerse donde se cruzan.
  */
-export interface GraficaLineaProps extends Pick<MarcoGraficaProps, "titulo" | "descripcion" | "estado" | "alReintentar" | "datosDeEjemplo" | "textoVacio" | "className"> {
+export interface GraficaLineaProps extends Pick<MarcoGraficaProps, "titulo" | "descripcion" | "estado" | "alReintentar" | "textoVacio" | "className"> {
 	categorias: string[];
 	series: SerieGrafica[];
 	formatoValor?: (n: number) => string;

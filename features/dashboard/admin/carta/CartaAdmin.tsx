@@ -10,19 +10,21 @@ import { Buscador } from "@/components/ui/Buscador";
 import { Selector } from "@/components/ui/Campo";
 import { Dialogo } from "@/components/ui/Dialogo";
 import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
+import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
+import { Imagen } from "@/components/ui/Imagen";
 import { Indicador } from "@/components/ui/Indicador";
 import { Insignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { Tabla, type ColumnaTabla } from "@/components/ui/Tabla";
-import type { MenuItem } from "@/features/shared/data/restaurantData";
+import type { MenuItem } from "./tipos";
 import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
 import { ACEPTA } from "@/lib/validacion/archivos";
 import { DialogoImportacion } from "./DialogoImportacion";
 import { DialogoPlatillo, ETIQUETAS } from "./DialogoPlatillo";
 import { leerArchivo, type Fila } from "./importacion";
-import { API, API_EXTERNA, useCartaAdmin } from "./useCartaAdmin";
+import { API, useCartaAdmin } from "./useCartaAdmin";
 
 /**
  * Carta en administración (PLAN 5.9). Misma lógica (`useCartaAdmin`), otra forma: indicadores,
@@ -33,7 +35,6 @@ import { API, API_EXTERNA, useCartaAdmin } from "./useCartaAdmin";
 
 const importe = (n: number) => formatearImporte(n) ?? "—";
 const entero = new Intl.NumberFormat("es-MX");
-const SIN_API = "Disponible cuando la carta esté conectada al sistema.";
 
 type Pendiente = { archivo: File; filas: Fila[]; filasBd: Fila[] };
 
@@ -70,8 +71,20 @@ export function CartaAdmin() {
 			destructiva: true,
 		});
 		if (!ok) return;
-		if (carta.eliminar(categoria, p.id)) notificar({ tono: "exito", titulo: `${p.name} eliminado` });
-		else notificar({ tono: "error", titulo: "No se pudo eliminar", descripcion: "Este platillo aún no tiene un registro válido." });
+		if (await carta.eliminar(categoria, p.id)) notificar({ tono: "exito", titulo: `${p.name} eliminado` });
+		else notificar({ tono: "error", titulo: "No se pudo eliminar", descripcion: "Vuelve a intentarlo en un momento." });
+	}
+
+	async function alternar(categoria: string, p: MenuItem) {
+		if (await carta.alternarDisponible(categoria, p.id)) notificar({ tono: "exito", titulo: p.available ? `${p.name} agotado` : `${p.name} disponible` });
+		else notificar({ tono: "error", titulo: "No se pudo cambiar la disponibilidad", descripcion: "Vuelve a intentarlo en un momento." });
+	}
+
+	async function guardar(categoria: string, d: Partial<MenuItem>): Promise<boolean> {
+		const ok = await carta.guardar(categoria, d);
+		if (ok) notificar({ tono: "exito", titulo: d.id === undefined ? "Platillo añadido" : "Cambios guardados", descripcion: d.name });
+		else notificar({ tono: "error", titulo: "No se pudo guardar", descripcion: "Vuelve a intentarlo en un momento." });
+		return ok;
 	}
 
 	function elegirArchivo(f: "csv" | "xlsx") {
@@ -110,9 +123,14 @@ export function CartaAdmin() {
 			titulo: "Platillo",
 			principal: true,
 			celda: (p) => (
-				<span className="flex flex-col gap-0.5">
-					<span>{p.name}</span>
-					{p.description && <span className="text-(length:--texto-pequeno) font-normal text-texto-secundario">{p.description}</span>}
+				<span className="flex items-center gap-3">
+					<span className="relative aspect-square w-12 shrink-0 overflow-hidden rounded-control border border-borde-sutil bg-superficie-cafe">
+						<Imagen src={p.imageUrl || null} decorativa fill sizes="3rem" className="object-cover" />
+					</span>
+					<span className="flex min-w-0 flex-col gap-0.5">
+						<span>{p.name}</span>
+						{p.description && <span className="text-(length:--texto-pequeno) font-normal text-texto-secundario">{p.description}</span>}
+					</span>
 				</span>
 			),
 		},
@@ -153,10 +171,10 @@ export function CartaAdmin() {
 			<input ref={entrada} type="file" hidden onChange={(e) => void alElegir(e.target.files?.[0])} />
 
 			<div className={REJILLA_INDICADORES}>
-				<Indicador rotulo="Platillos en la carta" valor={entero.format(todos.length)} detalle={contar(carta.categorias.length, "categoría")} className={INDICADOR_PROTAGONISTA} estado={carta.cargada ? "listo" : "cargando"} />
-				<Indicador rotulo="Disponibles" valor={entero.format(disponibles)} estado={carta.cargada ? "listo" : "cargando"} />
-				<Indicador rotulo="Agotados" valor={entero.format(todos.length - disponibles)} estado={carta.cargada ? "listo" : "cargando"} />
-				<Indicador rotulo="Populares" valor={entero.format(todos.filter((i) => i.tags?.includes("popular")).length)} estado={carta.cargada ? "listo" : "cargando"} />
+				<Indicador rotulo="Platillos en la carta" valor={entero.format(todos.length)} detalle={contar(carta.categorias.length, "categoría")} className={INDICADOR_PROTAGONISTA} estado={carta.carga.estado} alReintentar={carta.recargar} />
+				<Indicador rotulo="Disponibles" valor={entero.format(disponibles)} estado={carta.carga.estado} alReintentar={carta.recargar} />
+				<Indicador rotulo="Agotados" valor={entero.format(todos.length - disponibles)} estado={carta.carga.estado} alReintentar={carta.recargar} />
+				<Indicador rotulo="Populares" valor={entero.format(todos.filter((i) => i.tags?.includes("popular")).length)} estado={carta.carga.estado} alReintentar={carta.recargar} />
 			</div>
 
 			<div className="flex flex-wrap items-end gap-3">
@@ -173,7 +191,10 @@ export function CartaAdmin() {
 				/>
 			</div>
 
-			{carta.cargada && carta.categorias.length === 0 && (
+			{carta.carga.estado === "error" && (
+				<EstadoError titulo="No pudimos traer la carta" descripcion="Vuelve a intentarlo en un momento." alReintentar={carta.recargar} />
+			)}
+			{carta.carga.estado === "listo" && carta.categorias.length === 0 && (
 				<EstadoVacio icono={<UtensilsCrossed />} titulo="La carta está vacía" descripcion="Importa los platillos desde una plantilla para empezar." />
 			)}
 
@@ -188,10 +209,7 @@ export function CartaAdmin() {
 						acciones={
 							<DialogoPlatillo
 								categoria={c.name}
-								alGuardar={(d) => {
-									carta.guardar(c.id, d);
-									notificar({ tono: "exito", titulo: "Platillo añadido", descripcion: d.name });
-								}}
+								alGuardar={(d) => guardar(c.id, d)}
 								disparador={
 									<Boton variante="secundario" icono={<Plus />}>
 										{`Añadir a ${c.name}`}
@@ -214,17 +232,14 @@ export function CartaAdmin() {
 										tamano="compacto"
 										// El nombre accesible empieza por el texto visible (WCAG 2.5.3).
 										aria-label={p.available ? `Agotar ${p.name}` : `Ofrecer ${p.name}`}
-										onClick={() => carta.alternarDisponible(c.id, p.id)}
+										onClick={() => void alternar(c.id, p)}
 									>
 										{p.available ? "Agotar" : "Ofrecer"}
 									</Boton>
 									<DialogoPlatillo
 										platillo={p}
 										categoria={c.name}
-										alGuardar={(d) => {
-											carta.guardar(c.id, d);
-											notificar({ tono: "exito", titulo: "Cambios guardados", descripcion: d.name });
-										}}
+										alGuardar={(d) => guardar(c.id, d)}
 										disparador={
 											<Boton variante="secundario" tamano="compacto" soloIcono icono={<Pencil />}>
 												{`Editar ${p.name}`}
@@ -249,18 +264,17 @@ export function CartaAdmin() {
 				descripcion="Descarga la plantilla, rellénala y súbela. Antes de guardar verás qué cambia."
 			>
 				<div className="flex flex-col gap-(--espacio-md)">
-					{!API_EXTERNA && <p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">{SIN_API}</p>}
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-						<Boton variante="secundario" icono={<FileSpreadsheet />} deshabilitado={!API_EXTERNA} onClick={() => descargar("plantilla-xlsx")}>
+						<Boton variante="secundario" icono={<FileSpreadsheet />} onClick={() => descargar("plantilla-xlsx")}>
 							Plantilla de Excel
 						</Boton>
-						<Boton variante="secundario" icono={<Download />} deshabilitado={!API_EXTERNA} onClick={() => descargar("plantilla-csv")}>
+						<Boton variante="secundario" icono={<Download />} onClick={() => descargar("plantilla-csv")}>
 							Plantilla CSV
 						</Boton>
-						<Boton icono={<Upload />} deshabilitado={!API_EXTERNA} onClick={() => elegirArchivo("xlsx")}>
+						<Boton icono={<Upload />} onClick={() => elegirArchivo("xlsx")}>
 							Subir Excel
 						</Boton>
-						<Boton icono={<Upload />} deshabilitado={!API_EXTERNA} onClick={() => elegirArchivo("csv")}>
+						<Boton icono={<Upload />} onClick={() => elegirArchivo("csv")}>
 							Subir CSV
 						</Boton>
 					</div>
@@ -288,10 +302,9 @@ export function CartaAdmin() {
 					>
 						JSON de este panel
 					</Boton>
-					<Boton variante="secundario" deshabilitado={!API_EXTERNA} onClick={() => descargar("excel")}>
+					<Boton variante="secundario" onClick={() => descargar("excel")}>
 						Excel desde el sistema
 					</Boton>
-					{!API_EXTERNA && <p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">{SIN_API}</p>}
 				</div>
 			</Dialogo>
 
@@ -305,7 +318,7 @@ export function CartaAdmin() {
 					alTerminar={(r) => {
 						setPendiente(null);
 						notificar({ tono: "exito", titulo: "Importación completa", descripcion: `${contar(r.inserted, "nuevo")} y ${contar(r.updated, "actualizado")}.` });
-						void carta.recargarDeBd();
+						void carta.recargar({ silenciosa: true });
 					}}
 				/>
 			)}

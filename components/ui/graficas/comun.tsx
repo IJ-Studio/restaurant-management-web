@@ -6,7 +6,6 @@ import { Boton } from "../Boton";
 import { Esqueleto } from "../Esqueleto";
 import { EstadoError } from "../EstadoError";
 import { EstadoVacio } from "../EstadoVacio";
-import { Insignia } from "../Insignia";
 import { Tabla, type ColumnaTabla } from "../Tabla";
 
 /**
@@ -152,8 +151,6 @@ export interface MarcoGraficaProps {
 	descripcion?: string;
 	estado?: "listo" | "cargando" | "error";
 	alReintentar?: () => void | Promise<unknown>;
-	/** Muestra la insignia «Datos de ejemplo» (DESIGN.md § Indicador). */
-	datosDeEjemplo?: boolean;
 	/** Alto del dibujo, sin el eje X: el esqueleto ocupa lo mismo para que nada salte. */
 	alto: number;
 	vacia: boolean;
@@ -171,7 +168,6 @@ export function MarcoGrafica({
 	descripcion,
 	estado = "listo",
 	alReintentar,
-	datosDeEjemplo = false,
 	alto,
 	vacia,
 	textoVacio = "No hay datos para este periodo.",
@@ -198,7 +194,6 @@ export function MarcoGrafica({
 					{descripcion && <p className="m-0 text-(length:--texto-pequeno) leading-[1.5] text-texto-secundario">{descripcion}</p>}
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
-					{datosDeEjemplo && <Insignia tono="aviso">Datos de ejemplo</Insignia>}
 					{lista && (
 						<Boton variante="fantasma" tamano="compacto" onClick={() => setVista((v) => (v === "grafica" ? "tabla" : "grafica"))}>
 							{vista === "grafica" ? "Ver tabla" : "Ver gráfica"}

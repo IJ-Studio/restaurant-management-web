@@ -69,7 +69,7 @@ test.describe("saneamiento", () => {
 	});
 
 	test("conserva los emoji compuestos (unificador de ancho cero)", () => {
-		const familia = "👨\u200D👩\u200D👧";
+		const familia = "\u{1F468}\u200D\u{1F469}\u200D\u{1F467}";
 		expect(sanearLinea(familia)).toBe(familia);
 	});
 
@@ -204,7 +204,7 @@ test.describe("formularios", () => {
 		// «Ana» tiene 3 letras: cuenta; un dato de 2 letras, no.
 		expect(errorDe(esquemaRegistro, { ...registroValido, nombre: "Al", password: "Al#Quijote29" })).toBeNull();
 		expect(errorDe(esquemaRegistro, { ...registroValido, agreed: false })).toBe(
-			"Debes aceptar los términos y condiciones.",
+			"Para crear tu cuenta, acepta los términos y el aviso de privacidad.",
 		);
 		expect(errorDe(esquemaRegistro, { ...registroValido, lada: "+1" })).toBe("Elige una lada válida.");
 		// Claves desconocidas no pasan al payload.
@@ -232,8 +232,8 @@ test.describe("formularios", () => {
 	});
 
 	test("reserva: contacto, horario futuro y mesa", () => {
-		expect(errorDe(esquemaReservaContacto, { clienteNombre: "Ana", clienteTelefono: "55", clienteEmail: "a@b.c" })).toBeNull();
-		expect(errorDe(esquemaReservaContacto, { clienteNombre: " ", clienteTelefono: "55", clienteEmail: "a@b.c" })).toBe(
+		expect(errorDe(esquemaReservaContacto, { clienteNombre: "Ana", clienteTelefono: "55", clienteEmail: "a@b.c", privacidad: true })).toBeNull();
+		expect(errorDe(esquemaReservaContacto, { clienteNombre: " ", clienteTelefono: "55", clienteEmail: "a@b.c", privacidad: true })).toBe(
 			"El nombre es requerido",
 		);
 		expect(errorDe(esquemaReservaContacto, { clienteNombre: "Ana", clienteTelefono: "55", clienteEmail: "ana" })).toBe(
@@ -312,16 +312,12 @@ test.describe("formularios", () => {
 		expect(errorDe(esquemaPlatillo, { ...platillo, price: -1 })).toBe("El precio no puede ser negativo.");
 		expect(errorDe(esquemaPlatillo, { ...platillo, price: Number.NaN })).toBe("El precio no puede ser negativo.");
 
-		const promo = { title: "2×1", emoji: "🎉", startDate: "2026-11-01", endDate: "2026-11-30", active: true };
+		const promo = { title: "2×1", startDate: "2026-11-01", endDate: "2026-11-30", active: true };
 		expect(errorDe(esquemaPromocion, promo)).toBeNull();
 		expect(errorDe(esquemaPromocion, { ...promo, startDate: "", endDate: "" })).toBeNull();
 		expect(errorDe(esquemaPromocion, { ...promo, endDate: "2026-10-31" })).toBe(
 			"La fecha de fin no puede ser anterior a la de inicio.",
 		);
-		// Los límites cuentan caracteres (puntos de código), como un varchar de Postgres: tres emoji
-		// caben en 4 aunque ocupen 6 unidades UTF-16; cinco, no.
-		expect(errorDe(esquemaPromocion, { ...promo, emoji: "🎉🎉🎉" })).toBeNull();
-		expect(errorDe(esquemaPromocion, { ...promo, emoji: "🎉🎉🎉🎉🎉" })).toBe(MENSAJES.demasiadoLargo(4));
 	});
 
 	test("factura, caja, propinas, nómina y proveedores del admin", () => {

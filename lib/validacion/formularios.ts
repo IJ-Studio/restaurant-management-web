@@ -53,7 +53,9 @@ export const esquemaRegistro = z
 		lada,
 		telefono,
 		password: contrasenaNueva,
-		agreed: z.literal(true, { error: "Debes aceptar los términos y condiciones." }),
+		agreed: z.literal(true, { error: "Para crear tu cuenta, acepta los términos y el aviso de privacidad." }),
+		/** Finalidades secundarias (D-36): opcional; no viaja en el alta hasta que el API registre consentimientos. */
+		promociones: z.boolean().optional(),
 	})
 	.superRefine((datos, ctx) => {
 		if (contieneDatosPersonales(datos.password, datos)) {
@@ -100,6 +102,8 @@ export const esquemaReservaContacto = z.object({
 	clienteEmail: lineaRequerida("El correo es requerido").pipe(
 		z.string().regex(/\S+@\S+\.\S+/, { error: "Email inválido" }),
 	),
+	/** D-36: consentimiento del aviso de privacidad simplificado (no viaja en el cuerpo de la reserva). */
+	privacidad: z.literal(true, { error: "Para reservar, acepta el uso de tus datos para gestionar la reserva." }),
 });
 
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
@@ -209,7 +213,6 @@ export const esquemaPromocion = z
 		title: lineaRequerida("Escribe el título de la promoción."),
 		description: textoLibre().optional(),
 		badge: lineaOpcional().optional(),
-		emoji: lineaOpcional(4).optional(),
 		originalPrice: numeroDesde(0, "El precio no puede ser negativo.").optional(),
 		discountedPrice: numeroDesde(0, "El precio no puede ser negativo.").optional(),
 		startDate: z.union([z.literal(""), z.string().regex(FECHA, { error: "Fecha no válida." })]).optional(),
@@ -303,3 +306,16 @@ export function erroresPorCampo(error: z.ZodError): Record<string, string> {
 	}
 	return errores;
 }
+
+/** Reporte de un problema (PLAN-AMPLIACION D-34). La ruta la pone la pantalla, no la persona. */
+export const TIPOS_REPORTE = [
+	{ valor: "no-funciona", texto: "Algo no funciona" },
+	{ valor: "dato-incorrecto", texto: "Un dato está mal" },
+	{ valor: "accesibilidad", texto: "No puedo usarlo bien (accesibilidad)" },
+	{ valor: "otro", texto: "Otra cosa" },
+] as const;
+export const esquemaReporte = z.object({
+	tipo: z.enum(TIPOS_REPORTE.map((t) => t.valor) as [string, ...string[]], { error: "Elige qué tipo de problema es." }),
+	descripcion: textoLibre(1000).pipe(z.string().min(10, { error: "Cuéntanos un poco más: al menos 10 caracteres." })),
+});
+export type DatosReporte = z.output<typeof esquemaReporte>;

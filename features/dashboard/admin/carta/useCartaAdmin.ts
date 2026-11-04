@@ -1,27 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { MenuService } from "@/features/shared/services/dataService";
-import type { MenuCategory, MenuItem } from "@/features/shared/data/restaurantData";
-import { authHeaders, csvEscape, downloadAsFile, parseBool, parseNumber } from "@/features/dashboard/admin/utils/menuUtils";
+import { useCarga } from "@/hooks/useCarga";
+import { api } from "@/lib/api";
+import { normalizarCarta } from "@/lib/publico/carta";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { csvEscape, downloadAsFile, parseBool, parseNumber } from "@/features/dashboard/admin/utils/menuUtils";
+import type { MenuCategory, MenuItem } from "./tipos";
 
 /**
- * Lógica de la carta en administración (PLAN 5.9), sacada de la página sin cambiar su contrato:
- * - el estado vive en `MenuService` (almacenamiento local) y, con API externa, se carga de
- *   `GET /platillos/export.json`;
- * - el alta (`POST /platillos`) es optimista y reconcilia el id real; la edición hace `PATCH
- *   /platillos/:id` solo si el id viene de la BD; activar y eliminar siguen siendo locales, como
- *   antes (NP-46);
- * - exportar a CSV o JSON es local; a Excel y las plantillas, del API.
- *
- * Lo que cambia: sin `alert()` ni `confirm()`. Las operaciones devuelven si salieron bien y la
- * pantalla avisa con notificaciones; la confirmación de eliminar la pide la pantalla.
+ * Lógica de la carta en administración (PLAN 5.9; PLAN-AMPLIACION D-24 y D-31). La fuente es solo
+ * el API, sin copia en el navegador:
+ * - carga: `GET /platillos/export.json` (todos los campos) y los nombres de las categorías de
+ *   `GET /menu/categories/with-products`;
+ * - alta `POST /platillos`, edición `PATCH /platillos/:id`, agotar u ofrecer `PATCH /platillos/:id`
+ *   con `disponible`, y eliminar `DELETE /platillos/:id`; tras cada cambio se vuelve a leer;
+ * - exportar a CSV o JSON usa lo cargado; a Excel y las plantillas, el API.
+ * Cada operación devuelve si salió bien; la pantalla avisa con notificaciones.
  */
 
-const BASE = process.env.NEXT_PUBLIC_API_URL?.trim();
-export const API = (BASE && BASE.length > 0 ? BASE : "/api").replace(/\/$/, "");
-export const API_EXTERNA = API.startsWith("http");
+export const API = (process.env.NEXT_PUBLIC_API_URL ?? "").trim().replace(/\/$/, "");
 
 /** Colores de categoría: tokens de las gráficas en lugar de hex. */
 const COLORES = ["var(--color-grafica-1)", "var(--color-grafica-2)", "var(--color-grafica-3)", "var(--color-grafica-4)"];
@@ -32,13 +29,15 @@ export function filasDe(datos: unknown): Record<string, unknown>[] {
 	return Array.isArray(filas) ? filas : [];
 }
 
-function deFilasBd(filas: Record<string, unknown>[]): MenuCategory[] {
+function deFilasBd(filas: Record<string, unknown>[], nombres: Map<string, string>): MenuCategory[] {
 	const porCategoria = new Map<string, MenuCategory>();
-	filas.forEach((r, i) => {
+	for (const r of filas) {
 		const id = String(r.categoria_id ?? 0);
 		if (!porCategoria.has(id)) {
-			porCategoria.set(id, { id, name: `Categoría ${r.categoria_id ?? 0}`, icon: "", color: COLORES[Math.abs(Number(r.categoria_id ?? 0)) % COLORES.length], items: [] });
+			porCategoria.set(id, { id, name: nombres.get(id) ?? `Categoría ${id}`, color: COLORES[Math.abs(Number(r.categoria_id ?? 0)) % COLORES.length], items: [] });
 		}
+		const numero = Number(r.id);
+		if (!Number.isFinite(numero) || numero <= 0) continue;
 		const tags: string[] = [];
 		if (parseBool(r.es_popular, false)) tags.push("popular");
 		if (parseBool(r.es_vegano, false)) tags.push("vegano");
@@ -46,7 +45,7 @@ function deFilasBd(filas: Record<string, unknown>[]): MenuCategory[] {
 		if (parseBool(r.es_nuevo, false)) tags.push("nuevo");
 		if (parseBool(r.es_sin_gluten, false)) tags.push("sin-gluten");
 		porCategoria.get(id)!.items.push({
-			id: Number(r.id) || Date.now() + i,
+			id: numero,
 			name: String(r.nombre ?? ""),
 			description: String(r.descripcion_corta ?? r.descripcion ?? ""),
 			price: parseNumber(r.precio, 0),
@@ -58,7 +57,7 @@ function deFilasBd(filas: Record<string, unknown>[]): MenuCategory[] {
 			imageUrl: typeof r.imagen_url === "string" ? r.imagen_url : undefined,
 			imagePublicId: typeof r.imagen_public_id === "string" ? r.imagen_public_id : undefined,
 		});
-	});
+	}
 	return [...porCategoria.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -68,8 +67,8 @@ const cuerpo = (d: Partial<MenuItem>) => ({
 	precio: d.price,
 	disponible: d.available,
 	tiempo_preparacion: d.prepTime,
-	imagen_url: d.imageUrl ?? null,
-	imagen_public_id: d.imagePublicId ?? null,
+	imagen_url: d.imageUrl || null,
+	imagen_public_id: d.imagePublicId || null,
 	tags: d.tags,
 });
 
@@ -83,96 +82,47 @@ function descargar(blob: Blob, nombre: string) {
 const hoy = () => new Date().toISOString().slice(0, 10);
 
 export function useCartaAdmin() {
-	const [categorias, setCategorias] = useState<MenuCategory[]>([]);
-	const [cargada, setCargada] = useState(false);
+	const [carga, recargar] = useCarga(async () => {
+		const [filas, carta] = await Promise.all([api.get<unknown>("/platillos/export.json"), api.get<unknown>("/menu/categories/with-products").catch(() => [])]);
+		const nombres = new Map(normalizarCarta(carta).map((c) => [String(c.id), c.nombre] as const));
+		return deFilasBd(filasDe(filas), nombres);
+	}, "carta: cargar");
+	const categorias = carga.estado === "listo" ? carga.datos : [];
 
-	const cargarDeBd = useCallback(async () => {
+	async function operar(contexto: string, peticion: () => Promise<unknown>): Promise<boolean> {
 		try {
-			const res = await fetch(`${API}/platillos/export.json`, { cache: "no-store", headers: authHeaders() });
-			if (!res.ok) return;
-			const filas = filasDe(await res.json().catch(() => null));
-			if (filas.length) setCategorias(deFilasBd(filas));
+			await peticion();
+			await recargar({ silenciosa: true });
+			return true;
 		} catch (e) {
-			registrarError(e, "carta: cargar de la BD");
+			registrarError(e, contexto);
+			return false;
 		}
-	}, []);
-
-	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial del almacenamiento local
-		setCategorias(MenuService.getMenu());
-		setCargada(true);
-		if (API_EXTERNA) void cargarDeBd();
-	}, [cargarDeBd]);
-
-	useEffect(() => {
-		if (categorias.length > 0) MenuService.saveMenu(categorias);
-	}, [categorias]);
-
-	function guardar(categoria: string, datos: Partial<MenuItem>) {
-		const existente = categorias.find((c) => c.id === categoria)?.items.find((i) => i.id === datos.id);
-		if (existente) {
-			if (typeof existente.id === "number" && existente.id > 0 && API_EXTERNA) {
-				void fetch(`${API}/platillos/${existente.id}`, {
-					cache: "no-store",
-					method: "PATCH",
-					headers: { "Content-Type": "application/json", ...authHeaders() },
-					body: JSON.stringify(cuerpo({ ...existente, ...datos })),
-				}).catch((e) => registrarError(e, "carta: actualizar"));
-			}
-			setCategorias((cs) => cs.map((c) => (c.id !== categoria ? c : { ...c, items: c.items.map((i) => (i.id === datos.id ? ({ ...i, ...datos } as MenuItem) : i)) })));
-			return;
-		}
-		const temporal = Date.now();
-		const nuevo: MenuItem = {
-			id: temporal,
-			name: datos.name ?? "",
-			description: datos.description ?? "",
-			price: datos.price ?? 0,
-			available: datos.available ?? true,
-			category: categoria,
-			tags: datos.tags ?? [],
-			prepTime: datos.prepTime ?? 10,
-			calories: datos.calories ?? 0,
-			imageUrl: datos.imageUrl ?? undefined,
-			imagePublicId: datos.imagePublicId ?? undefined,
-		};
-		setCategorias((cs) => cs.map((c) => (c.id !== categoria ? c : { ...c, items: [...c.items, nuevo] })));
-		if (!API_EXTERNA) return;
-		void (async () => {
-			try {
-				const res = await fetch(`${API}/platillos`, {
-					cache: "no-store",
-					method: "POST",
-					headers: { "Content-Type": "application/json", ...authHeaders() },
-					body: JSON.stringify({ categoria_id: Number(categoria), ...cuerpo(nuevo) }),
-				});
-				if (!res.ok) return;
-				const real = Number((await res.json().catch(() => null))?.id);
-				if (!Number.isFinite(real) || real <= 0) return;
-				setCategorias((cs) => cs.map((c) => (c.id !== categoria ? c : { ...c, items: c.items.map((i) => (i.id === temporal ? { ...i, id: real } : i)) })));
-			} catch (e) {
-				registrarError(e, "carta: crear");
-			}
-		})();
 	}
 
-	function alternarDisponible(categoria: string, id: MenuItem["id"]) {
-		setCategorias((cs) => cs.map((c) => (c.id !== categoria ? c : { ...c, items: c.items.map((i) => (i.id !== id ? i : { ...i, available: !i.available })) })));
+	const buscar = (categoria: string, id: MenuItem["id"]) => categorias.find((c) => c.id === categoria)?.items.find((i) => i.id === id);
+
+	function guardar(categoria: string, datos: Partial<MenuItem>): Promise<boolean> {
+		const existente = datos.id === undefined ? undefined : buscar(categoria, datos.id);
+		if (existente) return operar("carta: actualizar", () => api.patch(`/platillos/${existente.id}`, cuerpo({ ...existente, ...datos })));
+		return operar("carta: crear", () => api.post("/platillos", { categoria_id: Number(categoria), ...cuerpo({ available: true, prepTime: 10, tags: [], ...datos }) }));
 	}
 
-	/** `false` si el id no es válido (antes, `alert("ID de platillo inválido")`). */
-	function eliminar(categoria: string, id: MenuItem["id"]): boolean {
-		const numero = Number(id);
-		if (!Number.isFinite(numero) || numero <= 0) return false;
-		setCategorias((cs) => cs.map((c) => (c.id !== categoria ? c : { ...c, items: c.items.filter((i) => i.id !== id) })));
-		return true;
+	function alternarDisponible(categoria: string, id: MenuItem["id"]): Promise<boolean> {
+		const actual = buscar(categoria, id);
+		if (!actual) return Promise.resolve(false);
+		return operar("carta: disponibilidad", () => api.patch(`/platillos/${actual.id}`, { disponible: !actual.available }));
+	}
+
+	function eliminar(categoria: string, id: MenuItem["id"]): Promise<boolean> {
+		const actual = buscar(categoria, id);
+		if (!actual) return Promise.resolve(false);
+		return operar("carta: eliminar", () => api.delete(`/platillos/${actual.id}`));
 	}
 
 	async function filasActualesBd(): Promise<Record<string, unknown>[]> {
-		if (!API_EXTERNA) return [];
 		try {
-			const res = await fetch(`${API}/platillos/export.json`, { cache: "no-store", headers: authHeaders() });
-			return res.ok ? filasDe(await res.json().catch(() => null)) : [];
+			return filasDe(await api.get<unknown>("/platillos/export.json"));
 		} catch {
 			return [];
 		}
@@ -186,9 +136,7 @@ export function useCartaAdmin() {
 		const lineas = [["category", "name", "description", "price", "available", "tags", "prepTime", "calories"].join(",")];
 		for (const c of categorias)
 			for (const i of c.items)
-				lineas.push(
-					[c.name, i.name, i.description, i.price, i.available ? 1 : 0, i.tags?.join("|") ?? "", i.prepTime ?? 0, i.calories ?? 0].map(csvEscape).join(","),
-				);
+				lineas.push([c.name, i.name, i.description, i.price, i.available ? 1 : 0, i.tags?.join("|") ?? "", i.prepTime ?? 0, i.calories ?? 0].map(csvEscape).join(","));
 		descargar(new Blob([lineas.join("\n")], { type: "text/csv;charset=utf-8" }), `menu_${hoy()}.csv`);
 	}
 
@@ -205,5 +153,5 @@ export function useCartaAdmin() {
 		}
 	}
 
-	return { categorias, cargada, guardar, alternarDisponible, eliminar, filasActualesBd, recargarDeBd: cargarDeBd, exportarJson, exportarCsv, descargarDelApi };
+	return { carga, categorias, recargar, guardar, alternarDisponible, eliminar, filasActualesBd, exportarJson, exportarCsv, descargarDelApi };
 }

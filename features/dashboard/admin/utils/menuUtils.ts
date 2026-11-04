@@ -1,6 +1,6 @@
 "use client";
 
-import { type TagKey } from "../data/menuMock";
+import { type TagKey } from "../carta/tipos";
 
 export function normalizeStr(s: string) {
   return (s || "").trim();

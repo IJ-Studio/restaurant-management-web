@@ -47,8 +47,7 @@ export const HOSTS_ENLACE: readonly string[] = [
 
 /** Orígenes que se pueden incrustar en un marco. */
 export const HOSTS_MARCO: readonly string[] = [
-	// Widget de subida de CldUploadButton.
-	"https://upload-widget.cloudinary.com",
+	// Ninguno propio: la subida de imágenes es firmada y sin widget (D-31); Stripe va aparte en la CSP.
 ];
 
 /** Origen del API del backend, si la variable pública es una URL válida. */

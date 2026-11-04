@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { ImageUp, Pencil, Plus, Tag, Trash2 } from "lucide-react";
-import { CldUploadButton } from "next-cloudinary";
+import { Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { PROTAGONISTA_DE_TRES, REJILLA_TRES_INDICADORES } from "@/components/paneles/rejilla";
@@ -13,19 +12,17 @@ import { Dialogo } from "@/components/ui/Dialogo";
 import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
-import { Imagen } from "@/components/ui/Imagen";
 import { Indicador } from "@/components/ui/Indicador";
 import { Insignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { Tabla, type ColumnaTabla } from "@/components/ui/Tabla";
-import { clasesBoton } from "@/components/ui/estilos-boton";
+import { SubidaImagen } from "@/features/dashboard/admin/comun/SubidaImagen";
 import { authHeaders } from "@/features/dashboard/admin/utils/menuUtils";
 import { GRADIENT_PRESETS, mapPromotionRow, type Promotion, type PromotionRow } from "@/features/shared/data/promotions";
 import { formatearDia } from "@/lib/formato/fecha";
 import { formatearImporte } from "@/lib/formato/precio";
 import { promocionesVigentes } from "@/lib/publico/promociones-vigentes";
 import { registrarError } from "@/lib/registro/registrar-error";
-import { TAMANO_MAXIMO } from "@/lib/validacion/archivos";
 import { esquemaPromocion } from "@/lib/validacion/formularios";
 
 /**
@@ -33,12 +30,12 @@ import { esquemaPromocion } from "@/lib/validacion/formularios";
  * `PATCH` y `DELETE /promociones/:id`) con el mismo cuerpo (`toBody`). Lo nuevo:
  * - el diálogo valida con `esquemaPromocion` (paso 3.1): título obligatorio, precios ≥ 0 y la
  *   fecha de inicio no posterior a la de fin, que pide 5.10;
- * - la imagen se sube con el mismo widget, limitado a JPG, PNG, WebP y AVIF de 5 MB (la firma
- *   antes de subir, en NP-46);
+ * - la imagen, con la subida firmada de `SubidaImagen` (D-31): tipo, tamaño y firma de bytes antes de subir;
  * - eliminar pide confirmación del sistema; los errores, notificaciones (antes `alert()`).
  *
- * El color y el emoji siguen en el cuerpo porque son datos del API; la web pública no los pinta
- * desde la fase 4, y aquí el color se elige por nombre, sin muestras.
+ * El color sigue en el cuerpo porque es un dato del API; la web pública no lo pinta desde la
+ * fase 4, y aquí se elige por nombre, sin muestras. Sin emojis (D-25): el formulario ya no tiene ese
+ * campo y el cuerpo no lo envía, así que el API conserva lo que tuviera.
  */
 
 const BASE = process.env.NEXT_PUBLIC_API_URL?.trim();
@@ -52,7 +49,6 @@ function cuerpo(d: Partial<Promotion>) {
 		titulo: d.title,
 		descripcion: d.description,
 		badge: d.badge || null,
-		emoji: d.emoji || null,
 		color: d.color,
 		precio_original: d.originalPrice ?? null,
 		precio_descuento: d.discountedPrice ?? null,
@@ -70,7 +66,6 @@ function DialogoPromocion({ promo, disparador, alGuardar }: { promo?: Promotion;
 		title: promo?.title ?? "",
 		description: promo?.description ?? "",
 		badge: promo?.badge ?? "",
-		emoji: promo?.emoji ?? "",
 		color: promo?.color ?? GRADIENT_PRESETS[0].value,
 		originalPrice: promo?.originalPrice === undefined ? "" : String(promo.originalPrice),
 		discountedPrice: promo?.discountedPrice === undefined ? "" : String(promo.discountedPrice),
@@ -132,10 +127,7 @@ function DialogoPromocion({ promo, disparador, alGuardar }: { promo?: Promotion;
 			>
 				<Campo etiqueta="Título" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} error={errores.title} maxLength={120} autoComplete="off" />
 				<AreaTexto etiqueta="Descripción" opcional rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} error={errores.description} maxLength={300} contador />
-				<div className="grid grid-cols-1 gap-(--espacio-md) sm:grid-cols-2">
-					<Campo etiqueta="Etiqueta" opcional value={f.badge} onChange={(e) => setF({ ...f, badge: e.target.value })} error={errores.badge} maxLength={30} ayuda="Palabra corta sobre la tarjeta: «Fin de semana»." />
-					<Campo etiqueta="Emoji" opcional value={f.emoji} onChange={(e) => setF({ ...f, emoji: e.target.value })} error={errores.emoji} maxLength={4} ayuda="Dato del sistema; la web no lo muestra." />
-				</div>
+				<Campo etiqueta="Etiqueta" opcional value={f.badge} onChange={(e) => setF({ ...f, badge: e.target.value })} error={errores.badge} maxLength={30} ayuda="Palabra corta sobre la tarjeta: «Fin de semana»." />
 				<div className="grid grid-cols-1 gap-(--espacio-md) sm:grid-cols-2">
 					<Campo etiqueta="Precio normal" opcional type="number" inputMode="decimal" min={0} step="0.01" value={f.originalPrice} onChange={(e) => setF({ ...f, originalPrice: e.target.value })} error={errores.originalPrice} />
 					<Campo etiqueta="Precio de la promoción" opcional type="number" inputMode="decimal" min={0} step="0.01" value={f.discountedPrice} onChange={(e) => setF({ ...f, discountedPrice: e.target.value })} error={errores.discountedPrice} />
@@ -145,33 +137,12 @@ function DialogoPromocion({ promo, disparador, alGuardar }: { promo?: Promotion;
 					<Campo etiqueta="Hasta" opcional type="date" value={f.endDate} min={f.startDate || undefined} onChange={(e) => setF({ ...f, endDate: e.target.value })} error={errores.endDate} />
 				</div>
 				<Selector etiqueta="Color de la tarjeta" opciones={GRADIENT_PRESETS.map((g) => ({ valor: g.value, texto: g.label }))} value={f.color} onChange={(e) => setF({ ...f, color: e.target.value })} ayuda="Dato del sistema; la web usa los colores de la casa." />
-				<fieldset className="m-0 flex min-w-0 flex-col gap-(--espacio-sm) border-0 p-0">
-					<legend className="mb-(--espacio-xs) p-0 font-semibold text-texto-principal">Imagen</legend>
-					{f.imageUrl ? (
-						<div className="flex flex-wrap items-end gap-(--espacio-md)">
-							<div className="relative aspect-[4/3] w-48 overflow-hidden rounded-tarjeta border border-borde-sutil">
-								<Imagen src={f.imageUrl} alt={`Imagen de ${f.title || "la promoción"}`} fill sizes="12rem" className="object-cover" />
-							</div>
-							<Boton variante="secundario" tamano="compacto" icono={<Trash2 />} onClick={() => setF({ ...f, imageUrl: "", imagePublicId: "" })}>
-								Quitar la imagen
-							</Boton>
-						</div>
-					) : (
-						<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">Sin imagen. JPG, PNG, WebP o AVIF de hasta {TAMANO_MAXIMO.imagen / (1024 * 1024)} MB.</p>
-					)}
-					<CldUploadButton
-						uploadPreset="tu_upload_preset"
-						options={{ maxFiles: 1, clientAllowedFormats: ["jpg", "jpeg", "png", "webp", "avif"], maxFileSize: TAMANO_MAXIMO.imagen, sources: ["local"] }}
-						onSuccess={(resultado) => {
-							const info = resultado?.info;
-							if (info && typeof info === "object" && "secure_url" in info) setF((x) => ({ ...x, imageUrl: String(info.secure_url), imagePublicId: String(info.public_id ?? "") }));
-						}}
-						className={clasesBoton({ variante: "secundario", tamano: "compacto", className: "self-start" })}
-					>
-						<ImageUp aria-hidden="true" />
-						{f.imageUrl ? "Cambiar la imagen" : "Subir una imagen"}
-					</CldUploadButton>
-				</fieldset>
+				<SubidaImagen
+					destino="promociones"
+					valor={{ url: f.imageUrl, publicId: f.imagePublicId }}
+					alCambiar={(v) => setF((x) => ({ ...x, imageUrl: v.url, imagePublicId: v.publicId }))}
+					textoAlternativo={`Imagen de ${f.title || "la promoción"}`}
+				/>
 			</form>
 		</Dialogo>
 	);

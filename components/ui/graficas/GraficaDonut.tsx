@@ -26,7 +26,7 @@ export interface PorcionDonut {
 	valor: number;
 }
 
-export interface GraficaDonutProps extends Pick<MarcoGraficaProps, "titulo" | "descripcion" | "estado" | "alReintentar" | "datosDeEjemplo" | "textoVacio" | "className"> {
+export interface GraficaDonutProps extends Pick<MarcoGraficaProps, "titulo" | "descripcion" | "estado" | "alReintentar" | "textoVacio" | "className"> {
 	porciones: PorcionDonut[];
 	formatoValor?: (n: number) => string;
 	/** Formato de la cifra del centro, que tiene poco sitio («$ 68 mil»); por defecto, `formatoValor`. */

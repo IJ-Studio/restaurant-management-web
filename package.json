@@ -15,7 +15,6 @@
 		"jose": "^6.1.2",
 		"lucide-react": "^0.575.0",
 		"next": "^16.4.3",
-		"next-cloudinary": "^6.17.5",
 		"pg": "^8.16.3",
 		"react": "^19.2.9",
 		"react-dom": "^19.2.9",
@@ -35,7 +34,8 @@
 		"test:e2e": "playwright test",
 		"test:e2e:ui": "playwright test --ui",
 		"test:unidad": "playwright test -c playwright.unidad.config.ts",
-		"revisar:invisibles": "node scripts/revisar-caracteres-invisibles.mjs"
+		"revisar:invisibles": "node scripts/revisar-caracteres-invisibles.mjs",
+		"revisar:emojis": "node scripts/revisar-emojis.mjs"
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.14.0",

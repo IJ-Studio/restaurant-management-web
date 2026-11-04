@@ -23,7 +23,7 @@ import {
  * cuadrícula de 1 px recesiva. La categoría activa se resalta con una banda café; el tooltip
  * lista todas sus series. Solo se rotula el valor más alto.
  */
-export interface GraficaBarrasProps extends Pick<MarcoGraficaProps, "titulo" | "descripcion" | "estado" | "alReintentar" | "datosDeEjemplo" | "textoVacio" | "className"> {
+export interface GraficaBarrasProps extends Pick<MarcoGraficaProps, "titulo" | "descripcion" | "estado" | "alReintentar" | "textoVacio" | "className"> {
 	categorias: string[];
 	series: SerieGrafica[];
 	formatoValor?: (n: number) => string;

@@ -1,63 +1,82 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChefHat, CircleAlert, Package } from "lucide-react";
+import { ChefHat, Package } from "lucide-react";
+import { AppOperaciones } from "@/components/paneles/AppOperaciones";
 import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { PanelLateral } from "@/components/ui/Dialogo";
+import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Indicador } from "@/components/ui/Indicador";
 import { Insignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
-import type { InventoryProduct, Order } from "@/features/shared/data/restaurantData";
-import { InventoryService, OrderService } from "@/features/shared/services/dataService";
+import { useCarga } from "@/hooks/useCarga";
+import { api } from "@/lib/api";
 import { contar } from "@/lib/formato/plural";
+import { registrarError } from "@/lib/registro/registrar-error";
+import { pedirPanel } from "@/lib/paneles/api-panel";
 
 /**
- * Panel de cocina (PLAN 5.19), para una tableta o un monitor que se lee a distancia: mesas en
- * Fraunces grande, platos en letra de título y botones de 56 px. La misma lógica sobre los
- * servicios locales: las comandas se leen cada 5 s y «Empezar» y «Marcar lista» avanzan el estado.
+ * Panel de cocina (PLAN 5.19; PLAN-AMPLIACION D-24), para una tableta o un monitor que se lee a
+ * distancia: mesas en Fraunces grande, platos en letra de título y botones de 56 px.
  *
- * Retirado lo que no era verdad: el «12m Avg» fijo, el botón «Entregado» de las listas (no hacía
- * nada) y el «aviso enviado» del inventario, que no avisaba a nadie. Las existencias se consultan en
- * un panel lateral, con su nivel en texto.
+ * Datos del API, los mismos que usa la app móvil del personal:
+ * - comandas de hoy: `GET /pedidos/admin/recent` (abiertas, en preparación y listas), cada 15 s;
+ * - «Empezar» y «Marcar lista»: `PATCH /pedidos/:id/estatus` (`en_preparacion`, `lista`);
+ * - existencias: `GET /inventario/productos`. El nivel «bajo» solo se marca si el API da el mínimo
+ *   de cada producto (`minStock`); si no, se listan sin juzgar el nivel.
  */
 
-const COLUMNAS: { estado: Order["status"]; titulo: string; accion?: string; vacio: string }[] = [
-	{ estado: "nuevo", titulo: "Nuevas", accion: "Empezar", vacio: "No hay comandas nuevas." },
-	{ estado: "preparando", titulo: "En preparación", accion: "Marcar lista", vacio: "Nada en el fuego." },
-	{ estado: "listo", titulo: "Listas para la mesa", vacio: "Nada esperando al mesero." },
-];
-const SIGUIENTE: Partial<Record<Order["status"], Order["status"]>> = { nuevo: "preparando", preparando: "listo" };
-const entero = new Intl.NumberFormat("es-MX");
+interface Comanda {
+	id: string;
+	table: string;
+	time: string;
+	status: string | null;
+	items: { nombre: string; cantidad: number }[];
+}
+interface Producto {
+	id: number;
+	name: string;
+	unit: string | null;
+	stock: string | number | null;
+	minStock?: string | number | null;
+}
 
-function Comanda({ pedido, accion, alAvanzar }: { pedido: Order; accion?: string; alAvanzar: () => void }) {
+const COLUMNAS = [
+	{ estado: "abierta", titulo: "Nuevas", accion: "Empezar", siguiente: "en_preparacion", vacio: "No hay comandas nuevas." },
+	{ estado: "en_preparacion", titulo: "En preparación", accion: "Marcar lista", siguiente: "lista", vacio: "Nada en el fuego." },
+	{ estado: "lista", titulo: "Listas para la mesa", vacio: "Nada esperando al mesero." },
+] as const;
+const entero = new Intl.NumberFormat("es-MX");
+const numero = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
+const esBajo = (p: Producto) => {
+	const minimo = numero(p.minStock);
+	const stock = numero(p.stock);
+	return minimo !== null && stock !== null && stock <= minimo;
+};
+/** Folio corto para leer a distancia y para el lector de pantalla: los UUID completos no se leen. */
+const folio = (id: string) => id.slice(0, 6).toUpperCase();
+
+function TarjetaComanda({ pedido, accion, ocupado, alAvanzar }: { pedido: Comanda; accion?: string; ocupado: boolean; alAvanzar: () => void }) {
 	return (
 		<li className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
 			<div className="flex items-baseline justify-between gap-3">
-				<h3 className="m-0 font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.1] text-texto-principal">{pedido.table.startsWith("Mesa") || pedido.table.startsWith("Barra") || pedido.table.startsWith("Terraza") ? pedido.table : `Mesa ${pedido.table}`}</h3>
-				<span className="shrink-0 text-texto-secundario numeros-tabulares">{`${pedido.id} · ${pedido.timestamp}`}</span>
+				<h3 className="m-0 font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.1] text-texto-principal">{pedido.table}</h3>
+				<span className="shrink-0 text-texto-secundario numeros-tabulares">{`${folio(pedido.id)} · ${pedido.time}`}</span>
 			</div>
-			<ul className="m-0 flex list-none flex-col gap-2 p-0" aria-label={`Platos de la comanda ${pedido.id}`}>
+			<ul className="m-0 flex list-none flex-col gap-2 p-0" aria-label={`Platos de la comanda ${folio(pedido.id)}`}>
 				{pedido.items.map((it, i) => (
-					<li key={`${it.name}-${i}`} className="flex flex-col gap-1 text-(length:--texto-titulo-interfaz) text-texto-principal">
-						<span>
-							<span className="me-2 font-semibold numeros-tabulares">{`${it.qty} ×`}</span>
-							{it.name}
-						</span>
-						{it.notes && (
-							<span className="flex items-center gap-2 text-(length:--texto-cuerpo) text-aviso">
-								<CircleAlert aria-hidden="true" className="size-5 shrink-0 stroke-[1.5]" />
-								{it.notes}
-							</span>
-						)}
+					<li key={`${it.nombre}-${i}`} className="text-(length:--texto-titulo-interfaz) text-texto-principal">
+						<span className="me-2 font-semibold numeros-tabulares">{`${it.cantidad} ×`}</span>
+						{it.nombre}
 					</li>
 				))}
 			</ul>
 			{accion ? (
-				<Boton className="min-h-14 w-full" aria-label={`${accion} la comanda ${pedido.id}`} onClick={alAvanzar}>
+				<Boton className="min-h-14 w-full" cargando={ocupado} aria-label={`${accion} la comanda ${folio(pedido.id)}`} onClick={alAvanzar}>
 					{accion}
 				</Boton>
 			) : (
@@ -68,115 +87,138 @@ function Comanda({ pedido, accion, alAvanzar }: { pedido: Order; accion?: string
 }
 
 export function CocinaPanel() {
-	const [pedidos, setPedidos] = useState<Order[]>([]);
-	const [inventario, setInventario] = useState<InventoryProduct[]>([]);
-	const [cargado, setCargado] = useState(false);
+	const [comandas, recargar] = useCarga(() => pedirPanel<Comanda[]>("/pedidos/admin/recent"), "cocina: comandas");
+	const [inventario, recargarInventario] = useCarga(() => pedirPanel<Producto[]>("/inventario/productos"), "cocina: existencias");
 	const [existencias, setExistencias] = useState(false);
+	const [avanzando, setAvanzando] = useState<string | null>(null);
 	const { notificar } = useNotificaciones();
 
 	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect -- lectura inicial de los servicios locales
-		setPedidos(OrderService.getOrders());
-		setInventario(InventoryService.getInventory());
-		setCargado(true);
-		const t = setInterval(() => setPedidos(OrderService.getOrders()), 5000);
+		const t = setInterval(() => void recargar({ silenciosa: true }), 15000);
 		return () => clearInterval(t);
-	}, []);
+	}, [recargar]);
 
-	function avanzar(p: Order) {
-		const siguiente = SIGUIENTE[p.status];
-		if (!siguiente) return;
-		OrderService.updateOrderStatus(p.id, siguiente);
-		setPedidos(OrderService.getOrders());
-		notificar({ tono: "exito", titulo: siguiente === "listo" ? `Comanda ${p.id} lista` : `Comanda ${p.id} en preparación` });
+	async function avanzar(p: Comanda, siguiente: "en_preparacion" | "lista") {
+		setAvanzando(p.id);
+		try {
+			await api.patch(`/pedidos/${encodeURIComponent(p.id)}/estatus`, { estatus: siguiente });
+			notificar({ tono: "exito", titulo: siguiente === "lista" ? `Comanda ${folio(p.id)} lista` : `Comanda ${folio(p.id)} en preparación` });
+			await recargar({ silenciosa: true });
+		} catch (err) {
+			registrarError(err, "cocina: avanzar comanda");
+			notificar({ tono: "error", titulo: "No se pudo mover la comanda", descripcion: "Vuelve a intentarlo en un momento." });
+		} finally {
+			setAvanzando(null);
+		}
 	}
 
-	const de = (s: Order["status"]) => pedidos.filter((p) => p.status === s);
-	const criticos = inventario.filter((i) => i.stock <= i.minStock);
-	const estado = cargado ? ("listo" as const) : ("cargando" as const);
+	const lista = comandas.estado === "listo" && Array.isArray(comandas.datos) ? comandas.datos : [];
+	const de = (estado: string) => lista.filter((p) => p.status === estado);
+	const productos = inventario.estado === "listo" && Array.isArray(inventario.datos) ? inventario.datos : [];
+	const bajos = productos.filter(esBajo);
+	const conMinimo = productos.some((p) => numero(p.minStock) !== null);
+	const comun = { estado: comandas.estado, alReintentar: recargar } as const;
 
 	return (
 		<PlantillaPanel
-				titulo="Comandas"
-				descripcion="Se actualiza sola cada 5 segundos."
-				acciones={
-					<Boton variante="secundario" icono={<Package />} className="min-h-12" onClick={() => setExistencias(true)}>
-						Existencias
-					</Boton>
-				}
+			titulo="Comandas"
+			descripcion="Se actualiza sola cada 15 segundos."
+			acciones={
+				<Boton variante="secundario" icono={<Package />} className="min-h-12" onClick={() => setExistencias(true)}>
+					Existencias
+				</Boton>
+			}
 		>
-			<Aviso tono="info" rol={null} titulo="Pantalla con datos de ejemplo.">
-				Las comandas salen de los pedidos de la sala guardados en este dispositivo.
-			</Aviso>
-
 			<div className={REJILLA_INDICADORES}>
-				<Indicador estado={estado} rotulo="En cocina" valor={entero.format(de("nuevo").length + de("preparando").length)} detalle="Nuevas y en preparación" className={INDICADOR_PROTAGONISTA} />
-				<Indicador estado={estado} rotulo="Nuevas" valor={entero.format(de("nuevo").length)} />
-				<Indicador estado={estado} rotulo="Listas para la mesa" valor={entero.format(de("listo").length)} />
-				<Indicador estado={estado} rotulo="Existencias bajas" valor={entero.format(criticos.length)} />
+				<Indicador {...comun} rotulo="En cocina" valor={entero.format(de("abierta").length + de("en_preparacion").length)} detalle="Nuevas y en preparación" className={INDICADOR_PROTAGONISTA} />
+				<Indicador {...comun} rotulo="Nuevas" valor={entero.format(de("abierta").length)} />
+				<Indicador {...comun} rotulo="Listas para la mesa" valor={entero.format(de("lista").length)} />
+				<Indicador
+					estado={inventario.estado}
+					alReintentar={recargarInventario}
+					rotulo="Existencias bajas"
+					valor={conMinimo ? entero.format(bajos.length) : "—"}
+					detalle={conMinimo ? undefined : "El sistema aún no da los mínimos"}
+				/>
 			</div>
 
-			{criticos.length > 0 && (
+			{bajos.length > 0 && (
 				<Aviso
 					tono="aviso"
 					rol={null}
-					titulo={`${contar(criticos.length, "producto")} en el mínimo o por debajo.`}
+					titulo={`${contar(bajos.length, "producto")} en el mínimo o por debajo.`}
 					accion={
 						<Boton variante="secundario" tamano="compacto" onClick={() => setExistencias(true)}>
 							Ver existencias
 						</Boton>
 					}
 				>
-					{criticos.slice(0, 3).map((c) => c.name).join(", ")}
-					{criticos.length > 3 ? ` y ${criticos.length - 3} más.` : "."}
+					{bajos.slice(0, 3).map((c) => c.name).join(", ")}
+					{bajos.length > 3 ? ` y ${bajos.length - 3} más.` : "."}
 				</Aviso>
 			)}
 
-			<div className="grid grid-cols-1 items-start gap-(--espacio-xl) lg:grid-cols-3">
-				{COLUMNAS.map((c) => {
-					const lista = de(c.estado);
-					return (
-						<section key={c.estado} aria-labelledby={`col-${c.estado}`} className="flex min-w-0 flex-col gap-(--espacio-md)">
-							<h2 id={`col-${c.estado}`} className="m-0 flex items-baseline justify-between gap-3 border-b border-borde-sutil pb-(--espacio-sm) font-titulos text-(length:--texto-titulo-3) font-normal text-texto-principal">
-								{c.titulo}
-								<span className="font-texto text-(length:--texto-titulo-interfaz) text-texto-secundario numeros-tabulares">
-									{lista.length}
-									<span className="solo-lectores"> comandas</span>
-								</span>
-							</h2>
-							{lista.length === 0 ? (
-								<p className="m-0 py-(--espacio-lg) text-center text-texto-secundario">{c.vacio}</p>
-							) : (
-								<ul className="m-0 flex list-none flex-col gap-(--espacio-md) p-0" aria-label={`Comandas: ${c.titulo.toLowerCase()}`}>
-									{lista.map((p) => (
-										<Comanda key={p.id} pedido={p} accion={c.accion} alAvanzar={() => avanzar(p)} />
-									))}
-								</ul>
-							)}
-						</section>
-					);
-				})}
-			</div>
+			{comandas.estado === "error" ? (
+				<EstadoError titulo="No pudimos traer las comandas" descripcion="Vuelve a intentarlo en un momento." alReintentar={recargar} />
+			) : (
+				<div className="grid grid-cols-1 items-start gap-(--espacio-xl) lg:grid-cols-3">
+					{COLUMNAS.map((c) => {
+						const columna = de(c.estado);
+						return (
+							<section key={c.estado} aria-labelledby={`col-${c.estado}`} className="flex min-w-0 flex-col gap-(--espacio-md)">
+								<h2 id={`col-${c.estado}`} className="m-0 flex items-baseline justify-between gap-3 border-b border-borde-sutil pb-(--espacio-sm) font-titulos text-(length:--texto-titulo-3) font-normal text-texto-principal">
+									{c.titulo}
+									<span className="font-texto text-(length:--texto-titulo-interfaz) text-texto-secundario numeros-tabulares">
+										{comandas.estado === "listo" ? columna.length : "…"}
+										<span className="solo-lectores"> comandas</span>
+									</span>
+								</h2>
+								{comandas.estado === "cargando" ? null : columna.length === 0 ? (
+									<p className="m-0 py-(--espacio-lg) text-center text-texto-secundario">{c.vacio}</p>
+								) : (
+									<ul className="m-0 flex list-none flex-col gap-(--espacio-md) p-0" aria-label={`Comandas: ${c.titulo.toLowerCase()}`}>
+										{columna.map((p) => (
+											<TarjetaComanda
+												key={p.id}
+												pedido={p}
+												accion={"accion" in c ? c.accion : undefined}
+												ocupado={avanzando === p.id}
+												alAvanzar={() => "siguiente" in c && void avanzar(p, c.siguiente)}
+											/>
+										))}
+									</ul>
+								)}
+							</section>
+						);
+					})}
+				</div>
+			)}
 
 			<PanelLateral abierto={existencias} alCambiarAbierto={setExistencias} titulo="Existencias" descripcion="Primero lo que está en el mínimo o por debajo.">
-				{inventario.length === 0 ? (
-					<EstadoVacio icono={<ChefHat />} titulo="Sin datos de existencias" />
+				{inventario.estado === "error" ? (
+					<EstadoError titulo="No pudimos traer las existencias" descripcion="Vuelve a intentarlo en un momento." alReintentar={recargarInventario} />
+				) : productos.length === 0 ? (
+					<EstadoVacio icono={<ChefHat />} titulo={inventario.estado === "cargando" ? "Cargando existencias" : "Aún no hay productos en el inventario"} />
 				) : (
 					<ul className="m-0 flex list-none flex-col p-0">
-						{[...inventario]
-							.sort((a, b) => Number(b.stock <= b.minStock) - Number(a.stock <= a.minStock))
+						{[...productos]
+							.sort((a, b) => Number(esBajo(b)) - Number(esBajo(a)))
 							.map((i) => (
 								<li key={i.id} className="flex items-center justify-between gap-3 border-b border-borde-sutil py-(--espacio-sm) last:border-b-0">
 									<span className="flex min-w-0 flex-col">
 										<span className="font-semibold text-texto-principal">{i.name}</span>
-										<span className="text-(length:--texto-pequeno) text-texto-secundario">{`${i.stock} ${i.unit} · mínimo ${i.minStock}`}</span>
+										<span className="text-(length:--texto-pequeno) text-texto-secundario">
+											{[`${numero(i.stock) ?? "—"} ${i.unit ?? ""}`.trim(), numero(i.minStock) !== null ? `mínimo ${numero(i.minStock)}` : null].filter(Boolean).join(" · ")}
+										</span>
 									</span>
-									{i.stock <= i.minStock ? <Insignia tono="error" className="whitespace-nowrap">Bajo</Insignia> : <Insignia tono="exito" className="whitespace-nowrap">Bien</Insignia>}
+									{numero(i.minStock) !== null &&
+										(esBajo(i) ? <Insignia tono="error" className="whitespace-nowrap">Bajo</Insignia> : <Insignia tono="exito" className="whitespace-nowrap">Bien</Insignia>)}
 								</li>
 							))}
 					</ul>
 				)}
 			</PanelLateral>
+			<AppOperaciones />
 		</PlantillaPanel>
 	);
 }

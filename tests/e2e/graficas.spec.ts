@@ -29,7 +29,7 @@ test.describe("indicadores y gráficas del catálogo", () => {
 		expect(await cancelaciones.locator("p.text-error").count()).toBe(1);
 		const sinComparacion = page.getByRole("article", { name: "Reservas del mes" });
 		await expect(sinComparacion.locator("svg")).toHaveCount(0);
-		await expect(page.getByRole("article", { name: "Propinas" })).toContainText("Datos de ejemplo");
+		await expect(page.getByRole("article", { name: "Propinas" })).not.toContainText("Datos de ejemplo");
 		await expect(page.getByRole("article", { name: "Pedidos en línea" })).toHaveAttribute("aria-busy", "true");
 	});
 

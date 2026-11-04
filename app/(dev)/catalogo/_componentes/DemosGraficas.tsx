@@ -64,7 +64,6 @@ export function DemosGraficas() {
 						<Indicador
 							rotulo="Propinas"
 							valor="$ 2 310"
-							datosDeEjemplo
 							comparacion={{ cambio: -0.12, referencia: "frente a ayer" }}
 						/>
 					</Muestra>
@@ -131,7 +130,6 @@ export function DemosGraficas() {
 						<Muestra ancho>
 							<GraficaLinea
 								titulo="Reservas por zona"
-								datosDeEjemplo
 								categorias={SEMANAS}
 								series={[
 									{ clave: "salon", nombre: "Salón", valores: [64, 70, 66, 72, 80, 78, 85, 88, 84, 90, 96, 94] },

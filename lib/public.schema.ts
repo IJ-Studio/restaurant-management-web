@@ -11,9 +11,9 @@ export const direccionesCliente = pgTable("direcciones_cliente", {
 	colonia: varchar({ length: 100 }),
 	referencias: text(),
 	esPrincipal: boolean("es_principal").default(false),
-	codigoPostal: varchar("codigo_postal", { length: 5 }),   // 👈 NUEVO
-	ciudad: varchar({ length: 100 }),                         // 👈 NUEVO
-	estado: varchar({ length: 100 }),                         // 👈 NUEVO
+	codigoPostal: varchar("codigo_postal", { length: 5 }),
+	ciudad: varchar({ length: 100 }),
+	estado: varchar({ length: 100 }),
 }, (table) => [
 	foreignKey({
 			columns: [table.clienteId],
@@ -826,7 +826,7 @@ export const ordenes = pgTable("ordenes", {
 	tiempoCierre: timestamp("tiempo_cierre", { withTimezone: true, mode: 'string' }),
 	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).defaultNow(),
 	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).defaultNow(),
-	direccionEnvioId: integer("direccion_envio_id"), // 👈 NUEVO
+	direccionEnvioId: integer("direccion_envio_id"),
 
 }, (table) => [
 	index("idx_ordenes_atendido_por").using("btree", table.atendidoPor.asc().nullsLast().op("int4_ops")),
@@ -872,8 +872,8 @@ export const pagos = pgTable("pagos", {
 	cobradoPor: integer("cobrado_por"),
 	estatus: varchar({ length: 20 }).default('completado'),
 	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).defaultNow(),
-	pasarela: varchar({ length: 30 }),                               // 👈 NUEVO
-	idTransaccionPasarela: varchar("id_transaccion_pasarela", { length: 255 }), // 👈 NUEVO
+	pasarela: varchar({ length: 30 }),
+	idTransaccionPasarela: varchar("id_transaccion_pasarela", { length: 255 }),
 }, (table) => [
 	index("idx_pagos_orden").using("btree", table.ordenId.asc().nullsLast().op("uuid_ops")),
 	foreignKey({
@@ -955,7 +955,7 @@ export const facturas = pgTable("facturas", {
 	estatus: varchar({ length: 20 }).default('vigente'),
 	fechaEmision: timestamp("fecha_emision", { withTimezone: true, mode: 'string' }).defaultNow(),
 	fechaCancelacion: timestamp("fecha_cancelacion", { withTimezone: true, mode: 'string' }),
-	facturapiInvoiceId: varchar("facturapi_invoice_id", { length: 100 }), // 👈 NUEVO
+	facturapiInvoiceId: varchar("facturapi_invoice_id", { length: 100 }),
 }, (table) => [
 	foreignKey({
 			columns: [table.ordenId],
@@ -1033,7 +1033,7 @@ export const clientes = pgTable("clientes", {
 	rfc: varchar({ length: 13 }),
 	razonSocial: varchar("razon_social", { length: 200 }),
 	requiereFactura: boolean("requiere_factura").default(false),
-	stripeCustomerId: text("stripe_customer_id"),   // 👈 NUEVO
+	stripeCustomerId: text("stripe_customer_id"),
 	notas: text(),
 	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).defaultNow(),
 	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).defaultNow(),
