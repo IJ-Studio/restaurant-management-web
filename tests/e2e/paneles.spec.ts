@@ -18,7 +18,7 @@ test.describe("navegación de los paneles", () => {
 	test.skip(!MODO_DEV, "el catálogo solo existe en next dev");
 	test.describe.configure({ timeout: 180_000 });
 
-	test("desde 1024 px: barra lateral con grupos, la activa marcada y su grupo abierto", async ({ page }) => {
+	test("desde 1024 px: barra lateral con grupos, la activa marcada y los hijos a la vista", async ({ page }) => {
 		await page.setViewportSize({ width: 1280, height: 900 });
 		await abrir(page);
 		const nav = page.getByRole("navigation", { name: "Navegación del panel de administración" });
@@ -39,42 +39,24 @@ test.describe("navegación de los paneles", () => {
 			return r;
 		});
 		expect(estilo).toEqual([true, true]);
-		// El grupo que contiene la activa empieza abierto; los demás, cerrados.
-		await expect(nav.getByRole("button", { name: "Inventario" })).toHaveAttribute("aria-expanded", "true");
-		const finanzas = nav.getByRole("button", { name: "Finanzas & Caja" });
-		await expect(finanzas).toHaveAttribute("aria-expanded", "false");
-		await finanzas.click();
-		await expect(finanzas).toHaveAttribute("aria-expanded", "true");
+		// D-29: nada se pliega; los hijos de «Inventario» se ven siempre y no hay botones en la navegación.
+		await expect(nav.getByRole("button")).toHaveCount(0);
+		await expect(nav.getByRole("list", { name: "Inventario" }).getByRole("link")).toHaveCount(2);
 		await expect(nav.getByRole("link", { name: "Facturas" })).toBeVisible();
 		// Grupos con rótulo: cada lista tiene nombre.
-		await expect(nav.getByRole("list", { name: "Menú Principal" })).toBeVisible();
-		// Sin drawer a este ancho.
-		await expect(prueba(page, "abrir-navegacion-panel")).toBeHidden();
+		await expect(nav.getByRole("list", { name: "Servicio" })).toBeVisible();
+		await expect(prueba(page, "abrir-navegacion-panel")).toHaveCount(0);
 	});
 
-	test("la consulta decide la entrada activa (caja con ?filter=pending)", async ({ page }) => {
-		await abrir(page);
-		const nav = page.getByRole("navigation", { name: "Navegación del panel de caja" });
-		await expect(nav.locator('[aria-current="page"]')).toHaveText("Tickets Pendientes");
-		await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
-	});
-
-	test("por debajo de 1024 px: la navegación va en un panel lateral que se cierra al elegir", async ({ page }) => {
+	test("por debajo de 1024 px: la navegación entera a la vista, sin cajón", async ({ page }) => {
 		await page.setViewportSize({ width: 390, height: 844 });
 		await abrir(page);
-		await expect(page.getByRole("navigation", { name: "Navegación del panel de administración" })).toBeHidden();
-		const abrirNav = prueba(page, "abrir-navegacion-panel");
-		await abrirNav.click();
-		const drawer = page.getByRole("dialog", { name: "Administración" });
-		await expect(drawer.locator('[aria-current="page"]')).toHaveText("Proveedores");
-		await page.keyboard.press("Escape");
-		await expect(drawer).toBeHidden();
-		await expect(abrirNav).toBeFocused();
-		// Al elegir un enlace, el panel se cierra (el destino no existe en el catálogo: se intercepta).
-		await page.route("**/dashboard/admin/reports**", (r) => r.abort());
-		await abrirNav.click();
-		await drawer.getByRole("link", { name: "Reportes" }).click();
-		await expect(drawer).toBeHidden();
+		const panel = prueba(page, "panel-admin");
+		const nav = panel.getByRole("navigation", { name: "Navegación del panel de administración" });
+		await expect(nav).toBeVisible();
+		await expect(nav.getByRole("link")).toHaveCount(8);
+		await expect(nav.locator('[aria-current="page"]')).toHaveText("Inventario: proveedores");
+		await expect(prueba(page, "abrir-navegacion-panel")).toHaveCount(0);
 	});
 
 	test("cuenta y encabezado de página: menú con nombre y rol; h1 y acciones con la primaria al final", async ({ page }) => {

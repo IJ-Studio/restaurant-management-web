@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pencil, Plus, Trash2, Users } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
 import { Buscador } from "@/components/ui/Buscador";
@@ -13,7 +12,6 @@ import { Dialogo } from "@/components/ui/Dialogo";
 import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
-import { GraficaBarras } from "@/components/ui/graficas/GraficaBarras";
 import { Indicador } from "@/components/ui/Indicador";
 import { Insignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
@@ -26,7 +24,7 @@ import { registrarError } from "@/lib/registro/registrar-error";
 /**
  * Nómina (PLAN 5.6). Mismas llamadas que antes (`GET`, `POST`, `PATCH` y `DELETE` sobre
  * `/payroll`, con los mismos cuerpos) y la misma actualización optimista al activar o eliminar.
- * Cambia la forma: indicadores, gasto por área en `GraficaBarras`, `Tabla` con buscador, diálogo
+ * Panel del Inicio (D-27), sin gráfica (D-26: el gasto por área no se muestra como dato). Forma: indicadores, `Tabla` con buscador, diálogo
  * del catálogo, confirmación del sistema al eliminar y notificaciones en lugar de `alert()`. Los
  * errores ya no muestran el texto del API (D-20).
  */
@@ -34,7 +32,6 @@ import { registrarError } from "@/lib/registro/registrar-error";
 const importe = (n: number) => formatearImporte(n) ?? "—";
 const entero = new Intl.NumberFormat("es-MX");
 /** «Chef 1», «Mesero 3» → «Chef», «Mesero»; deja igual los puestos sin número (Gerente…). */
-const area = (puesto: string) => puesto.replace(/\s+\d+$/, "").trim();
 
 type Datos = { role: string; name: string; weeklyPay: number; active: boolean };
 
@@ -193,11 +190,6 @@ export function Nomina() {
 
 	const activos = useMemo(() => empleados.filter((e) => e.active), [empleados]);
 	const semanal = activos.reduce((a, e) => a + e.weeklyPay, 0);
-	const porArea = useMemo(() => {
-		const mapa = new Map<string, number>();
-		for (const e of activos) mapa.set(area(e.role), (mapa.get(area(e.role)) ?? 0) + e.weeklyPay);
-		return [...mapa.entries()].sort((a, b) => b[1] - a[1]);
-	}, [activos]);
 	const filtrados = useMemo(() => {
 		const q = busqueda.trim().toLowerCase();
 		return q ? empleados.filter((e) => e.name.toLowerCase().includes(q) || e.role.toLowerCase().includes(q)) : empleados;
@@ -214,13 +206,10 @@ export function Nomina() {
 	const indicador = { estado, alReintentar: cargar } as const;
 
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina
-				antetitulo="Finanzas"
-				titulo="Nómina"
-				descripcion="Pagos semanales del personal."
-				acciones={<DialogoEmpleado alGuardar={guardar} disparador={<Boton icono={<Plus />}>Añadir a la nómina</Boton>} />}
-			/>
+		<div className="flex flex-col gap-(--espacio-xl)">
+			<div className="flex justify-end max-sm:[&>*]:w-full">
+				<DialogoEmpleado alGuardar={guardar} disparador={<Boton icono={<Plus />}>Añadir a la nómina</Boton>} />
+			</div>
 
 			<div className={REJILLA_INDICADORES}>
 				<Indicador {...indicador} rotulo="Nómina semanal" valor={cargando ? undefined : importe(semanal)} detalle="Solo el personal activo" className={INDICADOR_PROTAGONISTA} />
@@ -229,18 +218,7 @@ export function Nomina() {
 				<Indicador {...indicador} rotulo="Pago medio" valor={cargando ? undefined : importe(activos.length ? semanal / activos.length : 0)} detalle="Por semana" />
 			</div>
 
-			<div className="grid grid-cols-1 items-start gap-(--espacio-xl) xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-				<GraficaBarras
-					titulo="Gasto semanal por área"
-					estado={estado}
-					alReintentar={cargar}
-					categorias={porArea.map(([a]) => a)}
-					series={[{ clave: "gasto", nombre: "Gasto semanal", valores: porArea.map(([, v]) => v) }]}
-					formatoValor={importe}
-					tituloCategoria="Área"
-					textoVacio="Aún no hay personal activo."
-				/>
-				<BloquePanel
+			<BloquePanel
 					titulo="Personal"
 					acciones={<Buscador etiqueta="Buscar por nombre o puesto" valor={busqueda} alCambiar={setBusqueda} marcador="Nombre o puesto" />}
 				>
@@ -280,7 +258,6 @@ export function Nomina() {
 						}
 					/>
 				</BloquePanel>
-			</div>
 			{dialogo}
 		</div>
 	);

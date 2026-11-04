@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Circle, UserPlus } from "lucide-react";
@@ -13,8 +13,7 @@ import { Casilla } from "@/components/ui/Casilla";
 import { Imagen } from "@/components/ui/Imagen";
 import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import { useEnvioFormulario } from "@/hooks/useEnvioFormulario";
-import { SettingsService } from "@/features/shared/services/dataService";
-import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
+import { restaurantConfig } from "@/config/restaurant.config";
 import { requisitosContrasena, tieneSecuenciaPredecible } from "@/lib/validacion/campos";
 import { aPayloadRegistro, esquemaRegistro, type DatosRegistro } from "@/lib/validacion/formularios";
 import { cn } from "@/lib/utils";
@@ -44,11 +43,6 @@ export default function PaginaRegistro() {
 	const router = useRouter();
 	const [password, setPassword] = useState("");
 	const [creada, setCreada] = useState(false);
-	const [ajustes, setAjustes] = useState<ReturnType<typeof SettingsService.getSettings> | null>(null);
-	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única de los ajustes guardados
-		setAjustes(SettingsService.getSettings());
-	}, []);
 
 	const { propsFormulario, errores, errorGeneral, enviando, anuncio } = useEnvioFormulario({
 		esquema: esquemaRegistro,
@@ -176,7 +170,7 @@ export default function PaginaRegistro() {
 			</div>
 			<div className="relative hidden aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie-cafe lg:mt-(--espacio-xl) lg:block">
 				<Imagen
-					src={ajustes?.registerBgImageUrl || INITIAL_SETTINGS.registerBgImageUrl}
+					src={restaurantConfig.images.fondoAcceso}
 					fill
 					decorativa
 					preload

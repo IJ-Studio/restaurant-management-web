@@ -1,51 +1,28 @@
 "use client";
 
-import { useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { CircleUserRound, LogOut, Menu } from "lucide-react";
-import type { SidebarSection } from "@/config/navigation/tipos";
+import { CircleUserRound, LogOut } from "lucide-react";
 import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
 import { Boton } from "@/components/ui/Boton";
-import { PanelLateral } from "@/components/ui/Dialogo";
-import { NavegacionPanel } from "./NavegacionPanel";
 
 /**
- * Barra superior de los paneles (DESIGN.md § Paneles, PLAN 3.13). Por debajo de 1024 px abre la
- * navegación en un panel lateral (drawer); desde 1024 px la navegación va en la barra lateral y
- * aquí solo quedan el nombre del panel, las opciones de accesibilidad y la cuenta. Sin logo: en
- * móvil, con texto al 125 %, el nombre del panel no cabría, y es lo que orienta.
+ * Barra superior de los paneles (DESIGN.md § Paneles, PLAN 3.13): el nombre del panel, las opciones
+ * de accesibilidad y la cuenta. La navegación ya no va en un cajón (D-29): la pinta `MarcoPanel`,
+ * en la barra lateral desde 1024 px y a la vista bajo esta barra por debajo. Sin logo: en móvil,
+ * con texto al 125 %, el nombre del panel no cabría, y es lo que orienta.
  *
  * El cierre de sesión llega como `alCerrarSesion`: la implementación única es del paso 2.14.
  */
 export interface BarraSuperiorPanelProps {
 	/** «Administración», «Caja», «Cocina»… */
 	nombrePanel: string;
-	secciones: SidebarSection[];
 	usuario: { nombre: string; rol: string };
 	alCerrarSesion?: () => void | Promise<unknown>;
-	/** Para el catálogo y las pruebas. */
-	rutaActual?: string;
 }
 
-export function BarraSuperiorPanel({ nombrePanel, secciones, usuario, alCerrarSesion, rutaActual }: BarraSuperiorPanelProps) {
-	const [abierto, setAbierto] = useState(false);
+export function BarraSuperiorPanel({ nombrePanel, usuario, alCerrarSesion }: BarraSuperiorPanelProps) {
 	return (
 		<div data-prueba="barra-superior-panel" className="flex h-(--alto-cabecera) items-center gap-2 border-b border-borde-sutil bg-fondo px-[calc(var(--margen-pagina)+env(safe-area-inset-left,0px))]">
-			{secciones.length > 0 && (
-				<PanelLateral
-					lado="inicio"
-					titulo={nombrePanel}
-					abierto={abierto}
-					alCambiarAbierto={setAbierto}
-					disparador={
-						<Boton variante="fantasma" soloIcono icono={<Menu />} className="-ms-3 lg:hidden" data-prueba="abrir-navegacion-panel">
-							Abrir la navegación
-						</Boton>
-					}
-				>
-					<NavegacionPanel secciones={secciones} rutaActual={rutaActual} alNavegar={() => setAbierto(false)} />
-				</PanelLateral>
-			)}
 			<p className="m-0 min-w-0 flex-1 truncate font-texto text-(length:--texto-titulo-interfaz) font-semibold leading-[1.35]">
 				{nombrePanel}
 			</p>

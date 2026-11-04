@@ -6,6 +6,36 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### P4 · Estructura del administrador (D-30, D-27, D-29 y D-28) (2026-11-03)
+
+Un solo commit para los cuatro subpasos: dependen entre sí (la navegación nueva, las rutas que desaparecen y el Inicio con paneles cambian las mismas pruebas).
+
+**D-30 · «Sistema» eliminado (`git rm`, todo versionado):** rutas `/dashboard/admin/{predictive,db-performance,settings,about}`, sus pantallas (`prediccion`, `salud`, `ajustes`, `acerca`), `aboutMock` y `settingsMock`, y sus cuatro pruebas. Login y registro dejan de leer los «ajustes» guardados en el navegador: el fondo sale de `restaurantConfig.images.fondoAcceso`; la raíz y el manifiesto toman el nombre de `restaurantConfig`. `recharts` se queda: lo usa el mapa de clientes de Reportes.
+
+**D-27 · Administrador simplificado:**
+- **Navegación** (`config/navigation/admin.nav.ts`): «Servicio» (Inicio, Reservas, Carta, Promociones) y «Gestión» (Inventario con Existencias y Proveedores, Personal, Facturas). Ocho enlaces en lugar de quince.
+- **Inicio con cuatro paneles en pestañas** (`?panel=`): Servicio de hoy (lo de antes), **Caja y propinas**, **Nómina** y **Reportes**. Cada pestaña pide sus datos solo al abrirse. `/dashboard/admin/{finance,payroll,reports}` redirigen a su panel.
+- **Cambio de orden justificado (D-24 adelantado):** Caja y propinas, Reportes y Facturas eran datos de ejemplo. Integrarlos tal cual para borrarlos después era trabajo doble, así que se integran ya sin ellos:
+  - **Caja y propinas** (`features/dashboard/admin/caja/PanelCaja.tsx`, nuevo) lee `GET /reportes/hoy` (cobrado, propinas, ticket medio, comensales, por método y por persona) y `GET /caja/cortes`. Son rutas que el API ya tiene en la rama que usa la móvil; el API hace las cuentas y el panel solo las pinta (D-26). Fuera `Finanzas` y `financeMock`.
+  - **Reportes**: solo la segmentación de clientes y la exportación (reales). Fuera las vistas de ventas y equipo y `reportsMock`.
+  - **Facturas**: estado vacío honesto hasta que el API tenga el listado (`INVENTARIO-API.md`). Fuera `invoicesMock` y `DialogoFactura`.
+  - **Nómina**: igual que antes (`/payroll`), sin la gráfica de gasto por área (D-26: ese dato no aparece en la pantalla) ni su título propio.
+- Título del Inicio: «Inicio» (fuera el saludo y la frase de relleno).
+
+**D-29 · Navegación sin plegables y usable en móvil** (`NavegacionPanel`):
+- Las entradas con hijos son un rótulo y sus hijos se ven siempre; ningún `aria-expanded`.
+- Por debajo de 1024 px desaparece el cajón: la navegación completa queda a la vista bajo la barra superior, en una rejilla de enlaces de 44 px (2, 3 o 4 columnas según el ancho). Los hijos llevan el nombre del grupo («Inventario: proveedores»). `BarraSuperiorPanel` ya no tiene botón de menú.
+- NP-37: se retiran `cajero.nav.ts` y `cocina.nav.ts`, que apuntaban a rutas inexistentes; caja, cocina y sala son una pantalla cada una.
+
+**D-28 · Plantilla única de panel** (`components/paneles/PlantillaPanel.tsx`): migas (si la pantalla cuelga de otra), encabezado con `h1`, frase y acciones, indicadores, avisos y contenido, con el mismo contenedor. La usan el Inicio, Carta, Promociones, Reservas, Existencias, Proveedores, Personal, Facturas, Caja, Cocina y Sala. Fuera los antetítulos sobre el `h1` («Inventario», «Servicio», «Equipo»…): repetían la navegación (la guía de impeccable los prohíbe).
+
+**Pruebas:** nuevas `caja-admin.spec.ts` (panel de caja con el API simulado, error sin ceros, redirecciones, axe a 360 y 1440 px en los dos temas) y `facturas.spec.ts` (estado vacío); adaptadas `layout-paneles` (ocho enlaces a la vista en 360 px, sin cajón), `paneles` (catálogo), `reportes`, `nomina`, `inicio-admin`, `proveedores` y la lista de rutas.
+
+**Verificación:** typecheck sin errores en el código (los de `.next/dev/types` eran tipos generados por `next dev` con las rutas borradas; se borró esa carpeta ignorada y el build pasó); lint de los archivos tocados sin errores nuevos (quedan los previos de `reservations.service`, `dataService` e `IdleLogout`, en P5); build correcto. Chromium contra `next start`, administración, operación, acceso, protección, línea base e imágenes: 207/208; el fallo era real (axe, `heading-order`: el estado vacío de Facturas saltaba de `h1` a `h3`) y se corrigió con `nivelTitulo={2}`; repetida tras un build nuevo, pasa. Catálogo en dev (paneles y landing): 15/15. Detector de impeccable en los archivos tocados: sin hallazgos.
+
+**No verificado:** Firefox y WebKit (al cerrar la tanda de frontend); `/reportes/hoy` y `/caja/cortes` contra el API real (solo existen en la rama local del API que usa la móvil: ver P7).
+
+
 ### P3 · Identidad mexicana e imágenes propias (D-22, D-23) (2026-11-03)
 
 **Textos (D-22):**

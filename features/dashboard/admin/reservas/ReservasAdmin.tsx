@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 import { CargadorMarca } from "@/components/marca/CargadorMarca";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
 import { Buscador } from "@/components/ui/Buscador";
@@ -235,8 +235,7 @@ export function ReservasAdmin() {
 
 	const indicador = { estado: carga, alReintentar: cargar } as const;
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina antetitulo="Servicio" titulo="Reservas" descripcion="Quién viene, cuándo y con qué mesa." />
+		<PlantillaPanel titulo="Reservas" descripcion="Quién viene, cuándo y con qué mesa.">
 
 			<div className={REJILLA_INDICADORES}>
 				<Indicador {...indicador} rotulo="Reservas" valor={entero.format(reservas.length)} detalle="Con los filtros actuales" className={INDICADOR_PROTAGONISTA} />
@@ -269,6 +268,6 @@ export function ReservasAdmin() {
 					vacio={<EstadoVacio icono={<CalendarDays />} titulo="No hay reservas con esos filtros" descripcion="Cambia las fechas, el estado o el nombre." />}
 				/>
 			</BloquePanel>
-		</div>
+		</PlantillaPanel>
 	);
 }

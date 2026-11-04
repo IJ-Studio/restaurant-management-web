@@ -1,10 +1,6 @@
-import type { Metadata } from "next";
-import { Reportes } from "@/features/dashboard/admin/reportes/Reportes";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Reportes · Administración" };
-
-/** Reportes (PLAN 5.3). La vista sale de `?vista=` para que la primera pintura ya sea la correcta. */
-export default async function PaginaReportes({ searchParams }: { searchParams: Promise<{ vista?: string }> }) {
-	const { vista } = await searchParams;
-	return <Reportes vistaInicial={vista} />;
+/** «Reportes» es un panel del Inicio desde D-27: la ruta antigua lleva a él. */
+export default function Pagina() {
+	redirect("/dashboard/admin?panel=reportes");
 }

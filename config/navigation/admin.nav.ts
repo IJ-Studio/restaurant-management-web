@@ -1,151 +1,42 @@
 /**
- * config/navigation/admin.nav.ts
+ * Navegación del administrador (PLAN-AMPLIACION D-27, D-29 y D-30).
  *
- * Admin navigation sections and items.
- * Separated from the Sidebar component to keep it data-driven and generic.
+ * - D-30: sin «Sistema» (predicción, base de datos, configuración y «acerca de»).
+ * - D-27: Reportes, Nómina y Caja y propinas son paneles del Inicio, no entradas propias.
+ * - D-29: las entradas con hijos no se pliegan; sus hijos se ven siempre.
  *
- * To add/remove items: edit this file only.
- * Import the Sidebar component and pass these sections as props.
+ * Solo datos: la barra lateral y la navegación móvil los pintan con `NavegacionPanel`.
  */
-import {
-  LayoutDashboard,
-  UtensilsCrossed,
-  Users,
-  Settings,
-  Package,
-  DollarSign,
-  BarChart2,
-  Truck,
-  FileText,
-  Info,
-  Database,
-  Wallet,
-  CalendarDays,
-  Tag,
-  TrendingUp,
-} from "lucide-react";
+import { createElement, type FC } from "react";
+import { CalendarDays, FileText, LayoutDashboard, Package, Tag, Truck, Users, UtensilsCrossed, Boxes } from "lucide-react";
 import type { SidebarSection } from "./tipos";
 
-// React.createElement is used here to keep this file as a plain config
-// (no JSX syntax needed — avoids requiring "use client" on a config file).
-import React from "react";
-
-const icon = (Icon: React.FC<{ size?: number }>, size = 17) =>
-  React.createElement(Icon, { size });
+const icono = (Icono: FC<{ "aria-hidden"?: boolean }>) => createElement(Icono, { "aria-hidden": true });
 
 export const ADMIN_NAV_SECTIONS: SidebarSection[] = [
-  {
-    label: "Menú Principal",
-    items: [
-      {
-        key:   "dashboard",
-        label: "Dashboard",
-        icon:  icon(LayoutDashboard),
-        href:  "/dashboard/admin",
-      },
-      {
-        key:   "menu",
-        label: "Catálogo Menú",
-        icon:  icon(UtensilsCrossed),
-        href:  "/dashboard/admin/menu",
-      },
-      {
-        key:   "reservations",
-        label: "Reservaciones",
-        icon:  icon(CalendarDays),
-        href:  "/dashboard/admin/reservations",
-      },
-      {
-        key:   "promociones",
-        label: "Promociones",
-        icon:  icon(Tag),
-        href:  "/dashboard/admin/promociones",
-      },
-      {
-        key:   "users",
-        label: "Personal",
-        icon:  icon(Users),
-        href:  "/dashboard/admin/users",
-      },
-      {
-        key:   "inventory",
-        label: "Inventario",
-        icon:  icon(Package),
-        children: [
-          {
-            key:   "inventory",
-            label: "Productos & Stock",
-            icon:  icon(Package, 15),
-            href:  "/dashboard/admin/inventory",
-          },
-          {
-            key:   "suppliers",
-            label: "Proveedores",
-            icon:  icon(Truck, 15),
-            href:  "/dashboard/admin/inventory/suppliers",
-          },
-        ],
-      },
-      {
-        key:   "finance",
-        label: "Finanzas & Caja",
-        icon:  icon(DollarSign),
-        children: [
-          {
-            key:   "finance",
-            label: "Caja & Propinas",
-            icon:  icon(DollarSign, 15),
-            href:  "/dashboard/admin/finance",
-          },
-          {
-            key:   "invoices",
-            label: "Facturas",
-            icon:  icon(FileText, 15),
-            href:  "/dashboard/admin/finance/invoices",
-          },
-          {
-            key:   "payroll",
-            label: "Nómina",
-            icon:  icon(Wallet, 15),
-            href:  "/dashboard/admin/payroll",
-          },
-        ],
-      },
-      {
-        key:   "reports",
-        label: "Reportes",
-        icon:  icon(BarChart2),
-        href:  "/dashboard/admin/reports",
-      },
-    ],
-  },
-  {
-    label: "Sistema",
-    items: [
-      {
-        key:   "predictive",
-        label: "Predicción",
-        icon:  icon(TrendingUp),
-        href:  "/dashboard/admin/predictive",
-      },
-      {
-        key:   "performance",
-        label: "Base de datos",
-        icon:  icon(Database),
-        href:  "/dashboard/admin/db-performance",
-      },
-      {
-        key:   "settings",
-        label: "Configuración",
-        icon:  icon(Settings),
-        href:  "/dashboard/admin/settings",
-      },
-      {
-        key:   "about",
-        label: "Acerca del restaurante",
-        icon:  icon(Info),
-        href:  "/dashboard/admin/about",
-      },
-    ],
-  },
+	{
+		label: "Servicio",
+		items: [
+			{ key: "inicio", label: "Inicio", icon: icono(LayoutDashboard), href: "/dashboard/admin" },
+			{ key: "reservas", label: "Reservas", icon: icono(CalendarDays), href: "/dashboard/admin/reservations" },
+			{ key: "carta", label: "Carta", icon: icono(UtensilsCrossed), href: "/dashboard/admin/menu" },
+			{ key: "promociones", label: "Promociones", icon: icono(Tag), href: "/dashboard/admin/promociones" },
+		],
+	},
+	{
+		label: "Gestión",
+		items: [
+			{
+				key: "inventario",
+				label: "Inventario",
+				icon: icono(Package),
+				children: [
+					{ key: "existencias", label: "Existencias", icon: icono(Boxes), href: "/dashboard/admin/inventory" },
+					{ key: "proveedores", label: "Proveedores", icon: icono(Truck), href: "/dashboard/admin/inventory/suppliers" },
+				],
+			},
+			{ key: "personal", label: "Personal", icon: icono(Users), href: "/dashboard/admin/users" },
+			{ key: "facturas", label: "Facturas", icon: icono(FileText), href: "/dashboard/admin/finance/invoices" },
+		],
+	},
 ];

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pencil, UserPlus, Users } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
 import { Buscador } from "@/components/ui/Buscador";
@@ -213,13 +213,11 @@ export function UsuariosAdmin() {
 
 	const indicador = { estado, alReintentar: cargar } as const;
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina
-				antetitulo="Equipo"
+		<PlantillaPanel
 				titulo="Usuarios"
 				descripcion="Quién entra al sistema y con qué rol."
 				acciones={<DialogoUsuario alGuardar={guardar} disparador={<Boton icono={<UserPlus />}>Usuario nuevo</Boton>} />}
-			/>
+		>
 
 			<div className={REJILLA_INDICADORES}>
 				<Indicador {...indicador} rotulo="Personal activo" valor={entero.format(usuarios.filter((u) => u.isActive && u.roleId !== 5).length)} detalle="Administración, caja, sala y cocina" className={INDICADOR_PROTAGONISTA} />
@@ -275,6 +273,6 @@ export function UsuariosAdmin() {
 				/>
 			</BloquePanel>
 			{dialogo}
-		</div>
+		</PlantillaPanel>
 	);
 }

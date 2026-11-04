@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Download, FileSpreadsheet, Pencil, Plus, Trash2, Upload, UtensilsCrossed } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
 import { Buscador } from "@/components/ui/Buscador";
@@ -136,9 +136,7 @@ export function CartaAdmin() {
 	];
 
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina
-				antetitulo="Carta"
+		<PlantillaPanel
 				titulo="Platillos"
 				descripcion="Lo que se ofrece, a qué precio y si está disponible."
 				acciones={
@@ -151,7 +149,7 @@ export function CartaAdmin() {
 						</Boton>
 					</>
 				}
-			/>
+		>
 			<input ref={entrada} type="file" hidden onChange={(e) => void alElegir(e.target.files?.[0])} />
 
 			<div className={REJILLA_INDICADORES}>
@@ -312,6 +310,6 @@ export function CartaAdmin() {
 				/>
 			)}
 			{confirmacion}
-		</div>
+		</PlantillaPanel>
 	);
 }

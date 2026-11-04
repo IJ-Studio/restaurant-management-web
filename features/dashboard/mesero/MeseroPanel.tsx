@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BellRing, Minus, Plus, Send } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { PROTAGONISTA_DE_TRES, REJILLA_TRES_INDICADORES } from "@/components/paneles/rejilla";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
@@ -198,8 +198,7 @@ export function MeseroPanel() {
 	const estado = cargado ? ("listo" as const) : ("cargando" as const);
 
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina antetitulo="Sala" titulo="Mesas" descripcion="Toma pedidos y pide la cuenta desde aquí." />
+		<PlantillaPanel titulo="Mesas" descripcion="Toma pedidos y pide la cuenta desde aquí.">
 			<Aviso tono="info" rol={null} titulo="Pantalla con datos de ejemplo.">
 				Las mesas y los pedidos se guardan solo en este dispositivo.
 			</Aviso>
@@ -261,6 +260,6 @@ export function MeseroPanel() {
 			</BloquePanel>
 
 			{abierta && <PanelPedido key={abierta.id} mesa={abierta} carta={carta} abierto alCerrar={() => setAbierta(null)} alEnviar={(items) => enviar(abierta, items)} />}
-		</div>
+		</PlantillaPanel>
 	);
 }

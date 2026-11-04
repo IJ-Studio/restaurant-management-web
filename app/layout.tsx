@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { AuthProvider } from "@/providers/AuthProvider";
-import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
+import { restaurantConfig } from "@/config/restaurant.config";
 import { RetirarServiceWorker } from "@/components/pwa/RetirarServiceWorker";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ConnectionStatus from "@/components/pwa/ConnectionStatus";
@@ -12,10 +12,10 @@ import { COLOR_FONDO_POR_TEMA } from "@/lib/preferencias/preferencias";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  applicationName: INITIAL_SETTINGS.restaurantName,
+  applicationName: restaurantConfig.name,
   title: {
-    default: INITIAL_SETTINGS.restaurantName,
-    template: `%s | ${INITIAL_SETTINGS.restaurantName}`,
+    default: restaurantConfig.name,
+    template: `%s | ${restaurantConfig.name}`,
   },
   // Metadatos con D-22: comida mexicana y solo datos de la configuración.
   description:
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   // Iconos locales por convención de archivos: app/icon.svg y app/apple-icon.png.
   appleWebApp: {
     capable: true,
-    title: INITIAL_SETTINGS.restaurantName,
+    title: restaurantConfig.name,
     // "default" pintaba una barra blanca sobre el tema oscuro en la app instalada de iOS.
     statusBarStyle: "black",
   },

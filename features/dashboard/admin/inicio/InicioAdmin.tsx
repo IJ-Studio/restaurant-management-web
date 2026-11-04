@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ClipboardList } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
@@ -14,7 +14,11 @@ import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { GraficaBarras } from "@/components/ui/graficas/GraficaBarras";
 import { Indicador } from "@/components/ui/Indicador";
 import { Insignia, type TonoInsignia } from "@/components/ui/Insignia";
+import { Pestanas } from "@/components/ui/Pestanas";
 import { Tabla, type ColumnaTabla } from "@/components/ui/Tabla";
+import { PanelCaja } from "@/features/dashboard/admin/caja/PanelCaja";
+import { Nomina } from "@/features/dashboard/admin/nomina/Nomina";
+import { PanelReportes } from "@/features/dashboard/admin/reportes/Reportes";
 import { getReservations } from "@/features/reservations/services/reservations.service";
 import { useCarga } from "@/hooks/useCarga";
 import { formatearImporte } from "@/lib/formato/precio";
@@ -265,10 +269,9 @@ function VentasDelDia() {
 	);
 }
 
-export function InicioAdmin({ nombre }: { nombre: string }) {
+function ServicioDeHoy() {
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina antetitulo="Inicio" titulo={nombre ? `Hola, ${nombre}` : "Hola"} descripcion="Así va el servicio de hoy." />
+		<div className="flex flex-col gap-(--espacio-xl)">
 			<Indicadores />
 			<Alertas />
 			<div className="grid grid-cols-1 items-start gap-(--espacio-xl) xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -276,5 +279,33 @@ export function InicioAdmin({ nombre }: { nombre: string }) {
 				<VentasDelDia />
 			</div>
 		</div>
+	);
+}
+
+const PANELES = ["hoy", "caja", "nomina", "reportes"] as const;
+
+/**
+ * Inicio de administración (D-27): el servicio de hoy y, en pestañas, los paneles que antes eran
+ * pantallas propias (Caja y propinas, Nómina y Reportes). Cada pestaña solo pide sus datos cuando
+ * se abre; la elegida va en la URL (`?panel=`), y las rutas antiguas redirigen aquí.
+ */
+export function InicioAdmin({ panelInicial }: { panelInicial?: string }) {
+	const inicial = PANELES.find((p) => p === panelInicial) ?? "hoy";
+	const [activo, setActivo] = useState<string>(inicial);
+	return (
+		<PlantillaPanel titulo="Inicio">
+			<Pestanas
+				etiqueta="Paneles del inicio"
+				parametroUrl="panel"
+				valorInicial={inicial}
+				alCambiar={setActivo}
+				pestanas={[
+					{ valor: "hoy", titulo: "Servicio de hoy", contenido: activo === "hoy" ? <ServicioDeHoy /> : null },
+					{ valor: "caja", titulo: "Caja y propinas", contenido: activo === "caja" ? <PanelCaja /> : null },
+					{ valor: "nomina", titulo: "Nómina", contenido: activo === "nomina" ? <Nomina /> : null },
+					{ valor: "reportes", titulo: "Reportes", contenido: activo === "reportes" ? <PanelReportes /> : null },
+				]}
+			/>
+		</PlantillaPanel>
 	);
 }

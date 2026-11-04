@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -16,8 +16,7 @@ import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import { useLockout } from "@/hooks/useLockout";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useEnvioFormulario } from "@/hooks/useEnvioFormulario";
-import { SettingsService } from "@/features/shared/services/dataService";
-import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
+import { restaurantConfig } from "@/config/restaurant.config";
 import { setUser } from "@/store/slices/authSlice";
 import { destinoTrasLogin, esRutaInternaSegura, rutaConParametros } from "@/lib/seguridad/urls";
 import { olvidarSesion } from "@/lib/sesion/sesion-cliente";
@@ -43,12 +42,6 @@ const ES_BLOQUEO = /Debes esperar|Demasiados intentos/;
 export default function PaginaAcceso() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	// Ajustes locales, leídos tras montar: en la hidratación vale el mismo valor por defecto que en el servidor.
-	const [ajustes, setAjustes] = useState<ReturnType<typeof SettingsService.getSettings> | null>(null);
-	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única de los ajustes guardados
-		setAjustes(SettingsService.getSettings());
-	}, []);
 
 	const dispatch = useDispatch();
 	const router = useRouter();
@@ -196,7 +189,7 @@ export default function PaginaAcceso() {
 			</div>
 			<div className="relative hidden aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie-cafe lg:mt-(--espacio-xl) lg:block">
 				<Imagen
-					src={ajustes?.loginBgImageUrl || INITIAL_SETTINGS.loginBgImageUrl}
+					src={restaurantConfig.images.fondoAcceso}
 					fill
 					decorativa
 					className="object-cover"

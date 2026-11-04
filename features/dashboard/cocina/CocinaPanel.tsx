@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChefHat, CircleAlert, Package } from "lucide-react";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
@@ -96,9 +96,7 @@ export function CocinaPanel() {
 	const estado = cargado ? ("listo" as const) : ("cargando" as const);
 
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina
-				antetitulo="Cocina"
+		<PlantillaPanel
 				titulo="Comandas"
 				descripcion="Se actualiza sola cada 5 segundos."
 				acciones={
@@ -106,7 +104,7 @@ export function CocinaPanel() {
 						Existencias
 					</Boton>
 				}
-			/>
+		>
 			<Aviso tono="info" rol={null} titulo="Pantalla con datos de ejemplo.">
 				Las comandas salen de los pedidos de la sala guardados en este dispositivo.
 			</Aviso>
@@ -179,6 +177,6 @@ export function CocinaPanel() {
 					</ul>
 				)}
 			</PanelLateral>
-		</div>
+		</PlantillaPanel>
 	);
 }

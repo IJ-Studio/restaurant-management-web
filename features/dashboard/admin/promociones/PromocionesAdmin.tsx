@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { ImageUp, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { CldUploadButton } from "next-cloudinary";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { PROTAGONISTA_DE_TRES, REJILLA_TRES_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
 import { Buscador } from "@/components/ui/Buscador";
@@ -335,13 +335,11 @@ export function PromocionesAdmin() {
 	];
 
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina
-				antetitulo="Carta"
+		<PlantillaPanel
 				titulo="Promociones"
 				descripcion="Las propuestas que se ven en la web, con su precio y sus fechas."
 				acciones={<DialogoPromocion alGuardar={guardar} disparador={<Boton icono={<Plus />}>Promoción nueva</Boton>} />}
-			/>
+		>
 
 			<div className={REJILLA_TRES_INDICADORES}>
 				<Indicador estado={estado} alReintentar={cargar} rotulo="En la web ahora" valor={entero.format(vigentes.size)} detalle="Activas y dentro de sus fechas" className={PROTAGONISTA_DE_TRES} />
@@ -400,6 +398,6 @@ export function PromocionesAdmin() {
 				/>
 			</BloquePanel>
 			{dialogo}
-		</div>
+		</PlantillaPanel>
 	);
 }

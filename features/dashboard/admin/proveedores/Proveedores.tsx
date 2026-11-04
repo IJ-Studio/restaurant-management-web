@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ClipboardList, Pencil, Plus, ShoppingCart, Trash2, Truck } from "lucide-react";
 import { Contraetiqueta } from "@/components/marca/Contraetiqueta";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { MigasPanel } from "@/components/paneles/MigasPanel";
 import { PROTAGONISTA_DE_TRES, REJILLA_TRES_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
@@ -261,9 +261,7 @@ export function Proveedores({ vistaInicial }: { vistaInicial?: string }) {
 	const indicador = { estado: loading ? ("cargando" as const) : error ? ("error" as const) : ("listo" as const), alReintentar: recargar };
 
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina
-				antetitulo={<MigasPanel migas={[{ nombre: "Productos y existencias", href: "/dashboard/admin/inventory" }]} actual="Proveedores" />}
+		<PlantillaPanel
 				titulo="Proveedores"
 				descripcion="Quién surte la cocina y lo que se les ha pedido."
 				acciones={
@@ -279,7 +277,8 @@ export function Proveedores({ vistaInicial }: { vistaInicial?: string }) {
 						{nuevaOrden()}
 					</>
 				}
-			/>
+			migas={<MigasPanel migas={[{ nombre: "Existencias", href: "/dashboard/admin/inventory" }]} actual="Proveedores" />}
+		>
 
 			<div className={REJILLA_TRES_INDICADORES}>
 				<Indicador {...indicador} rotulo="Comprado" valor={importe(comprado)} detalle="Sin contar las canceladas" className={PROTAGONISTA_DE_TRES} />
@@ -297,6 +296,6 @@ export function Proveedores({ vistaInicial }: { vistaInicial?: string }) {
 				]}
 			/>
 			{dialogo}
-		</div>
+		</PlantillaPanel>
 	);
 }

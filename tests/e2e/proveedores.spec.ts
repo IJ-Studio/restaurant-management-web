@@ -40,7 +40,7 @@ async function abrir(browser: Browser, opciones: { ancho?: number; ruta?: string
 test("tarjetas con contacto enlazado, migas e indicadores", async ({ browser }) => {
 	const { contexto, page } = await abrir(browser);
 	const main = page.locator("main");
-	await expect(main.getByRole("navigation", { name: "Migas de pan" }).getByRole("link", { name: "Productos y existencias" })).toHaveAttribute("href", "/dashboard/admin/inventory");
+	await expect(main.getByRole("navigation", { name: "Migas de pan" }).getByRole("link", { name: "Existencias" })).toHaveAttribute("href", "/dashboard/admin/inventory");
 	await expect(main).toContainText("$ 200.00");
 	const tarjeta = main.getByRole("listitem").filter({ hasText: "Huerta Norte" });
 	await expect(tarjeta.getByRole("link", { name: "771 123 4567" })).toHaveAttribute("href", "tel:7711234567");

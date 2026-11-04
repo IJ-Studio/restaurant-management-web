@@ -22,7 +22,7 @@ export function DemosPaneles() {
 	return (
 		<div className="flex flex-col gap-10">
 			<div className="flex flex-col gap-3">
-				<Rotulo>{`Administración · ruta actual ${RUTA_ADMIN} · barra lateral desde 1024 px, drawer por debajo`}</Rotulo>
+				<Rotulo>{`Administración · ruta actual ${RUTA_ADMIN} · barra lateral desde 1024 px; por debajo, la navegación completa a la vista`}</Rotulo>
 				<div className="overflow-hidden rounded-tarjeta border border-borde-sutil" data-prueba="panel-admin">
 					<div className="grid lg:grid-cols-[16rem_minmax(0,1fr)]">
 						<aside aria-label="Barra lateral" className="hidden border-e border-borde-sutil bg-superficie p-4 lg:block">
@@ -35,10 +35,15 @@ export function DemosPaneles() {
 						<div className="flex min-w-0 flex-col">
 							<BarraSuperiorPanel
 								nombrePanel="Administración"
-								secciones={navegacionDeRol(ROLES.ADMIN)}
 								usuario={{ nombre: "Laura Méndez", rol: "Administradora" }}
 								alCerrarSesion={cerrarSesion}
+							/>
+							<NavegacionPanel
+								secciones={navegacionDeRol(ROLES.ADMIN)}
+								etiqueta="Navegación del panel de administración"
+								variante="compacta"
 								rutaActual={RUTA_ADMIN}
+								className="border-b border-borde-sutil p-4 lg:hidden"
 							/>
 							<div className="flex flex-col gap-6 p-6">
 								<EncabezadoPagina
@@ -58,16 +63,6 @@ export function DemosPaneles() {
 				</div>
 			</div>
 
-			<div className="flex flex-col gap-3">
-				<Rotulo>Caja · ruta actual /dashboard/cajero?filter=pending · la consulta decide la entrada activa</Rotulo>
-				<div className="max-w-72 rounded-tarjeta border border-borde-sutil bg-superficie p-4" data-prueba="panel-caja">
-					<NavegacionPanel
-						secciones={navegacionDeRol(ROLES.CAJERO)}
-						etiqueta="Navegación del panel de caja"
-						rutaActual="/dashboard/cajero?filter=pending"
-					/>
-				</div>
-			</div>
 		</div>
 	);
 }

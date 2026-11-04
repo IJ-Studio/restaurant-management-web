@@ -1,9 +1,6 @@
-import type { Metadata } from "next";
-import { Nomina } from "@/features/dashboard/admin/nomina/Nomina";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Nómina · Administración" };
-
-/** Nómina (PLAN 5.6). */
-export default function PaginaNomina() {
-	return <Nomina />;
+/** «Nómina» es un panel del Inicio desde D-27: la ruta antigua lleva a él. */
+export default function Pagina() {
+	redirect("/dashboard/admin?panel=nomina");
 }

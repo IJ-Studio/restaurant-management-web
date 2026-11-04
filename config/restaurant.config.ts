@@ -29,6 +29,12 @@ export const restaurantConfig = {
     googleMaps: "https://maps.google.com/?cid=9162171458926916171",
   },
 
+  // ── Imágenes propias (D-23): public IDs de la nube de la casa ─────────────
+  images: {
+    /** Fondo de login y registro: la foto de la casa, desenfocada. */
+    fondoAcceso: "image_l57jar",
+  },
+
   // ── Hours ─────────────────────────────────────────────────────────────────
   hours: {
     display: "Lunes a Domingo · 1:00 PM – 11:00 PM",

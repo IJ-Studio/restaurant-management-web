@@ -2,7 +2,7 @@ import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
 
-// Reportes (PLAN 5.3). Contra el build de producción, con sesión de admin y el API simulado.
+// Reportes (PLAN 5.3; D-24 y D-27): panel del Inicio con la segmentación de clientes y la exportación.
 test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
 
 const CLAVE = "elquijote:preferencias";
@@ -27,6 +27,9 @@ const SEGMENTOS = {
 		{ nombre: "Ocasionales", color: "secondary", descripcion: "Vienen en fechas especiales.", tamano: 2, tamanoPct: 50, ticketPromedio: 300, frecuenciaPromedio: 2, tipoDominante: "Para llevar", recenciaPromedioDias: 40, clientes: [cliente("3", -1, -2), cliente("4", -1.1, -1.7)] },
 	],
 };
+
+/** Reportes es un panel del Inicio (D-27); la ruta antigua redirige aquí. */
+const R = "/dashboard/admin?panel=reportes";
 
 async function abrir(browser: Browser, ruta: string, ancho = 1440, segmentos: { status: number; cuerpo: unknown } = { status: 200, cuerpo: SEGMENTOS }, preferencias: Record<string, string> = {}) {
 	const contexto = await browser.newContext({ storageState: archivoSesion("admin"), viewport: { width: ancho, height: 900 } });
@@ -57,28 +60,8 @@ async function abrir(browser: Browser, ruta: string, ancho = 1440, segmentos: { 
 	return { contexto, page, pedidos };
 }
 
-test("ventas: datos de ejemplo marcados, periodo con aria-pressed y sin frases inventadas", async ({ browser }) => {
-	const { contexto, page, pedidos } = await abrir(browser, "/dashboard/admin/reports");
-	const main = page.locator("main");
-	await expect(main.getByRole("heading", { level: 1 })).toHaveText("Reportes");
-	expect(await main.getByText("Datos de ejemplo").count()).toBeGreaterThanOrEqual(5);
-	const mes = main.getByRole("button", { name: "Este mes" });
-	await mes.click();
-	await expect(mes).toHaveAttribute("aria-pressed", "true");
-	await expect(main).toContainText("$ 148,000.00");
-	await expect(main).not.toContainText(/K-Means|PCA|MoM|Proyección|tiempo real/);
-	await expect(main.getByRole("table", { name: "Platos más vendidos" })).toBeVisible();
-	// La segmentación no se pide hasta abrir su pestaña.
-	expect(pedidos.segmentos).toBe(0);
-	await main.getByRole("tab", { name: "Clientes" }).click();
-	await expect(main.getByText("Habituales").first()).toBeVisible();
-	expect(pedidos.segmentos).toBe(1);
-	await expect(page).toHaveURL(/vista=clientes/);
-	await contexto.close();
-});
-
 test("exportar: valida las fechas y descarga con la misma petición de siempre", async ({ browser }) => {
-	const { contexto, page, pedidos } = await abrir(browser, "/dashboard/admin/reports");
+	const { contexto, page, pedidos } = await abrir(browser, R);
 	await page.locator("main").getByRole("button", { name: "Exportar" }).click();
 	const dialogo = page.getByRole("dialog", { name: "Exportar un informe" });
 	await dialogo.getByLabel("Formato").selectOption("csv");
@@ -95,9 +78,9 @@ test("exportar: valida las fechas y descarga con la misma petición de siempre",
 });
 
 test("clientes: segmentos con su lista en un diálogo", async ({ browser }) => {
-	const { contexto, page } = await abrir(browser, "/dashboard/admin/reports?vista=clientes");
+	const { contexto, page } = await abrir(browser, R);
 	const main = page.locator("main");
-	await expect(main.getByRole("tab", { name: "Clientes" })).toHaveAttribute("aria-selected", "true");
+	await expect(main.getByRole("tab", { name: "Reportes" })).toHaveAttribute("aria-selected", "true");
 	await expect(main).toContainText("0.62");
 	await main.getByRole("button", { name: "Ver 2 clientes" }).first().click();
 	const dialogo = page.getByRole("dialog", { name: "Habituales" });
@@ -106,32 +89,29 @@ test("clientes: segmentos con su lista en un diálogo", async ({ browser }) => {
 });
 
 test("clientes: error con «Reintentar» y segmentación no disponible con el motivo del API", async ({ browser }) => {
-	const fallo = await abrir(browser, "/dashboard/admin/reports?vista=clientes", 1440, { status: 500, cuerpo: {} });
+	const fallo = await abrir(browser, R, 1440, { status: 500, cuerpo: {} });
 	await expect(fallo.page.locator("main").getByText("No pudimos traer la segmentación")).toBeVisible();
 	await expect(fallo.page.locator("main").getByRole("button", { name: "Reintentar" })).toBeVisible();
 	await fallo.contexto.close();
-	const sinDatos = await abrir(browser, "/dashboard/admin/reports?vista=clientes", 1440, { status: 200, cuerpo: { disponible: false, motivo: "Hacen falta al menos 20 clientes con pedidos." } });
+	const sinDatos = await abrir(browser, R, 1440, { status: 200, cuerpo: { disponible: false, motivo: "Hacen falta al menos 20 clientes con pedidos." } });
 	await expect(sinDatos.page.locator("main")).toContainText("Hacen falta al menos 20 clientes con pedidos.");
 	await sinDatos.contexto.close();
 });
 
 for (const tema of ["oscuro", "claro"] as const) {
-	for (const [vista, ancho, tamanoTexto] of [
-		["ventas", 360, "muy-grande"],
-		["ventas", 768, "normal"],
-		["ventas", 1440, "normal"],
-		["clientes", 360, "muy-grande"],
-		["clientes", 1440, "normal"],
+	for (const [ancho, tamanoTexto] of [
+		[360, "muy-grande"],
+		[768, "normal"],
+		[1440, "normal"],
 	] as const) {
-		test(`axe, sin desbordar y captura: ${vista}, ${ancho} px, tema ${tema}`, async ({ browser }, info) => {
-			const { contexto, page } = await abrir(browser, `/dashboard/admin/reports?vista=${vista}`, ancho, undefined, { tema, tamanoTexto });
+		test(`axe, sin desbordar y captura: ${ancho} px, tema ${tema}`, async ({ browser }, info) => {
+			const { contexto, page } = await abrir(browser, R, ancho, undefined, { tema, tamanoTexto });
 			const main = page.locator("main");
-			if (vista === "clientes") await expect(main.getByText("Habituales").first()).toBeVisible();
-			else await expect(main.getByText("Filete de res al vino").filter({ visible: true }).first()).toBeVisible();
+			await expect(main.getByText("Habituales").first()).toBeVisible();
 			const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
 			expect(r.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
 			expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
-			await page.screenshot({ path: `test-results/reportes/${info.project.name}/reportes-${vista}-${tema}-${ancho}.png`, fullPage: true, animations: "disabled" });
+			await page.screenshot({ path: `test-results/reportes/${info.project.name}/reportes-${tema}-${ancho}.png`, fullPage: true, animations: "disabled" });
 			await contexto.close();
 		});
 	}

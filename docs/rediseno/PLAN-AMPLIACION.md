@@ -8,9 +8,9 @@
 |---|---|
 | Fecha | 2026-11-03 |
 | Rama activa | `feature/rediseno-web-admin` (cierre de la fase 5 y frontend de la ampliación) |
-| Paquete en curso | **P4 · Estructura del administrador** |
-| Último paso completado | P3: identidad de comida mexicana (PRODUCT, DESIGN, sitio y metadatos) e imágenes propias (fondos de login y registro). P0 `664f1e6`. |
-| Siguiente paso | P4.1 (D-30: retirar «Sistema»), después D-27, D-29 y D-28. |
+| Paquete en curso | **P5 · Frontend de la ampliación** |
+| Último paso completado | P4: «Sistema» fuera, navegación de ocho entradas sin plegables (a la vista en móvil), Inicio con Caja, Nómina y Reportes como paneles, y plantilla única de panel. P3 `5d2bd64`. |
+| Siguiente paso | P5.1 (D-24: carta, mesero, cocina y caja sin datos locales), P5.2 (D-25) y el resto de P5. |
 | Bloqueos | Ninguno. 2.5 (aplicar la CSP) y NP-47 siguen sin ejecutarse por orden del usuario. |
 | Avisos | Repo del API con `HEAD` dañado en la copia local (se diagnostica en P7, sin reescribir nada). |
 | Decisiones del usuario pendientes | Ver § Pendientes para el usuario. |
@@ -53,6 +53,10 @@ Sustituyen a lo anterior donde choquen (incluidas la regla 6 del PLAN, «solo UI
 
 Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6 · (g) P7 · (h) P8 · (i) P9. Si una dependencia técnica obliga a cambiar el orden, se anota aquí.
 
+**Cambios de orden anotados:**
+- P2 se hizo mientras corrían las pruebas de P0 (solo documentación).
+- P4.2 adelanta D-24 en Caja y propinas, Reportes y Facturas: integrar en el Inicio pantallas de datos de ejemplo para borrarlas en P5.1 era trabajo doble.
+
 ### P0 · Cierre de la fase 5 — `feature/rediseno-web-admin`
 
 - [x] P0.1 WebKit en producción: públicas y recorrido.
@@ -86,10 +90,10 @@ Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6
 
 ### P4 · Estructura del administrador (D-30, D-29, D-27, D-28)
 
-- [ ] P4.1 D-30: `git rm` de Predicción, Rendimiento de BD, Ajustes y Acerca de (rutas, `features/`, pruebas, mocks y dependencias exclusivas, p. ej. `recharts` si solo lo usa Predicción).
-- [ ] P4.2 D-27: Reportes integrado en el inicio; Nómina y Caja y propinas como paneles del inicio; pestañas redundantes unificadas.
-- [ ] P4.3 D-29: navegación sin colapsables y usable en móvil (barra inferior o cajón con subítems visibles); 360 px sin desbordes.
-- [ ] P4.4 D-28: plantilla única de panel aplicada a admin, caja, mesero y cocina.
+- [x] P4.1 D-30: `git rm` de Predicción, Rendimiento de BD, Ajustes y Acerca de (rutas, `features/`, pruebas, mocks y dependencias exclusivas, p. ej. `recharts` si solo lo usa Predicción).
+- [x] P4.2 D-27: Reportes integrado en el inicio; Nómina y Caja y propinas como paneles del inicio; pestañas redundantes unificadas.
+- [x] P4.3 D-29: navegación sin colapsables y usable en móvil (barra inferior o cajón con subítems visibles); 360 px sin desbordes.
+- [x] P4.4 D-28: plantilla única de panel aplicada a admin, caja, mesero y cocina.
 - **Aceptación:** ninguna ruta borrada responde 200; la navegación de cada rol no tiene ítems ocultos; axe 0 y sin desbordes de 360 a 1440 px.
 
 ### P5 · Frontend de la ampliación y pendientes (a)

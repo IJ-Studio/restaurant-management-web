@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Banknote, CreditCard, Receipt, Smartphone } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
@@ -151,8 +151,7 @@ export function CajaPanel() {
 	];
 
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina antetitulo="Caja" titulo="Cobros" descripcion="Lo que falta por cobrar y lo cobrado hoy." acciones={<Buscador etiqueta="Buscar por ticket, mesa o cliente" valor={busqueda} alCambiar={setBusqueda} marcador="Ticket, mesa o cliente" />} />
+		<PlantillaPanel titulo="Cobros" descripcion="Lo que falta por cobrar y lo cobrado hoy." acciones={<Buscador etiqueta="Buscar por ticket, mesa o cliente" valor={busqueda} alCambiar={setBusqueda} marcador="Ticket, mesa o cliente" />}>
 			<Aviso tono="info" rol={null} titulo="Pantalla con datos de ejemplo.">
 				Aún no está conectada al sistema: los cobros se ven en esta visita, pero no se guardan.
 			</Aviso>
@@ -202,6 +201,6 @@ export function CajaPanel() {
 					textoVacio="Aún no hay cobros hoy."
 				/>
 			</div>
-		</div>
+		</PlantillaPanel>
 	);
 }

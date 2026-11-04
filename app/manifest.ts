@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
+import { restaurantConfig } from "@/config/restaurant.config";
 import { COLOR_FONDO_POR_TEMA } from "@/lib/preferencias/preferencias";
 
 /**
@@ -7,12 +7,12 @@ import { COLOR_FONDO_POR_TEMA } from "@/lib/preferencias/preferencias";
  * automáticamente el <link rel="manifest"> en el <head>.
  */
 export default function manifest(): MetadataRoute.Manifest {
-  const name = `Restaurante ${INITIAL_SETTINGS.restaurantName}`;
+  const name = `Restaurante ${restaurantConfig.name}`;
 
   return {
     id: "/",
     name,
-    short_name: INITIAL_SETTINGS.restaurantName,
+    short_name: restaurantConfig.name,
     description:
       "Menú digital, reservaciones y sistema de gestión del Restaurante El Quijote.",
     lang: "es-MX",

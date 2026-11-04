@@ -42,7 +42,7 @@ async function abrir(browser: Browser, opciones: { ancho?: number; falla?: "get"
 			return json({});
 		},
 	);
-	await page.goto("/dashboard/admin/payroll", { waitUntil: "load" });
+	await page.goto("/dashboard/admin?panel=nomina", { waitUntil: "load" });
 	return { contexto, page, pedidos };
 }
 

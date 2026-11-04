@@ -24,10 +24,13 @@ test("admin en 1440 px: barra lateral con la entrada activa, un solo main y el s
 	const nav = page.getByRole("navigation", { name: NAV_ADMIN });
 	await expect(nav.getByRole("link", { name: "Proveedores" })).toHaveAttribute("aria-current", "page");
 	await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
-	// Las 15 pantallas de administración tienen su entrada; Finanzas (3) empieza plegada.
-	await expect(nav.getByRole("link")).toHaveCount(12);
+	// D-27/D-30: ocho entradas, todas a la vista (D-29: nada plegado ni oculto).
+	await expect(nav.getByRole("link")).toHaveCount(8);
+	await expect(nav.getByRole("button")).toHaveCount(0);
+	for (const nombre of ["Inicio", "Reservas", "Carta", "Promociones", "Existencias", "Proveedores", "Personal", "Facturas"])
+		await expect(nav.getByRole("link", { name: nombre, exact: true })).toBeVisible();
 	await expect(page.locator("main")).toHaveCount(1);
-	await expect(page.getByRole("button", { name: "Abrir la navegación" })).toBeHidden();
+	await expect(page.getByRole("button", { name: "Abrir la navegación" })).toHaveCount(0);
 	// La barra lateral no tapa el contenido: empieza donde acaba ella.
 	const [l, m] = await Promise.all([lateral.boundingBox(), page.locator("main").boundingBox()]);
 	expect(Math.round(m!.x)).toBeGreaterThanOrEqual(Math.round(l!.x + l!.width));
@@ -38,20 +41,23 @@ test("admin en 1440 px: barra lateral con la entrada activa, un solo main y el s
 	await contexto.close();
 });
 
-test("admin en 360 px: el contenido ocupa todo el ancho y la navegación va en el drawer", async ({ browser }) => {
+test("admin en 360 px: el contenido ocupa todo el ancho y la navegación entera está a la vista", async ({ browser }) => {
 	const { contexto, page } = await abrir(browser, "admin", "/dashboard/admin", 360);
 	await expect(page.locator('[data-prueba="barra-lateral-panel"]')).toBeHidden();
 	const main = await page.locator("main").boundingBox();
 	expect(Math.round(main!.x)).toBe(0);
 	expect(Math.round(main!.width)).toBe(360);
 
-	await page.getByRole("button", { name: "Abrir la navegación" }).click();
-	const drawer = page.getByRole("dialog", { name: "Administración" });
-	await expect(drawer).toBeVisible();
-	await expect(drawer.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
-	await drawer.getByRole("link", { name: "Reservaciones" }).click();
+	// Sin cajón ni botón de menú (D-29): las ocho entradas se ven sin abrir nada, y sin desbordar.
+	await expect(page.getByRole("button", { name: "Abrir la navegación" })).toHaveCount(0);
+	const nav = page.getByRole("navigation", { name: NAV_ADMIN });
+	await expect(nav.getByRole("link")).toHaveCount(8);
+	for (const enlace of await nav.getByRole("link").all()) await expect(enlace).toBeInViewport();
+	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+	await expect(nav.getByRole("link", { name: "Inicio" })).toHaveAttribute("aria-current", "page");
+	await nav.getByRole("link", { name: "Reservas" }).click();
 	await expect(page).toHaveURL(/\/dashboard\/admin\/reservations$/);
-	await expect(drawer).toBeHidden();
+	await expect(page.getByRole("navigation", { name: NAV_ADMIN }).getByRole("link", { name: "Reservas" })).toHaveAttribute("aria-current", "page");
 	await contexto.close();
 });
 

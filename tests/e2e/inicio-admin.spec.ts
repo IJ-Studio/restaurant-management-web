@@ -69,7 +69,7 @@ async function abrir(browser: Browser, ancho = 1440, respuestas: Respuestas = {}
 test("indicadores, alerta accionable, pedidos con filtro y ventas por hora", async ({ browser }) => {
 	const { contexto, page } = await abrir(browser);
 	const main = page.locator("main");
-	await expect(main.getByRole("heading", { level: 1 })).toHaveText(/^Hola/);
+	await expect(main.getByRole("heading", { level: 1 })).toHaveText("Inicio");
 	await expect(page.locator('[data-prueba="indicador-ventas"]')).toContainText(/\$\s18,420\.50/);
 	await expect(main).toContainText("7 de 12");
 	await expect(main).toContainText("2 en preparación");

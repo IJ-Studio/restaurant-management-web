@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Archive, Layers, Package, Pencil, Plus, Trash2, TrendingDown, Truck } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
-import { EncabezadoPagina } from "@/components/paneles/EncabezadoPagina";
+import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
@@ -228,9 +228,7 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 	);
 
 	return (
-		<div className="mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)">
-			<EncabezadoPagina
-				antetitulo="Inventario"
+		<PlantillaPanel
 				titulo="Productos y existencias"
 				descripcion="Lo que hay en almacén, su nivel y las mermas."
 				acciones={
@@ -245,7 +243,7 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 						/>
 					</>
 				}
-			/>
+		>
 
 			<div className={REJILLA_INDICADORES}>
 				<Indicador {...indicador} rotulo="Valor en almacén" valor={importe(valor)} detalle="Existencias por su costo" className={INDICADOR_PROTAGONISTA} />
@@ -284,6 +282,6 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 				]}
 			/>
 			{dialogo}
-		</div>
+		</PlantillaPanel>
 	);
 }

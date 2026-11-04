@@ -5,7 +5,7 @@ export interface NavItem {
   label:    string;
   icon:     ReactNode;
   href?:    string;
-  /** Nested children — renders as a collapsible group */
+  /** Subentradas: se muestran siempre debajo de su grupo, sin plegarse (D-29). */
   children?: NavItem[];
 }
 

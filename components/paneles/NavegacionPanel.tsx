@@ -1,31 +1,29 @@
 "use client";
 
-import { Suspense, useId, useState } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ChevronDown } from "lucide-react";
 import type { NavItem, SidebarSection } from "@/config/navigation/tipos";
 import { cn } from "@/lib/utils";
 
 /**
- * Navegación de los paneles (DESIGN.md § Navigation y § Paneles, PLAN 3.13). Las entradas llegan
- * por rol desde `config/navigation/*` (ver `navegacionDeRol`).
+ * Navegación de los paneles (DESIGN.md § Navigation y § Paneles; PLAN-AMPLIACION D-29). Las
+ * entradas llegan por rol desde `config/navigation/*` (ver `navegacionDeRol`).
  *
- * - `<nav>` con nombre; grupos con rótulo en `--texto-etiqueta`; `<Link>` con `aria-current="page"`
- *   en la entrada activa, que lleva relleno `--color-superficie-cafe` y un filete de acento al
- *   inicio: cambia el relleno, no solo el tinte.
- * - Las entradas con hijos se despliegan con un botón (`aria-expanded`); la que contiene la
- *   activa empieza abierta.
- * - La activa es la de ruta más concreta que coincide con la actual; si su `href` lleva consulta
- *   (`?filter=pending`), también tiene que coincidir esa consulta.
+ * - Nada se pliega ni se esconde: las entradas con hijos son un rótulo y sus hijos se ven siempre.
+ * - `lateral` (desde 1024 px): lista vertical con rótulo de grupo; la activa lleva relleno
+ *   `--color-superficie-cafe` y el filete de acento al inicio (cambia el relleno, no solo el tinte).
+ * - `compacta` (por debajo de 1024 px): todas las entradas a la vista, en una rejilla de enlaces de
+ *   44 px de alto que se reparte el ancho; sin cajón ni botón de menú.
+ * - `<Link>` con `aria-current="page"` en la activa: la de ruta más concreta que coincide con la
+ *   actual (y con su consulta, si la lleva).
  */
 export interface NavegacionPanelProps {
 	secciones: SidebarSection[];
 	etiqueta?: string;
+	variante?: "lateral" | "compacta";
 	/** Ruta con consulta que se toma como actual (catálogo y pruebas); por defecto, la del navegador. */
 	rutaActual?: string;
-	/** Al pulsar un enlace (el panel lateral móvil se cierra). */
-	alNavegar?: () => void;
 	className?: string;
 }
 
@@ -47,73 +45,56 @@ export function claveActiva(secciones: SidebarSection[], ruta: string, busqueda:
 	return (mejor as { clave: string } | null)?.clave ?? null;
 }
 
-const contiene = (item: NavItem, clave: string | null): boolean =>
-	item.key === clave || (item.children ?? []).some((h) => contiene(h, clave));
+const FOCO = "focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-foco";
+const ICONO = "[&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:stroke-[1.5]";
+const ROTULO = "m-0 font-texto text-(length:--texto-etiqueta) font-semibold uppercase leading-[1.2] tracking-[0.16em] text-texto-tenue";
 
-const CLASE_ENTRADA =
-	"flex min-h-11 w-full items-center gap-3 rounded-control border-s-2 border-transparent px-3 text-start font-texto text-(length:--texto-pequeno) font-medium no-underline " +
-	"text-texto-secundario transition-colors duration-(--duracion-breve) ease-estandar al-pasar:bg-superficie-cafe al-pasar:text-texto-principal " +
-	"focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-foco [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:stroke-[1.5]";
-const CLASE_ACTIVA = "border-acento bg-superficie-cafe text-texto-principal";
+const ENLACE_LATERAL =
+	"flex min-h-11 w-full items-center gap-3 rounded-control border-s-2 border-transparent px-3 font-texto text-(length:--texto-pequeno) font-medium no-underline " +
+	`text-texto-secundario transition-colors duration-(--duracion-breve) ease-estandar al-pasar:bg-superficie-cafe al-pasar:text-texto-principal ${FOCO} ${ICONO}`;
+const ENLACE_COMPACTO =
+	"flex min-h-11 min-w-0 items-center gap-2 rounded-control border border-borde-sutil bg-superficie px-3 font-texto text-(length:--texto-pequeno) font-medium no-underline " +
+	`text-texto-secundario transition-colors duration-(--duracion-breve) ease-estandar al-pasar:bg-superficie-cafe al-pasar:text-texto-principal ${FOCO} ${ICONO}`;
+const ACTIVA = "border-acento bg-superficie-cafe text-texto-principal";
 
-function Entrada({ item, activa, alNavegar, nivel }: { item: NavItem; activa: string | null; alNavegar?: () => void; nivel: number }) {
-	const id = useId();
-	const [abierta, setAbierta] = useState(() => contiene(item, activa));
-	if (item.children?.length) {
-		return (
-			<li>
-				<button
-					type="button"
-					aria-expanded={abierta}
-					aria-controls={`${id}-hijos`}
-					onClick={() => setAbierta((a) => !a)}
-					className={cn(CLASE_ENTRADA, contiene(item, activa) && "text-texto-principal")}
-				>
-					<span aria-hidden="true">{item.icon}</span>
-					<span className="flex-1">{item.label}</span>
-					<ChevronDown aria-hidden="true" className={cn("transition-transform duration-(--duracion-breve)", abierta && "rotate-180")} />
-				</button>
-				<ul id={`${id}-hijos`} hidden={!abierta} className="m-0 flex list-none flex-col gap-0.5 p-0 ps-8">
-					{item.children.map((h) => (
-						<Entrada key={h.key} item={h} activa={activa} alNavegar={alNavegar} nivel={nivel + 1} />
-					))}
-				</ul>
-			</li>
-		);
-	}
+function Enlace({ item, activa, compacta }: { item: NavItem; activa: string | null; compacta: boolean }) {
 	const actual = item.key === activa;
 	return (
-		<li>
-			<Link
-				href={item.href ?? "#"}
-				aria-current={actual ? "page" : undefined}
-				onClick={alNavegar}
-				className={cn(CLASE_ENTRADA, actual && CLASE_ACTIVA)}
-			>
-				{nivel === 0 && <span aria-hidden="true">{item.icon}</span>}
-				<span>{item.label}</span>
+		<li className="min-w-0">
+			<Link href={item.href ?? "#"} aria-current={actual ? "page" : undefined} className={cn(compacta ? ENLACE_COMPACTO : ENLACE_LATERAL, actual && ACTIVA)}>
+				{item.icon}
+				<span className="min-w-0 truncate">{item.label}</span>
 			</Link>
 		</li>
 	);
 }
 
-function Lista({ secciones, activa, alNavegar }: { secciones: SidebarSection[]; activa: string | null; alNavegar?: () => void }) {
-	const base = useId();
+/** Barra lateral: grupos con su rótulo; las entradas con hijos, rótulo con icono y los hijos debajo. */
+function Lateral({ secciones, activa }: { secciones: SidebarSection[]; activa: string | null }) {
 	return (
 		<div className="flex flex-col gap-6">
-			{secciones.map((s, i) => (
+			{secciones.map((s) => (
 				<div key={s.label} className="flex flex-col gap-1">
 					{/* Rótulo, no encabezado: la barra lateral va antes del h1 de la página. */}
-					<p
-						id={`${base}-grupo-${i}`}
-						className="m-0 px-3 pb-1 font-texto text-(length:--texto-etiqueta) font-semibold uppercase leading-[1.2] tracking-[0.16em] text-texto-tenue"
-					>
-						{s.label}
-					</p>
-					<ul aria-labelledby={`${base}-grupo-${i}`} className="m-0 flex list-none flex-col gap-0.5 p-0">
-						{s.items.map((item) => (
-							<Entrada key={item.key} item={item} activa={activa} alNavegar={alNavegar} nivel={0} />
-						))}
+					<p className={cn(ROTULO, "px-3 pb-1")}>{s.label}</p>
+					<ul aria-label={s.label} className="m-0 flex list-none flex-col gap-0.5 p-0">
+						{s.items.map((item) =>
+							item.children?.length ? (
+								<li key={item.key} className="flex flex-col gap-0.5">
+									<p className={cn("m-0 flex min-h-11 items-center gap-3 px-3 font-texto text-(length:--texto-pequeno) font-medium text-texto-principal", ICONO)}>
+										{item.icon}
+										{item.label}
+									</p>
+									<ul aria-label={item.label} className="m-0 flex list-none flex-col gap-0.5 p-0 ps-8">
+										{item.children.map((h) => (
+											<Enlace key={h.key} item={{ ...h, icon: null }} activa={activa} compacta={false} />
+										))}
+									</ul>
+								</li>
+							) : (
+								<Enlace key={item.key} item={item} activa={activa} compacta={false} />
+							),
+						)}
 					</ul>
 				</div>
 			))}
@@ -121,28 +102,57 @@ function Lista({ secciones, activa, alNavegar }: { secciones: SidebarSection[]; 
 	);
 }
 
+/** Móvil y tableta: cada grupo, su rótulo y todos sus enlaces en una rejilla (los hijos, con el nombre del grupo). */
+function Compacta({ secciones, activa }: { secciones: SidebarSection[]; activa: string | null }) {
+	return (
+		<div className="flex flex-col gap-(--espacio-sm)">
+			{secciones.map((s) => {
+				const hojas = s.items.flatMap((item) =>
+					item.children?.length ? item.children.map((h) => ({ ...h, label: `${item.label}: ${h.label.toLowerCase()}` })) : [item],
+				);
+				return (
+					<div key={s.label} className="flex flex-col gap-2">
+						<p className={ROTULO}>{s.label}</p>
+						<ul aria-label={s.label} className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3 md:grid-cols-4">
+							{hojas.map((item) => (
+								<Enlace key={item.key} item={item} activa={activa} compacta />
+							))}
+						</ul>
+					</div>
+				);
+			})}
+		</div>
+	);
+}
+
+function Lista({ secciones, activa, variante }: { secciones: SidebarSection[]; activa: string | null; variante: "lateral" | "compacta" }) {
+	return variante === "compacta" ? <Compacta secciones={secciones} activa={activa} /> : <Lateral secciones={secciones} activa={activa} />;
+}
+
+type PropsLista = { secciones: SidebarSection[]; variante: "lateral" | "compacta" };
+
 /** Con la consulta del navegador: `useSearchParams` necesita un `Suspense` por encima. */
-function ConConsulta(props: Omit<NavegacionPanelProps, "rutaActual" | "etiqueta" | "className">) {
+function ConConsulta(props: PropsLista) {
 	const ruta = usePathname();
 	const busqueda = useSearchParams();
 	return <Lista {...props} activa={claveActiva(props.secciones, ruta, new URLSearchParams(busqueda.toString()))} />;
 }
 
 /** Mientras llega la consulta: la activa solo por ruta. */
-function SoloRuta(props: Omit<NavegacionPanelProps, "rutaActual" | "etiqueta" | "className">) {
+function SoloRuta(props: PropsLista) {
 	const ruta = usePathname();
 	return <Lista {...props} activa={claveActiva(props.secciones, ruta, new URLSearchParams())} />;
 }
 
-export function NavegacionPanel({ secciones, etiqueta = "Navegación del panel", rutaActual, alNavegar, className }: NavegacionPanelProps) {
+export function NavegacionPanel({ secciones, etiqueta = "Navegación del panel", variante = "lateral", rutaActual, className }: NavegacionPanelProps) {
 	let contenido;
 	if (rutaActual !== undefined) {
 		const [ruta, consulta = ""] = rutaActual.split("?");
-		contenido = <Lista secciones={secciones} alNavegar={alNavegar} activa={claveActiva(secciones, ruta, new URLSearchParams(consulta))} />;
+		contenido = <Lista secciones={secciones} variante={variante} activa={claveActiva(secciones, ruta, new URLSearchParams(consulta))} />;
 	} else {
 		contenido = (
-			<Suspense fallback={<SoloRuta secciones={secciones} alNavegar={alNavegar} />}>
-				<ConConsulta secciones={secciones} alNavegar={alNavegar} />
+			<Suspense fallback={<SoloRuta secciones={secciones} variante={variante} />}>
+				<ConConsulta secciones={secciones} variante={variante} />
 			</Suspense>
 		);
 	}

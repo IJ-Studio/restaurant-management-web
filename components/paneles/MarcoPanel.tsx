@@ -13,14 +13,14 @@ import { NavegacionPanel } from "./NavegacionPanel";
  * Marco de los paneles (PLAN 5.1, DESIGN.md § Paneles):
  * - «Saltar al contenido»;
  * - desde 1024 px, la barra lateral de 16rem, fija a la altura de la ventana y con su propio scroll;
- * - por debajo de 1024 px, el drawer de `BarraSuperiorPanel`;
+ * - por debajo de 1024 px, la navegación completa a la vista bajo la barra superior (D-29: sin
+ *   cajón ni entradas plegadas);
  * - la barra superior, con la cuenta y el cierre de sesión único (2.14);
  * - el contenido en el único `<main>`, que ocupa todo el ancho restante, sin márgenes calculados
  *   en JavaScript.
  *
  * La navegación sale del rol de la sesión (`navegacionDeRol`). Solo el admin la tiene: caja,
- * cocina y mesero son una sola pantalla, y las entradas extra de `cajero.nav` y `cocina.nav`
- * apuntan a rutas que no existen (NP-37). Así un mesero nunca ve las entradas de admin.
+ * cocina y sala son una sola pantalla cada una (NP-37). Así un mesero nunca ve las entradas de admin.
  */
 const PANELES: Record<Exclude<RolSesion, "cliente">, { nombre: string; rol: string; navegacion: boolean }> = {
 	admin: { nombre: "Administración", rol: "Administración", navegacion: true },
@@ -71,11 +71,18 @@ export function MarcoPanel({ rol, nombre, apellidos, children }: MarcoPanelProps
 				<div className="sticky top-0 z-40">
 					<BarraSuperiorPanel
 						nombrePanel={panel?.nombre ?? "Tu cuenta"}
-						secciones={secciones}
 						usuario={{ nombre: nombreCompleto, rol: panel?.rol ?? "" }}
 						alCerrarSesion={cerrarSesion}
 					/>
 				</div>
+				{secciones.length > 0 && (
+					<NavegacionPanel
+						secciones={secciones}
+						etiqueta={etiqueta}
+						variante="compacta"
+						className="border-b border-borde-sutil bg-fondo px-[calc(var(--margen-pagina)+env(safe-area-inset-left,0px))] py-(--espacio-md) lg:hidden"
+					/>
+				)}
 				<main id="contenido-panel" tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
 					{children}
 				</main>
