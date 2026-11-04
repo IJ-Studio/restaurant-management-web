@@ -212,6 +212,7 @@ test.describe("formularios", () => {
 	});
 
 	test("perfil: obligatorios nombre, apellidos y teléfono; conserva claves extra", () => {
+		// Con dirección, el API la pide completa: calle, CP, ciudad y estado (P5.9, D-32).
 		const perfil = {
 			name: "Ana",
 			lastname: "López",
@@ -220,7 +221,8 @@ test.describe("formularios", () => {
 			calle: " Mayor ",
 			numero: "1",
 			colonia: "",
-			ciudad: "",
+			ciudad: "Huejutla",
+			estado: "Hidalgo",
 			codigoPostal: "06600",
 			indicaciones: "Tocar\r\nfuerte",
 			id: 7,
@@ -229,6 +231,7 @@ test.describe("formularios", () => {
 		expect(errorDe(esquemaPerfil, { ...perfil, phone: " " })).toBe("Escribe tu teléfono.");
 		expect(errorDe(esquemaPerfil, { ...perfil, codigoPostal: "066001" })).toBe(MENSAJES.demasiadoLargo(5));
 		expect(errorDe(esquemaPerfil, { ...perfil, email: "ana@" })).toBe(MENSAJES.correo);
+		expect(errorDe(esquemaPerfil, { ...perfil, estado: "" })).toBe("Escribe el estado.");
 	});
 
 	test("reserva: contacto, horario futuro y mesa", () => {
