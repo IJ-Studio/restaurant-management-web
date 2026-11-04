@@ -183,7 +183,8 @@ export const esquemaUsuarioNuevo = z.looseObject({
 	name: lineaRequerida("Escribe el nombre."),
 	lastname: lineaRequerida("Escribe los apellidos."),
 	email: correoBasico("Escribe el correo."),
-	phone: lineaRequerida("Escribe el teléfono."),
+	// 10 dígitos de México; sale con la lada (+52…), el formato que exige `PATCH /users/:id`.
+	phone: telefono.transform(telefonoConLada),
 	password: z.string({ error: "Mínimo 8 caracteres." }).min(8, { error: "Mínimo 8 caracteres." }),
 	roleId: z
 		.number({ error: "Elige un rol." })
@@ -191,18 +192,13 @@ export const esquemaUsuarioNuevo = z.looseObject({
 });
 
 /**
- * Edición de usuario: la contraseña vacía significa «no cambiarla» y se quita del payload, como
- * hoy. El rol puede ser cualquiera de los existentes (se puede editar a un administrador).
+ * Edición de usuario: nombre, apellidos, teléfono y rol. El correo y la contraseña no se cambian
+ * desde aquí (el API no lo admite en `PATCH /users/:id`; cada persona cambia su contraseña desde
+ * su perfil). El rol va a `PATCH /users/:id/role`, que solo admite los roles que se pueden crear.
  */
-export const esquemaUsuarioEdicion = esquemaUsuarioNuevo
-	.extend({
-		password: z
-			.string()
-			.refine((v) => v === "" || v.length >= 8, { error: "Mínimo 8 caracteres." })
-			.optional(),
-		roleId: z.number({ error: "Elige un rol." }).refine((r) => roles.includes(r), { error: "Elige un rol." }),
-	})
-	.transform(({ password, ...resto }) => (password ? { ...resto, password } : resto));
+export const esquemaUsuarioEdicion = esquemaUsuarioNuevo.omit({ password: true, email: true }).extend({
+	roleId: z.number({ error: "Elige un rol." }).refine((r) => roles.includes(r), { error: "Elige un rol." }),
+});
 
 /** Platillo de la carta (`DialogoPlatillo`, PLAN 5.9). */
 export const esquemaPlatillo = z.looseObject({

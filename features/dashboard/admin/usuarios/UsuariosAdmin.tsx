@@ -43,7 +43,7 @@ const entero = new Intl.NumberFormat("es-MX");
 const nombreDe = (u: Usuario) => `${u.name} ${u.lastname}`.trim();
 const rolDe = (id: number) => ROLE_LABELS[id] ?? "Sin rol";
 
-function DialogoUsuario({ usuario, disparador, alGuardar }: { usuario?: Usuario; disparador: ReactNode; alGuardar: (datos: Record<string, unknown>, id?: Usuario["id"]) => Promise<boolean> }) {
+function DialogoUsuario({ usuario, disparador, alGuardar }: { usuario?: Usuario; disparador: ReactNode; alGuardar: (datos: Record<string, unknown>, original?: Usuario) => Promise<boolean> }) {
 	const inicial = () => ({
 		name: usuario?.name ?? "",
 		lastname: usuario?.lastname ?? "",
@@ -57,7 +57,9 @@ function DialogoUsuario({ usuario, disparador, alGuardar }: { usuario?: Usuario;
 	const [errores, setErrores] = useState<Record<string, string>>({});
 	const [guardando, setGuardando] = useState(false);
 	const id = usuario ? `usuario-${usuario.id}` : "usuario-nuevo";
-	const roles = usuario ? Object.keys(ROLE_LABELS).map(Number) : [...CREATABLE_ROLES];
+	// `PATCH /users/:id/role` solo admite los roles que se pueden crear; el de administrador no se cambia aquí.
+	const esAdmin = usuario?.roleId === 1;
+	const roles = esAdmin ? [1] : [...CREATABLE_ROLES];
 
 	async function guardar() {
 		const datos = { ...f, roleId: Number(f.roleId) };
@@ -67,7 +69,7 @@ function DialogoUsuario({ usuario, disparador, alGuardar }: { usuario?: Usuario;
 		setErrores(e);
 		if (!r.success) return;
 		setGuardando(true);
-		const ok = await alGuardar(r.data as Record<string, unknown>, usuario?.id);
+		const ok = await alGuardar(r.data as Record<string, unknown>, usuario);
 		setGuardando(false);
 		if (ok) setAbierto(false);
 	}
@@ -107,21 +109,25 @@ function DialogoUsuario({ usuario, disparador, alGuardar }: { usuario?: Usuario;
 					<Campo etiqueta="Nombre" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} error={errores.name} autoComplete="off" maxLength={80} />
 					<Campo etiqueta="Apellidos" value={f.lastname} onChange={(e) => setF({ ...f, lastname: e.target.value })} error={errores.lastname} autoComplete="off" maxLength={80} />
 				</div>
-				<Campo etiqueta="Correo" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} error={errores.email} autoComplete="off" />
+				<Campo
+					etiqueta="Correo"
+					type="email"
+					value={f.email}
+					onChange={(e) => setF({ ...f, email: e.target.value })}
+					error={errores.email}
+					autoComplete="off"
+					readOnly={!!usuario}
+					ayuda={usuario ? "El correo no se cambia desde aquí: es con el que la persona entra." : undefined}
+				/>
 				<div className="grid grid-cols-1 gap-(--espacio-md) sm:grid-cols-2">
 					<Campo etiqueta="Teléfono" type="tel" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} error={errores.phone} autoComplete="off" maxLength={20} />
-					<Selector etiqueta="Rol" opciones={roles.map((r) => ({ valor: String(r), texto: rolDe(r) }))} value={f.roleId} onChange={(e) => setF({ ...f, roleId: e.target.value })} error={errores.roleId} />
+					<Selector etiqueta="Rol" opciones={roles.map((r) => ({ valor: String(r), texto: rolDe(r) }))} value={f.roleId} onChange={(e) => setF({ ...f, roleId: e.target.value })} error={errores.roleId} disabled={esAdmin} />
 				</div>
-				<Campo
-					etiqueta={usuario ? "Contraseña nueva" : "Contraseña"}
-					opcional={!!usuario}
-					type="password"
-					value={f.password}
-					onChange={(e) => setF({ ...f, password: e.target.value })}
-					error={errores.password}
-					autoComplete="new-password"
-					ayuda={usuario ? "Déjala vacía para no cambiarla. Mínimo 8 caracteres." : "Mínimo 8 caracteres."}
-				/>
+				{usuario ? (
+					<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">La contraseña no se cambia desde aquí: cada persona la cambia desde su perfil.</p>
+				) : (
+					<Campo etiqueta="Contraseña" type="password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} error={errores.password} autoComplete="new-password" ayuda="Mínimo 8 caracteres." />
+				)}
 			</form>
 		</Dialogo>
 	);
@@ -153,11 +159,15 @@ export function UsuariosAdmin() {
 		void cargar();
 	}, [cargar]);
 
-	async function guardar(datos: Record<string, unknown>, id?: Usuario["id"]) {
+	async function guardar(datos: Record<string, unknown>, original?: Usuario) {
 		try {
-			if (id !== undefined) await api.patch(`/users/${id}`, datos);
-			else await api.post("/users", datos);
-			notificar({ tono: "exito", titulo: id !== undefined ? "Cambios guardados" : "Usuario creado", descripcion: `${datos.name} ${datos.lastname}` });
+			if (original) {
+				// Cada dato por su ruta: el perfil por `PATCH /users/:id` y el rol por `/role` (antes el
+				// rol, el correo y la contraseña se descartaban en silencio y se mostraba «guardado»).
+				await api.patch(`/users/${original.id}`, { name: datos.name, lastname: datos.lastname, phone: datos.phone });
+				if (Number(datos.roleId) !== original.roleId) await api.patch(`/users/${original.id}/role`, { roleId: Number(datos.roleId) });
+			} else await api.post("/users", datos);
+			notificar({ tono: "exito", titulo: original ? "Cambios guardados" : "Usuario creado", descripcion: `${datos.name} ${datos.lastname}` });
 			void cargar();
 			return true;
 		} catch (e) {
@@ -176,7 +186,9 @@ export function UsuariosAdmin() {
 		});
 		if (!ok) return;
 		try {
-			await api.patch(`/users/${u.id}`, { isActive: !u.isActive });
+			// Baja lógica con `DELETE /users/:id` y reactivación con `PATCH /users/:id/reactivar`.
+			if (u.isActive) await api.delete(`/users/${u.id}`);
+			else await api.patch(`/users/${u.id}/reactivar`);
 			notificar({ tono: "exito", titulo: u.isActive ? "Usuario desactivado" : "Usuario activado", descripcion: nombreDe(u) });
 			void cargar();
 		} catch (e) {

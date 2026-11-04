@@ -35,7 +35,7 @@ async function abrir(browser: Browser, opciones: { ancho?: number; preferencias?
 	return { contexto, page, pedidos };
 }
 
-test("crear valida con el esquema y envía el payload de siempre", async ({ browser }) => {
+test("crear valida con el esquema y envía el teléfono con lada", async ({ browser }) => {
 	const { contexto, page, pedidos } = await abrir(browser);
 	await page.locator("main").getByRole("button", { name: "Usuario nuevo" }).click();
 	const dialogo = page.getByRole("dialog", { name: "Usuario nuevo" });
@@ -55,24 +55,35 @@ test("crear valida con el esquema y envía el payload de siempre", async ({ brow
 	await dialogo.getByLabel("Contraseña").fill("Bodega#Tinta9");
 	await dialogo.getByRole("button", { name: "Crear usuario" }).click();
 	await expect(dialogo).toBeHidden();
-	expect(pedidos).toEqual([{ metodo: "POST", ruta: "/users", cuerpo: { name: "Iván", lastname: "Soto", email: "ivan@elquijote.mx", phone: "7715556666", password: "Bodega#Tinta9", roleId: 3 } }]);
+	expect(pedidos).toEqual([{ metodo: "POST", ruta: "/users", cuerpo: { name: "Iván", lastname: "Soto", email: "ivan@elquijote.mx", phone: "+527715556666", password: "Bodega#Tinta9", roleId: 3 } }]);
 	await contexto.close();
 });
 
-test("editar sin contraseña no la envía; desactivar pide confirmación", async ({ browser }) => {
+test("editar manda el perfil y el rol a sus rutas; activar y desactivar usan las rutas del API", async ({ browser }) => {
 	const { contexto, page, pedidos } = await abrir(browser);
 	const main = page.locator("main");
 	await main.getByRole("button", { name: "Editar a Pablo Gil" }).filter({ visible: true }).click();
 	const dialogo = page.getByRole("dialog", { name: "Editar a Pablo Gil" });
-	await dialogo.getByLabel("Teléfono").fill("7719998888");
+	// El correo no se edita aquí y no hay campo de contraseña (el API los descartaba en silencio).
+	await expect(dialogo.getByLabel("Correo")).toHaveAttribute("readonly", "");
+	await expect(dialogo.getByLabel(/Contraseña/)).toHaveCount(0);
+	await dialogo.getByLabel("Teléfono").fill("771 999 8888");
+	await dialogo.getByLabel("Rol").selectOption({ label: "Cocina" });
 	await dialogo.getByRole("button", { name: "Guardar cambios" }).click();
 	await expect(dialogo).toBeHidden();
-	expect(pedidos[0]).toEqual({ metodo: "PATCH", ruta: "/users/2", cuerpo: { name: "Pablo", lastname: "Gil", email: "pablo@elquijote.mx", phone: "7719998888", roleId: 3 } });
+	expect(pedidos.slice(0, 2)).toEqual([
+		{ metodo: "PATCH", ruta: "/users/2", cuerpo: { name: "Pablo", lastname: "Gil", phone: "+527719998888" } },
+		{ metodo: "PATCH", ruta: "/users/2/role", cuerpo: { roleId: 4 } },
+	]);
 
 	await main.getByRole("button", { name: "Desactivar a Pablo Gil" }).filter({ visible: true }).click();
 	await page.getByRole("alertdialog", { name: "¿Desactivar a Pablo Gil?" }).getByRole("button", { name: "Desactivar" }).click();
-	await expect.poll(() => pedidos[1]).toEqual({ metodo: "PATCH", ruta: "/users/2", cuerpo: { isActive: false } });
+	await expect.poll(() => pedidos[2]).toEqual({ metodo: "DELETE", ruta: "/users/2", cuerpo: null });
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Usuario desactivado");
+
+	await main.getByRole("button", { name: "Activar a Ana López" }).filter({ visible: true }).click();
+	await page.getByRole("alertdialog", { name: "¿Activar a Ana López?" }).getByRole("button", { name: "Activar" }).click();
+	await expect.poll(() => pedidos[3]).toEqual({ metodo: "PATCH", ruta: "/users/3/reactivar", cuerpo: null });
 	await contexto.close();
 });
 

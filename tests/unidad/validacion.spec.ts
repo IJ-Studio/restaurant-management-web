@@ -300,11 +300,13 @@ test.describe("formularios", () => {
 		expect(errorDe(esquemaUsuarioNuevo, { ...usuario, roleId: 1 })).toBe("Elige un rol.");
 		expect(errorDe(esquemaUsuarioNuevo, { ...usuario, email: "luis@" })).toBe(MENSAJES.correo);
 
-		// En la edición, la contraseña vacía se quita del payload y se puede editar a un admin.
-		const editado = valorDe(esquemaUsuarioEdicion, { ...usuario, password: "", roleId: 1 });
-		expect(editado).not.toHaveProperty("password");
-		expect(editado).toMatchObject({ roleId: 1 });
-		expect(errorDe(esquemaUsuarioEdicion, { ...usuario, password: "1234" })).toBe("Mínimo 8 caracteres.");
+		// El teléfono sale con la lada, como lo pide PATCH /users/:id (E.164).
+		expect(valorDe(esquemaUsuarioNuevo, { ...usuario, phone: "55 1234 5678" })).toMatchObject({ phone: "+525512345678" });
+		expect(errorDe(esquemaUsuarioNuevo, { ...usuario, phone: "123" })).toBe(MENSAJES.telefono);
+
+		// En la edición no se validan correo ni contraseña (no se envían) y el rol puede ser el de admin.
+		expect(errorDe(esquemaUsuarioEdicion, { ...usuario, email: "", password: "", roleId: 1 })).toBeNull();
+		expect(valorDe(esquemaUsuarioEdicion, { ...usuario, phone: "+525512345678" })).toMatchObject({ phone: "+525512345678", roleId: 3 });
 		expect(errorDe(esquemaUsuarioEdicion, { ...usuario, roleId: 9 })).toBe("Elige un rol.");
 	});
 
