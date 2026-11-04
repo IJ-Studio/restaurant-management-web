@@ -45,8 +45,9 @@ interface Estadisticas {
 	totalMesas: number;
 }
 interface ProductoInventario {
-	stock: number;
-	minStock: number;
+	stock: number | string | null;
+	/** El API aún no da el mínimo (pendiente aditivo): sin él, el producto no se juzga. */
+	minStock?: number | string | null;
 }
 interface VentasPorHora {
 	ventas: number[];
@@ -88,7 +89,7 @@ const OPCIONES_FILTRO = [
 const POR_PAGINA = 10;
 
 function Alertas() {
-	const [inventario, recargar] = useCarga(() => pedirPanel<ProductoInventario[]>("/api/inventory/products"), "inicio admin: inventario");
+	const [inventario, recargar] = useCarga(() => pedirPanel<ProductoInventario[]>("/inventario/productos"), "inicio admin: inventario");
 	if (inventario.estado === "cargando") return null;
 	if (inventario.estado === "error")
 		return (
@@ -106,8 +107,10 @@ function Alertas() {
 			</Aviso>
 		);
 	const productos = Array.isArray(inventario.datos) ? inventario.datos : [];
-	const bajos = productos.filter((p) => num(p.stock) <= num(p.minStock));
-	const criticos = bajos.filter((p) => num(p.stock) <= num(p.minStock) / 2);
+	const cifra = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
+	const conMinimo = productos.filter((p) => cifra(p.minStock) !== null && cifra(p.stock) !== null);
+	const bajos = conMinimo.filter((p) => cifra(p.stock)! <= cifra(p.minStock)!);
+	const criticos = bajos.filter((p) => cifra(p.stock)! <= cifra(p.minStock)! / 2);
 	if (bajos.length === 0) return null;
 	const accion = (
 		<BotonEnlace href="/dashboard/admin/inventory" variante="secundario" tamano="compacto">

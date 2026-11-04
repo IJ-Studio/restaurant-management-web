@@ -57,7 +57,7 @@ export async function getTableMap(fechaHora?: string) {
   return res.json();
 }
 
-export async function createReservation(data: any) {
+export async function createReservation(data: Record<string, unknown>) {
   const res = await fetch(`${API_URL}/reservations`, { cache: "no-store",
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -108,7 +108,7 @@ export async function getNoShowRisk(id: string): Promise<{ probabilidad: number;
   return res.json();
 }
 
-export async function updateReservation(id: string, data: any) {
+export async function updateReservation(id: string, data: Record<string, unknown>) {
   const res = await fetch(`${API_URL}/reservations/${id}`, { cache: "no-store",
     method: 'PATCH',
     headers: getHeaders(true),

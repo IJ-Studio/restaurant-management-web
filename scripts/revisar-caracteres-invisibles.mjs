@@ -1,6 +1,7 @@
 // Falla si algún archivo del código, versionado o nuevo sin ignorar por .gitignore, contiene caracteres invisibles peligrosos:
 // controles bidireccionales (U+202A a U+202E y U+2066 a U+2069), de ancho cero (U+200B a U+200F)
-// o U+FEFF fuera del inicio del archivo. Pueden esconder código distinto del que se ve al revisarlo.
+// U+FEFF fuera del inicio del archivo o caracteres de control C0 y C1 (NP-39). Pueden esconder código
+// distinto del que se ve al revisarlo.
 // Solo informa de archivo y línea, para no volver a imprimir el carácter.
 // Si una cadena necesita uno de estos caracteres, se escribe como escape en el código, nunca literal.
 // Uso: node scripts/revisar-caracteres-invisibles.mjs (o pnpm revisar:invisibles). No necesita build.
@@ -16,6 +17,9 @@ const BINARIOS = /\.(png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot|pdf|zip|mp4|
 const BOM = 0xfeff;
 function esProhibido(codigo) {
 	return (
+		// NP-39: controles C0 (salvo tabulador y saltos de línea) y C1, como un retroceso literal.
+		(codigo < 0x20 && codigo !== 0x09 && codigo !== 0x0a && codigo !== 0x0d) ||
+		(codigo >= 0x7f && codigo <= 0x9f) ||
 		(codigo >= 0x202a && codigo <= 0x202e) ||
 		(codigo >= 0x2066 && codigo <= 0x2069) ||
 		(codigo >= 0x200b && codigo <= 0x200f) ||

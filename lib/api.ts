@@ -57,11 +57,11 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
   });
 
   if (!response.ok) {
-    let errorData: any = {};
+    let errorData: { message?: string; statusCode?: number; error?: string } = {};
     try {
       errorData = await response.json();
-    } catch (_) {
-      // Ignore parsing errors for non-JSON responses
+    } catch {
+      // Respuesta sin JSON: se usan el código y el texto del estado.
     }
 
     const message = errorData.message || "Ocurrió un error inesperado";
@@ -81,19 +81,19 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
 export const api = {
   get: <T>(endpoint: string, options?: RequestOptions) =>
     apiFetch<T>(endpoint, { ...options, method: "GET" }),
-  post: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
+  post: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     apiFetch<T>(endpoint, {
       ...options,
       method: "POST",
       body: body ? JSON.stringify(body) : undefined,
     }),
-  patch: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
+  patch: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     apiFetch<T>(endpoint, {
       ...options,
       method: "PATCH",
       body: body ? JSON.stringify(body) : undefined,
     }),
-  put: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
+  put: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     apiFetch<T>(endpoint, {
       ...options,
       method: "PUT",

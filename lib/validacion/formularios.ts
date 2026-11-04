@@ -88,8 +88,17 @@ export const esquemaPerfil = z.looseObject({
 	numero: lineaOpcional(),
 	colonia: lineaOpcional(),
 	ciudad: lineaOpcional(),
+	estado: lineaOpcional(),
 	codigoPostal: lineaOpcional(5),
 	indicaciones: textoLibre(),
+}).superRefine((d, ctx) => {
+	// La dirección es opcional, pero si se escribe, el API la pide completa (D-32).
+	const alguna = [d.calle, d.numero, d.colonia, d.ciudad, d.estado, d.codigoPostal, d.indicaciones].some((v) => typeof v === "string" && v.trim() !== "");
+	if (!alguna) return;
+	if (!String(d.calle ?? "").trim()) ctx.addIssue({ code: "custom", path: ["calle"], message: "Escribe la calle y el número." });
+	if (!/^\d{5}$/.test(String(d.codigoPostal ?? ""))) ctx.addIssue({ code: "custom", path: ["codigoPostal"], message: "El código postal tiene 5 dígitos." });
+	if (!String(d.ciudad ?? "").trim()) ctx.addIssue({ code: "custom", path: ["ciudad"], message: "Escribe la ciudad." });
+	if (!String(d.estado ?? "").trim()) ctx.addIssue({ code: "custom", path: ["estado"], message: "Escribe el estado." });
 });
 export type DatosPerfil = z.output<typeof esquemaPerfil>;
 

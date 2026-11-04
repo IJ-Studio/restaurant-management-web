@@ -8,9 +8,9 @@
 |---|---|
 | Fecha | 2026-11-03 |
 | Rama activa | `feature/rediseno-web-admin` (cierre de la fase 5 y frontend de la ampliación) |
-| Paquete en curso | **P5 · Frontend de la ampliación** |
-| Último paso completado | P5.1–P5.8: paneles y carta contra el API, sin emojis, subida firmada, landing con ajuste y molino, QR, reportar un problema y legal. P4 `2c40068`. |
-| Siguiente paso | P5.9 (pendientes (a): NP-17, NP-19, NP-22, NP-35, NP-39, lint) y después P6 (paridad). |
+| Paquete en curso | **P7 · API** |
+| Último paso completado | P5.9 (pendientes (a)) y P6 (`PARIDAD-MOVIL-WEB.md`). P5: `0ced1df`, `0dd5fec`, `42719fa`. |
+| Siguiente paso | P7: endpoints aditivos del API (firma de imágenes, platillos, reportes) con pruebas; después P8 y el cierre en Firefox y WebKit. |
 | Bloqueos | Ninguno. 2.5 (aplicar la CSP) y NP-47 siguen sin ejecutarse por orden del usuario. |
 | Avisos | Repo del API con `HEAD` dañado en la copia local (se diagnostica en P7, sin reescribir nada). |
 | Decisiones del usuario pendientes | Ver § Pendientes para el usuario. |
@@ -107,11 +107,11 @@ Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6
 - [x] P5.6 D-35: scroll-snap y aspas del molino con movimiento permitido.
 - [x] P5.7 D-37: bloque del QR con `config/app-operaciones.ts`.
 - [x] P5.8 D-36: legales y consentimientos según el documento legal público.
-- [ ] P5.9 Pendientes (a) por prioridad: seguridad, accesibilidad, datos reales, rendimiento y limpieza.
+- [x] P5.9 Pendientes (a) por prioridad: seguridad, accesibilidad, datos reales, rendimiento y limpieza.
 
 ### P6 · Paridad móvil-web (D-33)
 
-- [ ] P6.1 `PARIDAD-MOVIL-WEB.md`: matriz de diferencias y cambios que tendría que adoptar la móvil.
+- [x] P6.1 `PARIDAD-MOVIL-WEB.md`: matriz de diferencias y cambios que tendría que adoptar la móvil.
 
 ### P7 · API (`restaurant-management-api`)
 

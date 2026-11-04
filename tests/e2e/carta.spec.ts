@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { simularApi } from "./utilidades/api-simulada";
 
 // La carta (/menu, PLAN 4.10, D-20). Contra el build de producción; la página pide los datos
-// desde el navegador a /api/menu/categories, así que aquí se simulan con datos, error y espera.
+// desde el navegador al API (/menu/categories/with-products), así que aquí se simulan con datos, error y espera.
 test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
 
 const CLAVE = "elquijote:preferencias";
@@ -26,7 +26,7 @@ const CARTA = [
 async function abrir(page: Page, responder: (ruta: Route) => Promise<void>, preferencias: Record<string, string> = {}) {
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);
 	await simularApi(page);
-	await page.route("**/api/menu/categories", responder);
+	await page.route("**/menu/categories/with-products", responder);
 	await page.goto("/menu", { waitUntil: "load" });
 }
 const conDatos = (ruta: Route) => ruta.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(CARTA) });

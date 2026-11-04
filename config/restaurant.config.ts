@@ -58,7 +58,7 @@ export const restaurantConfig = {
     cajero:  { label: "Cajero",        dashboard: "/dashboard/cajero" },
     mesero:  { label: "Mesero",        dashboard: "/dashboard/mesero" },
     cocina:  { label: "Cocina",        dashboard: "/dashboard/cocina" },
-    cliente: { label: "Cliente",       dashboard: "/dashboard/cliente" },
+    cliente: { label: "Cliente",       dashboard: "/profile" },
   },
 
   // ── Stats shown in landing page ───────────────────────────────────────────

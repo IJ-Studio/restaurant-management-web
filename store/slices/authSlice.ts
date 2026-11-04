@@ -25,7 +25,7 @@ export const hydrateSession = createAsyncThunk(
       }
       dispatch(setUser(null));
       return null;
-    } catch (err: any) {
+    } catch {
       dispatch(setUser(null));
       // No seteamos error en UI para no mostrar alert en páginas públicas
       dispatch(setLoading(false));

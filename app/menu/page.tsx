@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * La carta (`/menu`, PLAN 4.10). Cliente: pide las categorías a la ruta interna de siempre
- * (`/api/menu/categories`), sin cambiar el endpoint ni los enlaces de categoría y plato.
+ * (`GET /menu/categories/with-products` del API, directo desde D-32: ya no pasa por una ruta interna),
+ * sin cambiar los enlaces de categoría y plato.
  *
  * - Carga con esqueletos del tamaño de lo que viene, sin «Cargando menú…» (D-20).
  * - Error cálido con «Reintentar» y «Llamar al restaurante»; nunca el texto de la excepción.
@@ -76,7 +77,7 @@ function Carta() {
 	const cargar = useCallback(async () => {
 		setEstado("cargando");
 		try {
-			const res = await fetch("/api/menu/categories", { cache: "no-store" });
+			const res = await fetch(`${(process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "")}/menu/categories/with-products`, { cache: "no-store" });
 			if (!res.ok) throw new Error(`carta ${res.status}`);
 			const datos: unknown = await res.json();
 			setCategorias(Array.isArray(datos) ? (datos as Categoria[]) : []);

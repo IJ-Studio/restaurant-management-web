@@ -49,7 +49,7 @@ async function abrir(browser: Browser, ancho = 1440, respuestas: Respuestas = {}
 			const ruta = new URL(p.url()).pathname;
 			const clave = ruta.endsWith("/dashboard/admin/stats")
 				? "stats"
-				: ruta.endsWith("/api/inventory/products")
+				: ruta.endsWith("/inventario/productos")
 					? "inventario"
 					: ruta.endsWith("/reservations")
 						? "reservas"

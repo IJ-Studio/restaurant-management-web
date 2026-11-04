@@ -6,6 +6,24 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### P6 · Paridad móvil-web (D-33) (2026-11-03)
+
+- Nuevo `PARIDAD-MOVIL-WEB.md`: navegación por rol, pantallas equivalentes (resumen del día, pedidos y estados, cobro, caja, sala, reservaciones, perfil), formatos (dinero, hora, mesa), los cambios que tendría que adoptar la móvil (reportar un problema, aviso del personal, nombres de estado, formato de dinero, subida firmada, existencias) y los que la web podría tomar de la móvil (cuenta separada, notas por platillo, incidencias y mermas, aviso de demora, cambio de contraseña).
+- Inventario de la móvil hecho por un subagente de solo lectura; el repo de la móvil no se tocó.
+
+### P5.9 · Pendientes (a) (2026-11-03)
+
+- **NP-19:** el rol cliente que entra en `/dashboard` va a `/profile` (también `restaurantConfig.roles.cliente.dashboard`).
+- **NP-17:** el perfil dejaba de guardar siempre (llamaba a `PUT /usuarios/perfil/actualizar/:id`, que no existe). Ahora los datos personales van a `PATCH /users/:id` con el teléfono en formato internacional (+52, como la móvil) y la dirección a `/direcciones` (`PUT` de la principal o `POST`); el perfil gana el campo «Estado», que el API exige, y la validación pide la dirección completa solo si se escribe alguna parte. Las existencias del Inicio piden `GET /inventario/productos` (antes, una ruta interna con la base del API, siempre 404) y solo juzgan el nivel si llega el mínimo. La carta pública (`/menu`) pide el API directamente: se borra la ruta interna `/api/menu/categories` (D-32, reemplazo probado con las pruebas de la carta) y sale de la lista de rutas públicas.
+- **NP-22:** el instalador descarga de `main` en lugar de una rama temporal y ya no pide claves de Supabase que el front no usa; las dos variables de servidor que aún escribe quedan comentadas como temporales hasta D-32.
+- **NP-35:** fuera (`git rm`) `types/index.ts`, `types/ButtonProps.tsx`, `hooks/useTheme.ts` y `app/api/menu/_meta.ts` (sin importadores). `IdleLogout` se conserva (NP-47).
+- **NP-39:** `revisar:invisibles` detecta también los controles C0 (salvo tabulador y saltos de línea) y C1; comprobado con un archivo temporal con un retroceso literal.
+- **Lint:** sin `any` en `lib/api.ts`, `authSlice` y `reservations.service`.
+
+**Verificación:** typecheck y lint de lo tocado; unitarias en verde; build correcto; Chromium contra `next start`, batería completa: 514 pasadas y 1 fallo de una prueba que esperaba el destino antiguo del cliente (corregida; `proteccion.spec` 16/16).
+
+**No verificado:** guardar el perfil y la dirección contra el API real; Firefox y WebKit (al cerrar la tanda de frontend).
+
 ### P5 · Frontend de la ampliación: datos reales, emojis, imágenes, landing, QR, reportes y legal (2026-11-03)
 
 **D-25 · Sin emojis.**

@@ -10,6 +10,7 @@ import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
 import { Esqueleto, EsqueletoLineas, ZonaCargando } from "@/components/ui/Esqueleto";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
+import { api } from "@/lib/api";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaPerfil } from "@/lib/validacion/formularios";
@@ -24,6 +25,14 @@ import { esquemaPerfil } from "@/lib/validacion/formularios";
  * validación usa `esquemaPerfil` (3.1) con el error en cada campo; el resultado es una
  * notificación cálida, sin el mensaje del servidor; y esqueletos al cargar (D-20).
  */
+/** Dirección de `GET /direcciones` (API). */
+type Direccion = { id: number; linea1?: string; linea2?: string | null; colonia?: string | null; referencias?: string | null; codigoPostal?: string; ciudad?: string; estado?: string; esPrincipal?: boolean | null };
+/** El API pide el teléfono en formato internacional: 10 dígitos de México pasan a `+52…`, como en la app móvil. */
+const telefonoE164 = (t: string) => {
+	const digitos = t.replace(/\D/g, "");
+	return digitos.length === 10 ? `+52${digitos}` : t.trim().startsWith("+") ? `+${digitos}` : t.trim();
+};
+
 type Perfil = {
 	name: string;
 	lastname: string;
@@ -33,14 +42,15 @@ type Perfil = {
 	numero: string;
 	colonia: string;
 	ciudad: string;
+	estado: string;
 	codigoPostal: string;
 	indicaciones: string;
 };
-const VACIO: Perfil = { name: "", lastname: "", email: "", phone: "", calle: "", numero: "", colonia: "", ciudad: "", codigoPostal: "", indicaciones: "" };
+const VACIO: Perfil = { name: "", lastname: "", email: "", phone: "", calle: "", numero: "", colonia: "", ciudad: "", estado: "", codigoPostal: "", indicaciones: "" };
 const PERSONALES = ["name", "lastname", "phone"] as const;
 // Sin editar, el campo se lee como texto (sin caja): se distingue a simple vista de uno editable.
 const comoTexto = (editando: boolean) => (editando ? undefined : "border-transparent bg-transparent px-0");
-const DIRECCION = ["calle", "numero", "colonia", "ciudad", "codigoPostal", "indicaciones"] as const;
+const DIRECCION = ["calle", "numero", "colonia", "ciudad", "estado", "codigoPostal", "indicaciones"] as const;
 
 export default function PaginaCuenta() {
 	const router = useRouter();
@@ -54,6 +64,7 @@ export default function PaginaCuenta() {
 	const [falloCarga, setFalloCarga] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [errores, setErrores] = useState<Record<string, string>>({});
+	const [direccionId, setDireccionId] = useState<number | null>(null);
 
 	useEffect(() => {
 		(async () => {
@@ -63,17 +74,22 @@ export default function PaginaCuenta() {
 				const sessionData = await sessionRes.json();
 				const u = sessionData?.user || sessionData;
 				if (!u) return router.push("/login?redirect=/profile");
+				// NP-17 / D-32: la dirección vive en `/direcciones` del API (la principal, o la primera).
+				const direcciones = await api.get<Direccion[]>("/direcciones").catch(() => [] as Direccion[]);
+				const d = (Array.isArray(direcciones) ? direcciones : []).find((x) => x.esPrincipal) ?? (Array.isArray(direcciones) ? direcciones[0] : undefined);
+				setDireccionId(d?.id ?? null);
 				const info: Perfil = {
 					name: u.name || "",
 					lastname: u.lastname || "",
 					email: u.email || "",
 					phone: u.phone || "",
-					calle: u.direccion?.calle || "",
-					numero: u.direccion?.numero || "",
-					colonia: u.direccion?.colonia || "",
-					ciudad: u.direccion?.ciudad || "",
-					codigoPostal: u.direccion?.codigoPostal || "",
-					indicaciones: u.direccion?.indicaciones || "",
+					calle: d?.linea1 || "",
+					numero: d?.linea2 || "",
+					colonia: d?.colonia || "",
+					ciudad: d?.ciudad || "",
+					estado: d?.estado || "",
+					codigoPostal: d?.codigoPostal || "",
+					indicaciones: d?.referencias || "",
 				};
 				setFormData(info);
 				setOriginales(info);
@@ -115,18 +131,34 @@ export default function PaginaCuenta() {
 		if (!ok) return;
 		setIsSubmitting(true);
 		try {
-			const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-			const token = localStorage.getItem("authToken");
-			const sessionRes = await fetch("/api/auth/me", { cache: "no-store" });
+			const sessionRes = await pedirSesion();
 			const sessionData = await sessionRes.json();
 			const activeUser = sessionData?.user || sessionData;
-			const res = await fetch(`${apiUrl}/usuarios/perfil/actualizar/${activeUser.id}`, {
-				cache: "no-store",
-				method: "PUT",
-				headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-				body: JSON.stringify(formData),
-			});
-			if (!res.ok) throw new Error(`perfil ${res.status}`);
+			// NP-17 / D-32: la ruta antigua (`PUT /usuarios/perfil/actualizar/:id`) no existía. Los datos
+			// personales van a `PATCH /users/:id` (el mismo de la app móvil) y la dirección a `/direcciones`.
+			if (PERSONALES.some((k) => formData[k] !== originales?.[k])) {
+				await api.patch(`/users/${encodeURIComponent(String(activeUser.id))}`, {
+					name: formData.name.trim(),
+					lastname: formData.lastname.trim(),
+					phone: telefonoE164(formData.phone),
+				});
+			}
+			if (DIRECCION.some((k) => formData[k] !== originales?.[k])) {
+				const cuerpo = {
+					linea1: formData.calle.trim(),
+					...(formData.numero.trim() ? { linea2: formData.numero.trim() } : {}),
+					...(formData.colonia.trim() ? { colonia: formData.colonia.trim() } : {}),
+					...(formData.indicaciones.trim() ? { referencias: formData.indicaciones.trim() } : {}),
+					codigoPostal: formData.codigoPostal.trim(),
+					ciudad: formData.ciudad.trim(),
+					estado: formData.estado.trim(),
+				};
+				if (direccionId !== null) await api.put(`/direcciones/${direccionId}`, cuerpo);
+				else {
+					const creada = await api.post<{ id?: number }>("/direcciones", { ...cuerpo, alias: "Principal", esPrincipal: true });
+					if (typeof creada?.id === "number") setDireccionId(creada.id);
+				}
+			}
 			notificar({ tono: "exito", titulo: "Tu cuenta está al día", descripcion: "Guardamos los cambios." });
 			setOriginales(formData);
 			setEditandoPersonal(false);
@@ -195,8 +227,8 @@ export default function PaginaCuenta() {
 						}}
 					>
 						<div className="grid gap-(--espacio-md) sm:grid-cols-2">
-							<Campo name="calle" etiqueta="Calle" opcional autoComplete="address-line1" value={formData.calle} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.calle} />
-							<Campo name="numero" etiqueta="Número" opcional autoComplete="address-line2" value={formData.numero} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.numero} />
+							<Campo name="calle" etiqueta="Calle y número" opcional autoComplete="address-line1" value={formData.calle} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.calle} />
+							<Campo name="numero" etiqueta="Interior" opcional autoComplete="address-line2" value={formData.numero} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.numero} />
 							<Campo name="colonia" etiqueta="Colonia" opcional autoComplete="address-level3" value={formData.colonia} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.colonia} />
 							<Campo
 								name="codigoPostal"
@@ -211,7 +243,8 @@ export default function PaginaCuenta() {
 								readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)}
 								error={errores.codigoPostal}
 							/>
-							<Campo name="ciudad" etiqueta="Ciudad" opcional autoComplete="address-level2" value={formData.ciudad} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.ciudad} className="sm:col-span-2" />
+							<Campo name="ciudad" etiqueta="Ciudad" opcional autoComplete="address-level2" value={formData.ciudad} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.ciudad} />
+							<Campo name="estado" etiqueta="Estado" opcional autoComplete="address-level1" value={formData.estado} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.estado} />
 							<AreaTexto
 								name="indicaciones"
 								etiqueta="Indicaciones de entrega"

@@ -34,7 +34,6 @@ const API: [string, string[]][] = [
 	["/api/inventory/products", ["GET", "POST", "PUT", "DELETE"]],
 	["/api/inventory/products/adjust", ["POST"]],
 	["/api/inventory/suppliers", ["GET", "POST", "PUT", "DELETE"]],
-	["/api/menu/categories", ["GET"]],
 	["/api/mesas", ["GET"]],
 	["/api/public/combos", ["GET"]],
 	["/api/public/cupones", ["GET"]],
@@ -63,7 +62,7 @@ test("cada ruta de /api sin token responde 401 en JSON y sin caché, salvo las p
 });
 
 test("una ruta pública con otro método exige token", async ({ request }) => {
-	expect((await pedir(request, "POST", "/api/menu/categories", "anónimo")).status()).toBe(401);
+	expect((await pedir(request, "POST", "/api/auth/me", "anónimo")).status()).toBe(401);
 	expect((await pedir(request, "DELETE", "/api/auth/me", "anónimo")).status()).toBe(401);
 });
 
@@ -117,7 +116,7 @@ for (const sujeto of ["anónimo", "cliente", "cajero", "mesero", "cocina", "admi
 
 // /dashboard reparte por rol con el DTO de la DAL (2.11). El redirect() ocurre durante el render
 // (el layout ya se está enviando), así que Next redirige en el navegador: se comprueba con uno.
-const DESTINO_POR_ROL = { admin: "/dashboard/admin", cajero: "/dashboard/cajero", mesero: "/dashboard/mesero", cocina: "/dashboard/cocina", cliente: "/dashboard/cliente" } as const;
+const DESTINO_POR_ROL = { admin: "/dashboard/admin", cajero: "/dashboard/cajero", mesero: "/dashboard/mesero", cocina: "/dashboard/cocina", cliente: "/profile" } as const;
 for (const [rol, destino] of Object.entries(DESTINO_POR_ROL) as [Rol, string][]) {
 	test(`/dashboard lleva a ${rol} a ${destino}`, async ({ browser }) => {
 		const contexto = await browser.newContext({ storageState: archivoSesion(rol) });

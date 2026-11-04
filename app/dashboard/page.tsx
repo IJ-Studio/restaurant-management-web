@@ -16,6 +16,7 @@ export default async function DashboardPage() {
     case "cocina":
       redirect("/dashboard/cocina");
     default:
-      redirect("/dashboard/cliente");
+      // NP-19: el cliente no tiene panel; su página es «Tu cuenta».
+      redirect("/profile");
   }
 }

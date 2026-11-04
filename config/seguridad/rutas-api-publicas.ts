@@ -16,7 +16,6 @@ export const RUTAS_API_PUBLICAS: readonly RutaApiPublica[] = [
 	{ ruta: "/api/auth/register", metodos: ["POST"], motivo: "Registro de clientes" },
 	{ ruta: "/api/auth/logout", metodos: ["POST"], motivo: "Cerrar sesión debe funcionar aunque el token haya caducado" },
 	{ ruta: "/api/auth/me", metodos: ["GET"], motivo: "La parte pública pregunta si hay sesión; ya responde 401 sin token" },
-	{ ruta: "/api/menu/categories", metodos: ["GET"], motivo: "Carta pública (/menu)" },
 	{
 		ruta: "/api/cron/backups",
 		metodos: ["GET"],

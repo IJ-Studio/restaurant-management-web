@@ -2,7 +2,7 @@
 # Instalacion completa de El Quijote (front + back) en Windows.
 #
 # Uso (PowerShell, no hace falta ser administrador):
-#   irm https://raw.githubusercontent.com/IJ-Studio/restaurant-management-web/claude/tender-lamport-pabgb9/scripts/setup-windows.ps1 | iex
+#   irm https://raw.githubusercontent.com/IJ-Studio/restaurant-management-web/main/scripts/setup-windows.ps1 | iex
 #
 # Que hace:
 #   1. Instala Git y Node.js LTS (con winget) si faltan, y pnpm.
@@ -19,7 +19,8 @@ $ErrorActionPreference = "Stop"
 $Root       = "C:\QUIJOTE"
 $FrontRepo  = "https://github.com/IJ-Studio/restaurant-management-web.git"
 $FrontDir   = Join-Path $Root "restaurant-management-web"
-$FrontBranch = "claude/tender-lamport-pabgb9"
+# NP-22: rama estable, no una rama temporal.
+$FrontBranch = "main"
 $BackRepo   = "https://github.com/IJ-Studio/restaurant-management-api.git"
 $BackDir    = Join-Path $Root "restaurant-management-api"
 
@@ -158,14 +159,14 @@ if ($writeBack -or $writeFront) {
   }
 
   if ($writeFront) {
-    $anonKey = Ask "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (clave anon/publishable)" $null
     $stripePublic = Ask "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (prueba)" "pk_test_placeholder"
     Write-EnvFile $frontEnv @(
       "NEXT_PUBLIC_API_URL=http://localhost:10000",
       "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dcb1tspbj",
-      "NEXT_PUBLIC_SUPABASE_URL=$supabaseUrl",
-      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anonKey",
       "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$stripePublic",
+      # NP-22: estas dos variables de servidor solo existen porque las rutas internas de la web
+      # (app/api) todavia leen la BD y verifican el token. Se quitan de aqui cuando D-32 retire esas
+      # rutas (PLAN-AMPLIACION, P8); el front no debe guardar secretos de servidor.
       "DATABASE_URL=$databaseUrl",
       "JWT_SECRET=$jwtSecret"
     )

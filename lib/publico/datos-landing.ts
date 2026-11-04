@@ -34,7 +34,7 @@ async function pedirJson(ruta: string, contexto: string): Promise<Resultado<unkn
 }
 
 
-/** Categorías con sus platos: el mismo endpoint que usa la ruta `/api/menu/categories`. */
+/** Categorías con sus platos: el mismo endpoint que usa la carta (`/menu`). */
 export async function obtenerCarta(): Promise<Resultado<CategoriaCarta[]>> {
 	const r = await pedirJson("/menu/categories/with-products", "landing: carta");
 	if (r.estado === "error" || !Array.isArray(r.datos)) return { estado: "error" };
