@@ -18,6 +18,7 @@ import { api } from "@/lib/api";
 import { contar } from "@/lib/formato/plural";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirPanel } from "@/lib/paneles/api-panel";
+import { presentarCarta } from "@/lib/formato/caja";
 
 /**
  * Panel de cocina (PLAN 5.19; PLAN-AMPLIACION D-24), para una tableta o un monitor que se lee a
@@ -87,8 +88,8 @@ function TarjetaComanda({ pedido, accion, ocupado, alAvanzar }: { pedido: Comand
 }
 
 export function CocinaPanel() {
-	const [comandas, recargar] = useCarga(() => pedirPanel<Comanda[]>("/pedidos/admin/recent"), "cocina: comandas");
-	const [inventario, recargarInventario] = useCarga(() => pedirPanel<Producto[]>("/inventario/productos"), "cocina: existencias");
+	const [comandas, recargar] = useCarga(() => pedirPanel<Comanda[]>("/pedidos/admin/recent").then(presentarCarta), "cocina: comandas");
+	const [inventario, recargarInventario] = useCarga(() => pedirPanel<Producto[]>("/inventario/productos").then(presentarCarta), "cocina: existencias");
 	const [existencias, setExistencias] = useState(false);
 	const [avanzando, setAvanzando] = useState<string | null>(null);
 	const { notificar } = useNotificaciones();

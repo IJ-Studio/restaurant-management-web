@@ -17,14 +17,17 @@ export interface CategoriaCarta {
 	platillos: PlatoCarta[];
 }
 
+import { presentarCarta } from "@/lib/formato/caja";
+
 const texto = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 const cifra = (v: unknown) => {
 	const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
 	return Number.isFinite(n) ? n : null;
 };
 
-export function normalizarCarta(datos: unknown): CategoriaCarta[] {
-	if (!Array.isArray(datos)) return [];
+export function normalizarCarta(crudos: unknown): CategoriaCarta[] {
+	if (!Array.isArray(crudos)) return [];
+	const datos = presentarCarta(crudos);
 	return datos.flatMap((c): CategoriaCarta[] => {
 		if (!c || typeof c !== "object") return [];
 		const categoria = c as Record<string, unknown>;

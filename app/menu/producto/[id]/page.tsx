@@ -27,6 +27,7 @@ import { registrarError } from "@/lib/registro/registrar-error";
 import { cantidadSegura } from "@/lib/seguridad/urls";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 import { cn } from "@/lib/utils";
+import { presentarCarta } from "@/lib/formato/caja";
 
 /**
  * Detalle de un plato (`/menu/producto/[id]`, PLAN 4.12). La lógica no cambia: los mismos
@@ -100,7 +101,7 @@ function DetallePlato() {
 				return;
 			}
 			if (!res.ok) throw new Error(`plato ${res.status}`);
-			setPlatillo(await res.json());
+			setPlatillo(presentarCarta(await res.json()));
 			setEstado("listo");
 		} catch (err) {
 			registrarError(err, "detalle de plato");
@@ -120,7 +121,7 @@ function DetallePlato() {
 			try {
 				const res = await fetch(`${API}/recommendations/combo/${platillo.id}`, { cache: "no-store" });
 				if (!res.ok) return;
-				setCombo(await res.json());
+				setCombo(presentarCarta(await res.json()));
 			} catch (err) {
 				registrarError(err, "detalle de plato: combo");
 			}

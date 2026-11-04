@@ -22,6 +22,7 @@ import { formatearImporte } from "@/lib/formato/precio";
 import { pedirPanel } from "@/lib/paneles/api-panel";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { cn } from "@/lib/utils";
+import { presentarCarta } from "@/lib/formato/caja";
 
 /**
  * Panel de caja (PLAN 5.17; PLAN-AMPLIACION D-24). Pensado primero para tableta: cifras grandes y
@@ -244,7 +245,7 @@ function DialogoCaja({ abierta, esperado, alHecho }: { abierta: boolean; esperad
 
 export function CajaPanel() {
 	const [caja, recargarCaja] = useCarga(() => pedirPanel<Caja>("/caja/actual"), "caja: estado de la caja");
-	const [cuentas, recargarCuentas] = useCarga(() => pedirPanel<Cuenta[]>("/pedidos/admin/recent"), "caja: cuentas por cobrar");
+	const [cuentas, recargarCuentas] = useCarga(() => pedirPanel<Cuenta[]>("/pedidos/admin/recent").then(presentarCarta), "caja: cuentas por cobrar");
 	const [metodos] = useCarga(() => pedirPanel<Metodo[]>("/pedidos/metodos-pago"), "caja: formas de pago");
 	const [busqueda, setBusqueda] = useState("");
 

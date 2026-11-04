@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { getSession } from "@/lib/session";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { nombrePropio } from "@/lib/formato/caja";
 
 /**
  * Capa de acceso a datos de sesión (PLAN 2.11), según la guía de autenticación de Next: la
@@ -39,8 +40,8 @@ export const verificarSesion = cache(async (): Promise<SesionDTO | null> => {
 		});
 		if (respuesta.ok) {
 			const usuario = (await respuesta.json()) as { name?: unknown; lastname?: unknown };
-			dto.nombre = typeof usuario.name === "string" ? usuario.name : "";
-			dto.apellidos = typeof usuario.lastname === "string" ? usuario.lastname : "";
+			dto.nombre = typeof usuario.name === "string" ? nombrePropio(usuario.name) : "";
+			dto.apellidos = typeof usuario.lastname === "string" ? nombrePropio(usuario.lastname) : "";
 		}
 	} catch (error) {
 		// El nombre es opcional: sin él, la sesión sigue siendo válida.

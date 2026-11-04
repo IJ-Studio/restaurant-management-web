@@ -6,6 +6,7 @@ import { normalizarCarta } from "@/lib/publico/carta";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { csvEscape, downloadAsFile, parseBool, parseNumber } from "@/features/dashboard/admin/utils/menuUtils";
 import type { MenuCategory, MenuItem } from "./tipos";
+import { presentarCarta } from "@/lib/formato/caja";
 
 /**
  * Lógica de la carta en administración (PLAN 5.9; PLAN-AMPLIACION D-24 y D-31). La fuente es solo
@@ -83,7 +84,7 @@ const hoy = () => new Date().toISOString().slice(0, 10);
 
 export function useCartaAdmin() {
 	const [carga, recargar] = useCarga(async () => {
-		const [filas, carta] = await Promise.all([api.get<unknown>("/platillos/export.json"), api.get<unknown>("/menu/categories/with-products").catch(() => [])]);
+		const [filas, carta] = await Promise.all([api.get<unknown>("/platillos/export.json").then(presentarCarta), api.get<unknown>("/menu/categories/with-products").catch(() => [])]);
 		const nombres = new Map(normalizarCarta(carta).map((c) => [String(c.id), c.nombre] as const));
 		return deFilasBd(filasDe(filas), nombres);
 	}, "carta: cargar");
@@ -122,7 +123,7 @@ export function useCartaAdmin() {
 
 	async function filasActualesBd(): Promise<Record<string, unknown>[]> {
 		try {
-			return filasDe(await api.get<unknown>("/platillos/export.json"));
+			return filasDe(presentarCarta(await api.get<unknown>("/platillos/export.json")));
 		} catch {
 			return [];
 		}

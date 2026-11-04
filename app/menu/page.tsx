@@ -17,6 +17,7 @@ import { useFiltroLocal } from "@/hooks/useBusqueda";
 import { formatearPrecio } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { cn } from "@/lib/utils";
+import { presentarCarta } from "@/lib/formato/caja";
 
 /**
  * La carta (`/menu`, PLAN 4.10). Cliente: pide las categorías a la ruta interna de siempre
@@ -80,7 +81,7 @@ function Carta() {
 			const res = await fetch(`${(process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "")}/menu/categories/with-products`, { cache: "no-store" });
 			if (!res.ok) throw new Error(`carta ${res.status}`);
 			const datos: unknown = await res.json();
-			setCategorias(Array.isArray(datos) ? (datos as Categoria[]) : []);
+			setCategorias(Array.isArray(datos) ? presentarCarta(datos as Categoria[]) : []);
 			setEstado("lista");
 		} catch (error) {
 			registrarError(error, "carta");

@@ -38,3 +38,17 @@ export function nombrePropio(texto: string | null | undefined): string {
 		.map((p, i) => (i > 0 && PARTICULAS.has(p) ? p : p.replace(/^\p{L}/u, (l) => l.toLocaleUpperCase("es-MX"))))
 		.join("");
 }
+
+const CLAVES_FRASE = new Set(["nombre", "descripcion", "descripcionCorta", "descripcion_corta", "categoria", "subcategoria"]);
+
+/**
+ * Recorre una respuesta del API y presenta con `primeraMayuscula` los textos de carta (nombre,
+ * descripción, categoría). Devuelve una copia; lo demás (ids, precios, URL) queda igual.
+ */
+export function presentarCarta<T>(datos: T): T {
+	if (Array.isArray(datos)) return datos.map((d) => presentarCarta(d)) as T;
+	if (!datos || typeof datos !== "object") return datos;
+	return Object.fromEntries(
+		Object.entries(datos as Record<string, unknown>).map(([k, v]) => [k, CLAVES_FRASE.has(k) && typeof v === "string" ? primeraMayuscula(v) : presentarCarta(v)]),
+	) as T;
+}

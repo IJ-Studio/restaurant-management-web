@@ -21,6 +21,7 @@ import { setUser } from "@/store/slices/authSlice";
 import { destinoTrasLogin, esRutaInternaSegura, rutaConParametros } from "@/lib/seguridad/urls";
 import { olvidarSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaAcceso } from "@/lib/validacion/formularios";
+import { nombrePropio } from "@/lib/formato/caja";
 
 /**
  * Iniciar sesión (`/login`, PLAN 4.17). La lógica no cambia: `POST /api/auth/login`, el token en
@@ -100,8 +101,8 @@ export default function PaginaAcceso() {
 			const roleName = roleNames[data.user?.roleId] || "cliente";
 			const sessionUser = {
 				id: String(data.user.id),
-				name: data.user.name || "",
-				lastname: data.user.lastname || "",
+				name: nombrePropio(data.user.name || ""),
+				lastname: nombrePropio(data.user.lastname || ""),
 				email: data.user.email,
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any -- mismo tipo que antes del rediseño
 				roleName: roleName as any,

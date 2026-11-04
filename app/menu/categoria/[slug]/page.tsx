@@ -15,6 +15,7 @@ import { TarjetaPlato } from "@/components/carta/TarjetaPlato";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { restaurantConfig } from "@/config/restaurant.config";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { presentarCarta } from "@/lib/formato/caja";
 
 /**
  * Una sección de la carta (`/menu/categoria/[slug]`, PLAN 4.11). Cliente: la misma petición de
@@ -85,7 +86,7 @@ function Contenido() {
 			const res = await fetch(`${api}/menu/categories/with-products`, { cache: "no-store" });
 			if (!res.ok) throw new Error(`categoría ${res.status}`);
 			const datos: unknown = await res.json();
-			const encontrada = Array.isArray(datos) ? (datos as Categoria[]).find((c) => String(c.id) === String(slug)) : undefined;
+			const encontrada = Array.isArray(datos) ? presentarCarta(datos as Categoria[]).find((c) => String(c.id) === String(slug)) : undefined;
 			setEstado(encontrada ? { tipo: "lista", categoria: encontrada } : { tipo: "no-existe" });
 		} catch (error) {
 			registrarError(error, "categoría de la carta");

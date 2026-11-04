@@ -20,6 +20,7 @@ import { CREATABLE_ROLES, ROLE_LABELS } from "@/config/roles.config";
 import { api } from "@/lib/api";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { esquemaUsuarioEdicion, esquemaUsuarioNuevo } from "@/lib/validacion/formularios";
+import { nombrePropio } from "@/lib/formato/caja";
 
 /**
  * Usuarios y personal (PLAN 5.13). Mismas llamadas (`GET /users`, `POST /users`,
@@ -139,7 +140,7 @@ export function UsuariosAdmin() {
 		setEstado("cargando");
 		try {
 			const datos = await api.get<Usuario[]>("/users");
-			setUsuarios(Array.isArray(datos) ? datos : []);
+			setUsuarios(Array.isArray(datos) ? datos.map((u) => ({ ...u, name: nombrePropio(u.name), lastname: nombrePropio(u.lastname) })) : []);
 			setEstado("listo");
 		} catch (e) {
 			registrarError(e, "usuarios: cargar");

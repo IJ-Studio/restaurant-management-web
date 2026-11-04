@@ -1,3 +1,4 @@
+import { nombrePropio } from "@/lib/formato/caja";
 // Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
@@ -93,7 +94,11 @@ export async function getReservations(filters?: {
     const error = await res.json().catch(() => ({ message: 'Error al obtener reservas' }));
     throw new Error(error.message || `Error al obtener reservas (${res.status})`);
   }
-  return res.json();
+  const datos = await res.json();
+  // El API guarda los nombres en MAYÚSCULAS; aquí se presentan como nombre propio.
+  return Array.isArray(datos)
+    ? datos.map((r: Record<string, unknown>) => (typeof r?.clienteNombre === "string" ? { ...r, clienteNombre: nombrePropio(r.clienteNombre) } : r))
+    : datos;
 }
 
 export async function getNoShowRisk(id: string): Promise<{ probabilidad: number; clasificacion: 'Alto' | 'Medio' | 'Bajo' }> {
