@@ -6,6 +6,42 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### P5 · Frontend de la ampliación: datos reales, emojis, imágenes, landing, QR, reportes y legal (2026-11-03)
+
+**D-25 · Sin emojis.**
+- Nuevo `pnpm revisar:emojis` (`scripts/revisar-emojis.mjs`): pictogramas extendidos, U+FE0F, tonos de piel y secuencias con U+200D en `app`, `components`, `lib`, `features`, `hooks`, `config`, `tests`, `styles`, `providers`, `store`, `types`, `utils` y `public`. Entra en la definición de terminado de cada fase.
+- Fuera el campo «Emoji» del formulario de promociones y del esquema (el cuerpo ya no lo envía: el API conserva lo que tuviera); comentarios con emoji del esquema Drizzle; el hook muerto `useFetch` (`git rm`); la prueba de saneamiento escribe sus emoji como escapes.
+
+**D-24 · Sin datos de prueba (operación y carta).**
+- **Cocina:** comandas de `GET /pedidos/admin/recent` cada 15 s; «Empezar» y «Marcar lista» con `PATCH /pedidos/:id/estatus`; existencias de `GET /inventario/productos`. El nivel «bajo» solo se marca si el API da el mínimo (hoy no lo da: «—» con «El sistema aún no da los mínimos»). Folio corto de 6 caracteres en lugar del UUID.
+- **Caja:** caja propia (`GET /caja/actual`, `POST /caja/abrir`, `POST /caja/cerrar`), cuentas entregadas por cobrar (`/pedidos/admin/recent`, cada 20 s) y cobro con los métodos del API (`GET /pedidos/metodos-pago`, `POST /pedidos/:id/cobrar` con método, propina y lo recibido en efectivo). Fuera la tabla de «Cobrados hoy» y la dona de formas de pago (eran de los datos de ejemplo; D-26).
+- **Sala:** mesas de `GET /mesas` (sin las inactivas), carta de `/menu/categories/with-products`, estado de cada mesa por sus pedidos de hoy, alta con `POST /pedidos/mesa` y `POST /pedidos/confirmar/:id`, y «Marcar servido» (`entregada`). Fuera el descuento, que se mostraba pero nunca se guardaba.
+- **Carta del admin:** la fuente es solo el API (`GET /platillos/export.json` y los nombres de categoría); alta, edición, agotar u ofrecer y eliminar esperan la respuesta del servidor y vuelven a leer. Miniatura de cada platillo en la tabla.
+- `useCarga` gana una recarga silenciosa para los sondeos (no vacía la pantalla ni la cambia por un error si ya había datos).
+- Retirados con `git rm`: `restaurantData.ts`, `dataService.ts`, `menuMock.tsx` y `cajeroMock`. Sus tipos de la carta pasan a `features/dashboard/admin/carta/tipos.ts`. La normalización de la carta pasa a `lib/publico/carta.ts` (módulo puro, la usan la landing en el servidor y los paneles en el navegador).
+- Fuera la insignia «Datos de ejemplo» de `BloquePanel`, `Indicador` y las gráficas: ya no queda ningún dato de ejemplo en los paneles.
+
+**D-31 · Platillos (lado web).** No había subida de imágenes en el API ni en la móvil, así que se diseña la subida firmada: `SubidaImagen` (miniatura actual, `verificarArchivo` con tamaño, extensión, tipo y firma de bytes **antes** de subir, firma del API en `POST /imagenes/firma` y subida directa a Cloudinary con esa firma). La usan la carta y las promociones. Fuera `CldUploadButton` y el preset de marcador; se retira la dependencia `next-cloudinary` (nadie la importa; `pnpm audit` baja de 19 a 18 altas) y el origen del widget de los marcos permitidos. Agotar y eliminar llegan al servidor. El endpoint de firma se crea en el API (P7); hasta entonces, la subida muestra un error cálido y conserva la imagen anterior.
+
+**D-35 · Landing.**
+- `scroll-snap-type: y proximity` en el documento solo en la landing (`:has(.portada[data-portada])`) y solo con movimiento permitido (sistema sin `reduce` y panel sin «reducido», o panel en «completo»); `scroll-snap-align: start` en la portada y las secciones, con el margen de la cabecera fija. Con proximidad el teclado, la rueda y el tacto se desplazan con normalidad y las secciones altas no se traban (prueba: «Avanzar página» desplaza).
+- Las aspas del molino giran sin parar y despacio (12 s por vuelta); se detienen con movimiento reducido. Pausa disponible siempre con «Reducir movimiento» del panel de accesibilidad (WCAG 2.2.2).
+- Decisión de P2.3 aplicada: fuera los enlaces de Nosotros (`/about`), Promociones (`/promociones`) y Reservas («Abrir en su propia página»). Quedan «Ver la carta completa» y las dos acciones de «Pedir».
+
+**D-37 · QR de la app de operaciones.** `config/app-operaciones.ts` con `rutaImagenQr: ""` y el bloque `AppOperaciones` en caja, cocina y sala, que no se pinta con la ruta vacía. **Para activarlo:** guardar la imagen del QR en `public/app-operaciones/qr.png` (u otra ruta bajo `public/`) y poner `rutaImagenQr: "/app-operaciones/qr.png"` en ese archivo. No se escribe ninguna URL de tienda.
+
+**D-34 · Reportar un problema.** `ReportarProblema` en el pie (columna «Ayuda») y en la barra de todos los paneles: `PanelLateral` con tipo y descripción (zod: `esquemaReporte`), ruta automática visible, campo trampa, tiempo mínimo y bloqueo del envío doble (`useEnvioFormulario`), sin datos personales y con el aviso de no escribir contraseñas ni tarjetas. `POST /reportes-problemas` (aditivo, P7); si falla, error cálido y el texto se conserva; nunca un éxito fingido.
+
+**D-36 · Legal para México.**
+- `config/legal.ts` con los datos del proveedor (razón social, RFC, domicilio fiscal, correo, correo ARCO, horario, contacto y plazo de reembolsos y portal CFDI) **vacíos**: el sitio muestra «Dato por confirmar» (`DatoLegal`) hasta que el restaurante los dé. Lo que sí sale del proyecto: nombre, teléfono y dirección del local, la pasarela (Stripe) y el alojamiento (Vercel).
+- Páginas con el texto del documento legal público: `/privacidad` (aviso integral de clientes), `/privacidad/personal` (nueva, personal y repartidores; enlazada desde la cuenta de los paneles), `/condiciones` (términos y condiciones), `/devoluciones` (cancelaciones y reembolsos, misma URL), `/cookies` (nueva) y `/corporativo` con los datos del proveedor. La de cookies se ajusta a lo que hace el sitio (solo cookies esenciales y las preferencias de accesibilidad; sin banner porque no hay cookies no esenciales); la adaptación queda anotada fuera del repo para su revisión legal.
+- Pie: datos del proveedor visibles y enlaces a términos, privacidad, cookies y cancelaciones.
+- Consentimientos con casillas desmarcadas: registro (términos y finalidades primarias, obligatoria; promociones y encuestas, opcional y aparte), reserva (aviso simplificado, obligatoria para continuar) y pago (términos y política de cancelaciones, obligatoria para pagar). Los consentimientos no viajan todavía a los endpoints existentes (no se cambia su contrato): registrarlos es del API (P7).
+
+**Verificación (P5.1–P5.8):** typecheck sin errores; lint de los archivos tocados sin errores nuevos (los que quedan son previos: rutas internas de BD, `IdleLogout` y `reservations.service`, P5.9 y P8); `revisar:emojis` (390 archivos) e `revisar:invisibles` en verde; unitarias 50/50; build correcto. Chromium contra `next start`, **batería completa**: 502 pasadas y 12 fallos, todos de pruebas que aún no marcaban las casillas de consentimiento nuevas o buscaban un rótulo que ahora también nombra la casilla («Teléfono»); corregidas las pruebas (sin cambiar código) y repetidas: checkout, registro y reservas en verde. Antes, en la tanda dirigida, se corrigieron fallos reales: el módulo de la carta solo de servidor importado desde el navegador (build), `role-img-alt` en las miniaturas sin foto (ahora decorativas) y la serialización de `scroll-snap-type` («y» equivale a «y proximity»). Catálogo en dev, Chromium: 121/121. Detector de impeccable: sin hallazgos en los archivos escritos.
+
+**No verificado:** Firefox y WebKit de este paquete (al cerrar la tanda de frontend); el API real para `/imagenes/firma`, `/reportes-problemas`, `POST/PATCH/DELETE /platillos` y las rutas de caja, cocina y sala de la rama local del API (P7); la subida real a Cloudinary (las pruebas la simulan).
+
 ### P4 · Estructura del administrador (D-30, D-27, D-29 y D-28) (2026-11-03)
 
 Un solo commit para los cuatro subpasos: dependen entre sí (la navegación nueva, las rutas que desaparecen y el Inicio con paneles cambian las mismas pruebas).

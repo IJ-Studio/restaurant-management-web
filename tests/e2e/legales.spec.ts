@@ -6,9 +6,9 @@ test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de produ
 
 const PAGINAS = [
 	["/ayuda", "Ayuda"],
-	["/condiciones", "Condiciones de uso"],
+	["/condiciones", "Términos y condiciones"],
 	["/corporativo", "Información corporativa"],
-	["/devoluciones", "Devoluciones y reemplazos"],
+	["/devoluciones", "Cancelaciones y reembolsos"],
 	["/privacidad", "Aviso de privacidad"],
 	["/seguridad", "Alertas de seguridad"],
 ] as const;
@@ -27,7 +27,13 @@ for (const [ruta, titulo] of PAGINAS) {
 	});
 }
 
-test("la redacción del aviso de privacidad se conserva", async ({ page }) => {
+// D-36: el aviso sigue el texto del documento legal público (finalidades primarias y secundarias,
+// derechos ARCO en 20 días hábiles) y no inventa los datos del responsable.
+test("el aviso de privacidad sigue el texto legal público y marca los datos por confirmar", async ({ page }) => {
 	await page.goto("/privacidad", { waitUntil: "load" });
-	await expect(page.locator("main")).toContainText("es responsable del tratamiento de tus datos personales");
+	const main = page.locator("main");
+	await expect(main.getByRole("heading", { name: "Finalidades primarias" })).toBeVisible();
+	await expect(main.getByRole("heading", { name: "Finalidades secundarias" })).toBeVisible();
+	await expect(main).toContainText("20 días hábiles");
+	await expect(main.locator("[data-dato-pendiente]").first()).toHaveText("Dato por confirmar");
 });

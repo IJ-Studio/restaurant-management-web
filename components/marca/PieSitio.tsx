@@ -1,9 +1,13 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Clock, Facebook, Instagram, MapPin, Phone } from "lucide-react";
 import { restaurantConfig } from "@/config/restaurant.config";
 import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
 import { Logo } from "@/components/marca/Logo";
 import { cn } from "@/lib/utils";
+import { DATOS_LEGALES } from "@/config/legal";
+import { DatoLegal } from "./DatoLegal";
+import { ReportarProblema } from "./ReportarProblema";
 
 /**
  * Pie del sitio público (DESIGN.md § Navigation, D-09). De servidor, sin JavaScript.
@@ -21,21 +25,22 @@ const CASA = [
 	{ nombre: "Información corporativa", href: "/corporativo" },
 ];
 const AYUDA = [
-	{ nombre: "Devoluciones y reemplazos", href: "/devoluciones" },
+	{ nombre: "Cancelaciones y reembolsos", href: "/devoluciones" },
 	{ nombre: "Gestionar reservaciones", href: "/reservations" },
 	{ nombre: "Alertas de seguridad", href: "/seguridad" },
 	{ nombre: "Ayuda", href: "/ayuda" },
 ];
 const LEGALES = [
-	{ nombre: "Condiciones de uso", href: "/condiciones" },
+	{ nombre: "Términos y condiciones", href: "/condiciones" },
 	{ nombre: "Aviso de privacidad", href: "/privacidad" },
+	{ nombre: "Cookies", href: "/cookies" },
 ];
 
 const CLASE_ENLACE =
 	"enlace-subrayado inline-flex min-h-11 items-center rounded-control text-texto-secundario al-pasar:text-texto-principal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco";
 const CLASE_RUBRO = "m-0 mb-2 font-texto text-(length:--texto-etiqueta) font-semibold uppercase leading-[1.2] tracking-[0.16em] text-texto-secundario";
 
-function Columna({ titulo, enlaces }: { titulo: string; enlaces: { nombre: string; href: string }[] }) {
+function Columna({ titulo, enlaces, extra }: { titulo: string; enlaces: { nombre: string; href: string }[]; extra?: ReactNode }) {
 	return (
 		<div>
 			<h2 className={CLASE_RUBRO}>{titulo}</h2>
@@ -47,6 +52,7 @@ function Columna({ titulo, enlaces }: { titulo: string; enlaces: { nombre: strin
 						</Link>
 					</li>
 				))}
+				{extra && <li className="text-texto-secundario">{extra}</li>}
 			</ul>
 		</div>
 	);
@@ -104,7 +110,23 @@ export function PieSitio({ anio = new Date().getFullYear() }: { anio?: number })
 					</ul>
 				</div>
 				<Columna titulo="Nosotros" enlaces={CASA} />
-				<Columna titulo="Ayuda" enlaces={AYUDA} />
+				<Columna titulo="Ayuda" enlaces={AYUDA} extra={<ReportarProblema />} />
+			</div>
+
+			{/* Datos del proveedor (D-36, Art. 76 BIS LFPC): de `config/legal.ts`; los que faltan, «Dato por confirmar». */}
+			<div className="border-t border-borde-sutil">
+				<p className="contenedor-pagina m-0 py-4 text-(length:--texto-pequeno) leading-[1.6] text-texto-tenue" data-prueba="datos-proveedor">
+					{"Razón social: "}
+					<DatoLegal valor={DATOS_LEGALES.razonSocial} />
+					{" · RFC: "}
+					<DatoLegal valor={DATOS_LEGALES.rfc} />
+					{" · Domicilio fiscal: "}
+					<DatoLegal valor={DATOS_LEGALES.domicilioFiscal} />
+					{` · Teléfono: ${contact.phone} · Correo: `}
+					<DatoLegal valor={DATOS_LEGALES.correoContacto} />
+					{" · Atención al cliente: "}
+					<DatoLegal valor={DATOS_LEGALES.horarioAtencion} />
+				</p>
 			</div>
 
 			{/* Última fila: legales y el acceso del personal, discreto. */}

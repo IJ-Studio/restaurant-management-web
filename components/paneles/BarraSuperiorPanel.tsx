@@ -2,7 +2,9 @@
 
 import * as Popover from "@radix-ui/react-popover";
 import { CircleUserRound, LogOut } from "lucide-react";
+import Link from "next/link";
 import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
+import { ReportarProblema } from "@/components/marca/ReportarProblema";
 import { Boton } from "@/components/ui/Boton";
 
 /**
@@ -26,6 +28,7 @@ export function BarraSuperiorPanel({ nombrePanel, usuario, alCerrarSesion }: Bar
 			<p className="m-0 min-w-0 flex-1 truncate font-texto text-(length:--texto-titulo-interfaz) font-semibold leading-[1.35]">
 				{nombrePanel}
 			</p>
+			<ReportarProblema variante="icono" />
 			<PanelAccesibilidad className="text-texto-principal" />
 			<Popover.Root>
 				<Popover.Trigger asChild>
@@ -45,6 +48,13 @@ export function BarraSuperiorPanel({ nombrePanel, usuario, alCerrarSesion }: Bar
 							<span className="truncate font-semibold">{usuario.nombre}</span>
 							<span className="text-(length:--texto-pequeno) text-texto-secundario">{usuario.rol}</span>
 						</div>
+						{/* D-36: el aviso de privacidad del personal, a mano desde la cuenta. */}
+						<Link
+							href="/privacidad/personal"
+							className="flex min-h-11 items-center rounded-control border-t border-borde-sutil px-3 text-(length:--texto-pequeno) text-texto-secundario no-underline al-pasar:bg-superficie-cafe al-pasar:text-texto-principal focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-foco"
+						>
+							Aviso de privacidad del personal
+						</Link>
 						{alCerrarSesion ? (
 							<button
 								type="button"

@@ -59,6 +59,11 @@ test("los cinco pasos con la dirección y la tarjeta guardadas, el mismo payload
 	await expect(page.getByRole("radio", { name: /4242/ })).toBeChecked();
 	await continuar(page);
 	await expect(page.locator("#paso-titulo")).toHaveText("Confirma tu pedido");
+	// D-36: sin aceptar los términos no se paga; la casilla empieza desmarcada.
+	await page.getByRole("button", { name: "Pagar $ 290" }).click();
+	await expect(page.getByText("Para pagar, acepta los términos y condiciones.")).toBeVisible();
+	expect(envios).toEqual([]);
+	await page.getByRole("checkbox", { name: /acepto los términos y condiciones/i }).check();
 	await page.getByRole("button", { name: "Pagar $ 290" }).click();
 	await expect(page).toHaveURL(/\/menu\/pedido\/checkout\/exito\?ordenId=dom12345$/);
 	expect(envios).toEqual([{ ruta: "/pagos/crear-intento", cuerpo: { usuarioId: 41, ordenId: "dom12345", direccionId: 3, metodoPagoGuardadoId: "pm_1" } }]);

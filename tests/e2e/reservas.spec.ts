@@ -38,9 +38,12 @@ async function abrir(page: Page, preferencias: Record<string, string> = {}) {
 }
 
 async function rellenarHastaMesa(page: Page) {
-	await page.getByLabel("Nombre completo").fill("Ana López");
-	await page.getByLabel("Teléfono").fill("771 123 4567");
-	await page.getByLabel("Correo").fill("ana@correo.mx");
+	await page.getByLabel("Nombre completo", { exact: true }).fill("Ana López");
+	await page.getByLabel("Teléfono", { exact: true }).fill("771 123 4567");
+	await page.getByLabel("Correo", { exact: true }).fill("ana@correo.mx");
+	// D-36: aviso de privacidad simplificado, con la casilla desmarcada.
+	await expect(page.getByRole("checkbox", { name: /aviso de privacidad/ })).not.toBeChecked();
+	await page.getByRole("checkbox", { name: /aviso de privacidad/ }).check();
 	await page.getByRole("button", { name: "Continuar" }).click();
 	await page.getByLabel("Fecha").fill("2030-06-15");
 	await page.getByLabel("Hora").fill("14:30");
@@ -51,8 +54,8 @@ async function rellenarHastaMesa(page: Page) {
 test("los cuatro pasos, la mesa en el plano, el mismo payload y la confirmación visible", async ({ page }) => {
 	const reservas = await abrir(page);
 	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Reservar mesa");
-	await expect(page.getByLabel("Nombre completo")).toHaveAttribute("autocomplete", "name");
-	await expect(page.getByLabel("Teléfono")).toHaveAttribute("autocomplete", "tel");
+	await expect(page.getByLabel("Nombre completo", { exact: true })).toHaveAttribute("autocomplete", "name");
+	await expect(page.getByLabel("Teléfono", { exact: true })).toHaveAttribute("autocomplete", "tel");
 	await rellenarHastaMesa(page);
 	await expect(page.getByRole("button", { name: /Mesa 5/ })).toBeDisabled();
 	await expect(page.getByRole("button", { name: /Mesa 5/ })).toContainText("Ocupada");
@@ -82,11 +85,12 @@ test("los cuatro pasos, la mesa en el plano, el mismo payload y la confirmación
 
 test("errores por campo con los mensajes de siempre", async ({ page }) => {
 	await abrir(page);
-	await page.getByLabel("Correo").fill("no-es-correo");
+	await page.getByLabel("Correo", { exact: true }).fill("no-es-correo");
 	await page.getByRole("button", { name: "Continuar" }).click();
-	await expect(page.getByLabel("Nombre completo")).toHaveAttribute("aria-invalid", "true");
+	await expect(page.getByLabel("Nombre completo", { exact: true })).toHaveAttribute("aria-invalid", "true");
 	await expect(page.getByText("El nombre es requerido")).toBeVisible();
 	await expect(page.getByText("Email inválido")).toBeVisible();
+	await expect(page.getByText("Para reservar, acepta el uso de tus datos para gestionar la reserva.")).toBeVisible();
 });
 
 test("el campo trampa rechaza el envío sin llamar al API", async ({ page }) => {

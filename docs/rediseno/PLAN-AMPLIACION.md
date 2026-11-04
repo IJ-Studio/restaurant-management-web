@@ -9,8 +9,8 @@
 | Fecha | 2026-11-03 |
 | Rama activa | `feature/rediseno-web-admin` (cierre de la fase 5 y frontend de la ampliación) |
 | Paquete en curso | **P5 · Frontend de la ampliación** |
-| Último paso completado | P4: «Sistema» fuera, navegación de ocho entradas sin plegables (a la vista en móvil), Inicio con Caja, Nómina y Reportes como paneles, y plantilla única de panel. P3 `5d2bd64`. |
-| Siguiente paso | P5.1 (D-24: carta, mesero, cocina y caja sin datos locales), P5.2 (D-25) y el resto de P5. |
+| Último paso completado | P5.1–P5.8: paneles y carta contra el API, sin emojis, subida firmada, landing con ajuste y molino, QR, reportar un problema y legal. P4 `2c40068`. |
+| Siguiente paso | P5.9 (pendientes (a): NP-17, NP-19, NP-22, NP-35, NP-39, lint) y después P6 (paridad). |
 | Bloqueos | Ninguno. 2.5 (aplicar la CSP) y NP-47 siguen sin ejecutarse por orden del usuario. |
 | Avisos | Repo del API con `HEAD` dañado en la copia local (se diagnostica en P7, sin reescribir nada). |
 | Decisiones del usuario pendientes | Ver § Pendientes para el usuario. |
@@ -56,6 +56,7 @@ Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6
 **Cambios de orden anotados:**
 - P2 se hizo mientras corrían las pruebas de P0 (solo documentación).
 - P4.2 adelanta D-24 en Caja y propinas, Reportes y Facturas: integrar en el Inicio pantallas de datos de ejemplo para borrarlas en P5.1 era trabajo doble.
+- P5 conecta caja, cocina, sala y carta directamente a las rutas del API que ya usa la móvil (parte de P8), porque D-24 no deja dejar esas pantallas con datos locales.
 
 ### P0 · Cierre de la fase 5 — `feature/rediseno-web-admin`
 
@@ -98,14 +99,14 @@ Orden del usuario: (a) P0 y P1 · (b) P2 · (c) P3 · (d) P4 · (e) P5 · (f) P6
 
 ### P5 · Frontend de la ampliación y pendientes (a)
 
-- [ ] P5.1 D-24 (lado front): fuera mocks, `dataService` y cifras inventadas; `EstadoVacio` donde no haya endpoint.
-- [ ] P5.2 D-25: emojis fuera y `pnpm revisar:emojis`.
-- [ ] P5.3 D-26: gráficas solo con datos ya calculados.
-- [ ] P5.4 D-31 (front): miniatura, subida firmada con `verificarArchivo`, agotar y eliminar contra el API.
-- [ ] P5.5 D-34: «Reportar un problema».
-- [ ] P5.6 D-35: scroll-snap y aspas del molino con movimiento permitido.
-- [ ] P5.7 D-37: bloque del QR con `config/app-operaciones.ts`.
-- [ ] P5.8 D-36: legales y consentimientos según el documento legal público.
+- [x] P5.1 D-24 (lado front): fuera mocks, `dataService` y cifras inventadas; `EstadoVacio` donde no haya endpoint.
+- [x] P5.2 D-25: emojis fuera y `pnpm revisar:emojis`.
+- [x] P5.3 D-26: gráficas solo con datos ya calculados.
+- [x] P5.4 D-31 (front): miniatura, subida firmada con `verificarArchivo`, agotar y eliminar contra el API.
+- [x] P5.5 D-34: «Reportar un problema».
+- [x] P5.6 D-35: scroll-snap y aspas del molino con movimiento permitido.
+- [x] P5.7 D-37: bloque del QR con `config/app-operaciones.ts`.
+- [x] P5.8 D-36: legales y consentimientos según el documento legal público.
 - [ ] P5.9 Pendientes (a) por prioridad: seguridad, accesibilidad, datos reales, rendimiento y limpieza.
 
 ### P6 · Paridad móvil-web (D-33)

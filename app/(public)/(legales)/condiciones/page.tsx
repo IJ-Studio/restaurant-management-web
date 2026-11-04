@@ -1,48 +1,81 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { DatoLegal } from "@/components/marca/DatoLegal";
 import { PaginaLegal, SeccionLegal } from "@/components/marca/PaginaLegal";
+import { DATOS_LEGALES } from "@/config/legal";
+import { restaurantConfig } from "@/config/restaurant.config";
 
-export const metadata: Metadata = { title: "Condiciones de uso" };
+export const metadata: Metadata = { title: "Términos y condiciones" };
 
-// Página de servidor dentro del grupo (legales) (PLAN 4.22); la redacción no cambia.
+/**
+ * Términos y condiciones de uso y compra (PLAN-AMPLIACION D-36), con el texto del documento legal
+ * público. Pendiente de revisión por un abogado antes de publicar.
+ */
 export default function CondicionesPage() {
-  return (
-    <PaginaLegal ruta="/condiciones" titulo="Condiciones de uso" entradilla="Reglas para usar el sitio web y la plataforma de pedidos/reservas de El Quijote.">
-      <SeccionLegal titulo="Aceptación">
-        <p>
-          Al usar este sitio, hacer una reservación o realizar un pedido en línea, aceptas estas
-          condiciones de uso. Si no estás de acuerdo, te pedimos no utilizar la plataforma.
-        </p>
-      </SeccionLegal>
+	const d = DATOS_LEGALES;
+	return (
+		<PaginaLegal ruta="/condiciones" titulo="Términos y condiciones" entradilla="Las reglas para usar el sitio y la app de El Quijote y comprar en ellos.">
+			<SeccionLegal titulo="1. Identidad del proveedor">
+				<ul>
+					<li>
+						Razón social: <DatoLegal valor={d.razonSocial} />
+					</li>
+					<li>
+						RFC: <DatoLegal valor={d.rfc} />
+					</li>
+					<li>
+						Domicilio: <DatoLegal valor={d.domicilioFiscal} />
+					</li>
+					<li>
+						Contacto: <a href={restaurantConfig.contact.phoneHref}>{restaurantConfig.contact.phone}</a> · <DatoLegal valor={d.correoContacto} />
+					</li>
+				</ul>
+			</SeccionLegal>
 
-      <SeccionLegal titulo="Uso de la cuenta">
-        <p>
-          Eres responsable de la información que registras y de mantener segura tu contraseña. No
-          está permitido crear cuentas falsas ni usar la plataforma para fines distintos a
-          reservar o pedir alimentos.
-        </p>
-      </SeccionLegal>
+			<SeccionLegal titulo="2. Objeto">
+				<p>Estos términos regulan el uso del sitio web y la aplicación móvil de El Quijote para realizar pedidos de alimentos.</p>
+			</SeccionLegal>
 
-      <SeccionLegal titulo="Precios y disponibilidad">
-        <p>
-          Los precios mostrados en el menú incluyen impuestos aplicables y pueden cambiar sin
-          previo aviso. La disponibilidad de platillos está sujeta a existencias del día.
-        </p>
-      </SeccionLegal>
+			<SeccionLegal titulo="3. Proceso de compra">
+				<ul>
+					<li>Antes de confirmar el pago revisas un resumen completo del pedido: artículos, precio unitario, IVA, costo de envío y total en pesos mexicanos.</li>
+					<li>Puedes corregir tu pedido antes de la confirmación final.</li>
+					<li>{`Una vez confirmado, el cobro se procesa a través de ${d.pasarelaPago}.`}</li>
+				</ul>
+			</SeccionLegal>
 
-      <SeccionLegal titulo="Reservaciones y pedidos">
-        <p>
-          Una reservación confirmada nos ayuda a preparar tu mesa; te pedimos llegar dentro de los
-          15 minutos posteriores a tu horario reservado. Los pedidos en línea se procesan en el
-          orden en que se reciben.
-        </p>
-      </SeccionLegal>
+			<SeccionLegal titulo="4. Precios">
+				<p>Todos los precios se muestran en pesos mexicanos (MXN), con el IVA incluido o desglosado y sin cargos ocultos.</p>
+			</SeccionLegal>
 
-      <SeccionLegal titulo="Modificaciones">
-        <p>
-          Podemos actualizar estas condiciones ocasionalmente. La versión vigente siempre estará
-          disponible en esta misma página.
-        </p>
-      </SeccionLegal>
-    </PaginaLegal>
-  );
+			<SeccionLegal titulo="5. Facturación">
+				<p>
+					Puedes generar tu CFDI 4.0 sin costo adicional, dentro del plazo fiscal correspondiente, desde <DatoLegal valor={d.portalFacturacion} />.
+				</p>
+			</SeccionLegal>
+
+			<SeccionLegal titulo="6. Cancelaciones, reembolsos y compensación">
+				<p>
+					Consulta la <Link href="/devoluciones">política de cancelaciones y reembolsos</Link>.
+				</p>
+			</SeccionLegal>
+
+			<SeccionLegal titulo="7. Seguridad">
+				<p>Todas las transacciones se hacen mediante conexión cifrada (HTTPS/TLS). Nunca almacenamos los datos completos de tu tarjeta.</p>
+			</SeccionLegal>
+
+			<SeccionLegal titulo="8. Uso aceptable">
+				<p>Te comprometes a usar la plataforma de forma lícita y a no intentar vulnerar su seguridad.</p>
+			</SeccionLegal>
+
+			<SeccionLegal titulo="9. Modificaciones">
+				<p>Podemos actualizar estos términos; la versión vigente siempre está disponible en esta página, con la fecha de la última actualización.</p>
+			</SeccionLegal>
+
+			<SeccionLegal titulo="10. Legislación aplicable">
+				<p>Estos términos se rigen por las leyes mexicanas, incluidas la Ley Federal de Protección al Consumidor y el Código de Comercio.</p>
+				<p>{`Última actualización: ${d.ultimaActualizacion}.`}</p>
+			</SeccionLegal>
+		</PaginaLegal>
+	);
 }

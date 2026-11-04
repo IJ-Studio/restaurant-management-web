@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loadStripe, type StripeCardElementOptions } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -82,6 +83,7 @@ function Asistente() {
 	const [loading, setLoading] = useState(true);
 	const [procesando, setProcesando] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [aceptaTerminos, setAceptaTerminos] = useState(false);
 	const [fallaCarga, setFallaCarga] = useState<"sin-pedido" | "no-encontrado" | "error" | null>(null);
 	const [errores, setErrores] = useState<Errores>({});
 	const [orden, setOrden] = useState<any>(null);
@@ -266,6 +268,10 @@ function Asistente() {
 	};
 
 	const manejarPagar = async () => {
+		if (!aceptaTerminos) {
+			setError("Para pagar, acepta los términos y condiciones.");
+			return;
+		}
 		setError(null);
 		setProcesando(true);
 		try {
@@ -377,6 +383,29 @@ function Asistente() {
 					<PasoPago metodos={metodosGuardados} seleccionadoId={metodoSeleccionadoId} onSeleccionar={setMetodoSeleccionadoId} guardarTarjeta={guardarTarjeta} onCambiarGuardarTarjeta={setGuardarTarjeta} />
 				)}
 				{pasoActual === 5 && <PasoConfirmar orden={orden} direccion={direccionElegida} requiereFactura={requiereFactura} datosFiscales={datosFiscales} metodo={metodoElegido} />}
+				{pasoActual === 5 && (
+					/* D-36: aceptación expresa de los términos antes de pagar, con la casilla desmarcada. */
+					<Casilla
+						etiqueta={
+							<>
+								He revisado el resumen y acepto los{" "}
+								<Link href="/condiciones" className="enlace-subrayado">
+									términos y condiciones
+								</Link>{" "}
+								y la{" "}
+								<Link href="/devoluciones" className="enlace-subrayado">
+									política de cancelaciones y reembolsos
+								</Link>
+								.
+							</>
+						}
+						checked={aceptaTerminos}
+						onChange={(e) => {
+							setAceptaTerminos(e.target.checked);
+							if (e.target.checked) setError(null);
+						}}
+					/>
+				)}
 
 				{error && <Aviso tono="error">{error}</Aviso>}
 

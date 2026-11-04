@@ -7,7 +7,9 @@ import { ArrowLeft, Check } from "lucide-react";
 import { AnuncioFormulario } from "@/components/ui/AnuncioFormulario";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
+import Link from "next/link";
 import { AreaTexto, Campo } from "@/components/ui/Campo";
+import { Casilla } from "@/components/ui/Casilla";
 import { CampoTrampa } from "@/components/ui/CampoTrampa";
 import { CargadorMarca } from "@/components/marca/CargadorMarca";
 import { Contraetiqueta } from "@/components/marca/Contraetiqueta";
@@ -55,6 +57,7 @@ export default function ReservationForm({ onSuccess }: Props) {
 		clienteNombre: "",
 		clienteTelefono: "",
 		clienteEmail: "",
+		privacidad: false,
 		fecha: today,
 		hora: "13:00",
 		numComensales: 2,
@@ -196,6 +199,21 @@ export default function ReservationForm({ onSuccess }: Props) {
 					<Campo etiqueta="Nombre completo" autoComplete="name" value={formData.clienteNombre} onChange={cambiar("clienteNombre")} error={errors.clienteNombre} />
 					<Campo etiqueta="Teléfono" type="tel" inputMode="tel" autoComplete="tel" value={formData.clienteTelefono} onChange={cambiar("clienteTelefono")} error={errors.clienteTelefono} />
 					<Campo etiqueta="Correo" type="email" inputMode="email" autoComplete="email" value={formData.clienteEmail} onChange={cambiar("clienteEmail")} error={errors.clienteEmail} />
+					{/* D-36: aviso de privacidad simplificado, con la casilla desmarcada. */}
+					<Casilla
+						etiqueta={
+							<>
+								Acepto que El Quijote use mi nombre, teléfono y correo para gestionar esta reserva, según el{" "}
+								<Link href="/privacidad" className="enlace-subrayado">
+									aviso de privacidad
+								</Link>
+								.
+							</>
+						}
+						checked={formData.privacidad}
+						onChange={(e) => setFormData((f) => ({ ...f, privacidad: e.target.checked }))}
+						error={errors.privacidad}
+					/>
 					{botones(
 						<Boton variante="primario" onClick={nextStep}>
 							Continuar

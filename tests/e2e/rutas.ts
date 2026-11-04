@@ -13,6 +13,8 @@ export const RUTAS_PUBLICAS = [
 	"/corporativo",
 	"/devoluciones",
 	"/privacidad",
+	"/privacidad/personal",
+	"/cookies",
 	"/promociones",
 	"/reservations",
 	"/seguridad",

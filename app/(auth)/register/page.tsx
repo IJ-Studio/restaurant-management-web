@@ -144,18 +144,21 @@ export default function PaginaRegistro() {
 							name="agreed"
 							etiqueta={
 								<>
-									Acepto las{" "}
+									Acepto los{" "}
 									<Link href="/condiciones" className="enlace-subrayado">
-										condiciones de uso
+										términos y condiciones
 									</Link>{" "}
-									y el{" "}
+									y el tratamiento de mis datos para las finalidades primarias del{" "}
 									<Link href="/privacidad" className="enlace-subrayado">
 										aviso de privacidad
 									</Link>
+									, necesarias para atender mis pedidos.
 								</>
 							}
 							error={errores.agreed}
 						/>
+						{/* D-36: las finalidades secundarias se aceptan aparte, con la casilla desmarcada. */}
+						<Casilla id="promociones" name="promociones" etiqueta="Quiero recibir promociones y encuestas de El Quijote (opcional)." />
 						<Boton type="submit" variante="primario" icono={<UserPlus />} cargando={enviando} textoCargando="Creando tu cuenta…">
 							Crear cuenta
 						</Boton>

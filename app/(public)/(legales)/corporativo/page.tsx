@@ -1,12 +1,26 @@
 import type { Metadata } from "next";
+import { DatoLegal } from "@/components/marca/DatoLegal";
 import { PaginaLegal, SeccionLegal } from "@/components/marca/PaginaLegal";
+import { DATOS_LEGALES } from "@/config/legal";
 
 export const metadata: Metadata = { title: "Información corporativa" };
 
-// Página de servidor dentro del grupo (legales) (PLAN 4.22); la redacción no cambia.
+// Página de servidor dentro del grupo (legales) (PLAN 4.22). D-36: primero, los datos del proveedor
+// (Art. 76 BIS LFPC) de `config/legal.ts`; los que faltan se marcan como «Dato por confirmar».
 export default function CorporativoPage() {
   return (
     <PaginaLegal ruta="/corporativo" titulo="Información corporativa" entradilla="Datos de identidad y operación de Restaurante El Quijote.">
+      <SeccionLegal titulo="Datos del proveedor">
+        <ul>
+          <li>Razón social: <DatoLegal valor={DATOS_LEGALES.razonSocial} /></li>
+          <li>RFC: <DatoLegal valor={DATOS_LEGALES.rfc} /></li>
+          <li>Domicilio fiscal: <DatoLegal valor={DATOS_LEGALES.domicilioFiscal} /></li>
+          <li>Teléfono: <a href="tel:+527717028172">+52 771 702 8172</a></li>
+          <li>Correo de contacto: <DatoLegal valor={DATOS_LEGALES.correoContacto} /></li>
+          <li>Horario de atención al cliente: <DatoLegal valor={DATOS_LEGALES.horarioAtencion} /></li>
+        </ul>
+      </SeccionLegal>
+
       <SeccionLegal titulo="Identidad del establecimiento">
         <p>
           Restaurante El Quijote opera en Plaza Hidalgo #5-1, Colonia Centro, Huejutla de Reyes,

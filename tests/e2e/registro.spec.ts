@@ -22,7 +22,7 @@ async function rellenar(page: Page) {
 	await page.getByLabel("Correo").fill("ana@correo.mx");
 	await page.getByLabel("Teléfono").fill("7711234567");
 	await page.getByLabel("Contraseña", { exact: true }).fill("Bodega#Tinta9");
-	await page.getByLabel(/Acepto las/).check();
+	await page.getByLabel(/Acepto los términos/).check();
 }
 const crear = (page: Page) => page.getByRole("button", { name: "Crear cuenta" }).click();
 
@@ -58,7 +58,7 @@ test("enviar vacío marca cada campo y no llama al API", async ({ page }) => {
 	await page.waitForTimeout(1_100);
 	await crear(page);
 	for (const etiqueta of ["Nombre", "Apellido", "Correo", "Teléfono"]) await expect(page.getByLabel(etiqueta)).toHaveAttribute("aria-invalid", "true");
-	await expect(page.getByText("Debes aceptar los términos y condiciones.")).toBeVisible();
+	await expect(page.getByText("Para crear tu cuenta, acepta los términos y el aviso de privacidad.")).toBeVisible();
 	expect(envios).toEqual([]);
 });
 
