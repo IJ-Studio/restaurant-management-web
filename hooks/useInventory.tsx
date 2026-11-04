@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 
+import { api } from "@/lib/api";
+
+/**
+ * Inventario del administrador contra el API (`/inventario/admin/*` y `POST /inventario/mermas`, el
+ * mismo que usa la móvil). Antes pasaba por rutas internas de la web que escribían en la BD sin
+ * comprobar el rol (D-32). Cada cuerpo lleva solo los campos que acepta el DTO del API.
+ */
+
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
 export interface Product {
@@ -89,22 +97,11 @@ export function useInventory() {
   const fetchData = useCallback(async () => {
     // Explicitly don't set loading to true here to avoid flickering on updates
     try {
-      const [resP, resM, resS, resO] = await Promise.all([
-        fetch("/api/inventory/products", { cache: "no-store" }),
-        fetch("/api/inventory/mermas", { cache: "no-store" }),
-        fetch("/api/inventory/suppliers", { cache: "no-store" }),
-        fetch("/api/inventory/orders", { cache: "no-store" }),
-      ]);
-
-      if (!resP.ok || !resM.ok || !resS.ok || !resO.ok) {
-        throw new Error("Failed to fetch inventory data");
-      }
-
       const [dataP, dataM, dataS, dataO] = await Promise.all([
-        resP.json(),
-        resM.json(),
-        resS.json(),
-        resO.json(),
+        api.get<Record<string, unknown>[]>("/inventario/admin/productos"),
+        api.get<Record<string, unknown>[]>("/inventario/admin/mermas"),
+        api.get<Record<string, unknown>[]>("/inventario/admin/proveedores"),
+        api.get<Record<string, unknown>[]>("/inventario/admin/ordenes"),
       ]);
 
       setProducts(dataP.map((p: any) => ({
@@ -156,79 +153,61 @@ export function useInventory() {
 
   // Mutations
   const saveProduct = async (p: Product) => {
-    const method = p.id && p.id !== 0 ? "PUT" : "POST";
-    const res = await fetch("/api/inventory/products", { cache: "no-store",
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(p),
-    });
-    if (!res.ok) throw new Error("Could not save product");
+    const cuerpo = {
+      name: p.name, sku: p.sku, category: p.category, unit: p.unit, stock: p.stock, minStock: p.minStock,
+      maxStock: p.maxStock, costPerUnit: p.costPerUnit, supplier: p.supplier, active: p.active,
+    };
+    if (p.id) await api.patch(`/inventario/admin/productos/${p.id}`, cuerpo);
+    else await api.post("/inventario/admin/productos", cuerpo);
     await fetchData();
   };
 
   const deleteProduct = async (id: number) => {
-    const res = await fetch(`/api/inventory/products?id=${id}`, { cache: "no-store",
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Could not delete product");
+    await api.delete(`/inventario/admin/productos/${id}`);
     await fetchData();
   };
 
   const adjustStock = async (id: number, stock: number) => {
-    const res = await fetch(`/api/inventory/products/adjust`, { cache: "no-store",
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, stock }),
-    });
-    if (!res.ok) throw new Error("Could not adjust stock");
+    await api.post(`/inventario/admin/productos/${id}/ajuste`, { stock });
     await fetchData();
   };
 
+  // Quién la registra y el costo los pone el API (usuario de la sesión y costo del producto).
   const saveMerma = async (m: Merma) => {
-    const res = await fetch("/api/inventory/mermas", { cache: "no-store",
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(m),
+    await api.post("/inventario/mermas", {
+      productId: m.productId, quantity: m.quantity, unit: m.unit, reason: m.reason, justification: m.justification,
     });
-    if (!res.ok) throw new Error("Could not save merma");
     await fetchData();
   };
 
   const saveSupplier = async (s: Supplier) => {
-    const method = s.id && s.id !== 0 ? "PUT" : "POST";
-    const res = await fetch("/api/inventory/suppliers", { cache: "no-store",
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(s),
-    });
-    if (!res.ok) throw new Error("Could not save supplier");
+    const cuerpo = {
+      name: s.name, contact: s.contact, email: s.email, phone: s.phone, category: s.category, products: s.products,
+      paymentTerms: s.paymentTerms, deliveryDays: s.deliveryDays, active: s.active, website: s.website, address: s.address, notes: s.notes,
+    };
+    if (s.id) await api.patch(`/inventario/admin/proveedores/${s.id}`, cuerpo);
+    else await api.post("/inventario/admin/proveedores", cuerpo);
     await fetchData();
   };
 
   const deleteSupplier = async (id: number) => {
-    const res = await fetch(`/api/inventory/suppliers?id=${id}`, { cache: "no-store",
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Could not delete supplier");
+    await api.delete(`/inventario/admin/proveedores/${id}`);
     await fetchData();
   };
 
+  // El total y el folio los calcula el API.
   const saveOrder = async (o: PurchaseOrder) => {
-    const method = o.id && o.id !== 0 ? "PUT" : "POST";
-    const res = await fetch("/api/inventory/orders", { cache: "no-store",
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(o),
-    });
-    if (!res.ok) throw new Error("Could not save order");
+    const cuerpo = {
+      supplierId: o.supplierId || null, status: o.status, expectedAt: o.expectedAt || null, notes: o.notes || null,
+      items: o.items.map((i) => ({ productName: i.productName, quantity: i.quantity, unit: i.unit, unitCost: i.unitCost })),
+    };
+    if (o.id) await api.patch(`/inventario/admin/ordenes/${o.id}`, cuerpo);
+    else await api.post("/inventario/admin/ordenes", cuerpo);
     await fetchData();
   };
 
   const deleteOrder = async (id: number) => {
-    const res = await fetch(`/api/inventory/orders?id=${id}`, { cache: "no-store",
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Could not delete order");
+    await api.delete(`/inventario/admin/ordenes/${id}`);
     await fetchData();
   };
 

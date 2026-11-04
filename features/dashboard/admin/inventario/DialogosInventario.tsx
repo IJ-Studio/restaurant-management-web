@@ -11,7 +11,7 @@ import { formatearImporte } from "@/lib/formato/precio";
 
 /**
  * Diálogos del inventario (PLAN 5.7). Sustituyen a `ProductModal`, `MermaModal` y `AdjustModal`
- * con los mismos cuerpos hacia `/api/inventory/*`. Validan al enviar, esperan la respuesta (antes
+ * hacia el API (`/inventario/admin/*` y `POST /inventario/mermas`). Validan al enviar, esperan la respuesta (antes
  * se cerraban sin saber si se había guardado) y avisan si falla.
  */
 
@@ -24,12 +24,23 @@ export const CATEGORIAS: Record<string, string> = {
 	condimentos: "Condimentos",
 	utensilios: "Utensilios",
 };
+/** Motivos que acepta `POST /inventario/mermas` (los mismos de la app móvil). */
 export const MOTIVOS_MERMA: Record<string, string> = {
+	caducado: "Caducado",
+	danado: "Dañado",
+	derrame: "Derrame",
+	preparacion: "Error de preparación",
+	devolucion: "Devolución",
+	otro: "Otro",
+};
+
+/** Para mostrar mermas antiguas, registradas con los motivos que usaba la web antes. */
+export const ETIQUETAS_MERMA: Record<string, string> = {
+	...MOTIVOS_MERMA,
 	caducidad: "Caducidad",
 	accidente: "Accidente",
 	calidad: "Calidad",
 	coccion: "Cocción",
-	otro: "Otro",
 };
 const UNIDADES = ["kg", "g", "l", "ml", "pza", "caja", "bolsa"];
 const opciones = (o: Record<string, string>) => Object.entries(o).map(([valor, texto]) => ({ valor, texto }));
@@ -162,7 +173,7 @@ export function DialogoProducto({ producto, disparador, alGuardar }: { producto?
 }
 
 export function DialogoMerma({ productos, disparador, alGuardar }: { productos: Product[]; disparador: ReactNode; alGuardar: (m: Merma) => Promise<boolean> }) {
-	const inicial = () => ({ productId: String(productos[0]?.id ?? ""), cantidad: "", motivo: "caducidad", justificacion: "", reporta: "" });
+	const inicial = () => ({ productId: String(productos[0]?.id ?? ""), cantidad: "", motivo: "caducado", justificacion: "" });
 	const [f, setF] = useState(inicial);
 	const producto = productos.find((p) => String(p.id) === f.productId);
 	const cantidad = num(f.cantidad);
@@ -178,7 +189,7 @@ export function DialogoMerma({ productos, disparador, alGuardar }: { productos: 
 			unit: producto.unit,
 			reason: f.motivo,
 			justification: f.justificacion.trim(),
-			reportedBy: f.reporta.trim(),
+			reportedBy: "",
 			date: hoy(),
 			cost: coste,
 		});
@@ -233,7 +244,6 @@ export function DialogoMerma({ productos, disparador, alGuardar }: { productos: 
 					<Selector etiqueta="Motivo" opciones={opciones(MOTIVOS_MERMA)} value={f.motivo} onChange={(e) => setF({ ...f, motivo: e.target.value })} />
 				</div>
 				<AreaTexto etiqueta="Qué pasó" rows={3} value={f.justificacion} onChange={(e) => setF({ ...f, justificacion: e.target.value })} error={d.errores.justificacion} maxLength={300} />
-				<Campo etiqueta="Reportado por" opcional value={f.reporta} onChange={(e) => setF({ ...f, reporta: e.target.value })} maxLength={80} autoComplete="off" />
 				<p aria-live="polite" className="m-0 text-texto-principal">
 					<span className="text-texto-secundario">Pérdida estimada: </span>
 					<span className="font-semibold numeros-tabulares">{importe(coste)}</span>

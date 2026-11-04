@@ -19,17 +19,12 @@ async function pedir(request: APIRequestContext, metodo: string, ruta: string, s
 	return request.fetch(ruta, { method: metodo, headers: cookieDe(sujeto), maxRedirects: 0, failOnStatusCode: false, data: metodo === "GET" ? undefined : {} });
 }
 
-/** Inventario de app/api (2026-11-04, tras D-32): ruta y métodos que exporta cada route.ts. */
+/** Inventario de app/api (2026-11-05, P8.2): solo queda la capa de sesión; el inventario va al API. */
 const API: [string, string[]][] = [
 	["/api/auth/login", ["POST"]],
 	["/api/auth/logout", ["POST"]],
 	["/api/auth/me", ["GET"]],
 	["/api/auth/register", ["POST"]],
-	["/api/inventory/mermas", ["GET", "POST"]],
-	["/api/inventory/orders", ["GET", "POST", "PUT", "DELETE"]],
-	["/api/inventory/products", ["GET", "POST", "PUT", "DELETE"]],
-	["/api/inventory/products/adjust", ["POST"]],
-	["/api/inventory/suppliers", ["GET", "POST", "PUT", "DELETE"]],
 ];
 
 const publica = (ruta: string, metodo: string) => RUTAS_API_PUBLICAS.some((r) => r.ruta === ruta && r.metodos.includes(metodo));
@@ -59,8 +54,16 @@ test("una ruta pública con otro método exige token", async ({ request }) => {
 });
 
 test("un token inválido equivale a no tener token", async ({ request }) => {
-	const r = await request.get("/api/inventory/products", { headers: { Cookie: "session=no-es-un-jwt" }, maxRedirects: 0 });
+	// El proxy protege cualquier /api/* que no sea pública, exista o no la ruta.
+	const r = await request.get("/api/cualquier-ruta", { headers: { Cookie: "session=no-es-un-jwt" }, maxRedirects: 0 });
 	expect(r.status()).toBe(401);
+});
+
+// P8.2: el inventario escribía en la BD desde la web sin comprobar el rol; ya no existe.
+test("las rutas internas de inventario ya no existen (ni con sesión de admin)", async ({ request }) => {
+	for (const ruta of ["/api/inventory/products", "/api/inventory/mermas", "/api/inventory/suppliers", "/api/inventory/orders"]) {
+		expect((await pedir(request, "GET", ruta, "admin")).status(), ruta).toBe(404);
+	}
 });
 
 // Las rutas se borraron con D-32, pero el proxy conserva la regla: si alguien las recrea, exigen admin.

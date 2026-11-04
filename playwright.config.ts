@@ -33,10 +33,9 @@ export default defineConfig({
 		url: `http://localhost:${PUERTO}`,
 		reuseExistingServer: true,
 		timeout: 2_700_000,
-		// Valores ficticios: el build importa lib/db.ts, que exige DATABASE_URL.
-		// No hay conexión real; la API se simula con page.route (paso 0.7).
+		// Valores ficticios: no hay conexión real; la API se simula con page.route (paso 0.7).
+		// La web ya no accede a la BD (P8.2), así que no necesita DATABASE_URL.
 		env: {
-			DATABASE_URL: "postgres://prueba:prueba@127.0.0.1:5432/prueba",
 			JWT_SECRET: SECRETO_E2E,
 			NEXT_PUBLIC_API_URL: `http://localhost:${PUERTO}`,
 			NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: "dcb1tspbj",

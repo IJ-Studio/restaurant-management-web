@@ -2,7 +2,7 @@ import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
 
-// Inventario (PLAN 5.7). Contra el build de producción, con sesión de admin y `/api/inventory/*` simulado.
+// Inventario (PLAN 5.7). Contra el build de producción, con sesión de admin y el API (`/inventario/*`) simulado.
 test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
 
 const CLAVE = "elquijote:preferencias";
@@ -32,7 +32,9 @@ async function abrir(browser: Browser, opciones: { ancho?: number; falla?: "carg
 		throw new Error("La página abrió un alert() o confirm()");
 	});
 	const pedidos: { metodo: string; ruta: string; cuerpo: unknown }[] = [];
-	await page.route("**/api/inventory/**", async (r) => {
+	await page.route(
+		(u) => u.origin === "http://localhost:3100" && u.pathname.startsWith("/inventario/"),
+		async (r) => {
 		const p = r.request();
 		const url = new URL(p.url());
 		const ruta = url.pathname + url.search;
@@ -40,9 +42,10 @@ async function abrir(browser: Browser, opciones: { ancho?: number; falla?: "carg
 		if (metodo !== "GET") pedidos.push({ metodo, ruta, cuerpo: p.postData() ? JSON.parse(p.postData()!) : null });
 		if (opciones.falla === "carga" && metodo === "GET") return r.fulfill({ status: 500, body: "{}" });
 		if (opciones.falla === "borrar" && metodo === "DELETE") return r.fulfill({ status: 500, body: "{}" });
-		const cuerpo = url.pathname.endsWith("/products") ? PRODUCTOS : url.pathname.endsWith("/mermas") ? MERMAS : [];
+		const cuerpo = url.pathname.endsWith("/productos") ? PRODUCTOS : url.pathname.endsWith("/mermas") ? MERMAS : [];
 		await r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(metodo === "GET" ? cuerpo : { ok: true }) });
-	});
+		},
+	);
 	await page.goto(opciones.ruta ?? "/dashboard/admin/inventory", { waitUntil: "load" });
 	return { contexto, page, pedidos };
 }
@@ -72,7 +75,7 @@ test("ajustar existencias envía el mismo POST con el valor calculado", async ({
 	await expect(dialogo).toContainText("35 kg");
 	await dialogo.getByRole("button", { name: "Ajustar" }).click();
 	await expect(dialogo).toBeHidden();
-	expect(pedidos).toEqual([{ metodo: "POST", ruta: "/api/inventory/products/adjust", cuerpo: { id: 1, stock: 35 } }]);
+	expect(pedidos).toEqual([{ metodo: "POST", ruta: "/inventario/admin/productos/1/ajuste", cuerpo: { stock: 35 } }]);
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Existencias ajustadas");
 	await contexto.close();
 });
@@ -90,7 +93,9 @@ test("producto nuevo valida mínimo y máximo; merma calcula la pérdida", async
 	await dialogo.getByLabel("Máximo").fill("40");
 	await dialogo.getByRole("button", { name: "Añadir producto" }).click();
 	await expect(dialogo).toBeHidden();
-	expect(pedidos[0]).toMatchObject({ metodo: "POST", ruta: "/api/inventory/products", cuerpo: { id: 0, name: "Pimentón de la Vera", minStock: 20, maxStock: 40, active: true } });
+	expect(pedidos[0]).toMatchObject({ metodo: "POST", ruta: "/inventario/admin/productos", cuerpo: { name: "Pimentón de la Vera", minStock: 20, maxStock: 40, active: true } });
+	// Solo los campos que acepta el DTO del API (sin id, lastUpdated ni supplierId).
+	expect(Object.keys(pedidos[0].cuerpo as object)).not.toContain("id");
 
 	await main.getByRole("button", { name: "Registrar merma" }).click();
 	const merma = page.getByRole("dialog", { name: "Registrar una merma" });
@@ -100,7 +105,8 @@ test("producto nuevo valida mínimo y máximo; merma calcula la pérdida", async
 	await merma.getByLabel("Qué pasó").fill("Se derramó.");
 	await merma.getByRole("button", { name: "Registrar merma" }).click();
 	await expect(merma).toBeHidden();
-	expect(pedidos[1]).toMatchObject({ metodo: "POST", ruta: "/api/inventory/mermas", cuerpo: { productId: 2, quantity: 0.5, cost: 45, justification: "Se derramó." } });
+	// El costo y quién la registra los pone el API; el motivo usa los códigos de la móvil.
+	expect(pedidos[1]).toEqual({ metodo: "POST", ruta: "/inventario/mermas", cuerpo: { productId: 2, quantity: 0.5, unit: "g", reason: "caducado", justification: "Se derramó." } });
 	await contexto.close();
 });
 
@@ -109,7 +115,7 @@ test("eliminar pide confirmación y, si falla, lo avisa", async ({ browser }) =>
 	await page.locator("main").getByRole("button", { name: "Eliminar Jitomate" }).filter({ visible: true }).click();
 	await page.getByRole("alertdialog", { name: "¿Eliminar Jitomate del inventario?" }).getByRole("button", { name: "Eliminar producto" }).click();
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("No se pudo eliminar el producto");
-	expect(pedidos).toEqual([{ metodo: "DELETE", ruta: "/api/inventory/products?id=1", cuerpo: null }]);
+	expect(pedidos).toEqual([{ metodo: "DELETE", ruta: "/inventario/admin/productos/1", cuerpo: null }]);
 	await contexto.close();
 });
 

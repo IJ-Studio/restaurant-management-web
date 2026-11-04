@@ -24,10 +24,10 @@ import { formatearDia } from "@/lib/formato/fecha";
 import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
-import { CATEGORIAS, DialogoAjuste, DialogoMerma, DialogoProducto, MOTIVOS_MERMA } from "./DialogosInventario";
+import { CATEGORIAS, DialogoAjuste, DialogoMerma, DialogoProducto, ETIQUETAS_MERMA } from "./DialogosInventario";
 
 /**
- * Inventario: productos y existencias (PLAN 5.7). Mismo hook y mismas rutas (`/api/inventory/*`).
+ * Inventario: productos y existencias (PLAN 5.7). Mismo hook, ahora contra el API (`/inventario/admin/*`, P8.2).
  * Cada operación espera la respuesta y avisa si falla (antes cerraba el modal sin saberlo), eliminar
  * pide confirmación (antes borraba al primer clic) y el nivel de existencias se dice con texto,
  * no solo con color. Sin emojis ni hex.
@@ -139,7 +139,7 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 	const columnasMermas: ColumnaTabla<Merma>[] = [
 		{ clave: "producto", titulo: "Producto", principal: true, celda: (m) => m.productName },
 		{ clave: "cantidad", titulo: "Cantidad", numerica: true, celda: (m) => <span className="whitespace-nowrap">{`${cantidad.format(m.quantity)} ${m.unit}`}</span> },
-		{ clave: "motivo", titulo: "Motivo", celda: (m) => MOTIVOS_MERMA[m.reason] ?? m.reason },
+		{ clave: "motivo", titulo: "Motivo", celda: (m) => ETIQUETAS_MERMA[m.reason] ?? m.reason },
 		{ clave: "que", titulo: "Qué pasó", celda: (m) => m.justification },
 		{ clave: "reporta", titulo: "Reportado por", celda: (m) => m.reportedBy || "—" },
 		{ clave: "fecha", titulo: "Fecha", celda: (m) => <span className="whitespace-nowrap">{formatearDia(m.date)}</span> },

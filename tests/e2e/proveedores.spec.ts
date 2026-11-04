@@ -2,7 +2,7 @@ import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
 
-// Proveedores (PLAN 5.8). Contra el build de producción, con sesión de admin y `/api/inventory/*` simulado.
+// Proveedores (PLAN 5.8). Contra el build de producción, con sesión de admin y el API (`/inventario/admin/*`) simulado.
 test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
 
 const CLAVE = "elquijote:preferencias";
@@ -26,13 +26,16 @@ async function abrir(browser: Browser, opciones: { ancho?: number; ruta?: string
 		throw new Error("La página abrió un alert() o confirm()");
 	});
 	const pedidos: { metodo: string; ruta: string; cuerpo: unknown }[] = [];
-	await page.route("**/api/inventory/**", async (r) => {
-		const p = r.request();
-		const url = new URL(p.url());
-		if (p.method() !== "GET") pedidos.push({ metodo: p.method(), ruta: url.pathname + url.search, cuerpo: p.postData() ? JSON.parse(p.postData()!) : null });
-		const datos = url.pathname.endsWith("/products") ? PRODUCTOS : url.pathname.endsWith("/suppliers") ? PROVEEDORES : url.pathname.endsWith("/orders") ? ORDENES : [];
-		await r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(p.method() === "GET" ? datos : { ok: true }) });
-	});
+	await page.route(
+		(u) => u.origin === "http://localhost:3100" && u.pathname.startsWith("/inventario/"),
+		async (r) => {
+			const p = r.request();
+			const url = new URL(p.url());
+			if (p.method() !== "GET") pedidos.push({ metodo: p.method(), ruta: url.pathname + url.search, cuerpo: p.postData() ? JSON.parse(p.postData()!) : null });
+			const datos = url.pathname.endsWith("/productos") ? PRODUCTOS : url.pathname.endsWith("/proveedores") ? PROVEEDORES : url.pathname.endsWith("/ordenes") ? ORDENES : [];
+			await r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(p.method() === "GET" ? datos : { ok: true }) });
+		},
+	);
 	await page.goto(opciones.ruta ?? "/dashboard/admin/inventory/suppliers", { waitUntil: "load" });
 	return { contexto, page, pedidos };
 }
@@ -50,7 +53,7 @@ test("tarjetas con contacto enlazado, migas e indicadores", async ({ browser }) 
 	await contexto.close();
 });
 
-test("orden de compra desde la tarjeta: solo productos del proveedor, total y el POST de siempre", async ({ browser }) => {
+test("orden de compra desde la tarjeta: solo productos del proveedor; el total lo calcula el API", async ({ browser }) => {
 	const { contexto, page, pedidos } = await abrir(browser);
 	await page.locator("main").getByRole("listitem").filter({ hasText: "Huerta Norte" }).getByRole("button", { name: "Hacer pedido" }).click();
 	const dialogo = page.getByRole("dialog", { name: "Orden de compra nueva" });
@@ -65,9 +68,11 @@ test("orden de compra desde la tarjeta: solo productos del proveedor, total y el
 	await expect(dialogo).toBeHidden();
 	expect(pedidos[0]).toMatchObject({
 		metodo: "POST",
-		ruta: "/api/inventory/orders",
-		cuerpo: { id: 0, supplierId: 1, supplierName: "Huerta Norte", status: "borrador", total: 60, items: [{ productName: "Cebolla", quantity: 4, unit: "kg", unitCost: 15 }] },
+		ruta: "/inventario/admin/ordenes",
+		cuerpo: { supplierId: 1, status: "borrador", items: [{ productName: "Cebolla", quantity: 4, unit: "kg", unitCost: 15 }] },
 	});
+	// Ni el total ni el nombre del proveedor viajan: los pone el API.
+	expect(Object.keys(pedidos[0].cuerpo as object)).not.toEqual(expect.arrayContaining(["total"]));
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Orden creada");
 	await contexto.close();
 });
@@ -87,11 +92,11 @@ test("proveedor nuevo valida el correo; eliminar una orden pide confirmación", 
 	await expect(dialogo.getByRole("list", { name: "Productos añadidos" })).toContainText("Queso manchego");
 	await dialogo.getByRole("button", { name: "Añadir proveedor" }).click();
 	await expect(dialogo).toBeHidden();
-	expect(pedidos[0]).toMatchObject({ metodo: "POST", ruta: "/api/inventory/suppliers", cuerpo: { id: 0, name: "Quesos Real del Monte", email: "ventas@quesos.mx", products: ["Queso manchego"] } });
+	expect(pedidos[0]).toMatchObject({ metodo: "POST", ruta: "/inventario/admin/proveedores", cuerpo: { name: "Quesos Real del Monte", email: "ventas@quesos.mx", products: ["Queso manchego"] } });
 
 	await main.getByRole("button", { name: "Eliminar la orden OC-2026-101" }).filter({ visible: true }).click();
 	await page.getByRole("alertdialog", { name: "¿Eliminar la orden OC-2026-101?" }).getByRole("button", { name: "Eliminar orden" }).click();
-	await expect.poll(() => pedidos.at(-1)).toEqual({ metodo: "DELETE", ruta: "/api/inventory/orders?id=7", cuerpo: null });
+	await expect.poll(() => pedidos.at(-1)).toEqual({ metodo: "DELETE", ruta: "/inventario/admin/ordenes/7", cuerpo: null });
 	await contexto.close();
 });
 

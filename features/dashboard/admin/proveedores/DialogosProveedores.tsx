@@ -15,7 +15,7 @@ import { correoBasicoOpcional } from "@/lib/validacion/campos";
 
 /**
  * Diálogos de proveedores y órdenes de compra (PLAN 5.8). Sustituyen a `SupplierModal` y
- * `OrderModal` con los mismos cuerpos hacia `/api/inventory/suppliers` y `/api/inventory/orders`.
+ * `OrderModal`, hacia el API (`/inventario/admin/proveedores` y `/ordenes`).
  */
 
 export const ESTADOS_ORDEN: Record<OrderStatus, string> = {
