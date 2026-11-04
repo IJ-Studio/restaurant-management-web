@@ -4,6 +4,23 @@
 
 ---
 
+## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
+
+### P1 · Seguridad de la documentación (2026-11-03)
+
+**Qué se hizo:**
+- El repositorio es público, así que el detalle de vulnerabilidades sale de los documentos versionados. Los originales de `ESTADO.md` y `NOTAS-PENDIENTES.md` (estado `1b3fd9f`) se copiaron fuera del repo, junto con un registro de lo retirado y de los hallazgos abiertos comprobados contra el código.
+- `NOTAS-PENDIENTES.md`: NP-01 a NP-11, NP-15, NP-20 a NP-22, NP-31 y NP-32 quedan como «pendiente de endurecer en el API», con su prioridad y remisión a `PLAN-AMPLIACION.md`. Se conserva la decisión del teléfono de la reserva (NP-06). NP-36 (punto 4), NP-40 y NP-35 en texto genérico.
+- `ESTADO.md`: fila de seguridad del resumen, §14, anexo C completo, los códigos de `/api` sin sesión y el aviso lateral del anexo D, y dos líneas del anexo A, en texto genérico.
+- `PLAN.md` (fila del cron en la lista de rutas públicas) y el `motivo` de esa ruta en `config/seguridad/rutas-api-publicas.ts`, sin mencionar lo que le falta.
+- Nuevo `PLAN-AMPLIACION.md`: decisiones D-22 a D-38, paquetes P0 a P9 con casillas y criterios, pendientes para el usuario y la clasificación D-38 (se completa en P2).
+
+**Aviso:** las ramas `feature/rediseno-web`, `-cimientos`, `-componentes` y `-seguridad` de `origin` ya contienen las versiones anteriores de estos documentos, y el historial local también. Esta corrección no las cambia: lo decide el usuario (sin push ni reescritura en la web).
+
+**Verificación:** `rg` en `docs/`, `config/` y el código de rutas sin comprobación, secretos, commits del historial con secretos, contraseñas por defecto e interpolaciones explotables: sin detalle de vulnerabilidades abiertas. El cambio de `rutas-api-publicas.ts` es solo el texto de un `motivo` (sin efecto en la lógica).
+
+---
+
 ## Fase 5 · Administración
 
 ### Cierre de la fase 5: en curso (2026-11-03), resumen para leer al volver

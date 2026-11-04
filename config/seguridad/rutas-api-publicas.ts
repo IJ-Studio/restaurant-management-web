@@ -20,7 +20,7 @@ export const RUTAS_API_PUBLICAS: readonly RutaApiPublica[] = [
 	{
 		ruta: "/api/cron/backups",
 		metodos: ["GET"],
-		motivo: "Excepción temporal: el cron de Vercel no envía token de usuario; su protección con CRON_SECRET es NP-10",
+		motivo: "Excepción temporal: el cron de Vercel no envía token de usuario; pendiente de endurecer en el API (NP-10)",
 	},
 ];
 

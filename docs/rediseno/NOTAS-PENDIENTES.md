@@ -2,7 +2,7 @@
 
 > El rediseño solo toca UI, UX y las medidas de seguridad aplicables desde la interfaz o la configuración del front. Lo que sigue **no se ejecuta** en las ramas `feature/rediseno-web-*`. Cada nota está pensada para ejecutarse en otra sesión.
 >
-> Origen: diagnóstico del 2026-10-30 (`docs/rediseno/ESTADO.md`, referencias al commit `922c05d`). Ningún valor secreto aparece aquí.
+> Origen: diagnóstico del 2026-10-30 (`docs/rediseno/ESTADO.md`, referencias al commit `922c05d`). Ningún valor secreto ni detalle de vulnerabilidades aparece aquí: las notas de seguridad abiertas solo dicen qué queda pendiente; su detalle técnico se guarda fuera del repositorio. La clasificación de cada nota (frontend, API, decisión del usuario u obsoleta) está en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
 >
 > **Prioridad:**
 > - **Crítica:** explotable hoy o con impacto grave; antes de cualquier despliegue.
@@ -14,28 +14,28 @@
 
 | ID | Tema | Categoría | Prioridad |
 |---|---|---|---|
-| NP-01 | Route handlers con acceso directo a Postgres y sin autenticación | Seguridad del servidor / BD | **Crítica** |
-| NP-02 | Secreto JWT comprometido y modelo de firma compartido | Autenticación | **Crítica** |
-| NP-03 | Contraseñas en texto plano y contraseña por defecto | Autenticación / BD | **Crítica** |
-| NP-04 | Token de sesión fuera de `localStorage`: cookie HttpOnly | Sesiones | Alta |
-| NP-05 | IDOR en pedidos, pagos y facturas | Seguridad del servidor | Alta |
+| NP-01 | Rutas internas del front con acceso a la BD: migrar al API | Seguridad del servidor / BD | **Crítica** |
+| NP-02 | Gestión del secreto de firma de sesiones | Autenticación | **Crítica** |
+| NP-03 | Alta de usuarios y almacenamiento de credenciales | Autenticación / BD | **Crítica** |
+| NP-04 | Sesión en cookie HttpOnly emitida por el servidor | Sesiones | Alta |
+| NP-05 | Autorización por propietario en pedidos, pagos y facturas | Seguridad del servidor | Alta |
 | NP-06 | Validación y saneamiento en el servidor | Validación servidor | Alta |
-| NP-07 | Límites de peticiones (rate limiting) | Límites | Alta |
-| NP-08 | Subidas a Cloudinary firmadas y preset restringido | Seguridad del servidor / infra | Alta |
-| NP-09 | Claves de pasarela de pago gestionadas en el navegador | Seguridad del servidor | Alta |
-| NP-10 | Respaldos y credenciales de Google en el entorno del front | Infraestructura | Alta |
-| NP-11 | Facturación creada desde el cliente tras el pago | Lógica de negocio | Alta |
+| NP-07 | Límites de peticiones | Límites | Alta |
+| NP-08 | Subidas a Cloudinary firmadas desde el API | Seguridad del servidor / infra | Alta |
+| NP-09 | Claves de pasarela de pago solo en el backend | Seguridad del servidor | Alta |
+| NP-10 | Respaldos de la BD fuera del front | Infraestructura | Alta |
+| NP-11 | Facturación generada en el servidor | Lógica de negocio | Alta |
 | NP-12 | Datos mock y `localStorage` como motor de datos | Lógica de negocio / API | Alta |
 | NP-13 | Posicionamiento del contenido: cocina mexicana frente a española | Contenido | Alta |
 | NP-14 | Carta de vinos: datos, endpoints y gestión | API / contenido | Alta |
-| NP-15 | Mensajes que permiten enumerar usuarios | Autenticación | Media |
+| NP-15 | Mensajes genéricos de autenticación | Autenticación | Media |
 | NP-16 | Recuperación de contraseña desactivada | Autenticación | Media |
 | NP-17 | Endpoints inexistentes o mal apuntados desde el front | Contratos API | Media |
 | NP-18 | Ajustes y "acerca de" del admin que no llegan al sitio público | Lógica de negocio | Media |
 | NP-19 | `/dashboard/cliente` no existe (redirección del rol 5) | Rutas / lógica | Media |
-| NP-20 | Cupones activos expuestos públicamente | Seguridad del servidor | Media |
-| NP-21 | Conexión a BD con `rejectUnauthorized: false` | Base de datos | Media |
-| NP-22 | Script de instalación que escribe secretos y descarga de una rama temporal | Infraestructura | Media |
+| NP-20 | Cupones: validación en el servidor | Seguridad del servidor | Media |
+| NP-21 | Conexión TLS a la BD | Base de datos | Media |
+| NP-22 | Script de instalación del front | Infraestructura | Media |
 | NP-23 | Cierre de sesión por inactividad | Sesiones | Media |
 | NP-24 | Panel de rendimiento de BD dentro del admin del restaurante | Producto | Baja |
 | NP-25 | Scripts de BD sueltos en la raíz del repo | Deuda técnica | Baja |
@@ -44,8 +44,8 @@
 | NP-28 | Entorno local: pnpm global roto y disco C: lleno | Entorno | Baja |
 | NP-29 | Pagos con `PaymentElement` (Apple Pay y Google Pay) | Idea | Baja |
 | NP-30 | Ideas de producto para la parte pública | Idea | Baja |
-| NP-31 | Librería `xlsx@0.18.5` con vulnerabilidades conocidas (decisión D-06) | Dependencias / seguridad | Alta |
-| NP-32 | Autorización por rol y por propietario en cada endpoint (complemento de D-15) | Seguridad del servidor | Alta |
+| NP-31 | Sustitución de la librería de hojas de cálculo (decisión D-06) | Dependencias / seguridad | Alta |
+| NP-32 | Autorización por rol en cada endpoint (complemento de D-15) | Seguridad del servidor | Alta |
 | NP-33 | Calidad y metadatos de las imágenes en Cloudinary | Contenido | Media |
 | NP-34 | Retirar el limpiador de service workers antiguos | Deuda técnica | Baja |
 | NP-36 | Orígenes de imagen y de terceros por confirmar con datos reales | Seguridad / contenido | Media |
@@ -63,162 +63,72 @@
 
 ---
 
-## NP-01 · Route handlers con acceso directo a Postgres y sin autenticación
+## NP-01 · Rutas internas del front con acceso a la BD: migrar al API
 
-- **Archivos y rutas afectados:**
-  - `app/api/admin/users/route.ts` (GET, POST), `app/api/admin/users/[id]/route.ts` (PUT, DELETE)
-  - `app/api/backups/route.ts` (GET, POST, DELETE), `app/api/cron/backups/route.ts`, `app/api/settings/route.ts` (GET, POST)
-  - `app/api/inventory/{products,products/adjust,orders,suppliers,mermas}/route.ts`, `app/api/mesas/route.ts`, `app/api/public/{combos,cupones}/route.ts`, `app/api/menu/categories/route.ts`
-  - `lib/db.ts`, `lib/schema.ts`, `lib/public.schema.ts`, `drizzle/`
-- **Problema:** el repo del front contiene una segunda API que lee y escribe en PostgreSQL con `DATABASE_URL`. `proxy.ts:68` deja pasar todo `/api/*`, y varios handlers no comprueban sesión ni rol:
-  - cualquiera puede crear o editar usuarios con cualquier rol, incluido administrador;
-  - cualquiera puede leer los salarios y direcciones del personal;
-  - cualquiera puede lanzar o borrar respaldos de la BD y modificar ajustes e inventario.
-
-  Además, las respuestas 500 devuelven el texto SQL.
-- **Riesgo:** toma de control total de la aplicación y fuga de datos personales y de la BD.
-- **Solución sugerida:**
-  1. Llevar cada endpoint al API externo (NestJS), con autenticación y autorización por rol.
-  2. Cambiar el front para consumir el API.
-  3. Borrar `app/api/*` con BD, `lib/db.ts`, `lib/schema.ts`, `lib/public.schema.ts`, `drizzle/` y las dependencias `pg`, `drizzle-orm`, `drizzle-kit`, `bcrypt`, `firebase-admin` y `googleapis`.
-  4. Quitar `DATABASE_URL` del entorno del front.
-
-  Mientras tanto, el PLAN (paso 2.10, decisión D-15) exige en `proxy.ts` un token válido en todo `/api/*`, salvo una lista documentada de rutas públicas, y rol admin en `/api/admin/**` y `/api/backups/**`. Es una barrera optimista: no sustituye a la autorización dentro de cada handler (NP-32).
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Crítica.
-- **Criterio de aceptación:**
-  - `rg "lib/db|drizzle-orm|from \"pg\"" app components features lib` no devuelve resultados.
-  - Ninguna ruta bajo `/api` del front toca la BD.
-  - Todas las operaciones del admin funcionan contra el API externo con un token válido y devuelven 401/403 sin él.
-  - Ningún error devuelve SQL.
 
-## NP-02 · Secreto JWT comprometido y modelo de firma compartido
+## NP-02 · Gestión del secreto de firma de sesiones
 
-- **Archivos y rutas afectados:** `proxy.ts:20-23`, `lib/session.ts:18-22`, `scripts/setup-windows.ps1:136,170`; historial de git (commits `43d3192` y `71ac470`).
-- **Problema:** `proxy.ts` trae como respaldo de `JWT_SECRET` una cadena hexadecimal real de 64 caracteres (`****`), presente en el historial. Además:
-  - `lib/session.ts` usa otro respaldo predecible distinto, así que, si falta la variable, cada archivo valida con una clave diferente;
-  - el front guarda el mismo secreto HMAC (HS256) con el que el backend firma los tokens.
-- **Riesgo:** quien conozca el secreto, o acceda al entorno del front, puede emitir tokens de administrador válidos para el API.
-- **Solución sugerida:**
-  1. **Rotar** `JWT_SECRET` en todos los entornos y tratar el anterior como comprometido.
-  2. Pasar a firma asimétrica (RS256 o EdDSA con JWKS publicado por el API), para que el front solo tenga la clave pública, o que el front no verifique y delegue en `GET /auth/me`.
-  3. Valorar purgar el valor del historial (`git filter-repo`) si el repo pudiera hacerse público.
-
-  La eliminación del respaldo en el código, para fallar cerrado, sí está en el PLAN (paso 2.9).
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Crítica.
-- **Criterio de aceptación:**
-  - El secreto antiguo ya no valida tokens en ningún entorno.
-  - El front no contiene ningún secreto de firma; si se mantiene la verificación en el front, usa solo la clave pública.
 
-## NP-03 · Contraseñas en texto plano y contraseña por defecto
+## NP-03 · Alta de usuarios y almacenamiento de credenciales
 
-- **Archivos y rutas afectados:** `app/api/admin/users/route.ts:80,90`; `app/dashboard/admin/users/page.tsx:397`.
-- **Problema:** el alta de usuarios desde el admin guarda la contraseña en texto plano y, si no se indica, usa una contraseña por defecto (`1234****`). Además, el administrador escribe la contraseña del nuevo usuario.
-- **Riesgo:** compromiso masivo de cuentas si se filtra la BD; cuentas con contraseña conocida.
-- **Solución sugerida:**
-  - Hash con argon2id o bcrypt en el API.
-  - Alta por invitación: correo con enlace de un solo uso para que el usuario fije su contraseña.
-  - Forzar el cambio de las contraseñas existentes.
-  - La política de contraseñas del admin debe igualar a la del registro.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Crítica.
-- **Criterio de aceptación:** ninguna contraseña se almacena en claro; no existe contraseña por defecto; el formulario del admin ya no pide contraseña (el ajuste de UI se hará después de este cambio).
 
-## NP-04 · Token de sesión fuera de `localStorage`: cookie HttpOnly
+## NP-04 · Sesión en cookie HttpOnly emitida por el servidor
 
-- **Archivos y rutas afectados:**
-  - `app/(auth)/login/page.tsx:72-73,106`, `lib/api.ts:42`, `providers/AuthProvider.tsx:28`
-  - `features/reservations/services/reservations.service.ts:16`, `app/dashboard/admin/page.tsx:16`, `app/menu/pedido/page.tsx:76`
-  - `features/dashboard/admin/utils/menuUtils.ts:109`, `components/admin/Importpreviewmodal.tsx:471`
-  - `app/api/auth/{login,logout}/route.ts`
-- **Problema:** el JWT se guarda en `localStorage.authToken` y en una cookie `session` creada desde JavaScript (sin `HttpOnly` ni `Secure`). Cualquier XSS puede leerlo.
-- **Riesgo:** robo de sesión, incluida la de administrador.
-- **Solución sugerida (elegir una):**
-  - **(a)** El API emite `Set-Cookie: session=…; HttpOnly; Secure; SameSite=Lax; Path=/` y el front llama con `credentials: "include"`. Requiere CORS con credenciales y protección CSRF (token de doble envío o `SameSite=Strict` en las mutaciones).
-  - **(b)** BFF en Next: `/api/auth/login` fija la cookie HttpOnly y un route handler reenvía al API añadiendo `Authorization`.
-
-  En los dos casos se eliminan `localStorage.authToken`, `localStorage.user` y la cookie escrita por JS.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:**
-  - `document.cookie` no contiene el token.
-  - `localStorage` solo contiene `elquijote:preferencias`.
-  - La prueba E2E de almacenamiento (PLAN 0.6) deja de tener la excepción `authToken`.
 
-## NP-05 · IDOR en pedidos, pagos y facturas
+## NP-05 · Autorización por propietario en pedidos, pagos y facturas
 
-- **Archivos y rutas afectados:** `app/menu/producto/[id]/page.tsx:195-199`, `app/menu/pedido/checkout/page.tsx`, `app/menu/pedido/checkout/exito/page.tsx:27,44`. Endpoints del API: `POST /pedidos/mesa`, `/metodos-pago/setup-intent`, `/metodos-pago`, `/pagos/crear-intento`, `GET /facturas/:id`, `GET /facturas/:id/descargar`.
-- **Problema:** el front envía `usuarioId` u `ordenId` en el cuerpo o la URL sin `Authorization`. Si el API confía en ellos, se puede actuar en nombre de otro usuario o descargar facturas ajenas, que contienen datos fiscales.
-- **Riesgo:** suplantación y fuga de datos fiscales.
-- **Solución sugerida:** el API obtiene el usuario del token y autoriza por propietario; ignora `usuarioId` en el cuerpo. El front envía las credenciales (depende de NP-04).
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:** las peticiones con `usuarioId` u `ordenId` ajenos devuelven 403; sin token devuelven 401.
 
 ## NP-06 · Validación y saneamiento en el servidor
 
-- **Archivos y rutas afectados:** todos los endpoints del API que reciben datos de registro, login, perfil, reserva, checkout (RFC, CP, dirección), CRUD del admin (platos, promociones, inventario, usuarios, ajustes, "acerca de") e importación CSV/JSON/XLSX. Afectan especialmente a los campos `heroTitle` y `about.description`, que hoy se pintan como HTML (`components/landing/Hero.tsx:96`, `components/landing/AboutSection.tsx:65`).
-- **Problema:** la validación del front es solo una ayuda de UX. Si el API acepta HTML o datos sin validar, se almacenan XSS y datos inválidos.
-- **Riesgo:** XSS almacenado en la portada pública y corrupción de datos.
-- **Solución sugerida:**
-  - Esquemas de validación en el API (class-validator o zod), con límites de longitud iguales a los del front.
-  - Los campos de texto enriquecido pasan a ser texto plano o campos estructurados.
-  - El HTML que llegue se rechaza o se sanea en el servidor.
-  - Idealmente, compartir los esquemas front-API en un paquete común.
-
-  El front deja de interpretar HTML en el paso 2.12 del PLAN.
-- **Teléfono de la reserva (decisión del usuario, 2026-11-01):** el front lo deja como hoy, que solo exige que no esté vacío (`esquemaReservaContacto`), y no lo endurece. La validación real del formato es del servidor: el endpoint de reservas debe aceptar solo los 10 dígitos de México (con o sin `+52`) y responder 400 con un mensaje claro si no.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:** enviar `<script>` o atributos `on*` en cualquier campo devuelve 400 o se guarda escapado; cada endpoint documenta su esquema.
+- **Teléfono de la reserva (decisión del usuario, 2026-11-01):** el front solo exige que no esté vacío (`esquemaReservaContacto`); el endpoint de reservas debe aceptar los 10 dígitos de México (con o sin `+52`) y responder 400 con un mensaje claro si no.
 
-## NP-07 · Límites de peticiones (rate limiting)
+## NP-07 · Límites de peticiones
 
-- **Archivos y rutas afectados:** API: `/auth/sign-in`, `/auth/register`, reservas, búsquedas, creación de pedidos y pagos; route handlers mientras existan (NP-01).
-- **Problema:** no hay límites de peticiones. El front solo aplica un bloqueo visual tras varios intentos (`useLockout`).
-- **Riesgo:** fuerza bruta de credenciales, abuso de reservas y pedidos, y costes de Stripe y Cloudinary.
-- **Solución sugerida:** limitación por IP y por cuenta en el API (por ejemplo `@nestjs/throttler`), respuestas 429 con `Retry-After` y, si hace falta, el cortafuegos de Vercel (NP-27).
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:** más de N intentos de login por minuto devuelven 429; el front ya muestra un mensaje genérico ante 429.
 
-## NP-08 · Subidas a Cloudinary firmadas y preset restringido
+## NP-08 · Subidas a Cloudinary firmadas desde el API
 
-- **Archivos y rutas afectados:** `features/dashboard/admin/components/ItemModal.tsx:173`, `features/dashboard/admin/components/PromoModal.tsx:197`; configuración de la cuenta de Cloudinary.
-- **Problema:** `CldUploadButton` usa el preset placeholder `tu_upload_preset`, sin firmar, así que hoy la subida no funciona. Con un preset sin firmar real, cualquiera que conozca la nube pública podría subir archivos.
-- **Riesgo:** abuso del almacenamiento y alojamiento de contenido ajeno.
-- **Solución sugerida:**
-  - El API expone un endpoint de firma (`signatureEndpoint`) que exige rol admin.
-  - Preset firmado con `allowed_formats` (jpg, png, webp, avif), tamaño máximo, carpeta fija y moderación.
-
-  El front ya valida tipo, tamaño y firma de bytes antes de subir (PLAN 5.x).
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:** una subida sin firma válida es rechazada por Cloudinary; solo el rol admin obtiene firmas.
 
-## NP-09 · Claves de pasarela de pago gestionadas en el navegador
+## NP-09 · Claves de pasarela de pago solo en el backend
 
-- **Archivos y rutas afectados:** `features/dashboard/admin/components/settings/GatewayModal.tsx:49-56`, `features/dashboard/admin/data/settingsMock.tsx:29`.
-- **Problema:** el admin tiene un formulario para escribir la API key y la secret key de las pasarelas.
-- **Riesgo:** exposición de claves secretas de pago.
-- **Solución sugerida:** las claves se gestionan solo en el backend (variables de entorno o gestor de secretos). La UI muestra el estado («Conectada · termina en 4F2A») que devuelve el API y no tiene campos de secreto. El ajuste de UI se hace cuando exista el endpoint.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:** ningún formulario del front acepta claves secretas; el bundle no contiene marcadores con forma de clave (`sk_live_`).
 
-## NP-10 · Respaldos y credenciales de Google en el entorno del front
+## NP-10 · Respaldos de la BD fuera del front
 
-- **Archivos y rutas afectados:** `app/api/backups/route.ts`, `app/api/cron/backups/route.ts`, `vercel.json` (cron diario), variables `GOOGLE_PRIVATE_KEY`, `GOOGLE_CLIENT_EMAIL`, `GOOGLE_DRIVE_FOLDER_ID` y `DATABASE_URL`; `app/api/backups/route.ts:95` (log de `GaxiosError`).
-- **Problema:**
-  - El front hace volcados de la BD y los sube a Google Drive con credenciales de cuenta de servicio.
-  - El log de error puede incluir cabeceras `Authorization`.
-  - `app/api/cron/backups/route.ts` no verifica `CRON_SECRET`: el comentario de la línea 6 lo menciona, pero el código no lo comprueba, así que cualquiera puede invocar el cron. Por eso es la única excepción temporal de la lista de rutas públicas de D-15 (PLAN 2.10).
-  - `lib/db.ts:39` llama a `http://localhost:3000/api/cron/backups` desde el propio módulo de base de datos.
-- **Riesgo:** exfiltración de la BD completa y de credenciales.
-- **Solución sugerida:** mover los respaldos a la infraestructura del backend (job programado del API o del proveedor de BD), con las credenciales fuera del proyecto del front. Registrar solo `err.message`.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:** el proyecto de Vercel del front no tiene variables de servidor de BD ni de Google; `vercel.json` no programa respaldos.
 
-## NP-11 · Facturación creada desde el cliente tras el pago
+## NP-11 · Facturación generada en el servidor
 
-- **Archivos y rutas afectados:** `app/menu/pedido/checkout/page.tsx`, `app/menu/pedido/checkout/exito/page.tsx`.
-- **Problema:** la factura (CFDI) se solicita desde el navegador después del pago. Si el usuario cierra la pestaña, la factura no se genera; además depende de datos enviados por el cliente.
-- **Riesgo:** inconsistencias fiscales y manipulación.
-- **Solución sugerida:** generar la factura en el API a partir del webhook de Stripe (`payment_intent.succeeded`), con los datos fiscales ya guardados en el pedido.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:** cada pago confirmado produce su factura aunque el cliente no vuelva a la página de éxito.
 
 ## NP-12 · Datos mock y `localStorage` como motor de datos
 
@@ -255,16 +165,11 @@
 - **Prioridad:** Alta.
 - **Criterio de aceptación:** el API devuelve la carta de vinos; la landing la muestra sin contenido inventado.
 
-## NP-15 · Mensajes que permiten enumerar usuarios
+## NP-15 · Mensajes genéricos de autenticación
 
-- **Archivos y rutas afectados:** API `/auth/sign-in`, `/auth/register` y recuperación; el front muestra `data.message` tal cual en `app/(auth)/login/page.tsx` y `app/(auth)/register/page.tsx`.
-- **Problema:** si el API responde «correo ya registrado» o «usuario no existe», se puede saber qué correos tienen cuenta.
-- **Riesgo:** enumeración de cuentas y phishing dirigido.
-- **Solución sugerida:** respuestas genéricas en el API («Correo o contraseña incorrectos»; en el registro, «Si el correo es válido, te enviaremos un enlace»).
-
-  El front pasa a mensajes genéricos propios y deja de mostrar `data.message` (PLAN 4.x).
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Media.
-- **Criterio de aceptación:** las respuestas del API no difieren entre un correo existente y uno inexistente, ni en texto ni en código.
 
 ## NP-16 · Recuperación de contraseña desactivada
 
@@ -307,32 +212,23 @@
 - **Prioridad:** Media.
 - **Criterio de aceptación:** un usuario con rol 5 que visita `/dashboard` llega a una página válida.
 
-## NP-20 · Cupones activos expuestos públicamente
+## NP-20 · Cupones: validación en el servidor
 
-- **Archivos y rutas afectados:** `app/api/public/cupones/route.ts`.
-- **Problema:** el endpoint público lista los cupones activos con sus códigos.
-- **Riesgo:** uso indebido de descuentos.
-- **Solución sugerida:** el API valida un cupón concreto (`POST /cupones/validar`) sin listar códigos; el listado público solo muestra promociones sin código.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Media.
-- **Criterio de aceptación:** no existe ningún endpoint público que devuelva códigos de cupón.
 
-## NP-21 · Conexión a BD con `rejectUnauthorized: false`
+## NP-21 · Conexión TLS a la BD
 
-- **Archivos y rutas afectados:** `lib/db.ts`.
-- **Problema:** la conexión TLS a Postgres no valida el certificado.
-- **Riesgo:** intermediario en la conexión a la BD.
-- **Solución sugerida:** validar con la CA del proveedor. Desaparece al resolver NP-01.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Media.
-- **Criterio de aceptación:** las conexiones a BD validan el certificado, o el front ya no conecta a la BD.
 
-## NP-22 · Script de instalación que escribe secretos y descarga de una rama temporal
+## NP-22 · Script de instalación del front
 
-- **Archivos y rutas afectados:** `scripts/setup-windows.ps1`.
-- **Problema:** el instalador escribe `DATABASE_URL` y `JWT_SECRET` en el `.env` del front y descarga de una rama `claude/...` de GitHub.
-- **Riesgo:** propagación de secretos de servidor y dependencia de una rama efímera.
-- **Solución sugerida:** que el instalador del front solo pida variables públicas (`NEXT_PUBLIC_API_URL`, nube de Cloudinary, clave publicable de Stripe) y use la rama `main` o una etiqueta.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Media.
-- **Criterio de aceptación:** el script no maneja secretos de servidor.
 
 ## NP-23 · Cierre de sesión por inactividad
 
@@ -409,31 +305,17 @@
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** cada idea se convierte en una historia de usuario antes de ejecutarse.
 
-## NP-31 · Librería `xlsx@0.18.5` con vulnerabilidades conocidas
+## NP-31 · Sustitución de la librería de hojas de cálculo (decisión D-06)
 
-- **Archivos y rutas afectados:** `package.json`, `components/admin/Importpreviewmodal.tsx:467-488`, `app/dashboard/admin/menu/page.tsx:147-178`.
-- **Problema:** la importación de la carta (CSV, JSON y XLSX) se parsea en el navegador con `xlsx@0.18.5`, la última versión publicada en npm. Tiene **prototype pollution (CVE-2023-30533)** y **ReDoS (CVE-2024-22363)**. El usuario decidió (D-06) no cambiarla durante el rediseño.
-- **Riesgo:** un archivo manipulado podría contaminar prototipos o bloquear la pestaña del administrador.
-- **Solución sugerida:** elegir una opción.
-  - **(a)** Instalar SheetJS 0.20.x desde el tarball oficial (`https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`), fijado con integridad en el lockfile, y cargarlo con `import()` solo al importar.
-  - **(b)** Mover el parseo al API (recomendado a medio plazo): el front solo sube el archivo validado.
-
-  Mientras tanto, el PLAN (paso 5.9) valida tamaño (≤ 2 MB), extensión, tipo MIME y firma de bytes antes de entregar el archivo a `xlsx`.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:** `pnpm audit` no muestra avisos de `xlsx`; la importación de los archivos de ejemplo funciona igual.
 
-## NP-32 · Autorización por rol y por propietario en cada endpoint
+## NP-32 · Autorización por rol en cada endpoint (complemento de D-15)
 
-- **Archivos y rutas afectados:** todos los route handlers de `app/api` mientras existan (NP-01) y los endpoints del API externo.
-- **Problema:** la decisión D-15 hace que el proxy exija un token válido en `/api/*` (salvo la lista pública documentada) y rol admin en `/api/admin/**` y `/api/backups/**`. Pero el proxy es una comprobación optimista: no decide qué rol puede hacer cada operación (por ejemplo, ¿cocina puede ajustar inventario?) ni comprueba la propiedad de los recursos.
-- **Riesgo:** un usuario autenticado con un rol bajo podría usar operaciones que no le corresponden.
-- **Solución sugerida:**
-  - Una matriz de permisos rol × operación definida en el API.
-  - Comprobación en cada handler o controlador (guards de NestJS).
-  - Pruebas de autorización por endpoint.
-  - Al migrar (NP-01), retirar del proxy las reglas que dupliquen esa lógica.
+- **Estado:** pendiente de endurecer en el API o en la configuración del servidor. Clasificación y paquete en [`PLAN-AMPLIACION.md`](PLAN-AMPLIACION.md).
+- **Detalle técnico:** se conserva fuera del repositorio (el repo es público).
 - **Prioridad:** Alta.
-- **Criterio de aceptación:** cada endpoint documenta qué roles admite; las pruebas cubren al menos un caso permitido y uno denegado por rol.
 
 ## NP-33 · Calidad y metadatos de las imágenes en Cloudinary
 
@@ -476,7 +358,7 @@
   - `features/dashboard/cliente/*`, `components/IdleLogout.tsx`, `styles/loading.css`, `types/index.ts`
   - `check_backups.ts` y `setup_settings.ts` (scripts en la raíz)
 - **Problema:** un grafo de importaciones desde `app/` y `proxy.ts` (paso 1.2) los marca sin uso, pero el PLAN no los incluye en el borrado: algunos los reutilizan pasos posteriores (3.13 navegación por rol, fase 4 landing, NP-19 y NP-23) y otros son scripts de operación.
-- **Riesgo:** bajo: peso muerto y confusión; `AboutSection` y las secciones de landing contienen código con riesgo XSS (`dangerouslySetInnerHTML`) que el PLAN 2.12 sanea mientras exista.
+- **Riesgo:** bajo: peso muerto y confusión.
 - **Solución sugerida:** revisarlos al cerrar cada fase y borrar (están versionados) lo que ningún paso reutilice. `components/ui/Button.tsx` y `types/ui.ts` se borraron en el 3.2 (2026-11-01). Las imágenes de este código muerto (`AboutSection` con `next/image` sin `sizes`, `CategoriesSection`, `features/dashboard/cliente/*` con fotos de Unsplash) no se adaptaron en el 1.9 porque no se pintan en ninguna ruta.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** el grafo de importaciones solo marca como huérfano lo que está documentado como excepción.
@@ -488,7 +370,7 @@
   1. **Supabase Storage** (`mdygrtdebtmuhmirnbxz.supabase.co`) se conserva como origen de imagen con **toda la ruta** (`/**`), como ya permitía `next.config`, porque según el código de `SmartImage` las fotos de platos y categorías que envía el API viven ahí. **No verificado** con datos reales (sin backend en las pruebas): ni que siga en uso ni bajo qué ruta (`/storage/v1/object/public/…` u otra).
   2. **Widget de subida de Cloudinary** (`CldUploadButton`): los orígenes `api.cloudinary.com` (conexión) y `upload-widget.cloudinary.com` (marco) se anotaron por la documentación del widget; **no verificados** en el navegador. Se confirman en la fase 2 al activar la CSP (2.3–2.5) con la consola abierta en el admin.
   3. Las `<img>` del admin y de `PromosSection` siguen siendo `<img>` normales: aceptan cualquier host que pegue el administrador (la galería de «acerca de» usa fotos de Unsplash en los datos de ejemplo y `GallerySection` sustituye las rotas por una de Unsplash, ocultando el error). Cuando las fases 4 y 5 las pasen a `Imagen`, **un host no listado mostrará el respaldo en lugar de la foto**.
-  4. `LandscapeSection.tsx:88` interpola la URL pegada sin escapar dentro de `background-image: url(…)` (ESTADO anexo B).
+  4. Una vista previa del admin construye un fondo con la URL pegada; se sustituye por `Imagen` al rehacer la pantalla.
 - **Riesgo:** una lista corta puede dejar sin foto contenido real; una lista larga amplía lo que la CSP deberá permitir.
 - **Solución sugerida:** decidir si toda imagen de contenido se sube a Cloudinary (la subida del admin ya va allí) y, si es así, retirar Supabase de la lista cuando el API deje de devolver esas URL; validar en el API que las URL de imagen sean de la nube de la casa. Al rehacer el admin (fase 5, 5.14), sustituir la vista previa de `LandscapeSection` por `Imagen`.
 - **Prioridad:** Media.
@@ -535,7 +417,7 @@
 - **Archivos y rutas afectados:** `app/api/cron/backups/route.ts:105` y `lib/db.ts:37`.
 - **Problema:** el paso 2.8 pide que `rg "console\.log" app components features hooks lib` no encuentre nada, pero estos dos están en código de servidor que el rediseño no toca (NP-01). Escriben mensajes fijos («CRON: …»), sin datos personales. `compiler.removeConsole` no los elimina del build de servidor con Turbopack (comprobado en el 2.8).
 - **Riesgo:** bajo; ruido en los registros del servidor.
-- **Solución sugerida:** al revisar el backend (NP-10, cron con `CRON_SECRET`), sustituirlos por el registro del servidor o eliminarlos.
+- **Solución sugerida:** al revisar el backend (NP-10), sustituirlos por el registro del servidor o eliminarlos.
 - **Prioridad:** Baja.
 - **Criterio de aceptación:** `rg "console\.log" app lib` sin resultados.
 

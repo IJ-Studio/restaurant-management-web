@@ -412,7 +412,7 @@
       | `/api/auth/logout` | POST | Cerrar sesión debe funcionar aunque el token haya caducado |
       | `/api/auth/me` | GET | Lo llama la parte pública para saber si hay sesión; ya responde 401 sin token |
       | `/api/menu/categories` | GET | Carta pública (`/menu`) |
-      | `/api/cron/backups` | GET | **Excepción temporal:** el cron de Vercel no envía un token de usuario; bloquearla cortaría los respaldos. Su protección con `CRON_SECRET` es NP-10. |
+      | `/api/cron/backups` | GET | **Excepción temporal:** el cron de Vercel no envía un token de usuario; bloquearla cortaría los respaldos. Pendiente de endurecer en el API (NP-10). |
 
       `/api/public/combos`, `/api/public/cupones` y `/api/mesas` **no se llaman desde el front**, así que pasan a exigir token.
     - Sin token o con un token inválido, la respuesta es `401` en JSON genérico (`{"error":"No autorizado"}`), con `Cache-Control: no-store`. Además, `/api/admin/**` y `/api/backups/**` exigen rol admin (`403`). La autorización por rol y por propietario del resto de endpoints es NP-32.
