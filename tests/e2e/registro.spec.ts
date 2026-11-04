@@ -90,3 +90,14 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+// Prioridad 2.1: con el autocompletado se rellena en menos de 1 s; antes el primer clic se
+// rechazaba con «Inténtalo de nuevo» (tiempo mínimo anti-robots) y hacía falta un segundo clic.
+test("un solo clic basta aunque se envíe enseguida de abrir la página", async ({ page }) => {
+	const envios = await abrir(page);
+	await rellenar(page);
+	await crear(page);
+	await expect(page.getByText("Tu cuenta está creada")).toBeVisible();
+	expect(envios).toHaveLength(1);
+	await expect(page.getByText("No se pudo enviar el formulario")).toHaveCount(0);
+});

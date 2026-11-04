@@ -124,21 +124,14 @@ test.describe("campos de formulario del catálogo", () => {
 		await expect(prueba(page, "envios")).toHaveText("Envíos atendidos: 0");
 	});
 
-	test("un envío antes del tiempo mínimo no sale; el segundo intento sí, y solo una vez", async ({ page }) => {
-		// Date.now() queda fijo (los temporizadores siguen): el primer envío ocurre «a 0 ms» del montaje.
-		const inicio = new Date("2026-11-01T12:00:00Z").getTime();
-		await page.clock.setFixedTime(inicio);
+	test("un envío antes del tiempo mínimo espera y sale con un solo clic, una sola vez", async ({ page }) => {
+		// Prioridad 2.1: antes se rechazaba y hacía falta un segundo clic. Ahora espera lo que falta.
 		await abrirCatalogo(page);
 		await rellenarValido(page);
 		await prueba(page, "enviar").click();
-		await expect(prueba(page, "error-general")).toHaveText(RECHAZADO);
-		await expect(prueba(page, "envios")).toHaveText("Envíos atendidos: 0");
-		await page.clock.setFixedTime(inicio + TIEMPO_MINIMO_MS + 500);
-		// Dos Enter seguidos desde un campo: un solo envío.
+		// Mientras espera, un Enter más no duplica el envío.
 		await formulario(page).getByLabel("Nombre").focus();
 		await page.keyboard.press("Enter");
-		await page.keyboard.press("Enter");
-		await expect(prueba(page, "enviar")).toHaveAttribute("aria-busy", "true");
 		await expect(prueba(page, "resultado-formulario")).toHaveText("Solicitud enviada para 2 personas.", { timeout: 5_000 });
 		await expect(prueba(page, "envios")).toHaveText("Envíos atendidos: 1");
 		await expect(prueba(page, "error-general")).toHaveCount(0);

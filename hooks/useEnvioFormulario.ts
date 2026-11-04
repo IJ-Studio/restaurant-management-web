@@ -12,11 +12,11 @@ import { NOMBRE_CAMPO_TRAMPA } from "@/components/ui/CampoTrampa";
  * - valida con el esquema de zod y, si hay errores, **enfoca el primer campo inválido** en el
  *   orden del formulario y **anuncia** cuántos son en una región `aria-live`;
  * - borra el error de un campo en cuanto se corrige;
- * - no envía si el **campo trampa** llega relleno ni si el formulario se envía antes del
- *   **tiempo mínimo de rellenado** (los robots tardan milisegundos). En los dos casos se muestra
- *   un mensaje neutro que invita a reintentar, sin decir el motivo: si una persona fue demasiado
- *   rápida, el segundo intento ya pasa. El campo trampa es la defensa principal; el tiempo mínimo
- *   es corto (1 s por defecto, para registro y reserva) y 0 en el inicio de sesión, por el autorrelleno.
+ * - no envía si el **campo trampa** llega relleno (mensaje neutro, sin decir el motivo). Si se
+ *   envía antes del **tiempo mínimo de rellenado** (1 s por defecto; 0 en el inicio de sesión),
+ *   espera lo que falta y envía: antes lo rechazaba y la persona tenía que pulsar dos veces
+ *   (Prioridad 2.1, con el autocompletado se rellena en milisegundos). El campo trampa es la
+ *   defensa principal contra robots.
  *
  * Los datos se leen del propio formulario por el `name` de cada control: las casillas dan un
  * booleano, los `type="number"` un número y el resto, el texto. `obtenerDatos` lo sustituye
@@ -95,12 +95,19 @@ export function useEnvioFormulario<E extends z.ZodType>({
 			setErrorGeneral(null);
 
 			const trampa = campoTrampa ? formulario.elements.namedItem(campoTrampa) : null;
-			const conTrampa = trampa instanceof HTMLInputElement && trampa.value !== "";
-			const demasiadoRapido = tiempoMinimoMs > 0 && Date.now() - montado.current < tiempoMinimoMs;
-			if (conTrampa || demasiadoRapido) {
+			if (trampa instanceof HTMLInputElement && trampa.value !== "") {
 				setErrorGeneral(MENSAJE_ENVIO_RECHAZADO);
 				anunciar(MENSAJE_ENVIO_RECHAZADO);
 				return;
+			}
+			const falta = tiempoMinimoMs > 0 ? tiempoMinimoMs - (Date.now() - montado.current) : 0;
+			if (falta > 0) {
+				// Bloquea otro envío mientras espera; un solo clic basta.
+				enCurso.current = true;
+				setEnviando(true);
+				await new Promise((r) => window.setTimeout(r, falta));
+				enCurso.current = false;
+				setEnviando(false);
 			}
 
 			const crudos = obtenerDatos ? obtenerDatos(formulario) : leerFormulario(formulario, campoTrampa ? [campoTrampa] : []);

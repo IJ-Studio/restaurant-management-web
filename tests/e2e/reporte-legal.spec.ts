@@ -47,7 +47,8 @@ test("si el API del reporte falla, lo dice con calidez, conserva el texto y nunc
 	await panel.getByLabel("¿Qué pasó?").selectOption("otro");
 	await panel.getByLabel("Descripción").fill("Una prueba de texto largo.");
 	await panel.getByRole("button", { name: "Enviar el reporte" }).click();
-	await expect(panel.getByText(/No pudimos enviar tu reporte/)).toBeVisible();
+	// El mensaje también se anuncia en una región solo para lectores; aquí se mira la alerta visible.
+	await expect(panel.getByRole("alert").getByText(/No pudimos enviar tu reporte/)).toBeVisible();
 	await expect(panel.getByText("Gracias, ya nos llegó tu reporte.")).toHaveCount(0);
 	await expect(panel.getByLabel("Descripción")).toHaveValue("Una prueba de texto largo.");
 });
