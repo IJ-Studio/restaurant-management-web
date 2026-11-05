@@ -140,7 +140,7 @@ function PanelPedido({ mesa, carta, abierto, alCerrar, alEnviado }: { mesa: Mesa
 												<Boton variante="secundario" soloIcono icono={<Minus />} className="size-12" onClick={() => cambiar(p, -1)}>
 													{`Quitar un ${p.nombre}`}
 												</Boton>
-												<span className="w-6 text-center font-semibold numeros-tabulares" aria-live="polite">
+												<span className="w-6 text-center font-semibold cifras-consola" aria-live="polite">
 													{n}
 													<span className="solo-lectores"> en el pedido</span>
 												</span>
@@ -165,7 +165,7 @@ function PanelPedido({ mesa, carta, abierto, alCerrar, alEnviado }: { mesa: Mesa
 							{carrito.map((c) => (
 								<li key={c.plato.id} className="flex justify-between gap-3">
 									<span>{`${c.cantidad} × ${c.plato.nombre}`}</span>
-									<span className="numeros-tabulares">{importe((c.plato.precio ?? 0) * c.cantidad)}</span>
+									<span className="cifras-consola">{importe((c.plato.precio ?? 0) * c.cantidad)}</span>
 								</li>
 							))}
 						</ul>

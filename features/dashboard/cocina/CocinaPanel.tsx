@@ -66,12 +66,12 @@ function TarjetaComanda({ pedido, accion, ocupado, alAvanzar }: { pedido: Comand
 		<li className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
 			<div className="flex items-baseline justify-between gap-3">
 				<h3 className="m-0 font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.1] text-texto-principal">{pedido.table}</h3>
-				<span className="shrink-0 text-texto-secundario numeros-tabulares">{`${folio(pedido.id)} · ${pedido.time}`}</span>
+				<span className="shrink-0 text-texto-secundario cifras-consola">{`${folio(pedido.id)} · ${pedido.time}`}</span>
 			</div>
 			<ul className="m-0 flex list-none flex-col gap-2 p-0" aria-label={`Platos de la comanda ${folio(pedido.id)}`}>
 				{pedido.items.map((it, i) => (
 					<li key={`${it.nombre}-${i}`} className="text-(length:--texto-titulo-interfaz) text-texto-principal">
-						<span className="me-2 font-semibold numeros-tabulares">{`${it.cantidad} ×`}</span>
+						<span className="me-2 font-semibold cifras-consola">{`${it.cantidad} ×`}</span>
 						{it.nombre}
 					</li>
 				))}

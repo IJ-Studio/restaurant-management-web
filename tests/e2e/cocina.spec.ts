@@ -68,6 +68,19 @@ test("avanzar una comanda de nueva a en preparación y a lista con el mismo PATC
 	await contexto.close();
 });
 
+test("folios y cantidades con cifras de consola: monoespaciadas y tabulares (P5.2)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const cifra = page.locator("main .cifras-consola").first();
+	await expect(cifra).toBeVisible();
+	const estilo = await cifra.evaluate((e) => {
+		const c = getComputedStyle(e);
+		return { familia: c.fontFamily, numeros: c.fontVariantNumeric };
+	});
+	expect(estilo.familia).toMatch(/monospace/);
+	expect(estilo.numeros).toContain("tabular-nums");
+	await contexto.close();
+});
+
 test("existencias en un panel lateral: primero las bajas, con su nivel en texto", async ({ browser }) => {
 	const { contexto, page } = await abrir(browser);
 	await expect(page.locator("main").getByText("1 producto en el mínimo o por debajo.")).toBeVisible();

@@ -364,6 +364,7 @@ Se eliminan Ibarra Real Nova, Inter y Roboto, y la carga por `<link>`.
 | `--texto-numero-lote` | Fraunces itálica | `0.9375rem` | 400 | 1 | «Nº 03» en la etiqueta de sección (color acento) |
 | `--texto-cifra-destacada` | Fraunces, `font-variant-numeric: lining-nums tabular-nums` | `clamp(2rem, 1.7rem + 1.2vw, 2.75rem)` | 500 | 1 | Cifra principal de un indicador |
 | `--texto-cifra-tabla` | DM Sans, `tabular-nums` | `0.9375rem` | 500 | 1.4 | Importes y cantidades en tablas y precios |
+| `.cifras-consola` (`--font-consola`) | Monoespaciada del sistema (`ui-monospace`, SF Mono, Cascadia Mono, Menlo, Consolas), `tabular-nums slashed-zero` | la del contexto | la del contexto | la del contexto | Solo en paneles operativos (cocina, sala, caja): folios, horas, cantidades e importes de línea. Sin descarga de fuentes. Las cifras destacadas siguen en Fraunces. |
 
 ### Named Rules
 
@@ -371,6 +372,7 @@ Se eliminan Ibarra Real Nova, Inter y Roboto, y la carga por `<link>`.
 - **Mayúsculas solo en `--texto-etiqueta`.** Nunca en Fraunces ni en párrafos.
 - **Títulos equilibrados:** `text-wrap: balance` en títulos y `text-wrap: pretty` en párrafos.
 - **Cifras tabulares** en tablas, indicadores, precios y horas, para que no bailen al actualizarse.
+- **Cifras de consola solo en la operación:** `.cifras-consola` es para las pantallas de servicio (cocina, sala, caja); nunca en el sitio público ni en los títulos.
 - **Tipografía editorial:** `…` en lugar de `...`, comillas latinas «» o tipográficas, espacio duro entre cifra y unidad (`45 min`, `$ 320`). Los textos de carga terminan en `…`.
 - **Tamaño de texto escalable:** todas las medidas tipográficas van en `rem`. El panel de accesibilidad cambia el `font-size` raíz (100 %, 112,5 % o 125 %) y todo escala a la vez.
 

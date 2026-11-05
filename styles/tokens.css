@@ -41,6 +41,8 @@
   /* Fuentes: las variables --fuente-* las crea next/font en <html> */
   --font-titulos: var(--fuente-titulos), "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   --font-texto: var(--fuente-texto), system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Cifras de consola de los paneles operativos (P5.2): monoespaciadas del sistema, sin descarga. */
+  --font-consola: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 :root {

@@ -137,6 +137,14 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Folios, horas, cantidades e importes de línea en cocina, sala y caja (P5.2): se leen de un
+     vistazo en una pantalla de servicio, sin que las cifras bailen y con el cero distinto de la O. */
+  .cifras-consola {
+    font-family: var(--font-consola);
+    font-variant-numeric: tabular-nums slashed-zero;
+    letter-spacing: 0;
+  }
+
   .enlace-subrayado {
     color: inherit;
     text-decoration-line: underline;
