@@ -116,3 +116,20 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+// Prioridad 4.2: al bajar por la carta, las migas y «Volver» siguen arriba, a la vista.
+test("las migas y «Volver» quedan fijas arriba al bajar por la carta", async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 700 });
+	await abrir(page, conDatos);
+	await expect(page.locator("section#seccion-1")).toBeVisible();
+	// Hasta la última sección de la carta (más abajo empieza el pie y el encabezado deja de acompañar).
+	await page.locator("main section[id^=\"seccion-\"]").last().scrollIntoViewIfNeeded();
+	const migas = page.getByRole("navigation", { name: "Migas de pan" });
+	await expect(migas).toBeInViewport();
+	// Justo bajo la cabecera fija, no tapadas por ella.
+	const caja = await migas.boundingBox();
+	const cabecera = await page.locator("header").first().boundingBox();
+	expect(caja!.y).toBeGreaterThanOrEqual(Math.floor(cabecera!.y + cabecera!.height) - 1);
+	expect(caja!.y).toBeLessThan(200);
+	await expect(page.getByRole("link", { name: /Volver/ }).or(page.getByRole("button", { name: /Volver/ })).first()).toBeInViewport();
+});
