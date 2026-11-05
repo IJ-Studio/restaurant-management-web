@@ -6,6 +6,13 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### Tanda autónoma 3 · «Ver cálculo» en todas las tarjetas (P1.4) (2026-11-05)
+
+- **API** (`1817a82`, `b1287e0`): tipo común `Calculo` (fórmula, operación suma/conteo/cociente, datos con clave y valor, periodo y filtros). Devuelven su desglose `/reportes/hoy` (cobrado y propinas por pago, ticket medio, comensales por orden, costo de mermas por merma), `/caja/actual` (cobrado, propinas y efectivo esperado) y `/dashboard/admin/stats` (ventas por hora, pedidos por estatus y cada mesa ocupada). Campos aditivos. Pruebas que rehacen cada cifra (API 43/43 en operaciones y roles).
+- **Web** (`ba07071`): `Indicador` con «Ver cálculo» en las 47 tarjetas con cifras de 14 pantallas. Inicio, caja de hoy y caja del cajero usan el desglose del API; las demás lo arman con las mismas filas que dan la cifra. La prueba genérica `tests/e2e/calculos.ts` abre cada desglose y rehace el resultado: 157/157 en Chromium en las 14 specs de paneles. Se corrigió que el neto de nómina no publicaba su valor numérico.
+- **Móvil** (`b5dc400`): `StatCard` con «Ver cálculo» en el panel del admin, la caja y la lista de cobros. 465/465.
+- **Pruebas reales:** web 4/4 (admin en diez pantallas con 59 desgloses, más cajero, cocina y mesero) y móvil 2/2. Reportes (segmentación) queda fuera de la prueba real porque depende de que haya segmentos en la copia; tiene su prueba simulada.
+
 ### Tanda autónoma 3 · mermas solo del personal operativo (P1.2) y mesas (P1.3) (2026-11-05)
 
 - **Mermas (P1.2):**
