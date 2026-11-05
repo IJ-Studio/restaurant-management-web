@@ -6,6 +6,22 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### Tanda autónoma 3 · mermas solo del personal operativo (P1.2) y mesas (P1.3) (2026-11-05)
+
+- **Mermas (P1.2):**
+  - BD: `inventario_mermas.reportado_por_id` (FK a `users`, `on delete set null`, con índice). Ensayada en la copia (aplicar, revertir, aplicar; 4 mermas sin cambio) y aplicada en producción (`mermas_autor_20261105`), 4 mermas antes y después.
+  - API `ed6d797`: `POST /inventario/mermas` solo cajero, mesero y cocina; el admin recibe 403 y solo consulta (`GET`). Se guarda el id de quien la registra, además del nombre, la cantidad, el motivo y la fecha.
+  - Web `9d0879e`: se retira «Registrar merma» del inventario del admin (queda la consulta) y se añade al panel de cocina con el mismo `POST` que la móvil.
+  - Móvil `20b213d`: el admin ve las mermas del día sin el botón de registrar.
+  - Pruebas: matriz de roles del controlador (API 42/42 en operaciones); e2e simuladas de cocina e inventario 27/27 (Chromium); reales web 2/2 (cocina registra y el admin la ve con quién la reportó; admin 403, cajero, mesero y cocina 201) y móvil 2/2.
+  - Interfaz: en la web el registro se ofrece en el panel de cocina, igual que en la móvil; cajero y mesero tienen permiso en el API pero sus paneles no muestran el formulario (decisión conservadora, anotada para revisar).
+- **Mesas (P1.3):**
+  - API `17cc160` y `59d8ea4`: `GET/POST /mesas/admin`, `PATCH/DELETE /mesas/admin/:id` y `GET /mesas/admin/areas`, solo admin; `GET /mesas` sigue público. La baja desactiva si la mesa tiene órdenes o reservaciones (historial) o reservas por venir, y lo dice; si no, la archiva en `registros_eliminados` y la borra. Número repetido → 409. Sin migración (la tabla ya tenía `activa`).
+  - Web `4fcf28d`: `/dashboard/admin/mesas` en la navegación (nueve entradas), con alta, edición, activar o desactivar y baja.
+  - Móvil `7da59b1`: Administración → «Mesas», con las mismas acciones y reglas.
+  - Pruebas: API 8/8 y comprobación con `curl` contra la copia (público 200, cajero 403, alta, 409, edición, borrado archivado y desactivación con historial); e2e simuladas 14/14 (Chromium); reales web 1/1 y móvil 2/2; móvil 26/26 en administración.
+- **Lección:** el API limita el inicio de sesión a 5 por minuto e IP; las pruebas reales usan `tokenDe`, que espera y reintenta ante un 429.
+
 ### Tanda autónoma 3 · nómina con sumas y restas (P3.1) y CORS (2026-11-05)
 
 - **BD**: `nomina_movimientos`, ensayada en la copia (con su reversa) y aplicada en producción (`nomina_movimientos_20261105`), sin cambio en los conteos. Dos triggers: el historial no se edita ni se borra, y una corrección debe ser el movimiento inverso exacto.
