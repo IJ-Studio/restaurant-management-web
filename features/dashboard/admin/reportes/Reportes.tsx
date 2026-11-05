@@ -18,6 +18,7 @@ import { api } from "@/lib/api";
 import { formatearImporte } from "@/lib/formato/precio";
 import { DialogoExportar } from "./DialogoExportar";
 import type { PuntoCliente } from "./DispersionSegmentos";
+import { conteo, suma } from "@/lib/paneles/calculo";
 
 /**
  * Reportes, panel del Inicio (PLAN 5.3; PLAN-AMPLIACION D-24, D-26 y D-27).
@@ -93,9 +94,9 @@ function VistaClientes() {
 	return (
 		<div className="flex flex-col gap-(--espacio-xl)">
 			<div className="grid grid-cols-1 gap-(--espacio-md) sm:grid-cols-3">
-				<Indicador rotulo="Clientes analizados" valor={entero.format(d.clientesAnalizados)} />
-				<Indicador rotulo="Segmentos" valor={entero.format(d.segmentosDetectados)} />
-				<Indicador rotulo="Separación entre segmentos" valor={decimal.format(d.indiceSilueta)} detalle="De −1 a 1: cuanto más alto, más distintos" />
+				<Indicador rotulo="Clientes analizados" calculo={suma("clientes analizados = suma de los clientes de cada segmento", d.segmentos, (s) => s.nombre, (s) => s.tamano)} valorCalculo={d.clientesAnalizados} valor={entero.format(d.clientesAnalizados)} />
+				<Indicador rotulo="Segmentos" calculo={conteo("segmentos = grupos que detectó el modelo", d.segmentos, (s) => s.nombre, (s) => `${s.tamano} clientes`)} valorCalculo={d.segmentosDetectados} valor={entero.format(d.segmentosDetectados)} />
+				<Indicador rotulo="Separación entre segmentos" calculo={{ formula: "índice de silueta del modelo de segmentación (lo calcula el API)", operacion: "suma", datos: [{ clave: "índice de silueta", valor: d.indiceSilueta, origen: "/reports/customer-segments" }] }} valorCalculo={d.indiceSilueta} valor={decimal.format(d.indiceSilueta)} detalle="De −1 a 1: cuanto más alto, más distintos" />
 			</div>
 
 			<BloquePanel titulo="Mapa de clientes" descripcion="Cada punto es un cliente; los cercanos compran de forma parecida.">

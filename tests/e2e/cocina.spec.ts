@@ -1,6 +1,7 @@
 import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
+import { comprobarCalculos } from "./calculos";
 
 // Panel de cocina (PLAN 5.19; PLAN-AMPLIACION D-24). Contra el build de producción, con sesión de
 // cocina y el API simulado: `/pedidos/admin/recent`, `PATCH /pedidos/:id/estatus` e `/inventario/productos`.
@@ -125,5 +126,12 @@ test("cocina registra una merma con el mismo POST de la móvil; el costo y el au
 	await expect(merma).toBeHidden();
 	expect(cambios).toEqual([{ merma: { productId: 2, quantity: 0.5, unit: "kg", reason: "caducado", justification: "Se echó a perder." } }]);
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Merma registrada");
+	await contexto.close();
+});
+
+test("«Ver cálculo»: cada cifra de las tarjetas se rehace desde su desglose (P1.4)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await expect(page.locator("main").getByRole("button", { name: /^Ver cálculo de / }).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
+	expect(await comprobarCalculos(page)).toHaveLength(4);
 	await contexto.close();
 });

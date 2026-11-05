@@ -21,6 +21,7 @@ import { pedirPanel } from "@/lib/paneles/api-panel";
 import { presentarCarta } from "@/lib/formato/caja";
 import { DialogoMerma } from "@/features/dashboard/admin/inventario/DialogosInventario";
 import type { Merma } from "@/hooks/useInventory";
+import { conteo } from "@/lib/paneles/calculo";
 
 /**
  * Panel de cocina (PLAN 5.19; PLAN-AMPLIACION D-24), para una tableta o un monitor que se lee a
@@ -137,6 +138,11 @@ export function CocinaPanel() {
 	const bajos = productos.filter(esBajo);
 	const conMinimo = productos.some((p) => numero(p.minStock) !== null);
 	const comun = { estado: comandas.estado, alReintentar: recargar } as const;
+	// «Ver cálculo» (P1.4): cada comanda que cuenta, con su estado.
+	const desglose = (formula: string, estados: string[]) => {
+		const filas = lista.filter((p) => p.status && estados.includes(p.status));
+		return { calculo: conteo(formula, filas, (p) => `${p.table} · ${folio(p.id)}`, (p) => p.status ?? "", { filtros: { comandas: "de hoy" } }), valorCalculo: filas.length };
+	};
 
 	return (
 		<PlantillaPanel
@@ -160,15 +166,17 @@ export function CocinaPanel() {
 			}
 		>
 			<div className={REJILLA_INDICADORES}>
-				<Indicador {...comun} rotulo="En cocina" valor={entero.format(de("abierta").length + de("en_preparacion").length)} detalle="Nuevas y en preparación" className={INDICADOR_PROTAGONISTA} />
-				<Indicador {...comun} rotulo="Nuevas" valor={entero.format(de("abierta").length)} />
-				<Indicador {...comun} rotulo="Listas para la mesa" valor={entero.format(de("lista").length)} />
+				<Indicador {...comun} rotulo="En cocina" {...desglose("en cocina = comandas nuevas + en preparación", ["abierta", "en_preparacion"])} valor={entero.format(de("abierta").length + de("en_preparacion").length)} detalle="Nuevas y en preparación" className={INDICADOR_PROTAGONISTA} />
+				<Indicador {...comun} rotulo="Nuevas" {...desglose("nuevas = comandas en estado «abierta»", ["abierta"])} valor={entero.format(de("abierta").length)} />
+				<Indicador {...comun} rotulo="Listas para la mesa" {...desglose("listas = comandas en estado «lista»", ["lista"])} valor={entero.format(de("lista").length)} />
 				<Indicador
 					estado={inventario.estado}
 					alReintentar={recargarInventario}
 					rotulo="Existencias bajas"
 					valor={conMinimo ? entero.format(bajos.length) : "—"}
 					detalle={conMinimo ? undefined : "El sistema aún no da los mínimos"}
+					calculo={conMinimo ? conteo("existencias bajas = productos con existencias en el mínimo o por debajo", bajos, (p) => p.name, (p) => `${numero(p.stock)} de mínimo ${numero(p.minStock)}`) : undefined}
+					valorCalculo={conMinimo ? bajos.length : undefined}
 				/>
 			</div>
 

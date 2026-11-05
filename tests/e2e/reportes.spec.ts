@@ -1,6 +1,7 @@
 import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
+import { comprobarCalculos } from "./calculos";
 
 // Reportes (PLAN 5.3; D-24 y D-27): panel del Inicio con la segmentación de clientes y la exportación.
 test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
@@ -116,3 +117,10 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+test("«Ver cálculo»: cada cifra de las tarjetas se rehace desde su desglose (P1.4)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser, R);
+	await expect(page.locator("main").getByRole("button", { name: /^Ver cálculo de / }).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
+	expect(await comprobarCalculos(page)).toHaveLength(3);
+	await contexto.close();
+});

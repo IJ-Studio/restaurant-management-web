@@ -1,6 +1,7 @@
 import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
+import { comprobarCalculos } from "./calculos";
 
 // Nómina (PLAN 5.6). Contra el build de producción, con sesión de admin y `/payroll` simulado en memoria.
 test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
@@ -146,5 +147,13 @@ test("sumar o restar exige justificación, queda en el historial y el neto se re
 	const resultado = Number(await calculo.locator("[data-resultado]").textContent());
 	expect(Math.round(valores.reduce((a, b) => a + b, 0) * 100) / 100).toBe(resultado);
 	expect(resultado).toBe(4049.5);
+	await contexto.close();
+});
+
+test("«Ver cálculo»: cada cifra de las tarjetas se rehace desde su desglose (P1.4)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await expect(page.locator("main").getByRole("button", { name: /^Ver cálculo de / }).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
+	// Cuatro tarjetas y el neto de la persona del resumen.
+	expect(await comprobarCalculos(page)).toHaveLength(5);
 	await contexto.close();
 });

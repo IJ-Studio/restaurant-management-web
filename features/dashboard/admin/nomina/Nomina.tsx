@@ -21,6 +21,7 @@ import { api } from "@/lib/api";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { MovimientosNomina } from "./MovimientosNomina";
+import { cociente, conteo, suma } from "@/lib/paneles/calculo";
 
 /**
  * Nómina (PLAN 5.6). Mismas llamadas que antes (`GET`, `POST`, `PATCH` y `DELETE` sobre
@@ -213,10 +214,10 @@ export function Nomina() {
 			</div>
 
 			<div className={REJILLA_INDICADORES}>
-				<Indicador {...indicador} rotulo="Nómina semanal" valor={cargando ? undefined : importe(semanal)} detalle="Solo el personal activo" className={INDICADOR_PROTAGONISTA} />
-				<Indicador {...indicador} rotulo="Al mes, aproximado" valor={cargando ? undefined : importe(semanal * 4)} detalle="Cuatro semanas" />
-				<Indicador {...indicador} rotulo="Personal activo" valor={cargando ? undefined : entero.format(activos.length)} detalle={cargando ? undefined : `De ${entero.format(empleados.length)} en la nómina`} />
-				<Indicador {...indicador} rotulo="Pago medio" valor={cargando ? undefined : importe(activos.length ? semanal / activos.length : 0)} detalle="Por semana" />
+				<Indicador {...indicador} rotulo="Nómina semanal" calculo={suma("nómina semanal = suma del pago semanal de cada persona activa", activos, (e) => e.name, (e) => e.weeklyPay, { filtros: { estado: "activo" } })} valorCalculo={semanal} valor={cargando ? undefined : importe(semanal)} detalle="Solo el personal activo" className={INDICADOR_PROTAGONISTA} />
+				<Indicador {...indicador} rotulo="Al mes, aproximado" calculo={{ formula: "al mes = nómina semanal × 4 (cuatro semanas)", operacion: "suma", datos: [1, 2, 3, 4].map((n) => ({ clave: `semana ${n}`, valor: semanal })) }} valorCalculo={semanal * 4} valor={cargando ? undefined : importe(semanal * 4)} detalle="Cuatro semanas" />
+				<Indicador {...indicador} rotulo="Personal activo" calculo={conteo("personal activo = personas de la nómina marcadas como activas", activos, (e) => e.name, (e) => e.role)} valorCalculo={activos.length} valor={cargando ? undefined : entero.format(activos.length)} detalle={cargando ? undefined : `De ${entero.format(empleados.length)} en la nómina`} />
+				<Indicador {...indicador} rotulo="Pago medio" calculo={cociente("pago medio = nómina semanal / personal activo", ["nómina semanal", semanal], ["personal activo", activos.length])} valorCalculo={activos.length ? semanal / activos.length : 0} valor={cargando ? undefined : importe(activos.length ? semanal / activos.length : 0)} detalle="Por semana" />
 			</div>
 
 			<BloquePanel

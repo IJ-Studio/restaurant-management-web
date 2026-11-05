@@ -1,6 +1,7 @@
 import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
+import { comprobarCalculos } from "./calculos";
 
 // Panel de caja (PLAN 5.17; PLAN-AMPLIACION D-24). Contra el build de producción, con sesión de
 // cajero y el API simulado: `/caja/actual`, `/pedidos/admin/recent`, `/pedidos/metodos-pago` y el cobro.
@@ -16,7 +17,21 @@ const METODOS = [
 	{ id: 1, nombre: "Efectivo", tipo: "efectivo", aplicaPropina: true, esEfectivo: true },
 	{ id: 2, nombre: "Tarjeta", tipo: "terminal", aplicaPropina: true, esEfectivo: false },
 ];
-const CAJA = { abierta: true, fechaApertura: "2026-11-03T14:00:00.000Z", fondoInicial: 500, totalVentas: 1200, propinas: 90, numPagos: 6, efectivoEsperado: 1350 };
+const CAJA = {
+	abierta: true,
+	fechaApertura: "2026-11-03T14:00:00.000Z",
+	fondoInicial: 500,
+	totalVentas: 1200,
+	propinas: 90,
+	numPagos: 6,
+	efectivoEsperado: 1350,
+	// Desglose del API (P1.4), coherente con las cifras de arriba.
+	calculos: {
+		totalVentas: { formula: "efectivo + tarjeta + digital", operacion: "suma", datos: [{ clave: "efectivo", valor: 800 }, { clave: "tarjeta", valor: 300 }, { clave: "digital", valor: 100 }] },
+		propinas: { formula: "en efectivo + otros", operacion: "suma", datos: [{ clave: "en efectivo", valor: 50 }, { clave: "con otros métodos", valor: 40 }] },
+		efectivoEsperado: { formula: "fondo + efectivo + propinas en efectivo", operacion: "suma", datos: [{ clave: "fondo inicial", valor: 500 }, { clave: "ventas en efectivo", valor: 800 }, { clave: "propinas en efectivo", valor: 50 }] },
+	},
+};
 
 async function abrir(browser: Browser, ancho = 1024, preferencias: Record<string, string> = {}, caja: unknown = CAJA) {
 	const contexto = await browser.newContext({ storageState: archivoSesion("cajero"), viewport: { width: ancho, height: 900 } });
@@ -120,3 +135,10 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+test("«Ver cálculo»: cada cifra de las tarjetas se rehace desde su desglose (P1.4)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await expect(page.locator("main").getByRole("button", { name: /^Ver cálculo de / }).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
+	expect(await comprobarCalculos(page)).toHaveLength(4);
+	await contexto.close();
+});

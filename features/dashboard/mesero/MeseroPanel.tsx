@@ -21,6 +21,7 @@ import { formatearImporte } from "@/lib/formato/precio";
 import { pedirPanel } from "@/lib/paneles/api-panel";
 import { normalizarCarta, type CategoriaCarta, type PlatoCarta } from "@/lib/publico/carta";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { conteo } from "@/lib/paneles/calculo";
 
 /**
  * Panel de sala (PLAN 5.18; PLAN-AMPLIACION D-24), pensado para el móvil. Datos del API, el mismo
@@ -209,6 +210,11 @@ export function MeseroPanel() {
 	};
 	const visibles = filtro === "todas" ? listaMesas : listaMesas.filter((m) => estadoDe(m) === filtro);
 	const cuantas = (e: EstadoMesa) => listaMesas.filter((m) => estadoDe(m) === e).length;
+	// «Ver cálculo» (P1.4): cada mesa activa que cuenta, con el estado que le dan sus pedidos.
+	const desglose = (formula: string, estados: EstadoMesa[]) => {
+		const filas = listaMesas.filter((m) => estados.includes(estadoDe(m)));
+		return { calculo: conteo(formula, filas, (m) => nombreMesa(m), (m) => estadoDe(m), { filtros: { mesas: "activas" } }), valorCalculo: filas.length };
+	};
 	const estadoIndicadores = mesas.estado === "listo" ? pedidos.estado : mesas.estado;
 
 	async function servir(pedido: PedidoActivo, mesa: Mesa) {
@@ -228,9 +234,9 @@ export function MeseroPanel() {
 	return (
 		<PlantillaPanel titulo="Mesas" descripcion="Toma pedidos y marca lo servido.">
 			<div className={REJILLA_TRES_INDICADORES}>
-				<Indicador estado={estadoIndicadores} alReintentar={() => Promise.all([recargarMesas(), recargarPedidos()])} rotulo="Libres" valor={entero.format(cuantas("libre"))} detalle={`De ${entero.format(listaMesas.length)} mesas`} className={PROTAGONISTA_DE_TRES} />
-				<Indicador estado={estadoIndicadores} rotulo="Ocupadas" valor={entero.format(cuantas("ocupada") + cuantas("lista"))} />
-				<Indicador estado={estadoIndicadores} rotulo="Con plato listo" valor={entero.format(cuantas("lista"))} />
+				<Indicador estado={estadoIndicadores} alReintentar={() => Promise.all([recargarMesas(), recargarPedidos()])} rotulo="Libres" {...desglose("libres = mesas activas sin pedidos abiertos", ["libre"])} valor={entero.format(cuantas("libre"))} detalle={`De ${entero.format(listaMesas.length)} mesas`} className={PROTAGONISTA_DE_TRES} />
+				<Indicador estado={estadoIndicadores} rotulo="Ocupadas" {...desglose("ocupadas = mesas activas con algún pedido abierto", ["ocupada", "lista"])} valor={entero.format(cuantas("ocupada") + cuantas("lista"))} />
+				<Indicador estado={estadoIndicadores} rotulo="Con plato listo" {...desglose("con plato listo = mesas con un pedido en estado «lista»", ["lista"])} valor={entero.format(cuantas("lista"))} />
 			</div>
 
 			<BloquePanel

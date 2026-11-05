@@ -25,6 +25,7 @@ import { DialogoImportacion } from "./DialogoImportacion";
 import { DialogoPlatillo, ETIQUETAS } from "./DialogoPlatillo";
 import { leerArchivo, type Fila } from "./importacion";
 import { API, useCartaAdmin } from "./useCartaAdmin";
+import { conteo } from "@/lib/paneles/calculo";
 
 /**
  * Carta en administración (PLAN 5.9). Misma lógica (`useCartaAdmin`), otra forma: indicadores,
@@ -171,10 +172,10 @@ export function CartaAdmin() {
 			<input ref={entrada} type="file" hidden onChange={(e) => void alElegir(e.target.files?.[0])} />
 
 			<div className={REJILLA_INDICADORES}>
-				<Indicador rotulo="Platillos en la carta" valor={entero.format(todos.length)} detalle={contar(carta.categorias.length, "categoría")} className={INDICADOR_PROTAGONISTA} estado={carta.carga.estado} alReintentar={carta.recargar} />
-				<Indicador rotulo="Disponibles" valor={entero.format(disponibles)} estado={carta.carga.estado} alReintentar={carta.recargar} />
-				<Indicador rotulo="Agotados" valor={entero.format(todos.length - disponibles)} estado={carta.carga.estado} alReintentar={carta.recargar} />
-				<Indicador rotulo="Populares" valor={entero.format(todos.filter((i) => i.tags?.includes("popular")).length)} estado={carta.carga.estado} alReintentar={carta.recargar} />
+				<Indicador rotulo="Platillos en la carta" calculo={conteo("platillos = todos los platillos de todas las categorías", todos, (i) => i.name, (i) => (i.available ? "disponible" : "agotado"))} valorCalculo={todos.length} valor={entero.format(todos.length)} detalle={contar(carta.categorias.length, "categoría")} className={INDICADOR_PROTAGONISTA} estado={carta.carga.estado} alReintentar={carta.recargar} />
+				<Indicador rotulo="Disponibles" calculo={conteo("disponibles = platillos marcados como disponibles", todos.filter((i) => i.available), (i) => i.name, () => "disponible")} valorCalculo={disponibles} valor={entero.format(disponibles)} estado={carta.carga.estado} alReintentar={carta.recargar} />
+				<Indicador rotulo="Agotados" calculo={conteo("agotados = platillos no disponibles", todos.filter((i) => !i.available), (i) => i.name, () => "agotado")} valorCalculo={todos.length - disponibles} valor={entero.format(todos.length - disponibles)} estado={carta.carga.estado} alReintentar={carta.recargar} />
+				<Indicador rotulo="Populares" calculo={conteo("populares = platillos con la etiqueta «popular»", todos.filter((i) => i.tags?.includes("popular")), (i) => i.name, () => "popular")} valorCalculo={todos.filter((i) => i.tags?.includes("popular")).length} valor={entero.format(todos.filter((i) => i.tags?.includes("popular")).length)} estado={carta.carga.estado} alReintentar={carta.recargar} />
 			</div>
 
 			<div className="flex flex-wrap items-end gap-3">

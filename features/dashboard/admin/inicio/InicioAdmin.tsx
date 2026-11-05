@@ -23,6 +23,8 @@ import { getReservations } from "@/features/reservations/services/reservations.s
 import { useCarga } from "@/hooks/useCarga";
 import { formatearImporte } from "@/lib/formato/precio";
 import { pedirPanel } from "@/lib/paneles/api-panel";
+import { conteo } from "@/lib/paneles/calculo";
+import type { Calculo } from "@/components/ui/VerCalculo";
 
 /**
  * Inicio de administración (PLAN 5.2). Mismos endpoints que antes; cada bloque con sus estados de
@@ -43,6 +45,8 @@ interface Estadisticas {
 	mesasOcupadas: number;
 	mesasLibres: number;
 	totalMesas: number;
+	/** Desglose de cada cifra (P1.4), del API. */
+	calculos?: Partial<Record<"totalVentas" | "pedidosPendientes" | "mesasOcupadas", Calculo>>;
 }
 interface ProductoInventario {
 	stock: number | string | null;
@@ -132,8 +136,15 @@ function Indicadores() {
 	const [estadisticas, recargarEstadisticas] = useCarga(() => pedirPanel<Estadisticas>("/dashboard/admin/stats"), "inicio admin: indicadores");
 	const [reservas, recargarReservas] = useCarga(async () => {
 		const hoy = hoyLocal();
-		const lista: { estatus?: string }[] = await getReservations({ fechaDesde: hoy, fechaHasta: hoy });
-		return (Array.isArray(lista) ? lista : []).filter((r) => r.estatus !== "cancelada" && r.estatus !== "no_show").length;
+		const lista: { estatus?: string; fechaHora?: string }[] = await getReservations({ fechaDesde: hoy, fechaHasta: hoy });
+		const validas = (Array.isArray(lista) ? lista : []).filter((r) => r.estatus !== "cancelada" && r.estatus !== "no_show");
+		return conteo(
+			"reservas de hoy = reservaciones del día que no están canceladas ni marcadas como no llegó",
+			validas,
+			(r, i) => `Reserva ${i + 1}${r.fechaHora ? ` · ${r.fechaHora.slice(11, 16)}` : ""}`,
+			(r) => r.estatus ?? "sin estatus",
+			{ periodo: { inicio: hoy, fin: hoy }, filtros: { estatus: "distinto de cancelada y no llegó" } },
+		);
 	}, "inicio admin: reservas");
 
 	const e = estadisticas.estado === "listo" ? estadisticas.datos : null;
@@ -146,6 +157,8 @@ function Indicadores() {
 				rotulo="Ventas de hoy"
 				valor={e ? formatearImporte(num(e.totalVentas)) : undefined}
 				detalle="Desde la apertura"
+				calculo={e?.calculos?.totalVentas}
+				valorCalculo={e ? num(e.totalVentas) : undefined}
 				className={INDICADOR_PROTAGONISTA}
 				data-prueba="indicador-ventas"
 			/>
@@ -154,19 +167,25 @@ function Indicadores() {
 				rotulo="Pedidos pendientes"
 				valor={e ? entero.format(num(e.pedidosPendientes)) : undefined}
 				detalle={e ? `${entero.format(num(e.pedidosEnPreparacion))} en preparación` : undefined}
+				calculo={e?.calculos?.pedidosPendientes}
+				valorCalculo={e ? num(e.pedidosPendientes) : undefined}
 			/>
 			<Indicador
 				{...comun}
 				rotulo="Mesas ocupadas"
 				valor={e ? `${entero.format(num(e.mesasOcupadas))} de ${entero.format(num(e.totalMesas))}` : undefined}
 				detalle={e ? `${entero.format(num(e.mesasLibres))} libres` : undefined}
+				calculo={e?.calculos?.mesasOcupadas}
+				valorCalculo={e ? num(e.mesasOcupadas) : undefined}
 			/>
 			<Indicador
 				rotulo="Reservas de hoy"
 				estado={reservas.estado}
 				alReintentar={recargarReservas}
-				valor={reservas.estado === "listo" ? entero.format(reservas.datos) : undefined}
+				valor={reservas.estado === "listo" ? entero.format(reservas.datos.datos.length) : undefined}
 				detalle="Sin contar las canceladas"
+				calculo={reservas.estado === "listo" ? reservas.datos : undefined}
+				valorCalculo={reservas.estado === "listo" ? reservas.datos.datos.length : undefined}
 			/>
 		</div>
 	);

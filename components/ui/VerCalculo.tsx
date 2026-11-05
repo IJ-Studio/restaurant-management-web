@@ -5,9 +5,14 @@ import { Calculator } from "lucide-react";
 import { Boton } from "@/components/ui/Boton";
 import { Dialogo } from "@/components/ui/Dialogo";
 
-/** Desglose de un resultado tal como lo devuelve el API: la fórmula y cada dato que se usó. */
+/**
+ * Desglose de un resultado tal como lo devuelve el API (o armado en el cliente con las mismas filas
+ * que dieron la cifra): la fórmula, la operación y cada dato que se usó. `suma` (por defecto): el
+ * resultado es la suma de los valores; `conteo`: el número de datos; `cociente`: el primero entre el segundo.
+ */
 export interface Calculo {
 	formula: string;
+	operacion?: "suma" | "conteo" | "cociente";
 	datos: { clave: string; valor: number | string; origen?: string }[];
 	periodo?: { inicio: string; fin: string };
 	filtros?: Record<string, string | number | boolean | null>;
@@ -18,7 +23,7 @@ export interface Calculo {
  * dato con su clave y su valor. Lo que se muestra sale de los mismos datos que produjeron el
  * resultado (los devuelve el API junto con él), así que siempre coincide.
  */
-export function VerCalculo({ titulo, resultado, calculo }: { titulo: string; resultado: string; calculo: Calculo }) {
+export function VerCalculo({ titulo, resultado, valor, calculo }: { titulo: string; resultado: string; /** El resultado como número, para comprobarlo. */ valor?: number; calculo: Calculo }) {
 	const [abierto, setAbierto] = useState(false);
 	return (
 		<Dialogo
@@ -32,7 +37,8 @@ export function VerCalculo({ titulo, resultado, calculo }: { titulo: string; res
 			titulo={`Cálculo: ${titulo}`}
 			descripcion={calculo.formula}
 		>
-			<div className="flex flex-col gap-(--espacio-md)" data-calculo>
+			<div className="flex flex-col gap-(--espacio-md)" data-calculo data-operacion={calculo.operacion ?? "suma"}>
+				{calculo.datos.length === 0 && <p className="m-0 text-texto-secundario">Sin datos en este periodo.</p>}
 				{calculo.periodo && (
 					<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">
 						Periodo: <span className="cifras-consola">{calculo.periodo.inicio}</span> a <span className="cifras-consola">{calculo.periodo.fin}</span>
@@ -52,8 +58,8 @@ export function VerCalculo({ titulo, resultado, calculo }: { titulo: string; res
 						</tr>
 					</thead>
 					<tbody>
-						{calculo.datos.map((d) => (
-							<tr key={d.clave} className="border-t border-borde-sutil" data-clave={d.clave} data-valor={d.valor}>
+						{calculo.datos.map((d, i) => (
+							<tr key={`${i}-${d.clave}`} className="border-t border-borde-sutil" data-clave={d.clave} data-valor={d.valor}>
 								<th scope="row" className="py-1 text-start font-normal">
 									<span className="cifras-consola">{d.clave}</span>
 									{d.origen && <span className="block text-texto-tenue">{d.origen}</span>}
@@ -65,7 +71,7 @@ export function VerCalculo({ titulo, resultado, calculo }: { titulo: string; res
 					<tfoot>
 						<tr className="border-t-2 border-borde-control">
 							<th scope="row" className="py-1 text-start">Resultado</th>
-							<td className="py-1 text-end font-semibold cifras-consola" data-resultado>
+							<td className="py-1 text-end font-semibold cifras-consola" data-resultado data-resultado-valor={valor}>
 								{resultado}
 							</td>
 						</tr>

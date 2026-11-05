@@ -24,6 +24,7 @@ import { primeraMayuscula } from "@/lib/formato/caja";
 import { tokenSesion } from "@/lib/paneles/api-panel";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { conteo, suma } from "@/lib/paneles/calculo";
 
 /**
  * Reservas en administración (PLAN 5.11). Mismos servicios (`getReservations` con sus filtros,
@@ -307,10 +308,10 @@ export function ReservasAdmin() {
 		<PlantillaPanel titulo="Reservas" descripcion="Quién viene, cuándo y con qué mesa.">
 
 			<div className={REJILLA_INDICADORES}>
-				<Indicador {...indicador} rotulo="Reservas" valor={entero.format(reservas.length)} detalle="Con los filtros actuales" className={INDICADOR_PROTAGONISTA} />
-				<Indicador {...indicador} rotulo="Comensales" valor={entero.format(resumen.comensales)} detalle="Sin canceladas ni ausencias" />
-				<Indicador {...indicador} rotulo="Confirmadas" valor={entero.format(resumen.confirmadas)} />
-				<Indicador {...indicador} rotulo="Pendientes" valor={entero.format(resumen.pendientes)} />
+				<Indicador {...indicador} rotulo="Reservas" calculo={conteo("reservas = reservaciones con los filtros actuales", reservas, (r) => `${r.clienteNombre ?? "Sin nombre"} · ${r.fechaHora.slice(0, 16).replace("T", " ")}`, (r) => r.estatus ?? "")} valorCalculo={reservas.length} valor={entero.format(reservas.length)} detalle="Con los filtros actuales" className={INDICADOR_PROTAGONISTA} />
+				<Indicador {...indicador} rotulo="Comensales" calculo={suma("comensales = suma de los comensales de cada reserva no cancelada ni ausente", reservas.filter((r) => r.estatus !== "cancelada" && r.estatus !== "no_show"), (r) => `${r.clienteNombre ?? "Sin nombre"} · ${r.fechaHora.slice(0, 16).replace("T", " ")}`, (r) => Number(r.numComensales ?? 0))} valorCalculo={resumen.comensales} valor={entero.format(resumen.comensales)} detalle="Sin canceladas ni ausencias" />
+				<Indicador {...indicador} rotulo="Confirmadas" calculo={conteo("confirmadas = reservas en estado confirmada", reservas.filter((r) => r.estatus === "confirmada"), (r) => `${r.clienteNombre ?? "Sin nombre"} · ${r.fechaHora.slice(0, 16).replace("T", " ")}`, () => "confirmada")} valorCalculo={resumen.confirmadas} valor={entero.format(resumen.confirmadas)} />
+				<Indicador {...indicador} rotulo="Pendientes" calculo={conteo("pendientes = reservas en estado pendiente", reservas.filter((r) => r.estatus === "pendiente"), (r) => `${r.clienteNombre ?? "Sin nombre"} · ${r.fechaHora.slice(0, 16).replace("T", " ")}`, () => "pendiente")} valorCalculo={resumen.pendientes} valor={entero.format(resumen.pendientes)} />
 			</div>
 
 			<BloquePanel

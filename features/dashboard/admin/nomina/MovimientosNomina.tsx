@@ -230,7 +230,7 @@ export function MovimientosNomina() {
 			celda: (p) => (
 				<span className="inline-flex items-center gap-1">
 					<span className="font-semibold">{importe(p.neto)}</span>
-					<VerCalculo titulo={`neto de ${nombrePropio(p.nombre ?? "")}`} resultado={String(p.neto)} calculo={p.calculo} />
+					<VerCalculo titulo={`neto de ${nombrePropio(p.nombre ?? "")}`} resultado={String(p.neto)} valor={Number(p.neto)} calculo={p.calculo} />
 				</span>
 			),
 		},

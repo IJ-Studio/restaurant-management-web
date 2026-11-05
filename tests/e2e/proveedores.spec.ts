@@ -1,6 +1,7 @@
 import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
+import { comprobarCalculos } from "./calculos";
 
 // Proveedores (PLAN 5.8). Contra el build de producción, con sesión de admin y el API (`/inventario/admin/*`) simulado.
 test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
@@ -130,5 +131,12 @@ test("las migas del panel quedan fijas bajo la barra superior", async ({ browser
 	const barra = await page.locator("[data-prueba=barra-superior-panel]").boundingBox();
 	const caja = await migas.boundingBox();
 	expect(caja!.y).toBeGreaterThanOrEqual(Math.floor(barra!.y + barra!.height) - 1);
+	await contexto.close();
+});
+
+test("«Ver cálculo»: cada cifra de las tarjetas se rehace desde su desglose (P1.4)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await expect(page.locator("main").getByRole("button", { name: /^Ver cálculo de / }).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
+	expect(await comprobarCalculos(page)).toHaveLength(3);
 	await contexto.close();
 });

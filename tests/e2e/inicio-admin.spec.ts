@@ -1,12 +1,26 @@
 import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
+import { comprobarCalculos } from "./calculos";
 
 // Inicio de administración (PLAN 5.2). Contra el build de producción, con sesión de admin y el API simulado.
 test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
 
 const CLAVE = "elquijote:preferencias";
-const ESTADISTICAS = { totalVentas: 18420.5, pedidosPendientes: 3, pedidosEnPreparacion: 2, mesasOcupadas: 7, mesasLibres: 5, totalMesas: 12 };
+const ESTADISTICAS = {
+	totalVentas: 18420.5,
+	pedidosPendientes: 3,
+	pedidosEnPreparacion: 2,
+	mesasOcupadas: 7,
+	mesasLibres: 5,
+	totalMesas: 12,
+	// Desglose del API (P1.4), coherente con las cifras de arriba.
+	calculos: {
+		totalVentas: { formula: "suma por hora", operacion: "suma", datos: [{ clave: "13:00 a 13:59", valor: 10000 }, { clave: "14:00 a 14:59", valor: 8420.5 }] },
+		pedidosPendientes: { formula: "órdenes pendientes", operacion: "suma", datos: [{ clave: "pendiente", valor: 3 }] },
+		mesasOcupadas: { formula: "mesas ocupadas", operacion: "conteo", datos: Array.from({ length: 7 }, (_, i) => ({ clave: `Mesa ${i + 1}`, valor: "ocupada" })) },
+	},
+};
 const INVENTARIO = [
 	{ stock: 1, minStock: 10 },
 	{ stock: 8, minStock: 10 },
@@ -127,3 +141,10 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+test("«Ver cálculo»: cada cifra de las tarjetas se rehace desde su desglose (P1.4)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await expect(page.locator("main").getByRole("button", { name: /^Ver cálculo de / }).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
+	expect(await comprobarCalculos(page)).toHaveLength(4);
+	await contexto.close();
+});

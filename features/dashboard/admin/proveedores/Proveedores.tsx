@@ -26,6 +26,7 @@ import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { DialogoOrden, DialogoProveedor, ESTADOS_ORDEN } from "./DialogosProveedores";
+import { conteo, suma } from "@/lib/paneles/calculo";
 
 /**
  * Proveedores y órdenes de compra (PLAN 5.8). Mismo hook y mismas rutas. Las operaciones esperan la
@@ -281,9 +282,9 @@ export function Proveedores({ vistaInicial }: { vistaInicial?: string }) {
 		>
 
 			<div className={REJILLA_TRES_INDICADORES}>
-				<Indicador {...indicador} rotulo="Comprado" valor={importe(comprado)} detalle="Sin contar las canceladas" className={PROTAGONISTA_DE_TRES} />
-				<Indicador {...indicador} rotulo="Órdenes en curso" valor={entero.format(pendientes.length)} detalle={contar(ordenes.filter((o) => o.status === "en_camino").length, "en camino", "en camino")} />
-				<Indicador {...indicador} rotulo="Proveedores activos" valor={entero.format(activos.length)} detalle={`De ${entero.format(proveedores.length)}`} />
+				<Indicador {...indicador} rotulo="Comprado" calculo={suma("comprado = suma del total de cada orden de compra no cancelada", ordenes.filter((o) => o.status !== "cancelada"), (o) => `${o.folio} · ${o.supplierName}`, (o) => o.total, { filtros: { estatus: "distinto de cancelada" } })} valorCalculo={comprado} valor={importe(comprado)} detalle="Sin contar las canceladas" className={PROTAGONISTA_DE_TRES} />
+				<Indicador {...indicador} rotulo="Órdenes en curso" calculo={conteo("en curso = órdenes ni recibidas ni canceladas", pendientes, (o) => `${o.folio} · ${o.supplierName}`, (o) => o.status)} valorCalculo={pendientes.length} valor={entero.format(pendientes.length)} detalle={contar(ordenes.filter((o) => o.status === "en_camino").length, "en camino", "en camino")} />
+				<Indicador {...indicador} rotulo="Proveedores activos" calculo={conteo("proveedores activos = proveedores marcados como activos", activos, (s) => s.name, () => "activo")} valorCalculo={activos.length} valor={entero.format(activos.length)} detalle={`De ${entero.format(proveedores.length)}`} />
 			</div>
 
 			<Pestanas

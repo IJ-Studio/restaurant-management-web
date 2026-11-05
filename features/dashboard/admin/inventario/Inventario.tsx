@@ -25,6 +25,7 @@ import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { CATEGORIAS, DialogoAjuste, DialogoProducto, ETIQUETAS_MERMA } from "./DialogosInventario";
+import { conteo, suma } from "@/lib/paneles/calculo";
 
 /**
  * Inventario: productos y existencias (PLAN 5.7). Mismo hook, ahora contra el API (`/inventario/admin/*`, P8.2).
@@ -232,10 +233,10 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 		>
 
 			<div className={REJILLA_INDICADORES}>
-				<Indicador {...indicador} rotulo="Valor en almacén" valor={importe(valor)} detalle="Existencias por su costo" className={INDICADOR_PROTAGONISTA} />
-				<Indicador {...indicador} rotulo="Productos" valor={entero.format(productos.length)} detalle={`${entero.format(productos.filter((p) => p.active).length)} activos`} />
-				<Indicador {...indicador} rotulo="En nivel crítico" valor={entero.format(criticos)} detalle={`${entero.format(bajos)} en nivel bajo`} />
-				<Indicador {...indicador} rotulo="Pérdida por mermas" valor={importe(perdida)} detalle={contar(mermas.length, "registro")} />
+				<Indicador {...indicador} rotulo="Valor en almacén" calculo={suma("valor en almacén = suma de existencias × costo de cada producto", productos, (p) => `${p.name} (${p.stock} × ${p.costPerUnit})`, (p) => p.stock * p.costPerUnit)} valorCalculo={valor} valor={importe(valor)} detalle="Existencias por su costo" className={INDICADOR_PROTAGONISTA} />
+				<Indicador {...indicador} rotulo="Productos" calculo={conteo("productos = todos los productos del inventario", productos, (p) => p.name, (p) => (p.active ? "activo" : "inactivo"))} valorCalculo={productos.length} valor={entero.format(productos.length)} detalle={`${entero.format(productos.filter((p) => p.active).length)} activos`} />
+				<Indicador {...indicador} rotulo="En nivel crítico" calculo={conteo("en nivel crítico = productos cuyo nivel es crítico", productos.filter((p) => nivel(p) === "critico"), (p) => p.name, (p) => `${p.stock} de mínimo ${p.minStock}`)} valorCalculo={criticos} valor={entero.format(criticos)} detalle={`${entero.format(bajos)} en nivel bajo`} />
+				<Indicador {...indicador} rotulo="Pérdida por mermas" calculo={suma("pérdida = suma del costo de cada merma registrada", mermas, (m) => `${m.productName} · ${m.date}`, (m) => Number(m.cost))} valorCalculo={perdida} valor={importe(perdida)} detalle={contar(mermas.length, "registro")} />
 			</div>
 
 			{!loading && !error && criticos + bajos > 0 && (

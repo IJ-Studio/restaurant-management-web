@@ -1,6 +1,7 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
+import { comprobarCalculos } from "./calculos";
 
 // Carta en administración (PLAN 5.9; D-24 y D-31). Contra el build de producción, con sesión de admin,
 // `/platillos*`, la firma de imágenes y Cloudinary simulados: todo cambio llega al servidor.
@@ -171,3 +172,10 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+test("«Ver cálculo»: cada cifra de las tarjetas se rehace desde su desglose (P1.4)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await expect(page.locator("main").getByRole("button", { name: /^Ver cálculo de / }).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
+	expect(await comprobarCalculos(page)).toHaveLength(4);
+	await contexto.close();
+});

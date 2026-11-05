@@ -1,6 +1,7 @@
 import { test, expect, type Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
+import { comprobarCalculos } from "./calculos";
 
 // Caja y propinas, panel del Inicio (PLAN-AMPLIACION D-24 y D-27). Solo datos del API simulado:
 // `/reportes/hoy` y `/caja/cortes`. Contra el build de producción, con sesión de admin.
@@ -14,6 +15,13 @@ const HOY = {
 		{ metodo: "Tarjeta", total: 5250.5, pagos: 13 },
 	],
 	porCajero: [{ nombre: "Ana López", total: 12450.5, pagos: 31 }],
+	// Desglose del API (P1.4), coherente con las cifras de arriba.
+	calculos: {
+		cobrado: { formula: "cobrado = suma de pagos", operacion: "suma", datos: [{ clave: "Efectivo", valor: 7200 }, { clave: "Tarjeta", valor: 5250.5 }] },
+		propinas: { formula: "propinas = suma", operacion: "suma", datos: [{ clave: "Pago 1", valor: 1000 }, { clave: "Pago 2", valor: 320 }] },
+		ticketPromedio: { formula: "cobrado / cuentas pagadas", operacion: "cociente", datos: [{ clave: "cobrado", valor: 12450.5 }, { clave: "cuentas pagadas", valor: 28 }] },
+		comensales: { formula: "suma de comensales", operacion: "suma", datos: [{ clave: "Orden 1", valor: 40 }, { clave: "Orden 2", valor: 34 }] },
+	},
 };
 const CORTES = [
 	{ id: 7, cajero: "Ana López", fechaApertura: "2026-11-02T14:00:00.000Z", fechaCierre: "2026-11-03T05:00:00.000Z", totalVentas: "15890.00", propinas: "1500.00", diferencia: "-20.00", estatus: "cerrado" },
@@ -86,3 +94,10 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+test("«Ver cálculo»: cada cifra de las tarjetas se rehace desde su desglose (P1.4)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser, "/dashboard/admin?panel=caja");
+	await expect(page.locator("main").getByRole("button", { name: /^Ver cálculo de / }).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
+	expect(await comprobarCalculos(page)).toHaveLength(4);
+	await contexto.close();
+});

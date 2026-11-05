@@ -11,6 +11,7 @@ import { Tabla, type ColumnaTabla } from "@/components/ui/Tabla";
 import { useCarga } from "@/hooks/useCarga";
 import { formatearImporte } from "@/lib/formato/precio";
 import { pedirPanel } from "@/lib/paneles/api-panel";
+import type { Calculo } from "@/components/ui/VerCalculo";
 
 /**
  * Caja y propinas, panel del Inicio (PLAN-AMPLIACION D-24 y D-27). Solo datos del API:
@@ -24,6 +25,8 @@ interface ResumenHoy {
 	ventas: { cobrado: number; propinas: number; pagos: number; ordenesPagadas: number; ticketPromedio: number; comensales: number };
 	porMetodo: { metodo: string; total: number; pagos: number }[];
 	porCajero: { nombre: string; total: number; pagos: number }[];
+	/** Desglose de cada cifra (P1.4), del API. */
+	calculos?: Partial<Record<"cobrado" | "propinas" | "ticketPromedio" | "comensales", Calculo>>;
 }
 interface Corte {
 	id: number;
@@ -68,6 +71,8 @@ const columnasCorte: ColumnaTabla<Corte>[] = [
 function Hoy() {
 	const [carga, recargar] = useCarga(() => pedirPanel<ResumenHoy>("/reportes/hoy"), "inicio admin: caja de hoy");
 	const v = carga.estado === "listo" ? carga.datos.ventas : null;
+	const c = carga.estado === "listo" ? carga.datos.calculos : undefined;
+	const desglose = (clave: keyof NonNullable<ResumenHoy["calculos"]>) => ({ calculo: c?.[clave], valorCalculo: v ? Number(v[clave]) : undefined });
 	const comun = { estado: carga.estado, alReintentar: recargar } as const;
 	const error = <EstadoError titulo="No pudimos traer la caja de hoy" descripcion="Vuelve a intentarlo en un momento." alReintentar={recargar} />;
 	const vacio = (titulo: string) => <EstadoVacio icono={<Banknote />} titulo={titulo} descripcion="Aparecerán aquí con el primer cobro del día." />;
@@ -75,10 +80,10 @@ function Hoy() {
 	return (
 		<>
 			<div className={REJILLA_INDICADORES}>
-				<Indicador {...comun} rotulo="Cobrado hoy" valor={v ? importe(v.cobrado) : undefined} detalle={v ? `${entero.format(v.pagos)} pagos` : undefined} className={INDICADOR_PROTAGONISTA} />
-				<Indicador {...comun} rotulo="Propinas" valor={v ? importe(v.propinas) : undefined} />
-				<Indicador {...comun} rotulo="Ticket medio" valor={v ? importe(v.ticketPromedio) : undefined} detalle={v ? `${entero.format(v.ordenesPagadas)} cuentas pagadas` : undefined} />
-				<Indicador {...comun} rotulo="Comensales" valor={v ? entero.format(v.comensales) : undefined} />
+				<Indicador {...comun} rotulo="Cobrado hoy" {...desglose("cobrado")} valor={v ? importe(v.cobrado) : undefined} detalle={v ? `${entero.format(v.pagos)} pagos` : undefined} className={INDICADOR_PROTAGONISTA} />
+				<Indicador {...comun} rotulo="Propinas" {...desglose("propinas")} valor={v ? importe(v.propinas) : undefined} />
+				<Indicador {...comun} rotulo="Ticket medio" {...desglose("ticketPromedio")} valor={v ? importe(v.ticketPromedio) : undefined} detalle={v ? `${entero.format(v.ordenesPagadas)} cuentas pagadas` : undefined} />
+				<Indicador {...comun} rotulo="Comensales" {...desglose("comensales")} valor={v ? entero.format(v.comensales) : undefined} />
 			</div>
 			<div className="grid grid-cols-1 items-start gap-(--espacio-xl) xl:grid-cols-2">
 				<BloquePanel titulo="Por método de pago">

@@ -24,6 +24,7 @@ import { formatearImporte } from "@/lib/formato/precio";
 import { promocionesVigentes } from "@/lib/publico/promociones-vigentes";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { esquemaPromocion } from "@/lib/validacion/formularios";
+import { conteo } from "@/lib/paneles/calculo";
 
 /**
  * Promociones en administración (PLAN 5.10). Mismas llamadas (`GET /promociones/admin`, `POST`,
@@ -313,9 +314,9 @@ export function PromocionesAdmin() {
 		>
 
 			<div className={REJILLA_TRES_INDICADORES}>
-				<Indicador estado={estado} alReintentar={cargar} rotulo="En la web ahora" valor={entero.format(vigentes.size)} detalle="Activas y dentro de sus fechas" className={PROTAGONISTA_DE_TRES} />
-				<Indicador estado={estado} alReintentar={cargar} rotulo="Activas" valor={entero.format(promos.filter((p) => p.active).length)} />
-				<Indicador estado={estado} alReintentar={cargar} rotulo="En total" valor={entero.format(promos.length)} />
+				<Indicador estado={estado} alReintentar={cargar} rotulo="En la web ahora" calculo={conteo("en la web = promociones activas y dentro de sus fechas", promos.filter((p) => vigentes.has(p.id)), (p) => p.title, () => "vigente")} valorCalculo={vigentes.size} valor={entero.format(vigentes.size)} detalle="Activas y dentro de sus fechas" className={PROTAGONISTA_DE_TRES} />
+				<Indicador estado={estado} alReintentar={cargar} rotulo="Activas" calculo={conteo("activas = promociones marcadas como activas", promos.filter((p) => p.active), (p) => p.title, () => "activa")} valorCalculo={promos.filter((p) => p.active).length} valor={entero.format(promos.filter((p) => p.active).length)} />
+				<Indicador estado={estado} alReintentar={cargar} rotulo="En total" calculo={conteo("en total = todas las promociones", promos, (p) => p.title, (p) => (p.active ? "activa" : "inactiva"))} valorCalculo={promos.length} valor={entero.format(promos.length)} />
 			</div>
 
 			<BloquePanel

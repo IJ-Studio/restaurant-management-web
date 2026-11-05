@@ -21,6 +21,7 @@ import { api } from "@/lib/api";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { esquemaUsuarioEdicion, esquemaUsuarioNuevo } from "@/lib/validacion/formularios";
 import { nombrePropio } from "@/lib/formato/caja";
+import { conteo } from "@/lib/paneles/calculo";
 
 /**
  * Usuarios y personal (PLAN 5.13). Mismas llamadas (`GET /users`, `POST /users`,
@@ -233,10 +234,10 @@ export function UsuariosAdmin() {
 		>
 
 			<div className={REJILLA_INDICADORES}>
-				<Indicador {...indicador} rotulo="Personal activo" valor={entero.format(usuarios.filter((u) => u.isActive && u.roleId !== 5).length)} detalle="Administración, caja, sala y cocina" className={INDICADOR_PROTAGONISTA} />
-				<Indicador {...indicador} rotulo="Usuarios" valor={entero.format(usuarios.length)} />
-				<Indicador {...indicador} rotulo="Clientes" valor={entero.format(usuarios.filter((u) => u.roleId === 5).length)} />
-				<Indicador {...indicador} rotulo="Inactivos" valor={entero.format(usuarios.filter((u) => !u.isActive).length)} />
+				<Indicador {...indicador} rotulo="Personal activo" calculo={conteo("personal activo = usuarios activos que no son clientes", usuarios.filter((u) => u.isActive && u.roleId !== 5), (u) => `${u.name} ${u.lastname}`, (u) => `rol ${u.roleId}`)} valorCalculo={usuarios.filter((u) => u.isActive && u.roleId !== 5).length} valor={entero.format(usuarios.filter((u) => u.isActive && u.roleId !== 5).length)} detalle="Administración, caja, sala y cocina" className={INDICADOR_PROTAGONISTA} />
+				<Indicador {...indicador} rotulo="Usuarios" calculo={conteo("usuarios = todas las cuentas", usuarios, (u) => `${u.name} ${u.lastname}`, (u) => (u.isActive ? "activo" : "inactivo"))} valorCalculo={usuarios.length} valor={entero.format(usuarios.length)} />
+				<Indicador {...indicador} rotulo="Clientes" calculo={conteo("clientes = cuentas con rol de cliente", usuarios.filter((u) => u.roleId === 5), (u) => `${u.name} ${u.lastname}`, () => "cliente")} valorCalculo={usuarios.filter((u) => u.roleId === 5).length} valor={entero.format(usuarios.filter((u) => u.roleId === 5).length)} />
+				<Indicador {...indicador} rotulo="Inactivos" calculo={conteo("inactivos = cuentas desactivadas", usuarios.filter((u) => !u.isActive), (u) => `${u.name} ${u.lastname}`, () => "inactivo")} valorCalculo={usuarios.filter((u) => !u.isActive).length} valor={entero.format(usuarios.filter((u) => !u.isActive).length)} />
 			</div>
 
 			<BloquePanel

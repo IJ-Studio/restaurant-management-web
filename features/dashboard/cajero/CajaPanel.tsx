@@ -23,6 +23,8 @@ import { pedirPanel } from "@/lib/paneles/api-panel";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { cn } from "@/lib/utils";
 import { presentarCarta } from "@/lib/formato/caja";
+import { suma } from "@/lib/paneles/calculo";
+import type { Calculo } from "@/components/ui/VerCalculo";
 
 /**
  * Panel de caja (PLAN 5.17; PLAN-AMPLIACION D-24). Pensado primero para tableta: cifras grandes y
@@ -51,7 +53,17 @@ interface Metodo {
 }
 type Caja =
 	| { abierta: false }
-	| { abierta: true; fechaApertura: string; fondoInicial: number; totalVentas: number; propinas: number; numPagos: number; efectivoEsperado: number };
+	| {
+			abierta: true;
+			fechaApertura: string;
+			fondoInicial: number;
+			totalVentas: number;
+			propinas: number;
+			numPagos: number;
+			efectivoEsperado: number;
+			/** Desglose de cada cifra (P1.4), del API. */
+			calculos?: Partial<Record<"totalVentas" | "propinas" | "efectivoEsperado", Calculo>>;
+	  };
 
 const importe = (n: unknown) => formatearImporte(Number(n) || 0) ?? "—";
 const entero = new Intl.NumberFormat("es-MX");
@@ -290,16 +302,20 @@ export function CajaPanel() {
 					alReintentar={recargarCuentas}
 					rotulo="Por cobrar"
 					valor={importe(porCobrar.reduce((a, c) => a + (Number(c.total) || 0), 0))}
+					calculo={suma("por cobrar = suma del total de cada cuenta entregada sin cobrar", porCobrar, (c) => `Cuenta ${folio(c.id)} · ${c.table}`, (c) => Number(c.total) || 0, { filtros: { estatus: "entregada" } })}
+					valorCalculo={porCobrar.reduce((a, c) => a + (Number(c.total) || 0), 0)}
 					detalle={contar(porCobrar.length, "cuenta entregada", "cuentas entregadas")}
 					className={INDICADOR_PROTAGONISTA}
 				/>
-				<Indicador estado={caja.estado} alReintentar={recargarCaja} rotulo="Cobrado en tu caja" valor={abierta ? importe(abierta.totalVentas) : "—"} detalle={abierta ? `${entero.format(abierta.numPagos)} pagos` : "Caja cerrada"} />
-				<Indicador estado={caja.estado} alReintentar={recargarCaja} rotulo="Propinas" valor={abierta ? importe(abierta.propinas) : "—"} />
+				<Indicador estado={caja.estado} alReintentar={recargarCaja} rotulo="Cobrado en tu caja" calculo={abierta ? abierta.calculos?.totalVentas : undefined} valorCalculo={abierta ? Number(abierta.totalVentas) : undefined} valor={abierta ? importe(abierta.totalVentas) : "—"} detalle={abierta ? `${entero.format(abierta.numPagos)} pagos` : "Caja cerrada"} />
+				<Indicador estado={caja.estado} alReintentar={recargarCaja} rotulo="Propinas" calculo={abierta ? abierta.calculos?.propinas : undefined} valorCalculo={abierta ? Number(abierta.propinas) : undefined} valor={abierta ? importe(abierta.propinas) : "—"} />
 				<Indicador
 					estado={caja.estado}
 					alReintentar={recargarCaja}
 					rotulo="Efectivo esperado"
 					valor={abierta ? importe(abierta.efectivoEsperado) : "—"}
+					calculo={abierta ? abierta.calculos?.efectivoEsperado : undefined}
+					valorCalculo={abierta ? Number(abierta.efectivoEsperado) : undefined}
 					detalle={abierta ? `Desde las ${hora.format(new Date(abierta.fechaApertura))}` : undefined}
 				/>
 			</div>

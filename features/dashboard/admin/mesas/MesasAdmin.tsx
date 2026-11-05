@@ -18,6 +18,7 @@ import { Tabla, type ColumnaTabla } from "@/components/ui/Tabla";
 import { api, APIError } from "@/lib/api";
 import { primeraMayuscula } from "@/lib/formato/caja";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { conteo, suma } from "@/lib/paneles/calculo";
 
 /**
  * Mesas del salón en administración (Prioridad 1.3): `GET /mesas/admin`, `GET /mesas/admin/areas`,
@@ -231,9 +232,9 @@ export function MesasAdmin() {
 			acciones={<DialogoMesa areas={areas} alGuardar={(d) => guardar(d)} disparador={<Boton icono={<Plus />}>Mesa nueva</Boton>} />}
 		>
 			<div className={REJILLA_TRES_INDICADORES}>
-				<Indicador estado={estado} alReintentar={cargar} rotulo="Mesas activas" valor={entero.format(activas.length)} className={PROTAGONISTA_DE_TRES} />
-				<Indicador estado={estado} alReintentar={cargar} rotulo="Lugares" valor={entero.format(activas.reduce((s, m) => s + m.capacidad, 0))} detalle="Suma de la capacidad de las activas" />
-				<Indicador estado={estado} alReintentar={cargar} rotulo="Inactivas" valor={entero.format(mesas.length - activas.length)} />
+				<Indicador estado={estado} alReintentar={cargar} rotulo="Mesas activas" calculo={conteo("mesas activas = mesas marcadas como activas", activas, (m) => m.numero, () => "activa")} valorCalculo={activas.length} valor={entero.format(activas.length)} className={PROTAGONISTA_DE_TRES} />
+				<Indicador estado={estado} alReintentar={cargar} rotulo="Lugares" calculo={suma("lugares = suma de la capacidad de cada mesa activa", activas, (m) => m.numero, (m) => m.capacidad)} valorCalculo={activas.reduce((s, m) => s + m.capacidad, 0)} valor={entero.format(activas.reduce((s, m) => s + m.capacidad, 0))} detalle="Suma de la capacidad de las activas" />
+				<Indicador estado={estado} alReintentar={cargar} rotulo="Inactivas" calculo={conteo("inactivas = mesas desactivadas", mesas.filter((m) => !m.activa), (m) => m.numero, () => "inactiva")} valorCalculo={mesas.length - activas.length} valor={entero.format(mesas.length - activas.length)} />
 			</div>
 
 			<BloquePanel titulo="Todas las mesas">

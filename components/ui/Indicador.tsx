@@ -5,6 +5,7 @@ import { CircleAlert, Minus, RotateCcw, TrendingDown, TrendingUp } from "lucide-
 import { cn } from "@/lib/utils";
 import { Boton } from "./Boton";
 import { Esqueleto } from "./Esqueleto";
+import { VerCalculo, type Calculo } from "./VerCalculo";
 import { formatoPorcentaje } from "./graficas/formato";
 
 /**
@@ -36,6 +37,9 @@ export interface IndicadorProps extends Omit<HTMLAttributes<HTMLElement>, "title
 	detalle?: ReactNode;
 	estado?: "listo" | "cargando" | "error";
 	alReintentar?: () => void | Promise<unknown>;
+	/** «Ver cálculo» (P1.4): el desglose de la cifra y la cifra como número. */
+	calculo?: Calculo;
+	valorCalculo?: number;
 }
 
 
@@ -46,6 +50,8 @@ export function Indicador({
 	detalle,
 	estado = "listo",
 	alReintentar,
+	calculo,
+	valorCalculo,
 	className,
 	...resto
 }: IndicadorProps) {
@@ -69,6 +75,9 @@ export function Indicador({
 				>
 					{rotulo}
 				</h3>
+				{estado === "listo" && calculo && (
+					<VerCalculo titulo={rotulo.toLowerCase()} resultado={typeof valor === "string" ? valor : String(valorCalculo ?? "")} valor={valorCalculo} calculo={calculo} />
+				)}
 			</div>
 
 			{estado === "cargando" ? (
