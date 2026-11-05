@@ -6,6 +6,14 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### Tanda autónoma 3 · entorno de pruebas local (2026-11-05)
+
+- **Copia local de la BD:** PostgreSQL 17.6 portable en `D:\dev-cache\pgsql` (la misma versión mayor que producción; fuera de los repos, sin servicios instalados), clúster en `D:\dev-cache\pgdata`, puerto 54329.
+- **Respaldo:** `pg_dump` de `public` y `respaldo_20261104` en `D:\dev-cacheespaldos` (fuera de git), con conteos por tabla (61 tablas, 27 550 filas). Restaurado en `quijote_local` con los roles de producción recreados (`anon`, `authenticated`, `service_role`, `sgr_*`, `*_role` y sus usuarios de acceso con contraseña local). Restauración comprobada: conteos idénticos, 61 políticas y RLS en las 61 tablas.
+- **Usuario limitado:** `scripts/comprobar-rol-limitado.cjs` conectado de verdad como `sgr_usuario_backend`. Todo correcto: archivar y restaurar con id entero y UUID, webhook idempotente, reportes y promociones. Antes no se podía comprobar.
+- **Migración de teléfonos, ensayada en la copia:** 585 cambios, 3 sin normalizar, y las tablas quedan idénticas tras la reversa. Sigue sin aplicarse en producción hasta el despliegue.
+- **Usuarios de prueba** (solo en la copia, dominio `prueba.local`): uno por rol. El API local corre contra la copia como `sgr_usuario_backend` y los cinco roles inician sesión.
+
 ### Tanda autónoma · un clic, cancelaciones, WhatsApp, carta y navegación (2026-11-05)
 
 - **Un clic (P2.1)**, web `28c5db4`. Causa: el tiempo mínimo anti-robots (1 s) rechazaba el envío si se rellenaba con el autocompletado, y había que pulsar dos veces. Ahora espera lo que falta y envía. Reproducido antes de corregir. Pasa en los tres motores.
