@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChefHat, Package } from "lucide-react";
+import { ChefHat, Package, TrendingDown } from "lucide-react";
 import { AppOperaciones } from "@/components/paneles/AppOperaciones";
 import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
@@ -19,6 +19,8 @@ import { contar } from "@/lib/formato/plural";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirPanel } from "@/lib/paneles/api-panel";
 import { presentarCarta } from "@/lib/formato/caja";
+import { DialogoMerma } from "@/features/dashboard/admin/inventario/DialogosInventario";
+import type { Merma } from "@/hooks/useInventory";
 
 /**
  * Panel de cocina (PLAN 5.19; PLAN-AMPLIACION D-24), para una tableta o un monitor que se lee a
@@ -29,6 +31,7 @@ import { presentarCarta } from "@/lib/formato/caja";
  * - «Empezar» y «Marcar lista»: `PATCH /pedidos/:id/estatus` (`en_preparacion`, `lista`);
  * - existencias: `GET /inventario/productos`. El nivel «bajo» solo se marca si el API da el mínimo
  *   de cada producto (`minStock`); si no, se listan sin juzgar el nivel.
+ * - «Registrar merma»: `POST /inventario/mermas` (solo personal operativo; el admin solo consulta).
  */
 
 interface Comanda {
@@ -44,6 +47,7 @@ interface Producto {
 	unit: string | null;
 	stock: string | number | null;
 	minStock?: string | number | null;
+	costPerUnit?: string | number | null;
 }
 
 const COLUMNAS = [
@@ -113,6 +117,20 @@ export function CocinaPanel() {
 		}
 	}
 
+	// Quién la registra y el costo los pone el API (usuario de la sesión y costo del producto).
+	async function registrarMerma(m: Merma) {
+		try {
+			await api.post("/inventario/mermas", { productId: m.productId, quantity: m.quantity, unit: m.unit, reason: m.reason, justification: m.justification });
+			notificar({ tono: "exito", titulo: "Merma registrada" });
+			await recargarInventario({ silenciosa: true });
+			return true;
+		} catch (err) {
+			registrarError(err, "cocina: registrar merma");
+			notificar({ tono: "error", titulo: "No se pudo registrar la merma", descripcion: "Vuelve a intentarlo en un momento." });
+			return false;
+		}
+	}
+
 	const lista = comandas.estado === "listo" && Array.isArray(comandas.datos) ? comandas.datos : [];
 	const de = (estado: string) => lista.filter((p) => p.status === estado);
 	const productos = inventario.estado === "listo" && Array.isArray(inventario.datos) ? inventario.datos : [];
@@ -125,9 +143,20 @@ export function CocinaPanel() {
 			titulo="Comandas"
 			descripcion="Se actualiza sola cada 15 segundos."
 			acciones={
-				<Boton variante="secundario" icono={<Package />} className="min-h-12" onClick={() => setExistencias(true)}>
-					Existencias
-				</Boton>
+				<>
+					<Boton variante="secundario" icono={<Package />} className="min-h-12" onClick={() => setExistencias(true)}>
+						Existencias
+					</Boton>
+					<DialogoMerma
+						productos={productos.map((p) => ({ id: p.id, name: p.name, unit: p.unit ?? "pza", costPerUnit: numero(p.costPerUnit) ?? 0 }))}
+						alGuardar={registrarMerma}
+						disparador={
+							<Boton variante="secundario" icono={<TrendingDown />} className="min-h-12">
+								Registrar merma
+							</Boton>
+						}
+					/>
+				</>
 			}
 		>
 			<div className={REJILLA_INDICADORES}>

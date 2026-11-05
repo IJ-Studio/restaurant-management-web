@@ -3,8 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 
 /**
- * Inventario del administrador contra el API (`/inventario/admin/*` y `POST /inventario/mermas`, el
- * mismo que usa la móvil). Antes pasaba por rutas internas de la web que escribían en la BD sin
+ * Inventario del administrador contra el API (`/inventario/admin/*`; las mermas solo se consultan:
+ * las registra el personal operativo, P1.2), el mismo que usa la móvil). Antes pasaba por rutas internas de la web que escribían en la BD sin
  * comprobar el rol (D-32). Cada cuerpo lleva solo los campos que acepta el DTO del API.
  */
 
@@ -172,14 +172,6 @@ export function useInventory() {
     await fetchData();
   };
 
-  // Quién la registra y el costo los pone el API (usuario de la sesión y costo del producto).
-  const saveMerma = async (m: Merma) => {
-    await api.post("/inventario/mermas", {
-      productId: m.productId, quantity: m.quantity, unit: m.unit, reason: m.reason, justification: m.justification,
-    });
-    await fetchData();
-  };
-
   const saveSupplier = async (s: Supplier) => {
     const cuerpo = {
       name: s.name, contact: s.contact, email: s.email, phone: s.phone, category: s.category, products: s.products,
@@ -221,7 +213,6 @@ export function useInventory() {
     saveProduct,
     deleteProduct,
     adjustStock,
-    saveMerma,
     saveSupplier,
     deleteSupplier,
     saveOrder,

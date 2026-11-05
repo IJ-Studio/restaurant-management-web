@@ -172,7 +172,16 @@ export function DialogoProducto({ producto, disparador, alGuardar }: { producto?
 	);
 }
 
-export function DialogoMerma({ productos, disparador, alGuardar }: { productos: Product[]; disparador: ReactNode; alGuardar: (m: Merma) => Promise<boolean> }) {
+/** Registro de una merma. Lo usa el personal operativo (panel de cocina): el admin solo consulta el registro. */
+export function DialogoMerma({
+	productos,
+	disparador,
+	alGuardar,
+}: {
+	productos: Pick<Product, "id" | "name" | "unit" | "costPerUnit">[];
+	disparador: ReactNode;
+	alGuardar: (m: Merma) => Promise<boolean>;
+}) {
 	const inicial = () => ({ productId: String(productos[0]?.id ?? ""), cantidad: "", motivo: "caducado", justificacion: "" });
 	const [f, setF] = useState(inicial);
 	const producto = productos.find((p) => String(p.id) === f.productId);

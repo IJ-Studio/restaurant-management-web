@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Archive, Layers, Package, Pencil, Plus, Trash2, TrendingDown, Truck } from "lucide-react";
+import { Archive, Layers, Package, Pencil, Plus, Trash2, Truck } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
@@ -24,7 +24,7 @@ import { formatearDia } from "@/lib/formato/fecha";
 import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
-import { CATEGORIAS, DialogoAjuste, DialogoMerma, DialogoProducto, ETIQUETAS_MERMA } from "./DialogosInventario";
+import { CATEGORIAS, DialogoAjuste, DialogoProducto, ETIQUETAS_MERMA } from "./DialogosInventario";
 
 /**
  * Inventario: productos y existencias (PLAN 5.7). Mismo hook, ahora contra el API (`/inventario/admin/*`, P8.2).
@@ -59,7 +59,7 @@ const ESTADOS_FILTRO = [
 ];
 
 export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
-	const { products: productos, mermas, loading, error, saveProduct, deleteProduct, adjustStock, saveMerma, recargar } = useInventory();
+	const { products: productos, mermas, loading, error, saveProduct, deleteProduct, adjustStock, recargar } = useInventory();
 	const [busqueda, setBusqueda] = useState("");
 	const [categoria, setCategoria] = useState("todas");
 	const [estado, setEstado] = useState("todos");
@@ -146,19 +146,6 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 		{ clave: "perdida", titulo: "Pérdida", numerica: true, celda: (m) => importe(Number(m.cost)) },
 	];
 
-	const guardarMerma = (m: Merma) => operar(() => saveMerma(m), "Merma registrada", "No se pudo registrar la merma", "merma");
-	const botonMerma = (
-		<DialogoMerma
-			productos={productos}
-			alGuardar={guardarMerma}
-			disparador={
-				<Boton variante="secundario" icono={<TrendingDown />}>
-					Registrar merma
-				</Boton>
-			}
-		/>
-	);
-
 	const errorCarga = error ? <EstadoError titulo="No pudimos traer el inventario" descripcion="Vuelve a intentarlo en un momento." alReintentar={recargar} /> : undefined;
 	const indicador = { estado: loading ? ("cargando" as const) : error ? ("error" as const) : ("listo" as const), alReintentar: recargar };
 
@@ -213,7 +200,7 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 	);
 
 	const vistaMermas = (
-		<BloquePanel titulo="Mermas" descripcion={loading || error ? undefined : `Pérdida acumulada: ${importe(perdida)}.`} acciones={botonMerma}>
+		<BloquePanel titulo="Mermas" descripcion={loading || error ? undefined : `Pérdida acumulada: ${importe(perdida)}.`}>
 			<Tabla
 				leyenda="Mermas registradas"
 				tablaDesde="xl"
@@ -222,7 +209,7 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 				claveFila={(m) => m.id}
 				estado={loading ? "cargando" : "listo"}
 				error={errorCarga}
-				vacio={<EstadoVacio icono={<Archive />} titulo="Sin mermas registradas" descripcion="Cuando se pierda producto, regístralo aquí." />}
+				vacio={<EstadoVacio icono={<Archive />} titulo="Sin mermas registradas" descripcion="Las registra el personal de cocina desde su panel; aquí se consultan." />}
 			/>
 		</BloquePanel>
 	);
@@ -236,7 +223,6 @@ export function Inventario({ vistaInicial }: { vistaInicial?: string }) {
 						<BotonEnlace href="/dashboard/admin/inventory/suppliers" variante="secundario" icono={<Truck />}>
 							Proveedores
 						</BotonEnlace>
-						{botonMerma}
 						<DialogoProducto
 							alGuardar={(datos) => operar(() => saveProduct(datos), "Producto añadido", "No se pudo añadir el producto", "añadir")}
 							disparador={<Boton icono={<Plus />}>Producto nuevo</Boton>}

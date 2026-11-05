@@ -97,16 +97,8 @@ test("producto nuevo valida mínimo y máximo; merma calcula la pérdida", async
 	// Solo los campos que acepta el DTO del API (sin id, lastUpdated ni supplierId).
 	expect(Object.keys(pedidos[0].cuerpo as object)).not.toContain("id");
 
-	await main.getByRole("button", { name: "Registrar merma" }).click();
-	const merma = page.getByRole("dialog", { name: "Registrar una merma" });
-	await merma.getByLabel("Producto").selectOption({ label: "Azafrán" });
-	await merma.getByLabel("Cantidad").fill("0.5");
-	await expect(merma).toContainText("$ 45.00");
-	await merma.getByLabel("Qué pasó").fill("Se derramó.");
-	await merma.getByRole("button", { name: "Registrar merma" }).click();
-	await expect(merma).toBeHidden();
-	// El costo y quién la registra los pone el API; el motivo usa los códigos de la móvil.
-	expect(pedidos[1]).toEqual({ metodo: "POST", ruta: "/inventario/mermas", cuerpo: { productId: 2, quantity: 0.5, unit: "g", reason: "caducado", justification: "Se derramó." } });
+	// Las mermas las registra el personal operativo (P1.2): el admin solo ve el registro.
+	await expect(page.getByRole("button", { name: "Registrar merma" })).toHaveCount(0);
 	await contexto.close();
 });
 

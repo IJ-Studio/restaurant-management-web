@@ -14,7 +14,7 @@ const COMANDAS = [
 ];
 const INVENTARIO = [
 	{ id: 1, name: "Tortillas", unit: "kg", stock: "2", minStock: "5" },
-	{ id: 2, name: "Queso", unit: "kg", stock: "9", minStock: "3" },
+	{ id: 2, name: "Queso", unit: "kg", stock: "9", minStock: "3", costPerUnit: "90.00" },
 ];
 
 async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string, string> = {}) {
@@ -38,6 +38,10 @@ async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string
 				cambios.push({ id: estatus[1], ...cuerpo });
 				comandas = comandas.map((c) => (c.id === estatus[1] ? { ...c, status: cuerpo.estatus } : c));
 				return json({ success: true });
+			}
+			if (camino.endsWith("/inventario/mermas") && p.method() === "POST") {
+				cambios.push({ merma: p.postDataJSON() });
+				return json({ success: true, message: "Merma registrada." });
 			}
 			await json([]);
 		},
@@ -108,3 +112,18 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+test("cocina registra una merma con el mismo POST de la móvil; el costo y el autor los pone el API (P1.2)", async ({ browser }) => {
+	const { contexto, page, cambios } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: "Registrar merma" }).click();
+	const merma = page.getByRole("dialog", { name: "Registrar una merma" });
+	await merma.getByLabel("Producto").selectOption({ label: "Queso" });
+	await merma.getByLabel("Cantidad").fill("0.5");
+	await expect(merma).toContainText("$ 45.00");
+	await merma.getByLabel("Qué pasó").fill("Se echó a perder.");
+	await merma.getByRole("button", { name: "Registrar merma" }).click();
+	await expect(merma).toBeHidden();
+	expect(cambios).toEqual([{ merma: { productId: 2, quantity: 0.5, unit: "kg", reason: "caducado", justification: "Se echó a perder." } }]);
+	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Merma registrada");
+	await contexto.close();
+});
