@@ -4,6 +4,19 @@
 >
 > Este documento resume el diagnóstico y remite a cuatro anexos con el detalle por archivo y línea (A: estructura y estilos · B: imágenes, formularios y dashboards · C: seguridad del front · D: verificaciones y Lighthouse). Ningún valor de variable de entorno ni secreto aparece en este documento: los secretos se citan por archivo, línea y nombre, con el valor enmascarado.
 
+## Estado actual (2026-11-05, tanda autónoma de ampliación)
+
+> Este documento es el diagnóstico de partida (2026-10-30). Lo hecho después está en `BITACORA.md` y `PLAN-AMPLIACION.md`; este bloque resume el estado vigente.
+
+| Área | Estado vigente |
+|---|---|
+| Base de datos | RLS en todas las tablas de `public`, con política para los roles propios; vistas con `security_invoker`; 46 índices de claves foráneas; deriva de Drizzle corregida; tabla de registros eliminados con restauración; correo único sin distinguir mayúsculas; motivo de cancelación y tipo de categoría. Avisos de seguridad de Supabase: sin ERROR ni WARN. |
+| Acceso a datos desde la web | La web ya no accede a la BD: se retiraron las rutas internas `/api/inventory/*`, `lib/db`, los esquemas de Drizzle y `pg`. Solo queda la capa de sesión (`/api/auth/*`). |
+| API (`fix/api-correcciones`, sin publicar) | Promociones, inventario del admin, listado de facturas, reactivación de usuarios, normalización de textos y teléfonos, cifrado preparado (escritura desactivada), motivo de cancelación obligatorio y predicción de ausencias desactivable. 394 pruebas en verde. |
+| Web (`feature/rediseno-web-admin`) | Formularios con un solo clic, cierre de sesión caducada sin 401, usuarios del admin contra las rutas reales, facturas, inventario, WhatsApp en reservas, «Platos de la casa» solo con comida, formato «Primera mayúscula» y cifras de consola en los paneles. |
+| Móvil (`feature/paridad-api-web`) | Formato «Primera mayúscula» y motivo obligatorio al cancelar. 457 pruebas en verde. |
+| Preparado sin aplicar (requiere decisión o despliegue) | Migración B (mayúsculas), migración de teléfonos a E.164, escritura cifrada, CSP (2.5) y NP-47. |
+
 ## Cómo se obtuvo y límites de la medición
 
 - Recorrido del código con búsquedas dirigidas, `pnpm install --frozen-lockfile`, `tsc --noEmit`, ESLint (preset de Next instalado fuera del repo, porque el proyecto no tiene configuración), `next build`, `next start` y Lighthouse 12.8 (Chrome headless) en móvil y escritorio.

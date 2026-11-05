@@ -6,14 +6,14 @@
 
 | Campo | Valor |
 |---|---|
-| Fecha | 2026-11-03 |
-| Rama activa | `feature/rediseno-web-admin` (cierre de la fase 5 y frontend de la ampliación) |
-| Paquete en curso | Tanda cerrada (2026-11-04): ver «Resumen de la tanda de ampliación» en la bitácora |
-| Último paso completado | P7 parcial (API-1 y endpoints aditivos de API-2) y P8 parcial (fuera las rutas internas con reemplazo). Frontend verificado en Chromium, Firefox y WebKit. |
-| Siguiente paso | P7 (b) pendientes: promociones, facturas e inventario en el API; después P8 (retirar `/api/inventory/*` y la BD de la web) y P9 (fases 6 y 7). |
-| Bloqueos | Ninguno. 2.5 (aplicar la CSP) y NP-47 siguen sin ejecutarse por orden del usuario. |
-| Avisos | Repo del API con `HEAD` dañado en la copia local (se diagnostica en P7, sin reescribir nada). |
-| Decisiones del usuario pendientes | Ver § Pendientes para el usuario. |
+| Fecha | 2026-11-05 |
+| Rama activa | `feature/rediseno-web-admin` (web), `fix/api-correcciones` (API), `feature/paridad-api-web` (móvil); nada publicado |
+| Paquete en curso | Tanda autónoma (prioridades 1 a 6 del encargo del 2026-11-04): ver la bitácora, «Tanda autónoma» |
+| Último paso completado | BD (P1), formularios de un clic, sesión, promociones, facturas, inventario al API (P8.2), usuarios del admin, cancelaciones con motivo, WhatsApp, predicción desactivable, platos de la casa y cifras de consola |
+| Siguiente paso | Nómina con ajustes (P3.1), CRUD de mesas (P3.2), gestor de imágenes de la landing (P3.7), barra lateral pegajosa, migas pegajosas y paginación en servidor (P4), fases 6 y 7 |
+| Bloqueos | Escrituras en la BD que piden confirmación y no se aprobaron (migración de teléfonos); conexión con `sgr_usuario_backend` sin credenciales; Cloudinary sin variables en el API |
+| Avisos | HEAD del API reparado (P7.0). Detalle sensible en `_entrada/` |
+| Decisiones del usuario pendientes | Ver § Pendientes para el usuario y el informe final de la tanda |
 
 > Este bloque se actualiza en el mismo commit que cierra cada paso.
 
