@@ -8,7 +8,7 @@
  * Solo datos: la barra lateral y la navegación móvil los pintan con `NavegacionPanel`.
  */
 import { createElement, type FC } from "react";
-import { CalendarDays, FileText, LayoutDashboard, Package, Tag, Truck, Users, UtensilsCrossed, Boxes } from "lucide-react";
+import { Armchair, CalendarDays, FileText, LayoutDashboard, Package, Tag, Truck, Users, UtensilsCrossed, Boxes } from "lucide-react";
 import type { SidebarSection } from "./tipos";
 
 const icono = (Icono: FC<{ "aria-hidden"?: boolean }>) => createElement(Icono, { "aria-hidden": true });
@@ -19,6 +19,7 @@ export const ADMIN_NAV_SECTIONS: SidebarSection[] = [
 		items: [
 			{ key: "inicio", label: "Inicio", icon: icono(LayoutDashboard), href: "/dashboard/admin" },
 			{ key: "reservas", label: "Reservas", icon: icono(CalendarDays), href: "/dashboard/admin/reservations" },
+			{ key: "mesas", label: "Mesas", icon: icono(Armchair), href: "/dashboard/admin/mesas" },
 			{ key: "carta", label: "Carta", icon: icono(UtensilsCrossed), href: "/dashboard/admin/menu" },
 			{ key: "promociones", label: "Promociones", icon: icono(Tag), href: "/dashboard/admin/promociones" },
 		],

@@ -34,6 +34,7 @@ export const RUTAS_PANEL = [
 	"/dashboard/admin/inventory",
 	"/dashboard/admin/inventory/suppliers",
 	"/dashboard/admin/menu",
+	"/dashboard/admin/mesas",
 	"/dashboard/admin/payroll",
 	"/dashboard/admin/promociones",
 	"/dashboard/admin/reports",

@@ -24,10 +24,10 @@ test("admin en 1440 px: barra lateral con la entrada activa, un solo main y el s
 	const nav = page.getByRole("navigation", { name: NAV_ADMIN });
 	await expect(nav.getByRole("link", { name: "Proveedores" })).toHaveAttribute("aria-current", "page");
 	await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
-	// D-27/D-30: ocho entradas, todas a la vista (D-29: nada plegado ni oculto).
-	await expect(nav.getByRole("link")).toHaveCount(8);
+	// D-27/D-30: nueve entradas con Mesas (P1.3), todas a la vista (D-29: nada plegado ni oculto).
+	await expect(nav.getByRole("link")).toHaveCount(9);
 	await expect(nav.getByRole("button")).toHaveCount(0);
-	for (const nombre of ["Inicio", "Reservas", "Carta", "Promociones", "Existencias", "Proveedores", "Personal", "Facturas"])
+	for (const nombre of ["Inicio", "Reservas", "Mesas", "Carta", "Promociones", "Existencias", "Proveedores", "Personal", "Facturas"])
 		await expect(nav.getByRole("link", { name: nombre, exact: true })).toBeVisible();
 	await expect(page.locator("main")).toHaveCount(1);
 	await expect(page.getByRole("button", { name: "Abrir la navegación" })).toHaveCount(0);
@@ -48,10 +48,10 @@ test("admin en 360 px: el contenido ocupa todo el ancho y la navegación entera 
 	expect(Math.round(main!.x)).toBe(0);
 	expect(Math.round(main!.width)).toBe(360);
 
-	// Sin cajón ni botón de menú (D-29): las ocho entradas se ven sin abrir nada, y sin desbordar.
+	// Sin cajón ni botón de menú (D-29): las nueve entradas se ven sin abrir nada, y sin desbordar.
 	await expect(page.getByRole("button", { name: "Abrir la navegación" })).toHaveCount(0);
 	const nav = page.getByRole("navigation", { name: NAV_ADMIN });
-	await expect(nav.getByRole("link")).toHaveCount(8);
+	await expect(nav.getByRole("link")).toHaveCount(9);
 	for (const enlace of await nav.getByRole("link").all()) await expect(enlace).toBeInViewport();
 	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 	await expect(nav.getByRole("link", { name: "Inicio" })).toHaveAttribute("aria-current", "page");
