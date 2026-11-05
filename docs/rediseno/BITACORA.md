@@ -6,6 +6,23 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### Tanda autónoma · un clic, cancelaciones, WhatsApp, carta y navegación (2026-11-05)
+
+- **Un clic (P2.1)**, web `28c5db4`. Causa: el tiempo mínimo anti-robots (1 s) rechazaba el envío si se rellenaba con el autocompletado, y había que pulsar dos veces. Ahora espera lo que falta y envía. Reproducido antes de corregir. Pasa en los tres motores.
+- **Motivo de cancelación (P3.3)**:
+  - Migración aditiva `motivo_cancelacion_20261105` (aplicada, sin cambio en los conteos).
+  - API `3496476`: motivo obligatorio y lista blanca en `PATCH /reservations/:id`; antes todo el cuerpo llegaba a `.set()`.
+  - Móvil `35634eb`: 457/457.
+  - Web `8874223`: diálogo de motivo. Además, la página del pedido mandaba cuatro llamadas sin token.
+- **Predicción de ausencias desactivable (P3.5)**: API `16b5a29` y web `8874223`. Está desactivada por defecto y no borra el modelo.
+- **WhatsApp en reservas (P3.4)**, web `de73faf`. El número del restaurante queda vacío y configurable, porque no consta en ningún sitio. Se corrigió un fallo de axe en el nombre accesible del botón desactivado (WCAG 2.5.3).
+- **Combos (P3.6)**: la regresión ya existía (`producto.spec.ts`, «combo y migas») y pasa.
+- **«Platos de la casa» solo comida (P5.1)**: migración `categorias_tipo_20261105`, que rellena el tipo desde el nombre real de las 25 categorías (9 de bebida y 16 de comida). Commits: API `1546160`, web `368b44d`.
+- **Cifras de consola (P5.2)**, web `f2359b2`: token `--font-consola` (monoespaciada del sistema) y regla en DESIGN.md.
+- **Migas fijas (P4.2)**: web `7932527` (públicas, bajo la cabecera fija) y `22041cc` (paneles, bajo la barra).
+- **Revisión `/ponytail-review` del segundo paquete del API**: 1 hallazgo corregido (`909f886`): un proveedor o producto con vínculos perdía esos vínculos al restaurarse; ahora responde 409 y propone desactivarlo. Queda anotado, como decisión de negocio, que recibir una orden no suma existencias. API: 395/395.
+- **Pruebas de esta parte** (contra el build, en Chromium, Firefox y WebKit): formularios 38/38, cancelación y predicción 21/21, reservas del admin 12/12, landing y carta 42/42, paneles operativos 32/32, páginas públicas con línea base 109/109 y paneles con migas 23/23. Catálogo en `next dev`: 11/11. En WebKit, la prueba de foco visual falló una vez por tiempo y pasó al repetirla.
+
 ### Tanda autónoma · revisión del paquete, formularios e inventario (2026-11-05)
 
 - **Revisión del API (`/ponytail-review`)**: 2 hallazgos que había que corregir y 1 opcional. (1) Las tablas nuevas tenían RLS sin política para los roles propios: migración `rls_tablas_nuevas_20261105` (API `aee9363`, con reversa) en `registros_eliminados`, `stripe_events`, `reportes_problemas` y `device_tokens`. Por catálogo, `sgr_usuario_backend` hereda de `sgr_backend`, tiene permisos en todas las tablas y secuencias, y todas las tablas tienen política para su grupo. La prueba conectando con ese usuario **no se pudo hacer**: crear un usuario temporal en la BD quedó bloqueado por el control de permisos. Queda `scripts/comprobar-rol-limitado.cjs` para que el usuario la lance con esas credenciales; con el usuario actual pasa entera. (2) Nómina buscaba el departamento con la caja exacta: ahora usa `lower()` y `GENERAL` por defecto (`b4c675c`); no hay duplicados. El opcional: índice único `users_email_lower_key` sobre `lower(email)` (`1bb67b1`), aplicado (0 duplicados antes) y comprobado con alta y login reales en tres variantes de mayúsculas. Archivar y restaurar en tablas con UUID (empleados, métodos de pago, perfiles fiscales): correcto contra la BD real.
