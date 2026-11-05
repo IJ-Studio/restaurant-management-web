@@ -21,6 +21,9 @@ async function abrir(browser: Browser, opciones: { ancho?: number; falla?: "get"
 	});
 	const lista = INICIALES.map((e) => ({ ...e }));
 	const pedidos: { metodo: string; ruta: string; cuerpo: unknown }[] = [];
+	// Sumas y restas (Prioridad 3.1): API simulada aparte, para no mezclar sus llamadas con las de /payroll.
+	const movimientos: { metodo: string; ruta: string; cuerpo: unknown }[] = [];
+	const historial: Record<string, unknown>[] = [];
 	await page.route(
 		(url) => url.origin === "http://localhost:3100" && !url.pathname.startsWith("/_next"),
 		async (r) => {
@@ -28,6 +31,21 @@ async function abrir(browser: Browser, opciones: { ancho?: number; falla?: "get"
 			if (!["fetch", "xhr"].includes(p.resourceType()) || p.headers()["rsc"]) return r.fallback();
 			const ruta = new URL(p.url()).pathname;
 			if (!ruta.startsWith("/payroll")) return r.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+			if (ruta.startsWith("/payroll/movimientos")) {
+				if (opciones.falla === "get" && p.method() === "GET") return r.fulfill({ status: 500, contentType: "application/json", body: "{}" });
+				const cuerpo = p.postData() ? JSON.parse(p.postData()!) : null;
+				const json = (b: unknown) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(b) });
+				if (p.method() === "POST") {
+					movimientos.push({ metodo: "POST", ruta, cuerpo });
+					historial.unshift({ id: historial.length + 1, empleado: "MARTA RUIZ", fecha: "2026-11-05", autor: "LAURA MÉNDEZ", corrigeId: null, corregidoPor: null, ...cuerpo });
+					return json({ id: historial.length });
+				}
+				if (ruta.endsWith("/resumen")) {
+					const restas = historial.filter((m) => m.tipo === "resta").reduce((a, m) => a + Number(m.monto), 0);
+					return json([{ empleadoId: "1", nombre: "MARTA RUIZ", puesto: "CHEF", base: 4200, sumas: 0, restas, neto: 4200 - restas, calculo: { formula: "neto = base + sumas − restas", periodo: { inicio: "2026-11-02", fin: "2026-11-08" }, datos: [{ clave: "base", valor: 4200 }, ...historial.map((m) => ({ clave: `resta#${m.id}`, valor: -Number(m.monto) }))] } }]);
+				}
+				return json({ movimientos: historial, pagina: 1, haySiguiente: false });
+			}
 			const metodo = p.method();
 			const cuerpo = p.postData() ? JSON.parse(p.postData()!) : null;
 			pedidos.push({ metodo, ruta, cuerpo });
@@ -108,3 +126,25 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+test("sumar o restar exige justificación, queda en el historial y el neto se recalcula desde «Ver cálculo» (P3.1)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const main = page.locator("main");
+	await main.getByRole("button", { name: "Sumar o restar a Marta Ruiz" }).filter({ visible: true }).click();
+	const dialogo = page.getByRole("dialog", { name: "Sumar o restar a Marta Ruiz" });
+	await dialogo.getByLabel("Monto").fill("150.5");
+	await dialogo.getByRole("button", { name: "Registrar" }).click();
+	await expect(dialogo.getByText("Explica el motivo (al menos 5 letras).")).toBeVisible();
+	await dialogo.getByLabel("Justificación").fill("Rompió una copa de cristal");
+	await dialogo.getByRole("button", { name: "Registrar" }).click();
+	await expect(dialogo).toBeHidden();
+	await expect(main.getByRole("table", { name: "Historial de sumas y restas" })).toContainText("Rompió una copa de cristal");
+	// «Ver cálculo»: la suma de los datos del desglose da exactamente el neto mostrado.
+	await main.getByRole("button", { name: "Ver cálculo de neto de Marta Ruiz" }).filter({ visible: true }).first().click();
+	const calculo = page.getByRole("dialog", { name: "Cálculo: neto de Marta Ruiz" });
+	const valores = await calculo.locator("[data-valor]").evaluateAll((filas) => filas.map((f) => Number(f.getAttribute("data-valor"))));
+	const resultado = Number(await calculo.locator("[data-resultado]").textContent());
+	expect(Math.round(valores.reduce((a, b) => a + b, 0) * 100) / 100).toBe(resultado);
+	expect(resultado).toBe(4049.5);
+	await contexto.close();
+});

@@ -20,6 +20,7 @@ import type { PayrollEntry } from "@/features/dashboard/admin/types/payroll";
 import { api } from "@/lib/api";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { MovimientosNomina } from "./MovimientosNomina";
 
 /**
  * Nómina (PLAN 5.6). Mismas llamadas que antes (`GET`, `POST`, `PATCH` y `DELETE` sobre
@@ -258,6 +259,7 @@ export function Nomina() {
 						}
 					/>
 				</BloquePanel>
+			<MovimientosNomina />
 			{dialogo}
 		</div>
 	);
