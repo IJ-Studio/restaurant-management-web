@@ -6,6 +6,18 @@
 
 ## Ampliación (D-22 a D-38) · plan en `PLAN-AMPLIACION.md`
 
+### Tanda autónoma 3 · nómina con sumas y restas (P3.1) y CORS (2026-11-05)
+
+- **BD**: `nomina_movimientos`, ensayada en la copia (con su reversa) y aplicada en producción (`nomina_movimientos_20261105`), sin cambio en los conteos. Dos triggers: el historial no se edita ni se borra, y una corrección debe ser el movimiento inverso exacto.
+- **API** (`82bdc4a`): listar, registrar, corregir y un resumen con el cálculo.
+- **Web** (`85bd504`): `VerCalculo`, que se reutilizará en todas las tarjetas, más neto, «Sumar o restar», historial y corrección.
+- **Móvil** (`4d2d821`): navegador de administración con la pantalla Nómina.
+- **Pruebas reales nuevas, con sesión de verdad contra el API local sobre la copia:**
+  - web: `tests/real` (`playwright.real.config.ts`), 1/1 en Chromium, Firefox y WebKit;
+  - móvil: `src/__tests__/real` (`E2E_API_REAL`), 2/2.
+- **Pruebas simuladas:** web 10/10 en los tres motores; móvil 460/460; API 399/399.
+- **CORS configurable** (API `10b6d23`): lo destapó la prueba real. El API solo admitía `localhost:3000` y la web en el 3100 recibía bloqueos. Ahora usa `CORS_ORIGINS`, con los orígenes de siempre por defecto. También se corrigió el nombre de la variable en el error de Facturapi.
+
 ### Tanda autónoma 3 · entorno de pruebas local (2026-11-05)
 
 - **Copia local de la BD:** PostgreSQL 17.6 portable en `D:\dev-cache\pgsql` (la misma versión mayor que producción; fuera de los repos, sin servicios instalados), clúster en `D:\dev-cache\pgdata`, puerto 54329.
