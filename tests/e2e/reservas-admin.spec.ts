@@ -21,7 +21,7 @@ const reserva = (id: string, nombre: string, estatus: string, extra: Record<stri
 	estatus,
 	...extra,
 });
-const RESERVAS = [reserva("a1", "Ana López", "confirmada"), reserva("b2", "Luis Pérez", "pendiente", { numComensales: 2, mesaNumero: null }), reserva("c3", "Eva Ruiz", "cancelada", { motivoCancelacion: "NO LLEGÓ EL GRUPO" })];
+const RESERVAS = [reserva("a1", "Ana López", "confirmada"), reserva("b2", "Luis Pérez", "pendiente", { numComensales: 2, mesaNumero: null, clienteTelefono: "" }), reserva("c3", "Eva Ruiz", "cancelada", { motivoCancelacion: "NO LLEGÓ EL GRUPO" })];
 
 async function abrir(browser: Browser, opciones: { ancho?: number; falla?: boolean; prediccion?: boolean; preferencias?: Record<string, string> } = {}) {
 	const contexto = await browser.newContext({ storageState: archivoSesion("admin"), viewport: { width: opciones.ancho ?? 1440, height: 900 } });
@@ -107,6 +107,17 @@ test("con la predicción desactivada en el API no hay columna de riesgo ni petic
 	await expect(main.getByRole("table", { name: "Reservas" }).locator("tbody tr")).toHaveCount(3);
 	await expect(main.getByRole("columnheader", { name: "Riesgo de no venir" })).toHaveCount(0);
 	expect(pedidos.filter((p) => p.ruta.endsWith("/no-show-risk"))).toEqual([]);
+	await contexto.close();
+});
+
+test("WhatsApp con la lada de país; sin teléfono, desactivado y con el motivo (Prioridad 3.4)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const main = page.locator("main");
+	const enlace = main.getByRole("link", { name: "Escribir a Ana López por WhatsApp (se abre en otra pestaña)" }).filter({ visible: true }).first();
+	await expect(enlace).toHaveAttribute("href", /^https:\/\/wa\.me\/527710000000\?text=Hola%2C%20Ana%20L%C3%B3pez/);
+	await expect(enlace).toHaveAttribute("target", "_blank");
+	await expect(enlace).toHaveAttribute("rel", "noopener noreferrer");
+	await expect(main.getByRole("button", { name: "Sin WhatsApp: no hay un teléfono válido de Luis Pérez" }).filter({ visible: true }).first()).toBeDisabled();
 	await contexto.close();
 });
 

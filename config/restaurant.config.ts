@@ -24,6 +24,12 @@ export const restaurantConfig = {
     address: "Pzla. Hidalgo 5-1, Centro, Huejutla de Reyes, Hgo., C.P. 43000",
     phone: "+52 771 702 8172",
     phoneHref: "tel:+527717028172",
+    /**
+     * WhatsApp del restaurante para los enlaces wa.me (Prioridad 3.4). Vacío hasta que el restaurante
+     * confirme qué número lo atiende: no se da por hecho que sea el teléfono fijo. Mientras esté
+     * vacío, el botón aparece desactivado y explica por qué.
+     */
+    whatsapp: "",
     facebook: "https://www.facebook.com/ElQuijote.Huejutla",
     instagram: "https://www.instagram.com/elquijotehuejutla/",
     googleMaps: "https://maps.google.com/?cid=9162171458926916171",

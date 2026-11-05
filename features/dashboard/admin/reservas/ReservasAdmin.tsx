@@ -8,6 +8,8 @@ import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
+import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { enlaceWhatsApp } from "@/lib/contacto/whatsapp";
 import { Buscador } from "@/components/ui/Buscador";
 import { Campo, Selector } from "@/components/ui/Campo";
 import { Dialogo } from "@/components/ui/Dialogo";
@@ -135,6 +137,23 @@ function DialogoEstado({ reserva, alGuardar }: { reserva: Reserva; alGuardar: (i
 				)}
 			</div>
 		</Dialogo>
+	);
+}
+
+/** Escribir al cliente por WhatsApp (Prioridad 3.4); sin teléfono válido, desactivado y con el motivo. */
+function BotonWhatsApp({ reserva }: { reserva: Reserva }) {
+	const nombre = reserva.clienteNombre || "el cliente";
+	const enlace = enlaceWhatsApp(reserva.clienteTelefono, `Hola, ${nombre}. Te escribimos de El Quijote por tu reserva del ${escribirFecha(reserva.fechaHora)}.`);
+	if (!enlace)
+		return (
+			<Boton variante="fantasma" tamano="compacto" deshabilitado aria-label={`Sin WhatsApp: no hay un teléfono válido de ${nombre}`}>
+				Sin WhatsApp
+			</Boton>
+		);
+	return (
+		<BotonEnlace href={enlace} target="_blank" rel="noopener noreferrer" variante="fantasma" tamano="compacto" aria-label={`Escribir a ${nombre} por WhatsApp (se abre en otra pestaña)`}>
+			WhatsApp
+		</BotonEnlace>
 	);
 }
 
@@ -313,8 +332,13 @@ export function ReservasAdmin() {
 					claveFila={(r) => r.id}
 					estado={carga === "cargando" ? "cargando" : "listo"}
 					error={carga === "error" ? <EstadoError titulo="No pudimos traer las reservas" descripcion="Vuelve a intentarlo en un momento." alReintentar={cargar} /> : undefined}
-					tituloAcciones="Estado"
-					acciones={(r) => <DialogoEstado reserva={r} alGuardar={guardarEstado} />}
+					tituloAcciones="Acciones"
+					acciones={(r) => (
+						<>
+							<BotonWhatsApp reserva={r} />
+							<DialogoEstado reserva={r} alGuardar={guardarEstado} />
+						</>
+					)}
 					vacio={<EstadoVacio icono={<CalendarDays />} titulo="No hay reservas con esos filtros" descripcion="Cambia las fechas, el estado o el nombre." />}
 				/>
 			</BloquePanel>
