@@ -14,6 +14,8 @@ export interface PlatoCarta {
 export interface CategoriaCarta {
 	id: number;
 	nombre: string;
+	/** `comida` o `bebida` según el API; ausente si la categoría aún no está clasificada. */
+	tipo?: "comida" | "bebida";
 	platillos: PlatoCarta[];
 }
 
@@ -41,6 +43,7 @@ export function normalizarCarta(crudos: unknown): CategoriaCarta[] {
 		});
 		const id = cifra(categoria.id);
 		const nombre = texto(categoria.nombre);
-		return id === null || !nombre ? [] : [{ id, nombre, platillos }];
+		const tipo = categoria.tipo === "comida" || categoria.tipo === "bebida" ? categoria.tipo : undefined;
+		return id === null || !nombre ? [] : [{ id, nombre, ...(tipo ? { tipo } : {}), platillos }];
 	});
 }

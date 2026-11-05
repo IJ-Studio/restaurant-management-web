@@ -51,6 +51,8 @@ test("secciones con sus platos, precios, enlaces de siempre y migas", async ({ p
 test("buscar sin tildes ni mayúsculas, anunciar el resultado y volver a la carta", async ({ page }) => {
 	await abrir(page, conDatos);
 	const campo = page.getByRole("searchbox", { name: "Buscar en la carta" });
+	// Con la carta pintada, React ya controla el campo (en WebKit, escribir antes se perdía).
+	await expect(page.locator("section#seccion-1")).toBeVisible();
 	await campo.fill("JAMON");
 	await expect(page.getByRole("list", { name: "Resultados para «JAMON»" }).getByRole("link")).toHaveText(["Croquetas de jamón"]);
 	await expect(page.getByText("1 plato", { exact: true })).toBeAttached();

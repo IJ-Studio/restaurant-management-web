@@ -27,6 +27,20 @@ test("el menú toma un plato por categoría, primero con foto, y la galería no 
 	expect(seleccionarPlatos([])).toEqual({ menu: [], galeria: [] });
 });
 
+test("«Platos de la casa» solo con comida: fuera las categorías de bebida (Prioridad 5.1)", () => {
+	const carta: CategoriaCarta[] = [
+		{ id: 1, nombre: "Cervezas", tipo: "bebida", platillos: [{ id: 101, nombre: "Lager", precio: 60, imagenUrl: foto("lager") }] },
+		{ id: 2, nombre: "Tacos", tipo: "comida", platillos: [{ id: 201, nombre: "Pastor", precio: 25, imagenUrl: foto("pastor") }] },
+		{ id: 3, nombre: "Sin clasificar", platillos: [{ id: 301, nombre: "Algo", precio: 10, imagenUrl: foto("algo") }] },
+	];
+	const { menu, galeria } = seleccionarPlatos(carta);
+	expect(menu.map((p) => p.id)).toEqual([201]);
+	expect([...menu, ...galeria].some((p) => p.id === 101)).toBe(false);
+	// Si el API aún no clasifica ninguna como comida, se excluyen solo las de bebida.
+	const sinComida = carta.map((c) => (c.tipo === "comida" ? { ...c, tipo: undefined } : c));
+	expect(seleccionarPlatos(sinComida).menu.map((p) => p.id).sort()).toEqual([201, 301]);
+});
+
 test("precio con espacio duro, sin decimales si es entero y nunca un cero inventado", () => {
 	expect(formatearPrecio(420)).toBe("$ 420");
 	expect(formatearPrecio(1250.5)).toBe("$ 1,250.5");
