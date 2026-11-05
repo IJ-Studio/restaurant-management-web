@@ -28,7 +28,8 @@ export interface PlantillaPanelProps {
 export function PlantillaPanel({ titulo, descripcion, acciones, migas, indicadores, avisos, className, children }: PlantillaPanelProps) {
 	return (
 		<div className={cn("mx-auto flex w-full max-w-(--ancho-amplio) flex-col gap-(--espacio-xl) px-(--margen-pagina) py-(--espacio-xl) lg:py-(--espacio-2xl)", className)}>
-			{migas}
+			{/* Migas fijas bajo la barra superior del panel al bajar (Prioridad 4.2). */}
+			{migas && <div className="sticky top-(--alto-cabecera) z-30 -my-2 bg-fondo py-2">{migas}</div>}
 			<EncabezadoPagina titulo={titulo} descripcion={descripcion} acciones={acciones} />
 			{indicadores}
 			{avisos}

@@ -119,3 +119,16 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+// Prioridad 4.2: en los paneles, las migas siguen bajo la barra superior al bajar.
+test("las migas del panel quedan fijas bajo la barra superior", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser, { ancho: 390 });
+	await expect(page.locator("main").getByText("Huerta Norte").filter({ visible: true }).first()).toBeVisible();
+	await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+	const migas = page.getByRole("navigation", { name: "Migas de pan" });
+	await expect(migas).toBeInViewport();
+	const barra = await page.locator("[data-prueba=barra-superior-panel]").boundingBox();
+	const caja = await migas.boundingBox();
+	expect(caja!.y).toBeGreaterThanOrEqual(Math.floor(barra!.y + barra!.height) - 1);
+	await contexto.close();
+});
