@@ -54,8 +54,9 @@ export function useLockout({
   useEffect(() => {
     if (waitSeconds === null) return;
     if (waitSeconds <= 0) {
-      resetLockout();
-      return;
+      // Fuera del cuerpo del efecto (react-hooks/set-state-in-effect): el mismo reinicio, un tick después.
+      const fin = setTimeout(resetLockout, 0);
+      return () => clearTimeout(fin);
     }
     intervalRef.current = setInterval(() => {
       setWaitSeconds((prev) => (prev !== null ? prev - 1 : null));

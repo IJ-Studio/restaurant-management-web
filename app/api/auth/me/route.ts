@@ -54,7 +54,7 @@ export async function GET() {
       }
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error en proxy /api/auth/me:", error);
     return NextResponse.json({ user: null }, { status: 500 });
   }

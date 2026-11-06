@@ -3,7 +3,7 @@ import { getAvailability } from '@/features/reservations/services/reservations.s
 
 export function useReservationAvailability(fecha: string, hora: string, numComensales: number) {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -14,8 +14,8 @@ export function useReservationAvailability(fecha: string, hora: string, numComen
         const result = await getAvailability(fecha, hora, numComensales);
         setData(result);
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        setError((err as Error).message);
         setData(null);
       } finally {
         setLoading(false);

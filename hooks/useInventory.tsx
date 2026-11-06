@@ -14,8 +14,8 @@ export interface Product {
   id: number;
   name: string;
   sku: string;
-  category: any;
-  unit: any;
+  category: string;
+  unit: string;
   stock: number;
   minStock: number;
   maxStock: number;
@@ -31,8 +31,8 @@ export interface Merma {
   productId: number;
   productName: string;
   quantity: number;
-  unit: any;
-  reason: any;
+  unit: string;
+  reason: string;
   justification: string;
   reportedBy: string;
   date: string;
@@ -84,6 +84,22 @@ export interface PurchaseOrder {
   notes?: string;
 }
 
+/** Cifra tal como llega del API: los numéricos de Postgres pueden venir como texto. */
+type Cifra = number | string;
+type ProductoApi = Omit<Product, "stock" | "minStock" | "maxStock" | "costPerUnit" | "supplierId"> & {
+  stock: Cifra;
+  minStock: Cifra;
+  maxStock: Cifra;
+  costPerUnit: Cifra;
+  supplierId?: Cifra | null;
+};
+type MermaApi = Omit<Merma, "quantity" | "cost"> & { quantity: Cifra; cost: Cifra };
+type ProveedorApi = Omit<Supplier, "deliveryDays"> & { deliveryDays: Cifra };
+type OrdenApi = Omit<PurchaseOrder, "total" | "items"> & {
+  total: Cifra;
+  items: (Omit<OrderItem, "quantity" | "unitCost"> & { quantity: Cifra; unitCost: Cifra })[];
+};
+
 // ─── Hook Implementation ───────────────────────────────────────────────────────
 
 export function useInventory() {
@@ -98,13 +114,13 @@ export function useInventory() {
     // Explicitly don't set loading to true here to avoid flickering on updates
     try {
       const [dataP, dataM, dataS, dataO] = await Promise.all([
-        api.get<Record<string, unknown>[]>("/inventario/admin/productos"),
-        api.get<Record<string, unknown>[]>("/inventario/admin/mermas"),
-        api.get<Record<string, unknown>[]>("/inventario/admin/proveedores"),
-        api.get<Record<string, unknown>[]>("/inventario/admin/ordenes"),
+        api.get<ProductoApi[]>("/inventario/admin/productos"),
+        api.get<MermaApi[]>("/inventario/admin/mermas"),
+        api.get<ProveedorApi[]>("/inventario/admin/proveedores"),
+        api.get<OrdenApi[]>("/inventario/admin/ordenes"),
       ]);
 
-      setProducts(dataP.map((p: any) => ({
+      setProducts(dataP.map((p) => ({
         ...p,
         stock: Number(p.stock),
         minStock: Number(p.minStock),
@@ -115,33 +131,34 @@ export function useInventory() {
             ? Number(p.supplierId)
             : undefined,
       })));
-      setMermas(dataM.map((m: any) => ({
+      setMermas(dataM.map((m) => ({
         ...m,
         quantity: Number(m.quantity),
         cost: Number(m.cost)
       })));
-      setSuppliers(dataS.map((s: any) => ({
+      setSuppliers(dataS.map((s) => ({
         ...s,
         deliveryDays: Number(s.deliveryDays)
       })));
-      setOrders(dataO.map((o: any) => ({
+      setOrders(dataO.map((o) => ({
         ...o,
         total: Number(o.total),
-        items: o.items.map((i: any) => ({
+        items: o.items.map((i) => ({
           ...i,
           quantity: Number(i.quantity),
           unitCost: Number(i.unitCost)
         }))
       })));
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchData();
+    // Fuera del cuerpo del efecto (react-hooks/set-state-in-effect): la misma carga, una microtarea después.
+    void Promise.resolve().then(fetchData);
   }, [fetchData]);
 
   /** Vuelve a pedir todo mostrando la carga (botón «Reintentar», PLAN 5.7). */
