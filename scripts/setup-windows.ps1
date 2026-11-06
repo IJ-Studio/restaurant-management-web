@@ -2,7 +2,7 @@
 # Instalacion completa de El Quijote (front + back) en Windows.
 #
 # Uso (PowerShell, no hace falta ser administrador):
-#   irm https://raw.githubusercontent.com/IJ-Studio/restaurant-management-web/main/scripts/setup-windows.ps1 | iex
+#   irm https://raw.githubusercontent.com/IJ-Studio/restaurant-management-web/developer/scripts/setup-windows.ps1 | iex
 #
 # Que hace:
 #   1. Instala Git y Node.js LTS (con winget) si faltan, y pnpm.
@@ -20,7 +20,7 @@ $Root       = "C:\QUIJOTE"
 $FrontRepo  = "https://github.com/IJ-Studio/restaurant-management-web.git"
 $FrontDir   = Join-Path $Root "restaurant-management-web"
 # NP-22: rama estable, no una rama temporal.
-$FrontBranch = "main"
+$FrontBranch = "developer"
 $BackRepo   = "https://github.com/IJ-Studio/restaurant-management-api.git"
 $BackDir    = Join-Path $Root "restaurant-management-api"
 
