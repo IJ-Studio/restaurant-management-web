@@ -49,6 +49,32 @@ test("bloqueo temporal: el aviso con los segundos y el botón inactivo", async (
 	await expect(page.getByRole("button", { name: "Iniciar sesión" })).toHaveAttribute("aria-disabled", "true");
 });
 
+test("bloqueo temporal: se muestra el texto del bloqueo, nunca el error genérico", async ({ page }) => {
+	await abrir(page, { status: 403, body: { message: "Demasiados intentos. Debes esperar 30 segundos." } });
+	await rellenar(page);
+	await entrar(page);
+	await expect(page.getByText("Podrás intentarlo de nuevo en 30 segundos.")).toBeVisible();
+	await expect(page.locator("form").getByRole("alert").filter({ hasText: "Demasiados intentos. Debes esperar 30 segundos." })).toBeVisible();
+	await expect(page.locator("main")).not.toContainText(/no coinciden|Operación exitosa|Ocurrió un error/);
+});
+
+test("bloqueo temporal: cuenta atrás y, al terminar, el botón vuelve a estar activo", async ({ page }) => {
+	await page.clock.install();
+	await abrir(page, { status: 403, body: { message: "Demasiados intentos. Debes esperar 3 segundos." } });
+	await rellenar(page);
+	await entrar(page);
+	const boton = page.getByRole("button", { name: "Iniciar sesión" });
+	await expect(page.getByText("Podrás intentarlo de nuevo en 3 segundos.")).toBeVisible();
+	await page.clock.runFor(1_000);
+	await expect(page.getByText("Podrás intentarlo de nuevo en 2 segundos.")).toBeVisible();
+	await page.clock.runFor(1_000);
+	await expect(page.getByText("Podrás intentarlo de nuevo en 1 segundos.")).toBeVisible();
+	await expect(boton).toHaveAttribute("aria-disabled", "true");
+	await page.clock.runFor(2_000);
+	await expect(page.getByText(/Podrás intentarlo de nuevo/)).toHaveCount(0);
+	await expect(boton).not.toHaveAttribute("aria-disabled", "true");
+});
+
 test("correo con formato inválido: error en el campo, sin llamar al API", async ({ page }) => {
 	const envios = await abrir(page, { status: 200, body: {} });
 	await rellenar(page, "ana-sin-arroba");

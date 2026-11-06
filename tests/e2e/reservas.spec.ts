@@ -83,6 +83,25 @@ test("los cuatro pasos, la mesa en el plano, el mismo payload y la confirmación
 	]);
 });
 
+test("mientras se consulta la disponibilidad, «Continuar» espera", async ({ page }) => {
+	let responder: () => void = () => {};
+	const pendiente = new Promise<void>((r) => (responder = r));
+	const consultas: string[] = [];
+	await abrir(page);
+	await page.route("**/reservations/availability?**", async (r) => {
+		consultas.push(new URL(r.request().url()).search);
+		await pendiente;
+		await r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+	});
+	await rellenarHastaMesa(page);
+	await page.getByRole("button", { name: /Mesa 4/ }).click();
+	const continuar = page.getByRole("button", { name: "Continuar" });
+	await expect(continuar).toHaveAttribute("aria-disabled", "true");
+	responder();
+	await expect(continuar).not.toHaveAttribute("aria-disabled", "true");
+	expect(consultas.at(-1)).toBe("?fecha=2030-06-15&hora=14:30&numComensales=2");
+});
+
 test("errores por campo con los mensajes de siempre", async ({ page }) => {
 	await abrir(page);
 	await page.getByLabel("Correo", { exact: true }).fill("no-es-correo");
