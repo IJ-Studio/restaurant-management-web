@@ -19,6 +19,7 @@ $ErrorActionPreference = "Stop"
 $Root       = "C:\QUIJOTE"
 $FrontRepo  = "https://github.com/IJ-Studio/restaurant-management-web.git"
 $FrontDir   = Join-Path $Root "restaurant-management-web"
+# NP-22: rama estable, no una rama temporal.
 $FrontBranch = "developer"
 $BackRepo   = "https://github.com/IJ-Studio/restaurant-management-api.git"
 $BackDir    = Join-Path $Root "restaurant-management-api"
