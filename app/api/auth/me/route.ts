@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { cookies } from "next/headers";
+import { nombrePropio } from "@/lib/formato/caja";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
 
@@ -46,14 +47,14 @@ export async function GET() {
       user: {
         id: String(userData.id),
         email: userData.email,
-        name: userData.name || "",
-        lastname: userData.lastname || "",
+        name: nombrePropio(userData.name || ""),
+        lastname: nombrePropio(userData.lastname || ""),
         phone: userData.phone || userData.telefono || "", // Mapeo camaleónico por si Drizzle usa "telefono"
         roleName: roleMap[userData.roleId] || "cliente",
       }
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error en proxy /api/auth/me:", error);
     return NextResponse.json({ user: null }, { status: 500 });
   }

@@ -5,6 +5,8 @@
  * (features/dashboard/admin) y por la página pública /promociones.
  */
 
+import { primeraMayuscula } from "@/lib/formato/caja";
+
 export interface Promotion {
   id: number;
   title: string;
@@ -53,9 +55,9 @@ export interface PromotionRow {
 export function mapPromotionRow(r: PromotionRow): Promotion {
   return {
     id: Number(r.id),
-    title: r.titulo ?? "",
-    description: r.descripcion ?? "",
-    badge: r.badge ?? undefined,
+    title: primeraMayuscula(r.titulo),
+    description: primeraMayuscula(r.descripcion),
+    badge: r.badge ? primeraMayuscula(r.badge) : undefined,
     emoji: r.emoji ?? undefined,
     color: r.color ?? GRADIENT_PRESETS[0].value,
     originalPrice:

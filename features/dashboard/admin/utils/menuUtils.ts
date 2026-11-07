@@ -1,6 +1,6 @@
 "use client";
 
-import { type TagKey } from "../data/menuMock";
+import { type TagKey } from "../carta/tipos";
 
 export function normalizeStr(s: string) {
   return (s || "").trim();
@@ -111,7 +111,7 @@ export function authHeaders(): Record<string, string> {
 }
 
 export async function downloadAsFile(url: string, fallback: string) {
-  const res = await fetch(url, { headers: authHeaders() });
+  const res = await fetch(url, { cache: "no-store", headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const blob = await res.blob();
   const filename = filenameFromCD(res.headers.get("content-disposition")) ?? fallback;

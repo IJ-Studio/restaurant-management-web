@@ -1,404 +1,186 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CldImage } from "next-cloudinary";
-import BackButton from "@/components/BackButton";
-import Button from "@/components/Button";
-import FloatingInput from "@/components/FloatingInput";
-import PhoneInput from "@/components/PhoneInput";
-import Checkbox from "@/components/Checkbox";
-import PasswordToggleButton from "@/components/PasswordToggleButton";
-import PasswordRequirements from "@/components/PasswordRequirements";
-import { useAsyncAction } from "@/hooks/useAsyncAction";
-import { SettingsService } from "@/features/shared/services/dataService";
-import { type SystemSettings } from "@/features/shared/data/restaurantData";
-import {
-  phoneRegex,
-  isValidEmail,
-  NAME_MAX_LENGTH,
-  PASSWORD_MAX_LENGTH,
-} from "@/utils/validators";
-import {
-  letters,
-  haveAnVowel,
-  noRepeatMoreThreeTimes,
-  noRepeatConsonantsMoreThreeTimes,
-} from "@/utils/validators";
-import {
-  length,
-  lowercase,
-  uppercase,
-  number,
-  specialChar,
-} from "@/utils/validators";
-export const dynamic = 'force-dynamic'
-// ----- Funciones de validación (sin cambios) -----
-// Quita espacios sobrantes; es lo que se valida y lo que se manda al API.
-const cleanName = (value: string) => value.trim().replace(/\s+/g, " ");
+import { Check, Circle, UserPlus } from "lucide-react";
+import { AnuncioFormulario } from "@/components/ui/AnuncioFormulario";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { Campo } from "@/components/ui/Campo";
+import { CampoTrampa } from "@/components/ui/CampoTrampa";
+import { Casilla } from "@/components/ui/Casilla";
+import { Imagen } from "@/components/ui/Imagen";
+import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
+import { useEnvioFormulario } from "@/hooks/useEnvioFormulario";
+import { restaurantConfig } from "@/config/restaurant.config";
+import { requisitosContrasena, tieneSecuenciaPredecible } from "@/lib/validacion/campos";
+import { aPayloadRegistro, esquemaRegistro, type DatosRegistro } from "@/lib/validacion/formularios";
+import { cn } from "@/lib/utils";
 
-const validateNameBlock = (value: string) => {
-  if (!value) return false;
-  const cleaned = cleanName(value);
-  // Límite de la columna y del API: 50 en total (dos palabras de 30 podrían sumar 61).
-  if (cleaned.length > NAME_MAX_LENGTH) return false;
-  const parts = cleaned.split(" ");
-  if (parts.length < 1 || parts.length > 2) return false;
-  for (const p of parts) {
-    if (!letters.test(p)) return false;
-    if (!haveAnVowel.test(p)) return false;
-    if (noRepeatMoreThreeTimes.test(p)) return false;
-    if (noRepeatConsonantsMoreThreeTimes.test(p)) return false;
-  }
-  return true;
-};
+/**
+ * Crear cuenta (`/register`, PLAN 4.18). La lógica no cambia: las reglas de siempre (ahora en
+ * `esquemaRegistro`, 3.1), el contrato exacto de `POST /api/auth/register` (`aPayloadRegistro`),
+ * los mismos mensajes del API ya filtrados y la vuelta al inicio de sesión a los 3 s.
+ *
+ * - Campo trampa (defensa principal), tiempo mínimo por defecto (1 s) y sin envío doble
+ *   (`useEnvioFormulario`; decisión del usuario, 2026-11-01). Errores junto a cada campo y un
+ *   anuncio para lectores.
+ * - Los requisitos de la contraseña, visibles bajo el campo y con su estado en texto, en lugar
+ *   del botón con ventana y la barra de colores con estilo en línea.
+ * - La foto de fondo se pide con `sizes` y, como en el login, solo desde 1024 px (BITÁCORA 3.1:
+ *   en `next dev` a 1440 px era el LCP y se avisaba de `loading="eager"`): con `preload`.
+ */
+const REQUISITOS: { clave: keyof ReturnType<typeof requisitosContrasena>; texto: string }[] = [
+	{ clave: "length", texto: "Entre 8 y 64 caracteres" },
+	{ clave: "uppercase", texto: "Una letra mayúscula" },
+	{ clave: "lowercase", texto: "Una letra minúscula" },
+	{ clave: "number", texto: "Un número" },
+	{ clave: "special", texto: "Un carácter especial (! @ # $ % & , . _ -)" },
+];
 
-const normalize = (str: string) =>
-  str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+export default function PaginaRegistro() {
+	const router = useRouter();
+	const [password, setPassword] = useState("");
+	const [creada, setCreada] = useState(false);
 
-const isPasswordContainingPersonalData = (
-  pwd: string,
-  nombre: string,
-  apellido: string,
-  correo: string,
-  telefono: string,
-) => {
-  const lowerPwd = normalize(pwd);
-  const emailUser = normalize(correo.split("@")[0]);
-  const nombreParts = normalize(nombre).split(/\s+/).filter(Boolean);
-  const apellidoParts = normalize(apellido).split(/\s+/).filter(Boolean);
-  const telefonoLimpio = telefono.replace(/\D/g, "");
-  const personalData = [
-    emailUser,
-    telefonoLimpio,
-    ...nombreParts,
-    ...apellidoParts,
-  ].filter((v) => v && v.length >= 3);
-  return personalData.some((data) => lowerPwd.includes(data));
-};
+	const { propsFormulario, errores, errorGeneral, enviando, anuncio } = useEnvioFormulario({
+		esquema: esquemaRegistro,
+		alEnviar: async (datos: DatosRegistro) => {
+			let res: Response;
+			try {
+				res = await fetch("/api/auth/register", {
+					cache: "no-store",
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(aPayloadRegistro(datos)),
+				});
+			} catch {
+				throw new Error("No pudimos crear tu cuenta. Inténtalo de nuevo en un momento.");
+			}
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				// Nest responde { message, error, statusCode }; en validación, `message` es una lista técnica en inglés.
+				const texto = Array.isArray(data.message)
+					? "Revisa los datos del formulario e inténtalo de nuevo."
+					: res.status >= 500
+						? "No pudimos completar el registro. Inténtalo de nuevo en unos minutos."
+						: data.message;
+				throw new Error(texto || "No pudimos crear tu cuenta. Inténtalo de nuevo.");
+			}
+			setCreada(true);
+			setTimeout(() => router.push("/login"), 3000);
+		},
+	});
 
-const MIN_SEQ = 3;
-const hasIncrementalNumbers = (pwd: string) => {
-  const digits = "0123456789";
-  for (let i = 0; i <= digits.length - MIN_SEQ; i++) {
-    if (pwd.includes(digits.slice(i, i + MIN_SEQ))) return true;
-  }
-  return false;
-};
-const hasDecrementalNumbers = (pwd: string) => {
-  const digits = "9876543210";
-  for (let i = 0; i <= digits.length - MIN_SEQ; i++) {
-    if (pwd.includes(digits.slice(i, i + MIN_SEQ))) return true;
-  }
-  return false;
-};
-const hasIncrementalLetters = (pwd: string) => {
-  const letters = "abcdefghijklmnopqrstuvwxyz";
-  const lowerPwd = pwd.toLowerCase();
-  for (let i = 0; i <= letters.length - MIN_SEQ; i++) {
-    if (lowerPwd.includes(letters.slice(i, i + MIN_SEQ))) return true;
-  }
-  return false;
-};
-const hasDecrementalLetters = (pwd: string) => {
-  const letters = "zyxwvutsrqponmlkjihgfedcba";
-  const lowerPwd = pwd.toLowerCase();
-  for (let i = 0; i <= letters.length - MIN_SEQ; i++) {
-    if (lowerPwd.includes(letters.slice(i, i + MIN_SEQ))) return true;
-  }
-  return false;
-};
-const hasRepeatedCharacters = (pwd: string) => /(.)\1{2,}/.test(pwd);
-const hasSequentialPattern = (pwd: string) =>
-  hasRepeatedCharacters(pwd) ||
-  hasIncrementalNumbers(pwd) ||
-  hasDecrementalNumbers(pwd) ||
-  hasIncrementalLetters(pwd) ||
-  hasDecrementalLetters(pwd);
+	const requisitos = requisitosContrasena(password);
+	const secuencia = password.length > 0 && tieneSecuenciaPredecible(password);
 
-// ----- Componente principal -----
-export default function RegisterPage() {
-  const [nombre, setNombre] = useState("");
-  const [apellido, setApellido] = useState("");
-  const [correo, setCorreo] = useState("");
-  const [lada, setLada] = useState("+52");
-  const [telefono, setTelefono] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [agreed, setAgreed] = useState(false);
-  const [settings, setSettings] = useState<SystemSettings | null>(null);
-
-  const router = useRouter();
-
-  useEffect(() => {
-    setSettings(SettingsService.getSettings());
-  }, []);
-
-  // Validaciones
-  const isNameValid = validateNameBlock(nombre);
-  const isLastnameValid = validateNameBlock(apellido);
-  const isEmailValid = isValidEmail(correo);
-  const isPhoneValid = phoneRegex.test(telefono);
-  const validations = {
-    length: length.test(password),
-    lowercase: lowercase.test(password),
-    uppercase: uppercase.test(password),
-    number: number.test(password),
-    special: specialChar.test(password),
-  };
-  const isPasswordValid =
-    Object.values(validations).every(Boolean) &&
-    !hasSequentialPattern(password) &&
-    !isPasswordContainingPersonalData(
-      password,
-      nombre,
-      apellido,
-      correo,
-      telefono,
-    );
-
-  const isFormValid =
-    isNameValid &&
-    isLastnameValid &&
-    isEmailValid &&
-    isPhoneValid &&
-    isPasswordValid &&
-    agreed;
-
-  // Acción asíncrona de registro
-  const registerAction = async () => {
-    // Contrato de POST /auth/sign-up del API (SignUpDto): solo estos campos; cualquier otro
-    // se rechaza con 400.
-    const reqData = {
-      name: cleanName(nombre),
-      lastname: cleanName(apellido),
-      email: correo,
-      phone: `${lada}${telefono}`,
-      password,
-      passwordConfirm: password,
-    };
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(reqData),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      // Nest responde { message, error, statusCode }; en errores de validación `message` es un
-      // arreglo de textos técnicos en inglés, así que no se muestran tal cual.
-      const text = Array.isArray(data.message)
-        ? "Revisa los datos del formulario e inténtalo de nuevo."
-        : res.status >= 500
-          ? "No pudimos completar el registro. Inténtalo de nuevo en unos minutos."
-          : data.message;
-      throw new Error(text || data.error || "Ocurrió un error al registrarse");
-    }
-    return data;
-  };
-
-  const {
-    execute: handleRegister,
-    loading,
-    error,
-    success,
-  } = useAsyncAction({
-    action: registerAction,
-    successMessage:
-      "¡Cuenta creada exitosamente! Revisa tu correo y confirma tu cuenta antes de iniciar sesión.",
-    onSuccess: () => {
-      setTimeout(() => router.push("/login"), 3000);
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isFormValid) {
-      // El error ya se maneja mediante los mensajes individuales en cada campo
-      return;
-    }
-    handleRegister();
-  };
-
-  return (
-    <div className="auth-grid">
-      <div className="auth-form-wrapper">
-        <div className="auth-form-inner">
-          <BackButton fallbackHref="/" label="Volver" />
-          <div className="mb-4 sm:mb-6">
-            <h2 className="auth-title">Crea tu cuenta</h2>
-          </div>
-
-          {error && <div className="alert-error">{error}</div>}
-          {success && <div className="alert-success">{success}</div>}
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="flex space-x-2">
-              <div className="w-1/2">
-                <FloatingInput
-                  id="nombre"
-                  type="text"
-                  placeholder="Nombre"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  label="Nombre"
-                  required
-                  error={
-                    nombre && !isNameValid
-                      ? "Solo letras: máximo 30 por palabra y 50 en total."
-                      : undefined
-                  }
-                />
-              </div>
-              <div className="w-1/2">
-                <FloatingInput
-                  id="apellido"
-                  type="text"
-                  placeholder="Apellido"
-                  value={apellido}
-                  onChange={(e) => setApellido(e.target.value)}
-                  label="Apellido"
-                  required
-                  error={
-                    apellido && !isLastnameValid
-                      ? "Solo letras: máximo 30 por palabra y 50 en total."
-                      : undefined
-                  }
-                />
-              </div>
-            </div>
-
-            <FloatingInput
-              id="correo"
-              type="email"
-              placeholder="Correo electrónico"
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-              label="Correo electrónico"
-              required
-              error={
-                correo && !isEmailValid
-                  ? "Ingresa un correo electrónico válido."
-                  : undefined
-              }
-            />
-
-            <PhoneInput
-              lada={lada}
-              setLada={setLada}
-              telefono={telefono}
-              setTelefono={setTelefono}
-              isPhoneValid={isPhoneValid}
-              showError
-            />
-
-            <div>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  placeholder="Crea una contraseña"
-                  autoComplete="new-password"
-                  maxLength={PASSWORD_MAX_LENGTH}
-                  className="input-floating pr-28"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <span className="input-label">Contraseña*</span>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <PasswordToggleButton
-                    showPassword={showPassword}
-                    setShowPassword={setShowPassword}
-                  />
-                  <PasswordRequirements validations={validations} />
-                </div>
-              </div>
-              {password.length > 0 && (
-                <div className="mt-2 w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-300 ${
-                      [
-                        "bg-red-500",
-                        "bg-orange-400",
-                        "bg-yellow-400",
-                        "bg-green-500",
-                        "bg-green-900",
-                      ][
-                        Math.min(
-                          Object.values(validations).filter(Boolean).length,
-                          4,
-                        )
-                      ]
-                    }`}
-                    style={{
-                      width: `${(Object.values(validations).filter(Boolean).length / 5) * 100}%`,
-                    }}
-                  />
-                </div>
-              )}
-              {password && hasSequentialPattern(password) && (
-                <p className="text-xs text-red-500 mt-1">
-                  La contraseña contiene secuencias predecibles.
-                </p>
-              )}
-              {password &&
-                isPasswordContainingPersonalData(
-                  password,
-                  nombre,
-                  apellido,
-                  correo,
-                  telefono,
-                ) && (
-                  <p className="text-xs text-red-500 mt-1">
-                    La contraseña contiene información personal.
-                  </p>
-                )}
-            </div>
-
-            <Checkbox
-              id="terms"
-              checked={agreed}
-              onChange={setAgreed}
-              label={
-                <>
-                  Acepto los{" "}
-                  <span className="font-medium hover:underline text-[var(--color-text)] cursor-pointer">
-                    Términos y condiciones
-                  </span>
-                  ,y{" "}
-                  <span className="font-medium hover:underline text-[var(--color-text)] cursor-pointer">
-                    Política de Privacidad
-                  </span>
-                </>
-              }
-            />
-
-            <button
-              type="submit"
-              disabled={!isFormValid}
-              className="btn-secondary"
-            >
-              {loading ? "Registrando..." : "Crear cuenta"}
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <div className="hidden lg:block h-screen p-10">
-        <div className="relative h-full w-full rounded-[3rem] shadow-xl overflow-hidden transition-all duration-1000 animate-in zoom-in-95">
-          <CldImage
-            src={settings?.registerBgImageUrl || "food-3955317_1280"}
-            fill
-            alt="Register background"
-            className="object-cover"
-            sizes="100vw"
-          />
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<div className="contenedor-pagina grid items-start gap-(--espacio-2xl) pb-(--espacio-entre-secciones) lg:grid-cols-2">
+			<div className="flex max-w-[34rem] flex-col">
+				<EncabezadoPublico ruta="/register" titulo="Crea tu cuenta" entradilla="Para pedir desde la carta, pagar en línea y tener tus reservas a mano." />
+				{creada ? (
+					<Aviso tono="exito" titulo="Tu cuenta está creada">
+						Revisa tu correo y confirma tu cuenta antes de iniciar sesión. Te llevamos al inicio de sesión en unos segundos.
+					</Aviso>
+				) : (
+					<form {...propsFormulario} aria-labelledby="titulo-registro" className="relative flex flex-col gap-(--espacio-md)">
+						<h2 id="titulo-registro" className="solo-lectores">
+							Datos de la cuenta
+						</h2>
+						<CampoTrampa />
+						<AnuncioFormulario mensaje={anuncio} />
+						{errorGeneral && <Aviso tono="error">{errorGeneral}</Aviso>}
+						<div className="grid gap-(--espacio-md) sm:grid-cols-2">
+							<Campo id="nombre" name="nombre" etiqueta="Nombre" autoComplete="given-name" maxLength={50} error={errores.nombre} />
+							<Campo id="apellido" name="apellido" etiqueta="Apellido" autoComplete="family-name" maxLength={50} error={errores.apellido} />
+						</div>
+						<Campo id="correo" name="correo" etiqueta="Correo" type="email" inputMode="email" autoComplete="email" error={errores.correo} />
+						<input type="hidden" name="lada" value="+52" />
+						<Campo
+							id="telefono"
+							name="telefono"
+							etiqueta="Teléfono"
+							type="tel"
+							inputMode="numeric"
+							autoComplete="tel-national"
+							maxLength={10}
+							ayuda="10 dígitos; la lada es +52."
+							error={errores.telefono}
+						/>
+						<div className="flex flex-col gap-(--espacio-sm)">
+							<Campo
+								id="password"
+								name="password"
+								etiqueta="Contraseña"
+								type="password"
+								revelable
+								autoComplete="new-password"
+								maxLength={64}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								aria-describedby="requisitos-contrasena"
+								error={errores.password}
+							/>
+							<ul id="requisitos-contrasena" aria-label="Requisitos de la contraseña" className="m-0 grid list-none gap-1 p-0 text-(length:--texto-pequeno) sm:grid-cols-2">
+								{REQUISITOS.map((r) => {
+									const ok = requisitos[r.clave];
+									return (
+										<li key={r.clave} className={cn("flex items-start gap-2 [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-[1.5]", ok ? "text-texto-principal" : "text-texto-secundario")}>
+											{ok ? <Check aria-hidden="true" className="text-exito" /> : <Circle aria-hidden="true" />}
+											<span>
+												{r.texto}
+												<span className="solo-lectores">{ok ? " (cumplido)" : " (pendiente)"}</span>
+											</span>
+										</li>
+									);
+								})}
+							</ul>
+							{secuencia && <p className="m-0 text-(length:--texto-pequeno) text-error">La contraseña contiene secuencias predecibles.</p>}
+						</div>
+						<Casilla
+							id="terms"
+							name="agreed"
+							etiqueta={
+								<>
+									Acepto los{" "}
+									<Link href="/condiciones" className="enlace-subrayado">
+										términos y condiciones
+									</Link>{" "}
+									y el tratamiento de mis datos para las finalidades primarias del{" "}
+									<Link href="/privacidad" className="enlace-subrayado">
+										aviso de privacidad
+									</Link>
+									, necesarias para atender mis pedidos.
+								</>
+							}
+							error={errores.agreed}
+						/>
+						{/* D-36: las finalidades secundarias se aceptan aparte, con la casilla desmarcada. */}
+						<Casilla id="promociones" name="promociones" etiqueta="Quiero recibir promociones y encuestas de El Quijote (opcional)." />
+						<Boton type="submit" variante="primario" icono={<UserPlus />} cargando={enviando} textoCargando="Creando tu cuenta…">
+							Crear cuenta
+						</Boton>
+						<p className="m-0 border-t border-borde-sutil pt-(--espacio-md) text-center text-texto-secundario">
+							¿Ya tienes cuenta?{" "}
+							<Link href="/login" className="enlace-subrayado inline-flex min-h-11 items-center text-texto-principal">
+								Inicia sesión
+							</Link>
+						</p>
+					</form>
+				)}
+			</div>
+			<div className="relative hidden aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie-cafe lg:mt-(--espacio-xl) lg:block">
+				<Imagen
+					src={restaurantConfig.images.fondoAcceso}
+					fill
+					decorativa
+					preload
+					className="object-cover"
+					sizes="(min-width: 1024px) 50vw, 100vw"
+				/>
+			</div>
+		</div>
+	);
 }

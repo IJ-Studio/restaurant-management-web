@@ -9,14 +9,21 @@
  *   import { store, type RootState, type AppDispatch } from '@/store'
  */
 
-import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./slices/authSlice";
+import { combineReducers, configureStore, type UnknownAction } from "@reduxjs/toolkit";
+import authReducer, { sesionCerrada } from "./slices/authSlice";
 
-export const store = configureStore({
-  reducer: {
-    auth: authReducer,
-  },
+const reductorApp = combineReducers({
+  auth: authReducer,
 });
+
+/** Con `sesionCerrada` cada slice vuelve a su estado inicial (PLAN 2.14). */
+export function reductorRaiz(estado: ReturnType<typeof reductorApp> | undefined, accion: UnknownAction) {
+  return reductorApp(sesionCerrada.match(accion) ? undefined : estado, accion);
+}
+
+export const crearStore = () => configureStore({ reducer: reductorRaiz });
+
+export const store = crearStore();
 
 export type RootState  = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

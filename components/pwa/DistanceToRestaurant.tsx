@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, LocateFixed, Navigation } from "lucide-react";
+import { useState, useSyncExternalStore } from "react";
+import { LocateFixed, Navigation } from "lucide-react";
+import { Boton } from "@/components/ui/Boton";
+import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 // Coordenadas del restaurante (las mismas del mapa de Google en /about).
@@ -40,7 +42,7 @@ function estimate(km: number) {
 const ERRORS: Record<number, string> = {
   1: "Permite el acceso a tu ubicación en el navegador para calcular la distancia.",
   2: "No pudimos obtener tu ubicación. Revisa que el GPS esté encendido.",
-  3: "Tu ubicación tardó demasiado. Intenta de nuevo.",
+  3: "Tu ubicación tardó demasiado. Inténtalo de nuevo.",
 };
 
 /**
@@ -50,12 +52,9 @@ const ERRORS: Record<number, string> = {
  */
 export default function DistanceToRestaurant({ className = "" }: { className?: string }) {
   const online = useOnlineStatus();
-  const [supported, setSupported] = useState(false);
+  // Se lee del navegador sin efecto: en el servidor, nunca disponible.
+  const supported = useSyncExternalStore(() => () => {}, () => "geolocation" in navigator, () => false);
   const [state, setState] = useState<State>({ status: "idle" });
-
-  useEffect(() => {
-    setSupported("geolocation" in navigator);
-  }, []);
 
   if (!supported) return null;
 
@@ -81,55 +80,34 @@ export default function DistanceToRestaurant({ className = "" }: { className?: s
     return `https://www.google.com/maps/dir/?${params}`;
   };
 
+  // Estilo del sistema (PLAN 4.21): botón fantasma, enlace del sistema y avisos en texto secundario.
   return (
-    <div className={`text-sm ${className}`}>
+    <div className={`flex flex-col gap-2 text-(length:--texto-pequeno) ${className}`}>
       {state.status === "done" ? (
         (() => {
           const { walking, minutes } = estimate(state.km);
           return (
-            <div className="space-y-2">
-              <p className="text-[var(--color-text)]">
-                Estás a <strong>{formatDistance(state.km)}</strong> del restaurante · aprox.{" "}
-                {minutes} min {walking ? "caminando" : "en auto"}
+            <>
+              <p className="m-0 text-texto-principal">
+                Estás a <strong className="numeros-tabulares">{formatDistance(state.km)}</strong> del restaurante · unos{" "}
+                <span className="numeros-tabulares">{minutes}</span> min {walking ? "caminando" : "en coche"}
               </p>
               {online ? (
-                <a
-                  href={directionsUrl(state.origin, walking)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 font-semibold text-[var(--color-brand)] hover:underline"
-                >
-                  <Navigation size={14} /> Cómo llegar
-                </a>
+                <BotonEnlace href={directionsUrl(state.origin, walking)} target="_blank" rel="noopener noreferrer" variante="fantasma" tamano="compacto" icono={<Navigation />} className="-ms-3 self-start">
+                  Ver la ruta<span className="solo-lectores"> (abre el mapa en otra pestaña)</span>
+                </BotonEnlace>
               ) : (
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  Conéctate a internet para abrir la ruta en el mapa.
-                </p>
+                <p className="m-0 text-texto-secundario">Con conexión podrás abrir la ruta en el mapa.</p>
               )}
-            </div>
+            </>
           );
         })()
       ) : (
-        <button
-          type="button"
-          onClick={locate}
-          disabled={state.status === "locating"}
-          className="inline-flex items-center gap-1.5 font-semibold text-[var(--color-brand)] hover:underline disabled:opacity-60"
-        >
-          {state.status === "locating" ? (
-            <>
-              <Loader2 size={14} className="animate-spin" /> Buscando tu ubicación…
-            </>
-          ) : (
-            <>
-              <LocateFixed size={14} /> ¿Qué tan lejos estoy?
-            </>
-          )}
-        </button>
+        <Boton variante="fantasma" tamano="compacto" icono={<LocateFixed />} onClick={locate} cargando={state.status === "locating"} textoCargando="Buscando tu ubicación…" className="-ms-3 self-start">
+          ¿A qué distancia estoy?
+        </Boton>
       )}
-      {state.status === "error" && (
-        <p className="mt-1 text-xs text-[var(--color-text-muted)]">{state.message}</p>
-      )}
+      {state.status === "error" && <p role="status" className="m-0 text-texto-secundario">{state.message}</p>}
     </div>
   );
 }

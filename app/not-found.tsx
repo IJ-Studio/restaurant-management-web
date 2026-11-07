@@ -1,45 +1,26 @@
-import Link from 'next/link';
-import styles from './not-found.module.css';
+import { ArrowLeft, UtensilsCrossed } from "lucide-react";
+import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { MarcoSitio } from "@/components/marca/MarcoSitio";
+import { PaginaEstado } from "@/components/marca/PaginaEstado";
+import { TEXTOS_ESTADO } from "@/components/marca/textos-estado";
 
-export default function NotFound() {
-  return (
-    <div className="relative flex h-screen w-full flex-col items-center justify-center bg-gray-50 overflow-hidden">
-      {/* Background Text */}
-      <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10rem] md:text-[20rem] font-black text-gray-200 select-none z-0 whitespace-nowrap opacity-60">
-        404
-      </h1>
-
-      {/* Content Wrapper */}
-      <div className="relative z-10 flex flex-col items-center gap-12 mt-16">
-        {/* Animation: Pan & Flying Food */}
-        <div className={styles.loader}>
-          <div className={styles.panWrapper}>
-            <div className={styles.pan}>
-              <div className={styles.food}></div>
-              <div className={styles.panBase}></div>
-              <div className={styles.panHandle}></div>
-            </div>
-            <div className={styles.panShadow}></div>
-          </div>
-        </div>
-
-        {/* Text and Action */}
-        <div className="text-center space-y-4 px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-            ¡Plato no encontrado!
-          </h2>
-          <p className="text-gray-600 max-w-md mx-auto">
-            La receta que buscas no está en nuestro menú. Revisa la URL o vuelve a la página principal.
-          </p>
-
-          <Link
-            href="/"
-            className="inline-block mt-4 px-8 py-3 bg-[#e85d04] text-white rounded-xl font-bold hover:bg-[#c44d03] transition-all shadow-lg hover:shadow-xl"
-          >
-            Volver al inicio
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+// 404 de la raíz (PLAN 4.23, D-21): dentro del marco público y con el plato de la campana vacía.
+export default function NoEncontradoRaiz() {
+	return (
+		<MarcoSitio>
+			<PaginaEstado
+				{...TEXTOS_ESTADO.noEncontrado}
+				acciones={
+					<>
+						<BotonEnlace href="/" variante="primario" icono={<ArrowLeft />}>
+							Volver al inicio
+						</BotonEnlace>
+						<BotonEnlace href="/menu" variante="secundario" icono={<UtensilsCrossed />}>
+							Ver la carta
+						</BotonEnlace>
+					</>
+				}
+			/>
+		</MarcoSitio>
+	);
 }

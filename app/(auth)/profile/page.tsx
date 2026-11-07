@@ -1,466 +1,302 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Phone, MapPin, Save, RefreshCw, ArrowLeft, ShieldCheck, Edit3, X, AlertTriangle } from "lucide-react";
-import Link from "next/link";
+import { MapPin, PenLine, Save, UserRound } from "lucide-react";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { AreaTexto, Campo } from "@/components/ui/Campo";
+import { useConfirmacion } from "@/components/ui/DialogoConfirmacion";
+import { Esqueleto, EsqueletoLineas, ZonaCargando } from "@/components/ui/Esqueleto";
+import { useNotificaciones } from "@/components/ui/Notificacion";
+import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
+import { api } from "@/lib/api";
+import { registrarError } from "@/lib/registro/registrar-error";
+import { pedirSesion } from "@/lib/sesion/sesion-cliente";
+import { esquemaPerfil } from "@/lib/validacion/formularios";
 
-export default function PerfilUsuarioPage() {
-  const router = useRouter();
+/**
+ * Tu cuenta (`/profile`, PLAN 4.20). La lógica no cambia: los datos salen de la sesión, sin
+ * sesión se va a `/login?redirect=/profile`, «Guardar» solo se activa si algo cambió, se pide
+ * confirmación y se envía el mismo `PUT /usuarios/perfil/actualizar/{id}` con todo el formulario.
+ *
+ * Lo nuevo: dos bloques (datos personales y dirección) que se editan por separado con campos del
+ * sistema y `autocomplete`; la confirmación es el diálogo del sistema en lugar de un banner; la
+ * validación usa `esquemaPerfil` (3.1) con el error en cada campo; el resultado es una
+ * notificación cálida, sin el mensaje del servidor; y esqueletos al cargar (D-20).
+ */
+/** Dirección de `GET /direcciones` (API). */
+type Direccion = { id: number; linea1?: string; linea2?: string | null; colonia?: string | null; referencias?: string | null; codigoPostal?: string; ciudad?: string; estado?: string; esPrincipal?: boolean | null };
+/** El API pide el teléfono en formato internacional: 10 dígitos de México pasan a `+52…`, como en la app móvil. */
+const telefonoE164 = (t: string) => {
+	const digitos = t.replace(/\D/g, "");
+	return digitos.length === 10 ? `+52${digitos}` : t.trim().startsWith("+") ? `+${digitos}` : t.trim();
+};
 
-  // Datos originales de la base de datos (para saber si hubo cambios reales)
-  const [datosOriginales, setDatosOriginales] = useState<any>(null);
+type Perfil = {
+	name: string;
+	lastname: string;
+	email: string;
+	phone: string;
+	calle: string;
+	numero: string;
+	colonia: string;
+	ciudad: string;
+	estado: string;
+	codigoPostal: string;
+	indicaciones: string;
+};
+const VACIO: Perfil = { name: "", lastname: "", email: "", phone: "", calle: "", numero: "", colonia: "", ciudad: "", estado: "", codigoPostal: "", indicaciones: "" };
+const PERSONALES = ["name", "lastname", "phone"] as const;
+// Sin editar, el campo se lee como texto (sin caja): se distingue a simple vista de uno editable.
+const comoTexto = (editando: boolean) => (editando ? undefined : "border-transparent bg-transparent px-0");
+const DIRECCION = ["calle", "numero", "colonia", "ciudad", "estado", "codigoPostal", "indicaciones"] as const;
 
-  // Estados del formulario
-  const [formData, setFormData] = useState({
-    name: "",
-    lastname: "",
-    email: "",
-    phone: "",
-    calle: "",
-    numero: "",
-    colonia: "",
-    ciudad: "",
-    codigoPostal: "",
-    indicaciones: ""
-  });
+export default function PaginaCuenta() {
+	const router = useRouter();
+	const { confirmar, dialogo } = useConfirmacion();
+	const { notificar } = useNotificaciones();
+	const [originales, setOriginales] = useState<Perfil | null>(null);
+	const [formData, setFormData] = useState<Perfil>(VACIO);
+	const [editandoPersonal, setEditandoPersonal] = useState(false);
+	const [editandoDireccion, setEditandoDireccion] = useState(false);
+	const [loading, setLoading] = useState(true);
+	const [falloCarga, setFalloCarga] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [errores, setErrores] = useState<Record<string, string>>({});
+	const [direccionId, setDireccionId] = useState<number | null>(null);
 
-  // Control de qué categorías están en modo edición
-  const [editandoPersonal, setEditandoPersonal] = useState(false);
-  const [editandoDireccion, setEditandoDireccion] = useState(false);
+	useEffect(() => {
+		(async () => {
+			try {
+				const sessionRes = await pedirSesion();
+				if (!sessionRes.ok) return router.push("/login?redirect=/profile");
+				const sessionData = await sessionRes.json();
+				const u = sessionData?.user || sessionData;
+				if (!u) return router.push("/login?redirect=/profile");
+				// NP-17 / D-32: la dirección vive en `/direcciones` del API (la principal, o la primera).
+				const direcciones = await api.get<Direccion[]>("/direcciones").catch(() => [] as Direccion[]);
+				const d = (Array.isArray(direcciones) ? direcciones : []).find((x) => x.esPrincipal) ?? (Array.isArray(direcciones) ? direcciones[0] : undefined);
+				setDireccionId(d?.id ?? null);
+				const info: Perfil = {
+					name: u.name || "",
+					lastname: u.lastname || "",
+					email: u.email || "",
+					phone: u.phone || "",
+					calle: d?.linea1 || "",
+					numero: d?.linea2 || "",
+					colonia: d?.colonia || "",
+					ciudad: d?.ciudad || "",
+					estado: d?.estado || "",
+					codigoPostal: d?.codigoPostal || "",
+					indicaciones: d?.referencias || "",
+				};
+				setFormData(info);
+				setOriginales(info);
+			} catch (error) {
+				registrarError(error, "cuenta: carga");
+				setFalloCarga(true);
+			} finally {
+				setLoading(false);
+			}
+		})();
+	}, [router]);
 
-  // Estados de carga, envíos y UI
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mostrarBannerConfirmacion, setMostrarBannerConfirmacion] = useState(false);
-  const [mensaje, setMensaje] = useState<{ tipo: "exito" | "error"; texto: string } | null>(null);
+	const hayCambios = !!originales && (Object.keys(formData) as (keyof Perfil)[]).some((k) => formData[k] !== originales[k]);
+	const cambiar = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+		const { name, value } = e.target;
+		setFormData((prev) => ({ ...prev, [name]: value }));
+	};
+	const restaurar = (campos: readonly (keyof Perfil)[]) => {
+		if (!originales) return;
+		setFormData((prev) => ({ ...prev, ...Object.fromEntries(campos.map((c) => [c, originales[c]])) }));
+		setErrores({});
+	};
 
-  // Cargar datos del usuario de forma segura
-  useEffect(() => {
-    const cargarInformacionUsuario = async () => {
-      try {
-        // Consultamos la sesión local que ya contiene los datos del usuario
-        const sessionRes = await fetch("/api/auth/me");
-        if (!sessionRes.ok) {
-          router.push("/login?redirect=/profile");
-          return;
-        }
+	const guardar = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!hayCambios || isSubmitting) return;
+		const r = esquemaPerfil.safeParse(formData);
+		if (!r.success) {
+			setErrores(Object.fromEntries(r.error.issues.map((i) => [String(i.path[0]), i.message])));
+			return;
+		}
+		setErrores({});
+		const ok = await confirmar({
+			titulo: "¿Guardar los cambios de tu cuenta?",
+			descripcion: "Usaremos estos datos en tus próximos pedidos y reservas.",
+			textoConfirmar: "Guardar cambios",
+			textoCancelar: "Seguir editando",
+		});
+		if (!ok) return;
+		setIsSubmitting(true);
+		try {
+			const sessionRes = await pedirSesion();
+			const sessionData = await sessionRes.json();
+			const activeUser = sessionData?.user || sessionData;
+			// NP-17 / D-32: la ruta antigua (`PUT /usuarios/perfil/actualizar/:id`) no existía. Los datos
+			// personales van a `PATCH /users/:id` (el mismo de la app móvil) y la dirección a `/direcciones`.
+			if (PERSONALES.some((k) => formData[k] !== originales?.[k])) {
+				await api.patch(`/users/${encodeURIComponent(String(activeUser.id))}`, {
+					name: formData.name.trim(),
+					lastname: formData.lastname.trim(),
+					phone: telefonoE164(formData.phone),
+				});
+			}
+			if (DIRECCION.some((k) => formData[k] !== originales?.[k])) {
+				const cuerpo = {
+					linea1: formData.calle.trim(),
+					...(formData.numero.trim() ? { linea2: formData.numero.trim() } : {}),
+					...(formData.colonia.trim() ? { colonia: formData.colonia.trim() } : {}),
+					...(formData.indicaciones.trim() ? { referencias: formData.indicaciones.trim() } : {}),
+					codigoPostal: formData.codigoPostal.trim(),
+					ciudad: formData.ciudad.trim(),
+					estado: formData.estado.trim(),
+				};
+				if (direccionId !== null) await api.put(`/direcciones/${direccionId}`, cuerpo);
+				else {
+					const creada = await api.post<{ id?: number }>("/direcciones", { ...cuerpo, alias: "Principal", esPrincipal: true });
+					if (typeof creada?.id === "number") setDireccionId(creada.id);
+				}
+			}
+			notificar({ tono: "exito", titulo: "Tu cuenta está al día", descripcion: "Guardamos los cambios." });
+			setOriginales(formData);
+			setEditandoPersonal(false);
+			setEditandoDireccion(false);
+		} catch (error) {
+			registrarError(error, "cuenta: guardar");
+			notificar({ tono: "error", titulo: "No pudimos guardar los cambios", descripcion: "Inténtalo de nuevo en un momento." });
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
 
-        const sessionData = await sessionRes.json();
-        const activeUser = sessionData?.user || sessionData;
+	return (
+		<div className="contenedor-pagina max-w-[48rem] pb-(--espacio-entre-secciones)">
+			{dialogo}
+			<EncabezadoPublico
+				ruta="/profile"
+				titulo="Tu cuenta"
+				entradilla="Tus datos de contacto y tu dirección para los pedidos a domicilio."
+				acciones={
+					!loading && !falloCarga ? (
+						<Boton type="submit" form="formulario-cuenta" variante="primario" icono={<Save />} deshabilitado={!hayCambios} cargando={isSubmitting} textoCargando="Guardando…">
+							Guardar cambios
+						</Boton>
+					) : undefined
+				}
+			/>
+			{loading ? (
+				<ZonaCargando cargando texto="Preparando tu cuenta…">
+					<div className="flex flex-col gap-4 rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
+						<Esqueleto sobre="superficie" className="h-6 w-1/3" />
+						<EsqueletoLineas sobre="superficie" lineas={4} />
+					</div>
+				</ZonaCargando>
+			) : falloCarga ? (
+				<Aviso tono="error" titulo="No pudimos traer tu cuenta">
+					Vuelve a cargar la página en un momento.
+				</Aviso>
+			) : (
+				<form id="formulario-cuenta" onSubmit={guardar} noValidate className="flex flex-col gap-(--espacio-xl)">
+					<Bloque
+						titulo="Datos personales"
+						icono={<UserRound />}
+						editando={editandoPersonal}
+						alEditar={() => setEditandoPersonal(true)}
+						alCancelar={() => {
+							restaurar(PERSONALES);
+							setEditandoPersonal(false);
+						}}
+					>
+						<div className="grid gap-(--espacio-md) sm:grid-cols-2">
+							<Campo name="name" etiqueta="Nombre" autoComplete="given-name" value={formData.name} onChange={cambiar} readOnly={!editandoPersonal} classNameControl={comoTexto(editandoPersonal)} error={errores.name} />
+							<Campo name="lastname" etiqueta="Apellidos" autoComplete="family-name" value={formData.lastname} onChange={cambiar} readOnly={!editandoPersonal} classNameControl={comoTexto(editandoPersonal)} error={errores.lastname} />
+							<Campo name="email" etiqueta="Correo" type="email" value={formData.email} readOnly classNameControl={comoTexto(false)} ayuda="Es tu identidad en la cuenta; no se puede cambiar aquí." className="sm:col-span-2" />
+							<Campo name="phone" etiqueta="Teléfono" type="tel" inputMode="tel" autoComplete="tel" value={formData.phone} onChange={cambiar} readOnly={!editandoPersonal} classNameControl={comoTexto(editandoPersonal)} error={errores.phone} />
+						</div>
+					</Bloque>
+					<Bloque
+						titulo="Dirección de entrega"
+						icono={<MapPin />}
+						editando={editandoDireccion}
+						alEditar={() => setEditandoDireccion(true)}
+						alCancelar={() => {
+							restaurar(DIRECCION);
+							setEditandoDireccion(false);
+						}}
+					>
+						<div className="grid gap-(--espacio-md) sm:grid-cols-2">
+							<Campo name="calle" etiqueta="Calle y número" opcional autoComplete="address-line1" value={formData.calle} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.calle} />
+							<Campo name="numero" etiqueta="Interior" opcional autoComplete="address-line2" value={formData.numero} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.numero} />
+							<Campo name="colonia" etiqueta="Colonia" opcional autoComplete="address-level3" value={formData.colonia} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.colonia} />
+							<Campo
+								name="codigoPostal"
+								etiqueta="Código postal"
+								opcional
+								codigo
+								inputMode="numeric"
+								maxLength={5}
+								autoComplete="postal-code"
+								value={formData.codigoPostal}
+								onChange={cambiar}
+								readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)}
+								error={errores.codigoPostal}
+							/>
+							<Campo name="ciudad" etiqueta="Ciudad" opcional autoComplete="address-level2" value={formData.ciudad} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.ciudad} />
+							<Campo name="estado" etiqueta="Estado" opcional autoComplete="address-level1" value={formData.estado} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.estado} />
+							<AreaTexto
+								name="indicaciones"
+								etiqueta="Indicaciones de entrega"
+								opcional
+								rows={3}
+								value={formData.indicaciones}
+								onChange={cambiar}
+								readOnly={!editandoDireccion}
+								error={errores.indicaciones}
+								className="sm:col-span-2"
+							/>
+						</div>
+					</Bloque>
+				</form>
+			)}
+		</div>
+	);
+}
 
-        if (!activeUser) {
-          router.push("/login?redirect=/profile");
-          return;
-        }
-
-        // Estructuramos la información inicial unificada
-        const infoPoblada = {
-          name: activeUser.name || "",
-          lastname: activeUser.lastname || "",
-          email: activeUser.email || "",
-          phone: activeUser.phone || "",
-          calle: activeUser.direccion?.calle || "",
-          numero: activeUser.direccion?.numero || "",
-          colonia: activeUser.direccion?.colonia || "",
-          ciudad: activeUser.direccion?.ciudad || "",
-          codigoPostal: activeUser.direccion?.codigoPostal || "",
-          indicaciones: activeUser.direccion?.indicaciones || ""
-        };
-
-        setFormData(infoPoblada);
-        setDatosOriginales(infoPoblada); // Guardamos la foto estática original
-      } catch (error) {
-        console.error("Error cargando perfil:", error);
-        setMensaje({ tipo: "error", texto: "Ocurrió un inconveniente al sincronizar tu cuenta." });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    cargarInformacionUsuario();
-  }, [router]);
-
-  // Verificar si hay algún cambio real comparando el estado actual vs el original
-  const comprobarSiHayCambios = () => {
-    if (!datosOriginales) return false;
-    return Object.keys(formData).some(
-      (key) => formData[key as keyof typeof formData] !== datosOriginales[key as keyof typeof datosOriginales]
-    );
-  };
-
-  const hayCambios = comprobarSiHayCambios();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Al dar clic al botón superior derecho, activamos el Banner de Confirmación
-  const preonSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!hayCambios) return;
-    setMostrarBannerConfirmacion(true);
-  };
-
-  // Procesar la actualización definitiva tras aceptar el banner
-  const confirmarGuardado = async () => {
-    setMostrarBannerConfirmacion(false);
-    setIsSubmitting(true);
-    setMensaje(null);
-
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("authToken");
-
-      const sessionRes = await fetch("/api/auth/me");
-      const sessionData = await sessionRes.json();
-      const activeUser = sessionData?.user || sessionData;
-
-      const res = await fetch(`${apiUrl}/usuarios/perfil/actualizar/${activeUser.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { "Authorization": `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!res.ok) throw new Error("No se pudieron guardar las modificaciones en el servidor.");
-
-      setMensaje({ tipo: "exito", texto: "¡Tu perfil se ha actualizado correctamente!" });
-      setDatosOriginales(formData); // El estado actual se vuelve el nuevo estado original de comparación
-      setEditandoPersonal(false);
-      setEditandoDireccion(false);
-    } catch (error: any) {
-      setMensaje({ tipo: "error", texto: error.message || "Error al actualizar." });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Cancelar la edición de una categoría y restaurar sus valores viejos
-  const cancelarCategoriaPersonal = () => {
-    setFormData(prev => ({
-      ...prev,
-      name: datosOriginales.name,
-      lastname: datosOriginales.lastname,
-      phone: datosOriginales.phone
-    }));
-    setEditandoPersonal(false);
-  };
-
-  const cancelarCategoriaDireccion = () => {
-    setFormData(prev => ({
-      ...prev,
-      calle: datosOriginales.calle,
-      numero: datosOriginales.numero,
-      colonia: datosOriginales.colonia,
-      ciudad: datosOriginales.ciudad,
-      codigoPostal: datosOriginales.codigoPostal,
-      indicaciones: datosOriginales.indicaciones
-    }));
-    setEditandoDireccion(false);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-text/60 text-xs tracking-wide">Sincronizando perfil...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-background min-h-screen text-text pb-16 pt-32 relative">
-      <div className="container mx-auto px-4 max-w-xl">
-
-        {/* CABECERA SUPERIOR INTERACTIVA */}
-        <div className="flex items-center justify-between mb-6">
-          <Link href="/menu" className="inline-flex items-center gap-2 text-xs font-semibold text-text/60 hover:text-brand transition-colors">
-            <ArrowLeft size={14} /> Volver al inicio
-          </Link>
-
-          {/* BOTÓN SUPERIOR DERECHA: BLOQUEADO HASTA QUE HAYA CAMBIOS */}
-          <button
-            onClick={preonSubmit}
-            disabled={!hayCambios || isSubmitting}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold tracking-wide shadow-sm transition-all flex items-center gap-2 ${
-              hayCambios
-                ? "bg-brand hover:bg-brand/90 text-white cursor-pointer"
-                : "bg-surface border border-border text-text/30 cursor-not-allowed"
-            }`}
-          >
-            {isSubmitting ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
-            Guardar Cambios
-          </button>
-        </div>
-
-        {/* BANNER DE CONFIRMACIÓN FLOTANTE / ALERTA */}
-        {mostrarBannerConfirmacion && (
-          <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl mb-6 flex flex-col gap-3 animate-in fade-in duration-200">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-              <div>
-                <h4 className="text-sm font-bold text-amber-600 dark:text-amber-400">¿Confirmar actualización de cuenta?</h4>
-                <p className="text-xs text-text-sec mt-0.5">Estás a punto de reescribir tus datos personales y/o de envío en la plataforma. ¿Deseas guardar estos cambios?</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2 self-end">
-              <button
-                onClick={() => setMostrarBannerConfirmacion(false)}
-                className="px-3 py-1.5 text-xs font-semibold bg-surface border border-border rounded-lg hover:bg-border/40 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmarGuardado}
-                className="px-3 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors"
-              >
-                Sí, estoy seguro
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* FEEDBACK DE RESPUESTA */}
-        {mensaje && (
-          <div className={`p-4 rounded-xl mb-6 border text-sm font-medium ${
-            mensaje.tipo === "exito"
-              ? "bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400"
-              : "bg-red-500/10 border-red-500/30 text-red-500"
-          }`}>
-            {mensaje.texto}
-          </div>
-        )}
-
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <User className="text-brand" size={24} /> Mi Cuenta
-          </h1>
-          <p className="text-xs text-text-sec mt-1">
-            Visualiza tus datos registrados. Haz clic en "Editar" en la sección correspondiente para modificar los campos.
-          </p>
-        </div>
-
-        <div className="space-y-6">
-
-          {/* CATEGORÍA 1: DATOS PERSONALES */}
-          <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-border/50">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-brand flex items-center gap-1.5">
-                <ShieldCheck size={14} /> Datos Personales
-              </h2>
-              {editandoPersonal ? (
-                <button
-                  onClick={cancelarCategoriaPersonal}
-                  className="text-xs font-medium text-red-500 hover:underline flex items-center gap-1"
-                >
-                  <X size={12}/> Cancelar
-                </button>
-              ) : (
-                <button
-                  onClick={() => setEditandoPersonal(true)}
-                  className="text-xs font-bold text-brand hover:underline flex items-center gap-1"
-                >
-                  <Edit3 size={12}/> Editar Info
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-text/60">Nombre</label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  disabled={!editandoPersonal}
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`w-full text-sm rounded-xl p-3 focus:outline-none transition-all ${
-                    editandoPersonal
-                      ? "bg-background border border-brand text-text"
-                      : "bg-background/40 border border-border/60 text-text/50 cursor-not-allowed"
-                  }`}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-text/60">Apellidos</label>
-                <input
-                  type="text"
-                  name="lastname"
-                  required
-                  disabled={!editandoPersonal}
-                  value={formData.lastname}
-                  onChange={handleChange}
-                  className={`w-full text-sm rounded-xl p-3 focus:outline-none transition-all ${
-                    editandoPersonal
-                      ? "bg-background border border-brand text-text"
-                      : "bg-background/40 border border-border/60 text-text/50 cursor-not-allowed"
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-text/60 flex items-center gap-1"><Mail size={12}/> Correo Electrónico (Identidad)</label>
-              <input
-                type="email"
-                name="email"
-                disabled
-                value={formData.email}
-                className="w-full text-sm bg-background/30 border border-border/40 rounded-xl p-3 text-text/40 cursor-not-allowed"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-text/60 flex items-center gap-1"><Phone size={12}/> Teléfono Celular</label>
-              <input
-                type="tel"
-                name="phone"
-                required
-                disabled={!editandoPersonal}
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Ej. 5512345678"
-                className={`w-full text-sm rounded-xl p-3 focus:outline-none transition-all ${
-                  editandoPersonal
-                    ? "bg-background border border-brand text-text"
-                    : "bg-background/40 border border-border/60 text-text/50 cursor-not-allowed"
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* CATEGORÍA 2: DOMICILIO DE ENTREGA */}
-          <div className="bg-surface rounded-2xl border border-border p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-border/50">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-brand flex items-center gap-1.5">
-                <MapPin size={14} /> Domicilio de Entrega
-              </h2>
-              {editandoDireccion ? (
-                <button
-                  onClick={cancelarCategoriaDireccion}
-                  className="text-xs font-medium text-red-500 hover:underline flex items-center gap-1"
-                >
-                  <X size={12}/> Cancelar
-                </button>
-              ) : (
-                <button
-                  onClick={() => setEditandoDireccion(true)}
-                  className="text-xs font-bold text-brand hover:underline flex items-center gap-1"
-                >
-                  <Edit3 size={12}/> Editar Info
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2 space-y-1.5">
-                <label className="text-xs font-semibold text-text/60">Calle</label>
-                <input
-                  type="text"
-                  name="calle"
-                  disabled={!editandoDireccion}
-                  value={formData.calle}
-                  onChange={handleChange}
-                  className={`w-full text-sm rounded-xl p-3 focus:outline-none transition-all ${
-                    editandoDireccion
-                      ? "bg-background border border-brand text-text"
-                      : "bg-background/40 border border-border/60 text-text/50 cursor-not-allowed"
-                  }`}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-text/60">Número</label>
-                <input
-                  type="text"
-                  name="numero"
-                  disabled={!editandoDireccion}
-                  value={formData.numero}
-                  onChange={handleChange}
-                  className={`w-full text-sm rounded-xl p-3 focus:outline-none transition-all ${
-                    editandoDireccion
-                      ? "bg-background border border-brand text-text"
-                      : "bg-background/40 border border-border/60 text-text/50 cursor-not-allowed"
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-text/60">Colonia</label>
-                <input
-                  type="text"
-                  name="colonia"
-                  disabled={!editandoDireccion}
-                  value={formData.colonia}
-                  onChange={handleChange}
-                  className={`w-full text-sm rounded-xl p-3 focus:outline-none transition-all ${
-                    editandoDireccion
-                      ? "bg-background border border-brand text-text"
-                      : "bg-background/40 border border-border/60 text-text/50 cursor-not-allowed"
-                  }`}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-text/60">Código Postal</label>
-                <input
-                  type="text"
-                  name="codigoPostal"
-                  maxLength={5}
-                  disabled={!editandoDireccion}
-                  value={formData.codigoPostal}
-                  onChange={handleChange}
-                  className={`w-full text-sm rounded-xl p-3 focus:outline-none transition-all ${
-                    editandoDireccion
-                      ? "bg-background border border-brand text-text"
-                      : "bg-background/40 border border-border/60 text-text/50 cursor-not-allowed"
-                  }`}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-text/60">Ciudad</label>
-              <input
-                type="text"
-                name="ciudad"
-                disabled={!editandoDireccion}
-                value={formData.ciudad}
-                onChange={handleChange}
-                className={`w-full text-sm rounded-xl p-3 focus:outline-none transition-all ${
-                  editandoDireccion
-                    ? "bg-background border border-brand text-text"
-                    : "bg-background/40 border border-border/60 text-text/50 cursor-not-allowed"
-                }`}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-text/60">Indicaciones de Entrega</label>
-              <textarea
-                name="indicaciones"
-                disabled={!editandoDireccion}
-                value={formData.indicaciones}
-                onChange={handleChange}
-                rows={2}
-                className={`w-full text-sm rounded-xl p-3 focus:outline-none transition-all resize-none ${
-                  editandoDireccion
-                    ? "bg-background border border-brand text-text"
-                    : "bg-background/40 border border-border/60 text-text/50 cursor-not-allowed"
-                }`}
-              />
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
+function Bloque({
+	titulo,
+	icono,
+	editando,
+	alEditar,
+	alCancelar,
+	children,
+}: {
+	titulo: string;
+	icono: React.ReactNode;
+	editando: boolean;
+	alEditar: () => void;
+	alCancelar: () => void;
+	children: React.ReactNode;
+}) {
+	return (
+		<section aria-label={titulo} className="flex flex-col gap-(--espacio-lg) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg) sm:p-(--espacio-xl)">
+			<header className="flex flex-wrap items-center justify-between gap-3">
+				<h2 className="m-0 flex items-center gap-2 font-texto text-(length:--texto-titulo-interfaz) font-semibold [&_svg]:size-5 [&_svg]:stroke-[1.5] [&_svg]:text-acento">
+					<span aria-hidden="true">{icono}</span>
+					{titulo}
+				</h2>
+				{editando ? (
+					<Boton variante="fantasma" tamano="compacto" onClick={alCancelar}>
+						Cancelar
+					</Boton>
+				) : (
+					<Boton variante="secundario" tamano="compacto" icono={<PenLine />} onClick={alEditar}>
+						{`Editar ${titulo.toLowerCase()}`}
+					</Boton>
+				)}
+			</header>
+			{children}
+		</section>
+	);
 }

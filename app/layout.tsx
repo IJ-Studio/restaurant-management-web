@@ -1,79 +1,77 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { AppProviders } from "@/components/providers/AppProviders";
-// 👇 1. Importa tu nuevo AuthProvider (Ajusta la ruta si lo guardaste en otra carpeta)
 import { AuthProvider } from "@/providers/AuthProvider";
-import { INITIAL_SETTINGS } from "@/features/shared/data/restaurantData";
-import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
-import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
+import { restaurantConfig } from "@/config/restaurant.config";
+import { RetirarServiceWorker } from "@/components/pwa/RetirarServiceWorker";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import ConnectionStatus from "@/components/pwa/ConnectionStatus";
+import { fuenteTexto, fuenteTitulos } from "./fuentes";
+import { ScriptPreferencias } from "@/components/marca/ScriptPreferencias";
+import { COLOR_FONDO_POR_TEMA } from "@/lib/preferencias/preferencias";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  applicationName: INITIAL_SETTINGS.restaurantName,
+  applicationName: restaurantConfig.name,
   title: {
-    default: INITIAL_SETTINGS.restaurantName,
-    template: `%s | ${INITIAL_SETTINGS.restaurantName}`,
+    default: restaurantConfig.name,
+    template: `%s | ${restaurantConfig.name}`,
   },
+  // Metadatos con D-22: comida mexicana y solo datos de la configuración.
   description:
-    INITIAL_SETTINGS.heroSubtitle ||
-    "Sistema de gestión y menú digital de Restaurante El Quijote. Cocina nacional e internacional en Huejutla de Reyes, Hidalgo.",
+    "Restaurante El Quijote: comida mexicana en el centro de Huejutla de Reyes, Hidalgo.",
   keywords: [
     "restaurante",
-    "menú",
-    "El Quijote",
-    "Huejutla",
     "comida mexicana",
+    "restaurante en Huejutla",
+    "El Quijote",
+    "Huejutla de Reyes",
   ],
-  icons: {
-    icon: INITIAL_SETTINGS.restaurantIco,
-    shortcut: INITIAL_SETTINGS.restaurantLogo,
-    apple: "/icons/apple-touch-icon.png",
-  },
+  // Iconos locales por convención de archivos: app/icon.svg y app/apple-icon.png.
   appleWebApp: {
     capable: true,
-    title: INITIAL_SETTINGS.restaurantName,
-    statusBarStyle: "default",
+    title: restaurantConfig.name,
+    // "default" pintaba una barra blanca sobre el tema oscuro en la app instalada de iOS.
+    statusBarStyle: "black",
   },
   formatDetection: { telephone: false },
 };
 
+// Sin maximum-scale ni user-scalable: el usuario siempre puede ampliar.
+// El tema no sigue al sistema (oscuro por defecto, claro a elección), así que el HTML sale
+// con el color del oscuro y public/preferencias.js antepone el del claro antes de pintar si toca.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#181a1b" },
-  ],
+  viewportFit: "cover",
+  colorScheme: "dark",
+  themeColor: COLOR_FONDO_POR_TEMA.oscuro,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Nonce de la CSP (PLAN 2.3), que pone proxy.ts. Leer las cabeceras hace dinámicas todas las
+  // páginas: un nonce por petición no cabe en una página prerenderizada.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html
+      lang="es"
+      className={`${fuenteTitulos.variable} ${fuenteTexto.variable}`}
+      suppressHydrationWarning
+    >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..900;1,9..40,300..900&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Ibarra+Real+Nova:ital,wght@0,400..700;1,400..700&family=Inter:wght@100..900&family=Roboto:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
+        <ScriptPreferencias nonce={nonce} />
       </head>
       <body>
         <AppProviders>
-          {/* 👇 2. Colocamos el AuthProvider envolviendo al Layout Wrapper */}
           <AuthProvider>
-            <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
+            {children}
           </AuthProvider>
         </AppProviders>
-        <ServiceWorkerRegister />
+        <RetirarServiceWorker />
         <InstallPrompt />
         <ConnectionStatus />
       </body>

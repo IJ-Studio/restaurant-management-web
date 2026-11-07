@@ -1,797 +1,666 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe, type StripeCardElementOptions } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { Check, MapPin, FileText, CreditCard, ShoppingBag, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, CreditCard, Lock, MapPin, Plus } from "lucide-react";
+import { Aviso } from "@/components/ui/Aviso";
+import { Boton } from "@/components/ui/Boton";
+import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { Campo, Selector } from "@/components/ui/Campo";
+import { Casilla } from "@/components/ui/Casilla";
+import { Esqueleto, EsqueletoLineas, ZonaCargando } from "@/components/ui/Esqueleto";
+import { EstadoError } from "@/components/ui/EstadoError";
+import { Contraetiqueta } from "@/components/marca/Contraetiqueta";
+import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
+import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
+import { formatearPrecio } from "@/lib/formato/precio";
+import { registrarError } from "@/lib/registro/registrar-error";
+import { pedirSesion } from "@/lib/sesion/sesion-cliente";
+import { esquemaDatosFiscales, esquemaDireccionEnvio } from "@/lib/validacion/formularios";
+import { cn } from "@/lib/utils";
 
-// Se crea UNA sola vez fuera del componente — evita recrear el objeto
-// Stripe en cada render.
+/**
+ * Pago del pedido a domicilio (`/menu/pedido/checkout`, PLAN 4.14). La lógica no cambia: la
+ * misma carga (sesión, pedido, direcciones, métodos guardados), las mismas llamadas
+ * (`/direcciones`, `/metodos-pago/setup-intent`, `/metodos-pago`, `/pagos/crear-intento`,
+ * `/facturas`), las mismas confirmaciones de Stripe y la misma redirección al éxito.
+ *
+ * Lo nuevo: campos con etiqueta, `autocomplete` (`address-line1`, `postal-code`…) e `inputmode`;
+ * validación con los esquemas del 3.1 (los mismos mensajes, y el correo fiscal comprobado si se
+ * escribe: decisión del usuario del 2026-11-01); errores por campo y un resumen; el
+ * `CardElement` con los colores de los tokens del tema (Stripe no admite variables CSS dentro de
+ * su iframe, así que se leen en el navegador); y redacción cálida sin el mensaje del servidor
+ * (los de Stripe sí se muestran: son para la persona, «Tu tarjeta fue rechazada»).
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any -- los datos del API no tienen contrato tipado (NP-17) */
+
+// Una sola instancia de Stripe, fuera del componente.
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 
-const RFC_REGEX = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/i;
-const CP_REGEX = /^\d{5}$/;
-
-// Catálogos simplificados. El catálogo oficial del SAT tiene muchas más
-// opciones — agrega las que tu negocio necesite.
 const USOS_CFDI = [
-  { value: "G01", label: "G01 - Adquisición de mercancías" },
-  { value: "G03", label: "G03 - Gastos en general" },
-  { value: "P01", label: "P01 - Por definir" },
+	{ valor: "G01", texto: "G01 · Adquisición de mercancías" },
+	{ valor: "G03", texto: "G03 · Gastos en general" },
+	{ valor: "P01", texto: "P01 · Por definir" },
 ];
-
 const REGIMENES_FISCALES = [
-  { value: "601", label: "601 - General de Ley Personas Morales" },
-  { value: "603", label: "603 - Personas Morales con Fines no Lucrativos" },
-  { value: "605", label: "605 - Sueldos y Salarios" },
-  { value: "606", label: "606 - Arrendamiento" },
-  { value: "612", label: "612 - Personas Físicas con Actividades Empresariales" },
-  { value: "616", label: "616 - Sin obligaciones fiscales" },
-  { value: "621", label: "621 - Incorporación Fiscal" },
-  { value: "626", label: "626 - Régimen Simplificado de Confianza" },
+	{ valor: "601", texto: "601 · General de Ley Personas Morales" },
+	{ valor: "603", texto: "603 · Personas Morales con Fines no Lucrativos" },
+	{ valor: "605", texto: "605 · Sueldos y Salarios" },
+	{ valor: "606", texto: "606 · Arrendamiento" },
+	{ valor: "612", texto: "612 · Personas Físicas con Actividades Empresariales" },
+	{ valor: "616", texto: "616 · Sin obligaciones fiscales" },
+	{ valor: "621", texto: "621 · Incorporación Fiscal" },
+	{ valor: "626", texto: "626 · Régimen Simplificado de Confianza" },
 ];
+const PASOS = ["Resumen", "Entrega", "Factura", "Pago", "Confirmar"] as const;
 
-const PASOS = [
-  { numero: 1, icono: ShoppingBag },
-  { numero: 2, icono: MapPin },
-  { numero: 3, icono: FileText },
-  { numero: 4, icono: CreditCard },
-  { numero: 5, icono: Check },
-];
+type Errores = Record<string, string>;
+const erroresDe = (resultado: { success: boolean; error?: { issues: { path: PropertyKey[]; message: string }[] } }): Errores =>
+	resultado.success ? {} : Object.fromEntries((resultado.error?.issues ?? []).map((i) => [String(i.path[0]), i.message]));
+const precio = (v: unknown) => formatearPrecio(typeof v === "number" ? v : Number(v));
 
-function CheckoutPageContent() {
-  return (
-    <Elements stripe={stripePromise} options={{ locale: "es" }}>
-      <CheckoutWizard />
-    </Elements>
-  );
+function Checkout() {
+	return (
+		<Elements stripe={stripePromise} options={{ locale: "es" }}>
+			<Asistente />
+		</Elements>
+	);
 }
 
-function CheckoutWizard() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const orderId = searchParams?.get("orderId");
-  const stripe = useStripe();
-  const elements = useElements();
+function Asistente() {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const orderId = searchParams?.get("orderId");
+	const stripe = useStripe();
+	const elements = useElements();
 
-  const [usuarioId, setUsuarioId] = useState<string | null>(null);
-  const [pasoActual, setPasoActual] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [procesando, setProcesando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+	const [usuarioId, setUsuarioId] = useState<string | null>(null);
+	const [pasoActual, setPasoActual] = useState(1);
+	const [loading, setLoading] = useState(true);
+	const [procesando, setProcesando] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [aceptaTerminos, setAceptaTerminos] = useState(false);
+	const [fallaCarga, setFallaCarga] = useState<"sin-pedido" | "no-encontrado" | "error" | null>(null);
+	const [errores, setErrores] = useState<Errores>({});
+	const [orden, setOrden] = useState<any>(null);
 
-  const [orden, setOrden] = useState<any>(null);
+	const [direcciones, setDirecciones] = useState<any[]>([]);
+	const [direccionSeleccionadaId, setDireccionSeleccionadaId] = useState<number | "nueva" | null>(null);
+	const [nuevaDireccion, setNuevaDireccion] = useState({ alias: "Casa", linea1: "", linea2: "", colonia: "", ciudad: "", estado: "", codigoPostal: "", referencias: "" });
+	const [guardarDireccion, setGuardarDireccion] = useState(true);
 
-  // Paso 2: dirección
-  const [direcciones, setDirecciones] = useState<any[]>([]);
-  const [direccionSeleccionadaId, setDireccionSeleccionadaId] = useState<number | "nueva" | null>(null);
-  const [nuevaDireccion, setNuevaDireccion] = useState({
-    alias: "Casa",
-    linea1: "",
-    linea2: "",
-    colonia: "",
-    ciudad: "",
-    estado: "",
-    codigoPostal: "",
-    referencias: "",
-  });
-  const [guardarDireccion, setGuardarDireccion] = useState(true);
+	const [requiereFactura, setRequiereFactura] = useState(false);
+	const [datosFiscales, setDatosFiscales] = useState({ rfc: "", razonSocial: "", usoCfdi: "G03", regimenFiscal: "", codigoPostalFiscal: "", email: "" });
 
-  // Paso 3: facturación
-  const [requiereFactura, setRequiereFactura] = useState(false);
-  const [datosFiscales, setDatosFiscales] = useState({
-    rfc: "",
-    razonSocial: "",
-    usoCfdi: "G03",
-    regimenFiscal: "",
-    codigoPostalFiscal: "",
-    email: "",
-  });
+	const [metodosGuardados, setMetodosGuardados] = useState<any[]>([]);
+	const [metodoSeleccionadoId, setMetodoSeleccionadoId] = useState<string | "nueva" | null>(null);
+	const [guardarTarjeta, setGuardarTarjeta] = useState(false);
 
-  // Paso 4: pago
-  const [metodosGuardados, setMetodosGuardados] = useState<any[]>([]);
-  const [metodoSeleccionadoId, setMetodoSeleccionadoId] = useState<string | "nueva" | null>(null);
-  const [guardarTarjeta, setGuardarTarjeta] = useState(false);
+	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+	// Carga inicial: usuario, pedido, direcciones y métodos de pago guardados.
+	useEffect(() => {
+		if (!orderId) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect -- sin pedido en la URL no hay nada que cargar
+			setFallaCarga("sin-pedido");
+			setLoading(false);
+			return;
+		}
+		const cargar = async () => {
+			try {
+				const resUser = await pedirSesion();
+				if (!resUser.ok) {
+					router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+					return;
+				}
+				const sessionData = await resUser.json();
+				const activeUser = sessionData?.user || sessionData;
+				if (!activeUser?.id) {
+					router.push("/login");
+					return;
+				}
+				setUsuarioId(activeUser.id);
 
-  // Carga inicial: usuario, orden, direcciones guardadas, métodos de pago guardados
-  useEffect(() => {
-    if (!orderId) {
-      setError("Falta el identificador del pedido.");
-      setLoading(false);
-      return;
-    }
+				const resOrdenes = await fetch(`${apiUrl}/pedidos/usuario?usuarioId=${activeUser.id}&tipo=domicilio`, { cache: "no-store" });
+				if (resOrdenes.ok) {
+					const ordenesData = await resOrdenes.json();
+					const ordenEncontrada = ordenesData.find((o: any) => o.id === orderId);
+					if (!ordenEncontrada) setFallaCarga("no-encontrado");
+					else setOrden(ordenEncontrada);
+				}
 
-    const cargar = async () => {
-      try {
-        const resUser = await fetch("/api/auth/me");
-        if (!resUser.ok) {
-          router.push(
-            `/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`,
-          );
-          return;
-        }
-        const sessionData = await resUser.json();
-        const activeUser = sessionData?.user || sessionData;
-        if (!activeUser?.id) {
-          router.push("/login");
-          return;
-        }
-        setUsuarioId(activeUser.id);
+				const resDirecciones = await fetch(`${apiUrl}/direcciones?usuarioId=${activeUser.id}`, { cache: "no-store" });
+				if (resDirecciones.ok) {
+					const data = await resDirecciones.json();
+					setDirecciones(data);
+					const principal = data.find((d: any) => d.esPrincipal);
+					if (principal) setDireccionSeleccionadaId(principal.id);
+					else if (data.length === 0) setDireccionSeleccionadaId("nueva");
+				}
 
-        const resOrdenes = await fetch(
-          `${apiUrl}/pedidos/usuario?usuarioId=${activeUser.id}&tipo=domicilio`,
-        );
-        if (resOrdenes.ok) {
-          const ordenesData = await resOrdenes.json();
-          const ordenEncontrada = ordenesData.find((o: any) => o.id === orderId);
-          if (!ordenEncontrada) {
-            setError("No se encontró el pedido. Regresa a Mis Pedidos e intenta de nuevo.");
-          } else {
-            setOrden(ordenEncontrada);
-          }
-        }
+				const resMetodos = await fetch(`${apiUrl}/metodos-pago?usuarioId=${activeUser.id}`, { cache: "no-store" });
+				if (resMetodos.ok) {
+					const data = await resMetodos.json();
+					setMetodosGuardados(data);
+					const principalMetodo = data.find((m: any) => m.esPrincipal);
+					if (principalMetodo) setMetodoSeleccionadoId(principalMetodo.id);
+					else if (data.length === 0) setMetodoSeleccionadoId("nueva");
+				}
+			} catch (e) {
+				registrarError(e, "checkout: carga");
+				setFallaCarga("error");
+			} finally {
+				setLoading(false);
+			}
+		};
+		cargar();
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- mismas dependencias que antes del rediseño
+	}, [orderId]);
 
-        const resDirecciones = await fetch(`${apiUrl}/direcciones?usuarioId=${activeUser.id}`);
-        if (resDirecciones.ok) {
-          const data = await resDirecciones.json();
-          setDirecciones(data);
-          const principal = data.find((d: any) => d.esPrincipal);
-          if (principal) setDireccionSeleccionadaId(principal.id);
-          else if (data.length === 0) setDireccionSeleccionadaId("nueva");
-        }
+	const irAtras = () => {
+		setError(null);
+		setErrores({});
+		setPasoActual((p) => Math.max(p - 1, 1));
+	};
 
-        const resMetodos = await fetch(`${apiUrl}/metodos-pago?usuarioId=${activeUser.id}`);
-        if (resMetodos.ok) {
-          const data = await resMetodos.json();
-          setMetodosGuardados(data);
-          const principalMetodo = data.find((m: any) => m.esPrincipal);
-          if (principalMetodo) setMetodoSeleccionadoId(principalMetodo.id);
-          else if (data.length === 0) setMetodoSeleccionadoId("nueva");
-        }
-      } catch (e) {
-        console.error("Error al cargar datos de checkout:", e);
-        setError("Ocurrió un error al cargar tu información. Intenta de nuevo.");
-      } finally {
-        setLoading(false);
-      }
-    };
+	// ── Validación por paso (esquemas del 3.1) ──
+	const validarPaso2 = (): Errores | string | null => {
+		if (direccionSeleccionadaId === "nueva") {
+			const e = erroresDe(esquemaDireccionEnvio.safeParse(nuevaDireccion));
+			return Object.keys(e).length ? e : null;
+		}
+		return direccionSeleccionadaId ? null : "Elige o añade una dirección de entrega.";
+	};
+	const validarPaso3 = (): Errores | null => {
+		if (!requiereFactura) return null;
+		const e = erroresDe(esquemaDatosFiscales.safeParse(datosFiscales));
+		return Object.keys(e).length ? e : null;
+	};
+	const validarPaso4 = (): string | null => {
+		if (metodoSeleccionadoId === "nueva") return elements?.getElement(CardElement) ? null : "Escribe los datos de tu tarjeta.";
+		return metodoSeleccionadoId ? null : "Elige o añade un método de pago.";
+	};
+	const fallar = (r: Errores | string) => {
+		if (typeof r === "string") setError(r);
+		else {
+			setErrores(r);
+			setError("Revisa los campos marcados.");
+		}
+	};
 
-    cargar();
-  }, [orderId]);
+	const manejarSiguiente = async () => {
+		setError(null);
+		setErrores({});
 
-  const irAtras = () => setPasoActual((p) => Math.max(p - 1, 1));
+		if (pasoActual === 2) {
+			const r = validarPaso2();
+			if (r) return fallar(r);
+			if (direccionSeleccionadaId === "nueva" && guardarDireccion) {
+				setProcesando(true);
+				try {
+					const res = await fetch(`${apiUrl}/direcciones`, {
+						cache: "no-store",
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ usuarioId: Number(usuarioId), ...nuevaDireccion }),
+					});
+					if (!res.ok) throw new Error(`direccion ${res.status}`);
+					const guardada = await res.json();
+					setDirecciones((prev) => [...prev, guardada]);
+					setDireccionSeleccionadaId(guardada.id);
+				} catch (e) {
+					registrarError(e, "checkout: guardar dirección");
+					setError("No pudimos guardar la dirección. Inténtalo de nuevo o desmarca «Guardar esta dirección».");
+					setProcesando(false);
+					return;
+				}
+				setProcesando(false);
+			}
+		}
 
-  // ── VALIDACIONES POR PASO ──────────────────────────────────────
+		if (pasoActual === 3) {
+			const r = validarPaso3();
+			if (r) return fallar(r);
+		}
 
-  const validarPaso2 = (): string | null => {
-    if (direccionSeleccionadaId === "nueva") {
-      if (!nuevaDireccion.linea1.trim()) return "La calle y número son requeridos.";
-      if (!nuevaDireccion.colonia.trim()) return "La colonia es requerida.";
-      if (!nuevaDireccion.ciudad.trim()) return "La ciudad es requerida.";
-      if (!nuevaDireccion.estado.trim()) return "El estado es requerido.";
-      if (!CP_REGEX.test(nuevaDireccion.codigoPostal)) return "El código postal debe tener 5 dígitos.";
-    } else if (!direccionSeleccionadaId) {
-      return "Selecciona o agrega una dirección de envío.";
-    }
-    return null;
-  };
+		if (pasoActual === 4) {
+			const r = validarPaso4();
+			if (r) return fallar(r);
+			if (metodoSeleccionadoId === "nueva" && guardarTarjeta) {
+				setProcesando(true);
+				try {
+					const resSetup = await fetch(`${apiUrl}/metodos-pago/setup-intent`, {
+						cache: "no-store",
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ usuarioId: Number(usuarioId) }),
+					});
+					if (!resSetup.ok) throw new Error("No pudimos preparar el guardado de la tarjeta.");
+					const { clientSecret } = await resSetup.json();
+					const result = await stripe!.confirmCardSetup(clientSecret, { payment_method: { card: elements!.getElement(CardElement)! } });
+					// El mensaje de Stripe es para la persona («Tu tarjeta fue rechazada»).
+					if (result.error) throw new Error(result.error.message || "No pudimos validar la tarjeta.");
+					const resGuardar = await fetch(`${apiUrl}/metodos-pago`, {
+						cache: "no-store",
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ usuarioId: Number(usuarioId), paymentMethodId: result.setupIntent!.payment_method }),
+					});
+					if (!resGuardar.ok) throw new Error("No pudimos guardar la tarjeta.");
+					const nuevoMetodo = await resGuardar.json();
+					setMetodosGuardados((prev) => [...prev, nuevoMetodo]);
+					setMetodoSeleccionadoId(nuevoMetodo.id);
+				} catch (e) {
+					registrarError(e, "checkout: guardar tarjeta");
+					setError(e instanceof Error && !/^\w+ \d{3}$/.test(e.message) ? e.message : "No pudimos guardar la tarjeta. Inténtalo de nuevo.");
+					setProcesando(false);
+					return;
+				}
+				setProcesando(false);
+			}
+		}
 
-  const validarPaso3 = (): string | null => {
-    if (!requiereFactura) return null;
-    if (!RFC_REGEX.test(datosFiscales.rfc)) return "El RFC no tiene un formato válido.";
-    if (!datosFiscales.razonSocial.trim()) return "La razón social es requerida.";
-    if (!datosFiscales.regimenFiscal) return "Selecciona un régimen fiscal.";
-    if (!CP_REGEX.test(datosFiscales.codigoPostalFiscal))
-      return "El código postal fiscal debe tener 5 dígitos.";
-    return null;
-  };
+		setPasoActual((p) => Math.min(p + 1, 5));
+	};
 
-  const validarPaso4 = (): string | null => {
-    if (metodoSeleccionadoId === "nueva") {
-      if (!elements?.getElement(CardElement)) return "Ingresa los datos de tu tarjeta.";
-    } else if (!metodoSeleccionadoId) {
-      return "Selecciona o agrega un método de pago.";
-    }
-    return null;
-  };
+	const manejarPagar = async () => {
+		if (!aceptaTerminos) {
+			setError("Para pagar, acepta los términos y condiciones.");
+			return;
+		}
+		setError(null);
+		setProcesando(true);
+		try {
+			const body: any = { usuarioId: Number(usuarioId), ordenId: orden.id };
+			if (typeof direccionSeleccionadaId === "number") body.direccionId = direccionSeleccionadaId;
+			if (metodoSeleccionadoId !== "nueva") body.metodoPagoGuardadoId = metodoSeleccionadoId;
 
-  const manejarSiguiente = async () => {
-    setError(null);
+			const resIntento = await fetch(`${apiUrl}/pagos/crear-intento`, {
+				cache: "no-store",
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+			if (!resIntento.ok) throw new Error("No pudimos iniciar el pago. Inténtalo de nuevo en un momento.");
+			const { clientSecret, status } = await resIntento.json();
 
-    if (pasoActual === 2) {
-      const err = validarPaso2();
-      if (err) return setError(err);
+			// Con tarjeta guardada (off_session) el backend puede haber confirmado ya el pago.
+			if (status !== "succeeded") {
+				const confirmOptions = metodoSeleccionadoId === "nueva" ? { payment_method: { card: elements!.getElement(CardElement)! } } : undefined;
+				const result = await stripe!.confirmCardPayment(clientSecret, confirmOptions as any);
+				if (result.error) throw new Error(result.error.message || "El pago no se completó.");
+			}
 
-      if (direccionSeleccionadaId === "nueva" && guardarDireccion) {
-        setProcesando(true);
-        try {
-          const res = await fetch(`${apiUrl}/direcciones`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usuarioId: Number(usuarioId), ...nuevaDireccion }),
-          });
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.message || "No se pudo guardar la dirección.");
-          }
-          const guardada = await res.json();
-          setDirecciones((prev) => [...prev, guardada]);
-          setDireccionSeleccionadaId(guardada.id);
-        } catch (e: any) {
-          setError(e.message);
-          setProcesando(false);
-          return;
-        }
-        setProcesando(false);
-      }
-    }
+			if (requiereFactura) {
+				await fetch(`${apiUrl}/facturas`, {
+					cache: "no-store",
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ usuarioId: Number(usuarioId), ordenId: orden.id, ...datosFiscales }),
+				}).catch((e) => registrarError(e, "checkout: factura"));
+			}
+			router.push(`/menu/pedido/checkout/exito?ordenId=${orden.id}`);
+		} catch (e) {
+			registrarError(e, "checkout: pago");
+			setError(e instanceof Error ? e.message : "No pudimos completar el pago. Inténtalo de nuevo.");
+		} finally {
+			setProcesando(false);
+		}
+	};
 
-    if (pasoActual === 3) {
-      const err = validarPaso3();
-      if (err) return setError(err);
-    }
+	if (loading)
+		return (
+			<ZonaCargando cargando texto="Preparando el pago…">
+				<div className="flex flex-col gap-4">
+					<Esqueleto className="h-10 w-full" />
+					<Esqueleto className="h-48 w-full" />
+					<EsqueletoLineas lineas={3} />
+				</div>
+			</ZonaCargando>
+		);
 
-    if (pasoActual === 4) {
-      const err = validarPaso4();
-      if (err) return setError(err);
+	if (fallaCarga && !orden)
+		return fallaCarga === "error" ? (
+			<EstadoError titulo="No pudimos preparar el pago" descripcion="Vuelve a intentarlo en un momento." alReintentar={() => window.location.reload()} />
+		) : (
+			<EstadoError
+				titulo="No encontramos este pedido"
+				descripcion="Vuelve a tu pedido y continúa al pago desde allí."
+				accion={
+					<BotonEnlace href="/menu/pedido?tab=domicilio" variante="secundario" icono={<ArrowLeft />}>
+						Volver a tu pedido
+					</BotonEnlace>
+				}
+			/>
+		);
 
-      if (metodoSeleccionadoId === "nueva" && guardarTarjeta) {
-        setProcesando(true);
-        try {
-          const resSetup = await fetch(`${apiUrl}/metodos-pago/setup-intent`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usuarioId: Number(usuarioId) }),
-          });
-          if (!resSetup.ok) throw new Error("No se pudo iniciar el guardado de la tarjeta.");
-          const { clientSecret } = await resSetup.json();
+	const direccionElegida = direccionSeleccionadaId === "nueva" ? nuevaDireccion : direcciones.find((d) => d.id === direccionSeleccionadaId);
+	const metodoElegido = metodoSeleccionadoId === "nueva" ? { marca: "Tarjeta nueva", ultimos4: "" } : metodosGuardados.find((m) => m.id === metodoSeleccionadoId);
 
-          const result = await stripe!.confirmCardSetup(clientSecret, {
-            payment_method: { card: elements!.getElement(CardElement)! },
-          });
+	return (
+		<div className="flex flex-col gap-(--espacio-xl)">
+			<ol aria-label="Pasos del pago" className="m-0 grid list-none grid-cols-5 gap-1 p-0">
+				{PASOS.map((nombre, i) => {
+					const n = i + 1;
+					const hecho = pasoActual > n;
+					const actual = pasoActual === n;
+					return (
+						<li key={nombre} aria-current={actual ? "step" : undefined} className="relative flex min-w-0 flex-col gap-2 overflow-hidden">
+							<span aria-hidden="true" className={cn("h-0.5 w-full", pasoActual >= n ? "bg-acento" : "bg-borde-sutil")} />
+							<span className={cn("flex items-center gap-1 text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.12em]", actual ? "text-texto-principal" : "text-texto-tenue")}>
+								{hecho && <Check aria-hidden="true" className="size-3.5 stroke-[1.5]" />}
+								<span className="max-sm:solo-lectores">{nombre}</span>
+								<span className="solo-lectores">{hecho ? " (hecho)" : ""}</span>
+							</span>
+						</li>
+					);
+				})}
+			</ol>
+			<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario sm:hidden" aria-hidden="true">
+				Paso {pasoActual} de 5 · {PASOS[pasoActual - 1]}
+			</p>
 
-          if (result.error) throw new Error(result.error.message || "No se pudo validar la tarjeta.");
+			<section aria-labelledby="paso-titulo" className="flex flex-col gap-(--espacio-lg) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg) sm:p-(--espacio-xl)">
+				{pasoActual === 1 && <PasoResumen orden={orden} />}
+				{pasoActual === 2 && (
+					<PasoDireccion
+						direcciones={direcciones}
+						seleccionadaId={direccionSeleccionadaId}
+						onSeleccionar={setDireccionSeleccionadaId}
+						nuevaDireccion={nuevaDireccion}
+						onCambiarNuevaDireccion={setNuevaDireccion}
+						guardar={guardarDireccion}
+						onCambiarGuardar={setGuardarDireccion}
+						errores={errores}
+					/>
+				)}
+				{pasoActual === 3 && <PasoFacturacion requiereFactura={requiereFactura} onCambiarRequiere={setRequiereFactura} datos={datosFiscales} onCambiarDatos={setDatosFiscales} errores={errores} />}
+				{pasoActual === 4 && (
+					<PasoPago metodos={metodosGuardados} seleccionadoId={metodoSeleccionadoId} onSeleccionar={setMetodoSeleccionadoId} guardarTarjeta={guardarTarjeta} onCambiarGuardarTarjeta={setGuardarTarjeta} />
+				)}
+				{pasoActual === 5 && <PasoConfirmar orden={orden} direccion={direccionElegida} requiereFactura={requiereFactura} datosFiscales={datosFiscales} metodo={metodoElegido} />}
+				{pasoActual === 5 && (
+					/* D-36: aceptación expresa de los términos antes de pagar, con la casilla desmarcada. */
+					<Casilla
+						etiqueta={
+							<>
+								He revisado el resumen y acepto los{" "}
+								<Link href="/condiciones" className="enlace-subrayado">
+									términos y condiciones
+								</Link>{" "}
+								y la{" "}
+								<Link href="/devoluciones" className="enlace-subrayado">
+									política de cancelaciones y reembolsos
+								</Link>
+								.
+							</>
+						}
+						checked={aceptaTerminos}
+						onChange={(e) => {
+							setAceptaTerminos(e.target.checked);
+							if (e.target.checked) setError(null);
+						}}
+					/>
+				)}
 
-          const resGuardar = await fetch(`${apiUrl}/metodos-pago`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              usuarioId: Number(usuarioId),
-              paymentMethodId: result.setupIntent!.payment_method,
-            }),
-          });
-          if (!resGuardar.ok) throw new Error("No se pudo guardar el método de pago.");
-          const nuevoMetodo = await resGuardar.json();
-          setMetodosGuardados((prev) => [...prev, nuevoMetodo]);
-          setMetodoSeleccionadoId(nuevoMetodo.id);
-        } catch (e: any) {
-          setError(e.message);
-          setProcesando(false);
-          return;
-        }
-        setProcesando(false);
-      }
-    }
+				{error && <Aviso tono="error">{error}</Aviso>}
 
-    setPasoActual((p) => Math.min(p + 1, 5));
-  };
-
-  const manejarPagar = async () => {
-    setError(null);
-    setProcesando(true);
-
-    try {
-      const body: any = { usuarioId: Number(usuarioId), ordenId: orden.id };
-
-      if (typeof direccionSeleccionadaId === "number") {
-        body.direccionId = direccionSeleccionadaId;
-      }
-      if (metodoSeleccionadoId !== "nueva") {
-        body.metodoPagoGuardadoId = metodoSeleccionadoId;
-      }
-
-      const resIntento = await fetch(`${apiUrl}/pagos/crear-intento`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!resIntento.ok) {
-        const errData = await resIntento.json().catch(() => ({}));
-        throw new Error(errData.message || "No se pudo iniciar el pago.");
-      }
-
-      const { clientSecret, status } = await resIntento.json();
-
-      // Si el backend ya confirmó el pago (tarjeta guardada, off_session),
-      // no hace falta volver a llamar a Stripe desde el navegador.
-      if (status !== "succeeded") {
-        const confirmOptions =
-          metodoSeleccionadoId === "nueva"
-            ? { payment_method: { card: elements!.getElement(CardElement)! } }
-            : undefined;
-
-        const result = await stripe!.confirmCardPayment(clientSecret, confirmOptions as any);
-
-        if (result.error) {
-          throw new Error(result.error.message || "El pago fue rechazado.");
-        }
-      }
-
-      if (requiereFactura) {
-        await fetch(`${apiUrl}/facturas`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ usuarioId: Number(usuarioId), ordenId: orden.id, ...datosFiscales }),
-        }).catch((e) => console.error("Error al generar factura:", e));
-      }
-
-      router.push(`/menu/pedido/checkout/exito?ordenId=${orden.id}`);
-    } catch (e: any) {
-      setError(e.message || "Ocurrió un error al procesar tu pago.");
-    } finally {
-      setProcesando(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-24">
-        <Loader2 className="animate-spin text-brand" size={32} />
-      </div>
-    );
-  }
-
-  if (error && !orden) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 pt-24 px-4 text-center">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-background min-h-screen pb-20 pt-32">
-      <div className="container mx-auto px-4 max-w-xl">
-        <div className="flex items-center justify-between mb-8">
-          {PASOS.map((p, i) => (
-            <div key={p.numero} className="flex items-center flex-1">
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                  pasoActual >= p.numero
-                    ? "bg-brand text-white"
-                    : "bg-surface-hover text-text/40 border border-border"
-                }`}
-              >
-                {pasoActual > p.numero ? <Check size={16} /> : p.numero}
-              </div>
-              {i < PASOS.length - 1 && (
-                <div className={`h-0.5 flex-1 mx-1 ${pasoActual > p.numero ? "bg-brand" : "bg-border"}`} />
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-surface border border-border rounded-2xl p-6 shadow-sm">
-          {pasoActual === 1 && <PasoResumen orden={orden} />}
-          {pasoActual === 2 && (
-            <PasoDireccion
-              direcciones={direcciones}
-              seleccionadaId={direccionSeleccionadaId}
-              onSeleccionar={setDireccionSeleccionadaId}
-              nuevaDireccion={nuevaDireccion}
-              onCambiarNuevaDireccion={setNuevaDireccion}
-              guardar={guardarDireccion}
-              onCambiarGuardar={setGuardarDireccion}
-            />
-          )}
-          {pasoActual === 3 && (
-            <PasoFacturacion
-              requiereFactura={requiereFactura}
-              onCambiarRequiere={setRequiereFactura}
-              datos={datosFiscales}
-              onCambiarDatos={setDatosFiscales}
-            />
-          )}
-          {pasoActual === 4 && (
-            <PasoPago
-              metodos={metodosGuardados}
-              seleccionadoId={metodoSeleccionadoId}
-              onSeleccionar={setMetodoSeleccionadoId}
-              guardarTarjeta={guardarTarjeta}
-              onCambiarGuardarTarjeta={setGuardarTarjeta}
-            />
-          )}
-          {pasoActual === 5 && (
-            <PasoConfirmar
-              orden={orden}
-              direccion={
-                direccionSeleccionadaId === "nueva"
-                  ? nuevaDireccion
-                  : direcciones.find((d) => d.id === direccionSeleccionadaId)
-              }
-              requiereFactura={requiereFactura}
-              datosFiscales={datosFiscales}
-              metodo={
-                metodoSeleccionadoId === "nueva"
-                  ? { marca: "tarjeta nueva", ultimos4: "" }
-                  : metodosGuardados.find((m) => m.id === metodoSeleccionadoId)
-              }
-            />
-          )}
-
-          {error && (
-            <p className="text-red-500 text-xs bg-red-500/10 border border-red-500/20 rounded-xl p-3 mt-4">
-              {error}
-            </p>
-          )}
-
-          <div className="flex gap-3 mt-6">
-            {pasoActual > 1 && (
-              <button
-                onClick={irAtras}
-                disabled={procesando}
-                className="flex-1 py-3 bg-surface-hover border border-border text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-surface-hover/80 transition-all disabled:opacity-50"
-              >
-                Atrás
-              </button>
-            )}
-
-            {pasoActual < 5 ? (
-              <button
-                onClick={manejarSiguiente}
-                disabled={procesando}
-                className="flex-1 py-3 bg-brand text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-brand/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {procesando ? <Loader2 size={14} className="animate-spin" /> : "Continuar"}
-              </button>
-            ) : (
-              <button
-                onClick={manejarPagar}
-                disabled={procesando}
-                className="flex-1 py-3 bg-brand text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-brand/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {procesando ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  `Pagar $${orden ? parseFloat(orden.total).toFixed(2) : ""}`
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+				<div className="flex flex-col-reverse gap-3 border-t border-borde-sutil pt-(--espacio-lg) sm:flex-row sm:justify-between">
+					{pasoActual > 1 ? (
+						<Boton variante="secundario" icono={<ArrowLeft />} onClick={irAtras} deshabilitado={procesando}>
+							Atrás
+						</Boton>
+					) : (
+						<span />
+					)}
+					{pasoActual < 5 ? (
+						<Boton variante="primario" onClick={manejarSiguiente} cargando={procesando} textoCargando="Guardando…">
+							Continuar
+						</Boton>
+					) : (
+						<Boton variante="primario" icono={<Lock />} onClick={manejarPagar} cargando={procesando} textoCargando="Procesando el pago…">
+							{`Pagar ${orden ? (precio(orden.total) ?? "") : ""}`}
+						</Boton>
+					)}
+				</div>
+			</section>
+			<p className="m-0 flex items-center gap-2 text-(length:--texto-pequeno) text-texto-tenue [&_svg]:size-4 [&_svg]:stroke-[1.5]">
+				<Lock aria-hidden="true" />
+				Los datos de tu tarjeta los recibe Stripe directamente; nunca pasan por nuestro sitio.
+			</p>
+		</div>
+	);
 }
 
-// ── COMPONENTES DE CADA PASO ──────────────────────────────────────
+function TituloPaso({ children }: { children: string }) {
+	return (
+		<h2 id="paso-titulo" className="m-0 font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.15]">
+			{children}
+		</h2>
+	);
+}
 
 function PasoResumen({ orden }: { orden: any }) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold text-text">Resumen de tu pedido</h2>
-      <div className="space-y-2">
-        {orden?.items?.map((item: any) => (
-          <div
-            key={item.id}
-            className="flex justify-between items-center bg-background/40 p-3 rounded-xl border border-border/40"
-          >
-            <p className="text-sm font-semibold text-text">
-              {item.cantidad}x {item.nombre}
-            </p>
-            <span className="text-sm font-bold text-text/80">
-              ${(item.cantidad * parseFloat(item.precio || item.precioUnitario)).toFixed(2)}
-            </span>
-          </div>
-        ))}
-      </div>
-      <div className="pt-3 border-t border-border/50 flex justify-between items-center">
-        <span className="text-sm text-text-sec">Total</span>
-        <span className="text-xl font-black text-brand">
-          ${orden ? parseFloat(orden.total).toFixed(2) : "0.00"}
-        </span>
-      </div>
-    </div>
-  );
+	return (
+		<>
+			<TituloPaso>Resumen de tu pedido</TituloPaso>
+			<ul className="m-0 flex list-none flex-col p-0">
+				{orden?.items?.map((item: any) => (
+					<li key={item.id} className="flex items-baseline justify-between gap-3 border-b border-borde-sutil py-(--espacio-sm)">
+						<span>
+							<span className="numeros-tabulares">{item.cantidad} ×</span> {item.nombre}
+						</span>
+						<span className="text-(length:--texto-cifra-tabla) font-medium numeros-tabulares">{precio(item.cantidad * Number(item.precio || item.precioUnitario))}</span>
+					</li>
+				))}
+			</ul>
+			<p className="m-0 flex items-baseline justify-between">
+				<span className="text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] text-texto-secundario">Total</span>
+				<span className="font-titulos text-(length:--texto-titulo-3) numeros-tabulares">{orden ? precio(orden.total) : "—"}</span>
+			</p>
+		</>
+	);
 }
 
-function PasoDireccion({
-  direcciones,
-  seleccionadaId,
-  onSeleccionar,
-  nuevaDireccion,
-  onCambiarNuevaDireccion,
-  guardar,
-  onCambiarGuardar,
-}: any) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold text-text">¿A dónde enviamos tu pedido?</h2>
-
-      {direcciones.length > 0 && (
-        <div className="space-y-2">
-          {direcciones.map((d: any) => (
-            <button
-              key={d.id}
-              onClick={() => onSeleccionar(d.id)}
-              className={`w-full text-left p-3 rounded-xl border transition-all ${
-                seleccionadaId === d.id ? "border-brand bg-brand/5" : "border-border bg-background/40"
-              }`}
-            >
-              <p className="text-sm font-bold text-text">{d.alias}</p>
-              <p className="text-xs text-text-sec">
-                {d.linea1}, {d.colonia}, {d.ciudad}, {d.estado} — CP {d.codigoPostal}
-              </p>
-            </button>
-          ))}
-        </div>
-      )}
-
-      <button
-        onClick={() => onSeleccionar("nueva")}
-        className={`w-full text-left p-3 rounded-xl border transition-all text-sm font-bold ${
-          seleccionadaId === "nueva"
-            ? "border-brand bg-brand/5 text-brand"
-            : "border-border bg-background/40 text-text-sec"
-        }`}
-      >
-        + Agregar nueva dirección
-      </button>
-
-      {seleccionadaId === "nueva" && (
-        <div className="space-y-3 pt-2">
-          <input
-            placeholder="Alias (ej. Casa, Oficina)"
-            value={nuevaDireccion.alias}
-            onChange={(e) => onCambiarNuevaDireccion({ ...nuevaDireccion, alias: e.target.value })}
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          />
-          <input
-            placeholder="Calle y número"
-            value={nuevaDireccion.linea1}
-            onChange={(e) => onCambiarNuevaDireccion({ ...nuevaDireccion, linea1: e.target.value })}
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          />
-          <input
-            placeholder="Colonia"
-            value={nuevaDireccion.colonia}
-            onChange={(e) => onCambiarNuevaDireccion({ ...nuevaDireccion, colonia: e.target.value })}
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              placeholder="Ciudad"
-              value={nuevaDireccion.ciudad}
-              onChange={(e) => onCambiarNuevaDireccion({ ...nuevaDireccion, ciudad: e.target.value })}
-              className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-            />
-            <input
-              placeholder="Estado"
-              value={nuevaDireccion.estado}
-              onChange={(e) => onCambiarNuevaDireccion({ ...nuevaDireccion, estado: e.target.value })}
-              className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-            />
-          </div>
-          <input
-            placeholder="Código postal (5 dígitos)"
-            maxLength={5}
-            value={nuevaDireccion.codigoPostal}
-            onChange={(e) =>
-              onCambiarNuevaDireccion({ ...nuevaDireccion, codigoPostal: e.target.value.replace(/\D/g, "") })
-            }
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          />
-          <input
-            placeholder="Referencias (opcional)"
-            value={nuevaDireccion.referencias}
-            onChange={(e) => onCambiarNuevaDireccion({ ...nuevaDireccion, referencias: e.target.value })}
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          />
-          <label className="flex items-center gap-2 text-xs text-text-sec">
-            <input type="checkbox" checked={guardar} onChange={(e) => onCambiarGuardar(e.target.checked)} />
-            Guardar esta dirección para futuras compras
-          </label>
-        </div>
-      )}
-    </div>
-  );
+/** Opción de una lista (dirección o tarjeta): radio nativo en una etiqueta de 44 px o más. */
+function Opcion({ nombre, valor, elegida, alElegir, children }: { nombre: string; valor: string; elegida: boolean; alElegir: () => void; children: React.ReactNode }) {
+	return (
+		<label
+			className={cn(
+				"flex min-h-14 cursor-pointer items-start gap-3 rounded-control border p-(--espacio-md)",
+				"transition-[background-color,border-color] duration-(--duracion-breve) ease-estandar",
+				"has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-foco",
+				elegida ? "border-acento bg-superficie-cafe" : "border-borde-control al-pasar:bg-superficie-cafe",
+			)}
+		>
+			<input type="radio" name={nombre} value={valor} checked={elegida} onChange={alElegir} className="mt-1 size-4 accent-(--color-acento)" />
+			<span className="flex min-w-0 flex-col gap-0.5">{children}</span>
+		</label>
+	);
 }
 
-function PasoFacturacion({ requiereFactura, onCambiarRequiere, datos, onCambiarDatos }: any) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold text-text">Facturación</h2>
+function PasoDireccion({ direcciones, seleccionadaId, onSeleccionar, nuevaDireccion, onCambiarNuevaDireccion, guardar, onCambiarGuardar, errores }: any) {
+	const cambiar = (campo: string) => (e: React.ChangeEvent<HTMLInputElement>) => onCambiarNuevaDireccion({ ...nuevaDireccion, [campo]: e.target.value });
+	return (
+		<>
+			<TituloPaso>¿A dónde te lo llevamos?</TituloPaso>
+			<fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+				<legend className="solo-lectores">Dirección de entrega</legend>
+				{direcciones.map((d: any) => (
+					<Opcion key={d.id} nombre="direccion" valor={String(d.id)} elegida={seleccionadaId === d.id} alElegir={() => onSeleccionar(d.id)}>
+						<span className="font-semibold">{d.alias}</span>
+						<span className="text-(length:--texto-pequeno) text-texto-secundario">
+							{d.linea1}, {d.colonia}, {d.ciudad}, {d.estado} · CP {d.codigoPostal}
+						</span>
+					</Opcion>
+				))}
+				<Opcion nombre="direccion" valor="nueva" elegida={seleccionadaId === "nueva"} alElegir={() => onSeleccionar("nueva")}>
+					<span className="flex items-center gap-2 font-semibold [&_svg]:size-4 [&_svg]:stroke-[1.5]">
+						<Plus aria-hidden="true" />
+						Añadir una dirección nueva
+					</span>
+				</Opcion>
+			</fieldset>
 
-      <label className="flex items-center gap-2 text-sm font-semibold text-text">
-        <input type="checkbox" checked={requiereFactura} onChange={(e) => onCambiarRequiere(e.target.checked)} />
-        Requiero factura de esta compra
-      </label>
+			{seleccionadaId === "nueva" && (
+				<div className="grid gap-(--espacio-md) sm:grid-cols-2">
+					<Campo etiqueta="Nombre de la dirección" ayuda="Casa, oficina…" value={nuevaDireccion.alias} onChange={cambiar("alias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.alias} />
+					<Campo etiqueta="Calle y número" value={nuevaDireccion.linea1} onChange={cambiar("linea1")} autoComplete="address-line1" className="sm:col-span-2" error={errores.linea1} />
+					<Campo etiqueta="Interior, piso o depto." value={nuevaDireccion.linea2} onChange={cambiar("linea2")} opcional autoComplete="address-line2" className="sm:col-span-2" error={errores.linea2} />
+					<Campo etiqueta="Colonia" value={nuevaDireccion.colonia} onChange={cambiar("colonia")} autoComplete="address-level3" error={errores.colonia} />
+					<Campo etiqueta="Ciudad" value={nuevaDireccion.ciudad} onChange={cambiar("ciudad")} autoComplete="address-level2" error={errores.ciudad} />
+					<Campo etiqueta="Estado" value={nuevaDireccion.estado} onChange={cambiar("estado")} autoComplete="address-level1" error={errores.estado} />
+					<Campo
+						etiqueta="Código postal"
+						codigo
+						inputMode="numeric"
+						maxLength={5}
+						autoComplete="postal-code"
+						value={nuevaDireccion.codigoPostal}
+						onChange={(e) => onCambiarNuevaDireccion({ ...nuevaDireccion, codigoPostal: e.target.value.replace(/\D/g, "") })}
+						error={errores.codigoPostal}
+					/>
+					<Campo etiqueta="Referencias" ayuda="Entre qué calles, color de la fachada…" value={nuevaDireccion.referencias} onChange={cambiar("referencias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.referencias} />
+					<Casilla etiqueta="Guardar esta dirección para otras compras" checked={guardar} onChange={(e) => onCambiarGuardar(e.target.checked)} className="sm:col-span-2" />
+				</div>
+			)}
+		</>
+	);
+}
 
-      {requiereFactura && (
-        <div className="space-y-3 pt-2">
-          <input
-            placeholder="RFC"
-            value={datos.rfc}
-            onChange={(e) => onCambiarDatos({ ...datos, rfc: e.target.value.toUpperCase() })}
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm uppercase"
-          />
-          <input
-            placeholder="Razón social"
-            value={datos.razonSocial}
-            onChange={(e) => onCambiarDatos({ ...datos, razonSocial: e.target.value })}
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          />
-          <select
-            value={datos.usoCfdi}
-            onChange={(e) => onCambiarDatos({ ...datos, usoCfdi: e.target.value })}
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          >
-            {USOS_CFDI.map((u) => (
-              <option key={u.value} value={u.value}>
-                {u.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={datos.regimenFiscal}
-            onChange={(e) => onCambiarDatos({ ...datos, regimenFiscal: e.target.value })}
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          >
-            <option value="">Selecciona tu régimen fiscal</option>
-            {REGIMENES_FISCALES.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-          <input
-            placeholder="Código postal fiscal (5 dígitos)"
-            maxLength={5}
-            value={datos.codigoPostalFiscal}
-            onChange={(e) =>
-              onCambiarDatos({ ...datos, codigoPostalFiscal: e.target.value.replace(/\D/g, "") })
-            }
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          />
-          <input
-            placeholder="Correo para enviarte la factura (opcional)"
-            value={datos.email}
-            onChange={(e) => onCambiarDatos({ ...datos, email: e.target.value })}
-            className="w-full p-3 rounded-xl border border-border bg-background text-sm"
-          />
-        </div>
-      )}
-    </div>
-  );
+function PasoFacturacion({ requiereFactura, onCambiarRequiere, datos, onCambiarDatos, errores }: any) {
+	const cambiar = (campo: string, transformar = (v: string) => v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => onCambiarDatos({ ...datos, [campo]: transformar(e.target.value) });
+	return (
+		<>
+			<TituloPaso>Factura</TituloPaso>
+			<Casilla etiqueta="Necesito factura de esta compra" checked={requiereFactura} onChange={(e) => onCambiarRequiere(e.target.checked)} />
+			{requiereFactura && (
+				<div className="grid gap-(--espacio-md) sm:grid-cols-2">
+					<Campo etiqueta="RFC" codigo autoComplete="off" value={datos.rfc} onChange={cambiar("rfc", (v) => v.toUpperCase())} maxLength={13} error={errores.rfc} />
+					<Campo etiqueta="Razón social" autoComplete="organization" value={datos.razonSocial} onChange={cambiar("razonSocial")} error={errores.razonSocial} />
+					<Selector etiqueta="Uso del CFDI" opciones={USOS_CFDI} value={datos.usoCfdi} onChange={cambiar("usoCfdi")} error={errores.usoCfdi} />
+					<Selector etiqueta="Régimen fiscal" marcador="Elige tu régimen fiscal" opciones={REGIMENES_FISCALES} value={datos.regimenFiscal} onChange={cambiar("regimenFiscal")} error={errores.regimenFiscal} />
+					<Campo
+						etiqueta="Código postal fiscal"
+						codigo
+						inputMode="numeric"
+						maxLength={5}
+						autoComplete="postal-code"
+						value={datos.codigoPostalFiscal}
+						onChange={cambiar("codigoPostalFiscal", (v) => v.replace(/\D/g, ""))}
+						error={errores.codigoPostalFiscal}
+					/>
+					<Campo etiqueta="Correo para enviarte la factura" type="email" inputMode="email" autoComplete="email" opcional value={datos.email} onChange={cambiar("email")} error={errores.email} />
+				</div>
+			)}
+		</>
+	);
+}
+
+/** Estilo del `CardElement` con los tokens del tema: Stripe pinta dentro de su iframe y no lee variables CSS. */
+function useEstiloTarjeta(): StripeCardElementOptions {
+	const { preferencias } = usePreferencias();
+	return useMemo(() => {
+		if (typeof window === "undefined") return {};
+		const raiz = getComputedStyle(document.documentElement);
+		const token = (nombre: string) => raiz.getPropertyValue(nombre).trim();
+		return {
+			style: {
+				base: {
+					color: token("--color-texto-principal"),
+					iconColor: token("--color-texto-secundario"),
+					fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+					fontSize: "16px",
+					"::placeholder": { color: token("--color-texto-tenue") },
+				},
+				invalid: { color: token("--color-error"), iconColor: token("--color-error") },
+			},
+		};
+		// El tema cambia los tokens: se vuelven a leer.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [preferencias.tema]);
 }
 
 function PasoPago({ metodos, seleccionadoId, onSeleccionar, guardarTarjeta, onCambiarGuardarTarjeta }: any) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold text-text">Método de pago</h2>
-
-      {metodos.length > 0 && (
-        <div className="space-y-2">
-          {metodos.map((m: any) => (
-            <button
-              key={m.id}
-              onClick={() => onSeleccionar(m.id)}
-              className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
-                seleccionadoId === m.id ? "border-brand bg-brand/5" : "border-border bg-background/40"
-              }`}
-            >
-              <CreditCard size={18} className="text-text-sec" />
-              <span className="text-sm font-semibold text-text capitalize">
-                {m.marca} •••• {m.ultimos4}
-              </span>
-              <span className="text-xs text-text-sec ml-auto">
-                {m.mesExpiracion}/{m.anioExpiracion}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      <button
-        onClick={() => onSeleccionar("nueva")}
-        className={`w-full text-left p-3 rounded-xl border transition-all text-sm font-bold ${
-          seleccionadoId === "nueva"
-            ? "border-brand bg-brand/5 text-brand"
-            : "border-border bg-background/40 text-text-sec"
-        }`}
-      >
-        + Usar una tarjeta nueva
-      </button>
-
-      {seleccionadoId === "nueva" && (
-        <div className="space-y-3 pt-2">
-          {/* CardElement vive dentro de un iframe de Stripe: tu código
-              nunca ve el número real ni el CVC que el usuario escribe aquí. */}
-          <div className="p-3 rounded-xl border border-border bg-background">
-            <CardElement
-              options={{
-                style: {
-                  base: {
-                    fontSize: "14px",
-                    color: "#1a1a1a",
-                    "::placeholder": { color: "#9ca3af" },
-                  },
-                },
-              }}
-            />
-          </div>
-          <label className="flex items-center gap-2 text-xs text-text-sec">
-            <input
-              type="checkbox"
-              checked={guardarTarjeta}
-              onChange={(e) => onCambiarGuardarTarjeta(e.target.checked)}
-            />
-            Guardar esta tarjeta para futuras compras
-          </label>
-        </div>
-      )}
-    </div>
-  );
+	const estilo = useEstiloTarjeta();
+	return (
+		<>
+			<TituloPaso>¿Cómo quieres pagar?</TituloPaso>
+			<fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+				<legend className="solo-lectores">Método de pago</legend>
+				{metodos.map((m: any) => (
+					<Opcion key={m.id} nombre="metodo" valor={String(m.id)} elegida={seleccionadoId === m.id} alElegir={() => onSeleccionar(m.id)}>
+						<span className="flex items-center gap-2 font-semibold capitalize [&_svg]:size-4 [&_svg]:stroke-[1.5]">
+							<CreditCard aria-hidden="true" />
+							{m.marca} <span className="numeros-tabulares">···· {m.ultimos4}</span>
+						</span>
+						<span className="text-(length:--texto-pequeno) text-texto-secundario numeros-tabulares">
+							Caduca {m.mesExpiracion}/{m.anioExpiracion}
+						</span>
+					</Opcion>
+				))}
+				<Opcion nombre="metodo" valor="nueva" elegida={seleccionadoId === "nueva"} alElegir={() => onSeleccionar("nueva")}>
+					<span className="flex items-center gap-2 font-semibold [&_svg]:size-4 [&_svg]:stroke-[1.5]">
+						<Plus aria-hidden="true" />
+						Usar una tarjeta nueva
+					</span>
+				</Opcion>
+			</fieldset>
+			{seleccionadoId === "nueva" && (
+				<div className="flex flex-col gap-(--espacio-md)">
+					<div className="flex flex-col gap-1">
+						<span className="text-(length:--texto-pequeno) font-semibold" id="tarjeta-rotulo">
+							Datos de la tarjeta
+						</span>
+						{/* El CardElement vive en un iframe de Stripe: el sitio nunca ve el número ni el CVC. */}
+						<div className="rounded-control border border-borde-control bg-superficie p-(--espacio-md) focus-within:border-foco" role="group" aria-labelledby="tarjeta-rotulo">
+							<CardElement options={estilo} />
+						</div>
+					</div>
+					<Casilla etiqueta="Guardar esta tarjeta para otras compras" checked={guardarTarjeta} onChange={(e) => onCambiarGuardarTarjeta(e.target.checked)} />
+				</div>
+			)}
+		</>
+	);
 }
 
 function PasoConfirmar({ orden, direccion, requiereFactura, datosFiscales, metodo }: any) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold text-text">Confirma tu pedido</h2>
-
-      <div className="space-y-3 text-sm">
-        <div className="flex items-start gap-2">
-          <MapPin size={16} className="text-brand shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-text">Enviar a:</p>
-            <p className="text-text-sec text-xs">
-              {direccion?.linea1}, {direccion?.colonia}, {direccion?.ciudad}, {direccion?.estado} — CP{" "}
-              {direccion?.codigoPostal}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-2">
-          <FileText size={16} className="text-brand shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-text">Factura:</p>
-            <p className="text-text-sec text-xs">
-              {requiereFactura ? `Sí — RFC ${datosFiscales.rfc}` : "No requerida"}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-2">
-          <CreditCard size={16} className="text-brand shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-text">Pago con:</p>
-            <p className="text-text-sec text-xs capitalize">
-              {metodo?.marca} {metodo?.ultimos4 ? `•••• ${metodo.ultimos4}` : ""}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="pt-3 border-t border-border/50 flex justify-between items-center">
-        <span className="text-sm text-text-sec">Total a pagar</span>
-        <span className="text-xl font-black text-brand">
-          ${orden ? parseFloat(orden.total).toFixed(2) : "0.00"}
-        </span>
-      </div>
-    </div>
-  );
+	return (
+		<>
+			<TituloPaso>Confirma tu pedido</TituloPaso>
+			<Contraetiqueta
+				pares={[
+					{
+						rotulo: "Entrega",
+						valor: (
+							<span className="flex items-start gap-2 [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-[1.5]">
+								<MapPin aria-hidden="true" />
+								{direccion?.linea1}, {direccion?.colonia}, {direccion?.ciudad}, {direccion?.estado} · CP {direccion?.codigoPostal}
+							</span>
+						),
+						tipo: "texto",
+					},
+					{ rotulo: "Factura", valor: requiereFactura ? `Sí, RFC ${datosFiscales.rfc}` : "No", tipo: "texto" },
+					{ rotulo: "Pago", valor: `${metodo?.marca ?? ""}${metodo?.ultimos4 ? ` ···· ${metodo.ultimos4}` : ""}`, tipo: "texto" },
+					{ rotulo: "Total", valor: orden ? (precio(orden.total) ?? "—") : "—" },
+				]}
+			/>
+		</>
+	);
 }
 
 // Depende del servidor: sin conexión se muestra un aviso y se carga al reconectar.
-export default function CheckoutPage() {
-  return (
-    <OnlineOnly what="el pago de tu pedido">
-      <CheckoutPageContent />
-    </OnlineOnly>
-  );
+export default function PaginaPago() {
+	return (
+		<div className="contenedor-pagina max-w-[48rem] pb-(--espacio-entre-secciones)">
+			<EncabezadoPublico ruta="/menu/pedido/checkout" titulo="Pago" entradilla="Cinco pasos breves: revisa, dinos dónde, factura si la necesitas y paga con seguridad." />
+			<OnlineOnly what="el pago de tu pedido">
+				<Checkout />
+			</OnlineOnly>
+		</div>
+	);
 }

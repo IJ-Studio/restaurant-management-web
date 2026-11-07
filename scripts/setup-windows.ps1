@@ -159,14 +159,14 @@ if ($writeBack -or $writeFront) {
   }
 
   if ($writeFront) {
-    $anonKey = Ask "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (clave anon/publishable)" $null
     $stripePublic = Ask "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (prueba)" "pk_test_placeholder"
     Write-EnvFile $frontEnv @(
       "NEXT_PUBLIC_API_URL=http://localhost:10000",
       "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dcb1tspbj",
-      "NEXT_PUBLIC_SUPABASE_URL=$supabaseUrl",
-      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anonKey",
       "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$stripePublic",
+      # NP-22: estas dos variables de servidor solo existen porque las rutas internas de la web
+      # (app/api) todavia leen la BD y verifican el token. Se quitan de aqui cuando D-32 retire esas
+      # rutas (PLAN-AMPLIACION, P8); el front no debe guardar secretos de servidor.
       "DATABASE_URL=$databaseUrl",
       "JWT_SECRET=$jwtSecret"
     )

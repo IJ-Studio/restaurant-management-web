@@ -1,0 +1,142 @@
+/* styles/tokens.css — valores de diseño. Cambiar un color o una fuente = editar SOLO este archivo. */
+@theme {
+  /* Color — tema oscuro (por defecto) */
+  --color-fondo: #14100C;
+  --color-superficie: #1C1712;
+  --color-superficie-elevada: #262019;
+  --color-superficie-cafe: #2B2119;
+  --color-borde-sutil: #2E261F;
+  --color-borde-control: #7D6E5A;
+  --color-texto-principal: #EFE7DA;
+  --color-texto-secundario: #BDB09C;
+  --color-texto-tenue: #978A76;
+  --color-acento: #C9A267;
+  --color-acento-intenso: #DBB97F;
+  --color-texto-sobre-acento: #14100C;
+  --color-foco: #E8C98F;
+  --color-error: #E8846F;
+  --color-exito: #9CC08F;
+  --color-aviso: #D9AE5B;
+  --color-info: #9DB4C7;
+  --color-grafica-1: #BA882E;
+  --color-grafica-2: #3578B8;
+  --color-grafica-3: #B84455;
+  --color-grafica-4: #56A76A;
+
+  /* Radios */
+  --radius-control: 2px;
+  --radius-tarjeta: 4px;
+  --radius-dialogo: 6px;
+  --radius-pastilla: 999px;
+
+  /* Sombras */
+  --shadow-flotante: 0 16px 40px rgb(0 0 0 / 0.5);
+
+  /* Movimiento */
+  --ease-salida: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-estandar: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@theme inline {
+  /* Fuentes: las variables --fuente-* las crea next/font en <html> */
+  --font-titulos: var(--fuente-titulos), "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-texto: var(--fuente-texto), system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Cifras de consola de los paneles operativos (P5.2): monoespaciadas del sistema, sin descarga. */
+  --font-consola: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+:root {
+  color-scheme: dark;
+  --texto-portada: clamp(2.75rem, 1.6rem + 5.2vw, 5.75rem);
+  --texto-titulo-1: clamp(2.25rem, 1.7rem + 2.4vw, 3.5rem);
+  --texto-titulo-2: clamp(1.75rem, 1.45rem + 1.3vw, 2.5rem);
+  --texto-titulo-3: clamp(1.375rem, 1.25rem + 0.55vw, 1.75rem);
+  --texto-titulo-interfaz: 1.125rem;
+  --texto-entradilla: 1.1875rem;
+  --texto-cuerpo: 1rem;
+  --texto-pequeno: 0.875rem;
+  --texto-etiqueta: 0.75rem;
+  --texto-numero-lote: 0.9375rem;
+  --texto-cifra-destacada: clamp(2rem, 1.7rem + 1.2vw, 2.75rem);
+  --texto-cifra-tabla: 0.9375rem;
+
+  --espacio-2xs: 0.25rem; --espacio-xs: 0.5rem; --espacio-sm: 0.75rem; --espacio-md: 1rem;
+  --espacio-lg: 1.5rem; --espacio-xl: 2rem; --espacio-2xl: 3rem; --espacio-3xl: 4rem; --espacio-4xl: 6rem;
+  --espacio-entre-secciones: clamp(4rem, 2.5rem + 6vw, 8rem);
+  --margen-pagina: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
+  --ancho-lectura: 65ch;
+  --ancho-contenido: 72rem;
+  --ancho-amplio: 90rem;
+  --alto-cabecera: 4rem;
+  --grosor-filete: 1px;
+
+  --sombra-cabecera: 0 1px 0 var(--color-borde-sutil);
+  --velo-fotografia: linear-gradient(to top, rgb(20 16 12 / 0.92) 0%, rgb(20 16 12 / 0.6) 45%, rgb(20 16 12 / 0.2) 100%);
+  /* Portada (PLAN 4.3). Bajo el texto el velo cubre al menos un 64 %: con eso, el texto hueso
+     da 4,5:1 sobre cualquier píxel de la foto, incluso blanco. Arriba, el de la cabecera. */
+  --velo-portada: linear-gradient(to top, rgb(20 16 12 / 0.94) 0%, rgb(20 16 12 / 0.8) 38%, rgb(20 16 12 / 0.45) 70%, rgb(20 16 12 / 0.2) 100%);
+  --velo-portada-lateral: linear-gradient(to right, rgb(20 16 12 / 0.7) 0%, rgb(20 16 12 / 0.35) 50%, rgb(20 16 12 / 0) 80%);
+  --velo-cabecera: linear-gradient(to bottom, rgb(20 16 12 / 0.86) 0%, rgb(20 16 12 / 0.7) 70%, rgb(20 16 12 / 0) 100%);
+  --velo-dialogo: rgb(10 8 6 / 0.72);
+
+  --duracion-instantanea: 100ms;
+  --duracion-breve: 180ms;
+  --duracion-media: 240ms;
+  --duracion-pausada: 480ms;
+  /* Solo para el cargador de marca y las ilustraciones (PLAN 4.0.1 y 4.0.2); se detienen con movimiento reducido. */
+  --duracion-vuelta-cargador: 4.8s;
+  --duracion-ilustracion: 2.4s;
+  --duracion-molino-aspas: 12s;
+  --duracion-molino-viento: 7s;
+}
+
+:root[data-tema="claro"] {
+  color-scheme: light;
+  --color-fondo: #F4EEE3;
+  --color-superficie: #FBF8F2;
+  --color-superficie-elevada: #FFFFFF;
+  --color-superficie-cafe: #EBE1D0;
+  --color-borde-sutil: #E2D8C8;
+  --color-borde-control: #8C7C66;
+  --color-texto-principal: #1E1813;
+  --color-texto-secundario: #54473A;
+  --color-texto-tenue: #6A5C4B;
+  --color-acento: #835E25;
+  --color-acento-intenso: #6C4C1B;
+  --color-texto-sobre-acento: #FBF8F2;
+  --color-foco: #6C4C1B;
+  --color-error: #A43A2A;
+  --color-exito: #3D6838;
+  --color-aviso: #7F5A12;
+  --color-info: #2F5672;
+  --color-grafica-1: #A76C12;
+  --color-grafica-2: #175D9B;
+  --color-grafica-3: #AE3B4C;
+  --color-grafica-4: #60A563;
+  --shadow-flotante: 0 16px 40px rgb(30 24 19 / 0.14);
+  --velo-dialogo: rgb(30 24 19 / 0.5);
+}
+
+:root[data-tamano-texto="grande"] { font-size: 112.5%; }
+:root[data-tamano-texto="muy-grande"] { font-size: 125%; }
+
+/* Texto sobre fotografía (PLAN 4.3): la portada y la cabecera sobre ella usan la tinta del tema
+   oscuro en los dos temas, porque el fondo es siempre la foto bajo un velo oscuro. */
+.sobre-fotografia {
+  color-scheme: dark;
+  --color-superficie-cafe: #2B2119;
+  --color-borde-control: #7D6E5A;
+  --color-texto-principal: #EFE7DA;
+  --color-texto-secundario: #BDB09C;
+  --color-texto-tenue: #978A76;
+  --color-acento: #C9A267;
+  --color-acento-intenso: #DBB97F;
+  --color-texto-sobre-acento: #14100C;
+  --color-foco: #E8C98F;
+  color: var(--color-texto-principal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-movimiento="completo"]) { --duracion-instantanea: 0.01ms; --duracion-breve: 0.01ms; --duracion-media: 0.01ms; --duracion-pausada: 0.01ms; }
+}
+:root[data-movimiento="reducido"] { --duracion-instantanea: 0.01ms; --duracion-breve: 0.01ms; --duracion-media: 0.01ms; --duracion-pausada: 0.01ms; }

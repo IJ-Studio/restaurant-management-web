@@ -30,6 +30,7 @@ yarn-error.log*
 
 # local env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -52,3 +53,9 @@ backend_tmp/
 .firebase/
 .env
 .vscode/settings.json
+
+# playwright
+test-results/
+playwright-report/
+playwright/.auth/
+tests/e2e/.cache/

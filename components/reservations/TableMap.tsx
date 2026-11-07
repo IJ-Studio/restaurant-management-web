@@ -1,124 +1,115 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { getTableMap }  from '@/features/reservations/services/reservations.service';
+"use client";
 
-interface Table {
-  id: number;
-  numero: string;
-  capacidad: number;
-  areaId: number;
-  areaNombre: string;
-  posicionX: number;
-  posicionY: number;
-  forma: string;
-  estado: 'disponible' | 'ocupada';
-  activa: boolean;
+import { useEffect, useState } from "react";
+import { Aviso } from "@/components/ui/Aviso";
+import { CargadorMarca } from "@/components/marca/CargadorMarca";
+import { getTableMap } from "@/features/reservations/services/reservations.service";
+import { registrarError } from "@/lib/registro/registrar-error";
+import { cn } from "@/lib/utils";
+
+/**
+ * Plano de mesas de la reserva (PLAN 4.16). La lógica no cambia: `getTableMap(fechaHora)`, las
+ * mesas por área y solo las disponibles se pueden elegir.
+ *
+ * Cada mesa es un botón con `aria-pressed`; la ocupada queda deshabilitada y lo dice con texto.
+ * Mientras busca, el cargador de marca; si falla, un aviso cálido sin el mensaje del servidor (D-20).
+ */
+interface Mesa {
+	id: number;
+	numero: string;
+	capacidad: number;
+	areaId: number;
+	areaNombre: string;
+	estado: "disponible" | "ocupada";
 }
 
 interface Props {
-  selectedTableId?: number;
-  onSelectTable: (tableId: number) => void;
-  fechaHora?: string;
+	selectedTableId?: number;
+	onSelectTable: (tableId: number) => void;
+	fechaHora?: string;
 }
 
 export default function TableMap({ selectedTableId, onSelectTable, fechaHora }: Props) {
-  const [tables, setTables] = useState<Table[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+	const [mesas, setMesas] = useState<Mesa[]>([]);
+	const [cargando, setCargando] = useState(true);
+	const [fallo, setFallo] = useState(false);
 
-  useEffect(() => {
-    const fetchTables = async () => {
-      if (!fechaHora) return;
-      try {
-        setLoading(true);
-        const data = await getTableMap(fechaHora);
-        setTables(data);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTables();
-  }, [fechaHora]);
+	useEffect(() => {
+		if (!fechaHora) return;
+		(async () => {
+			try {
+				setCargando(true);
+				setFallo(false);
+				setMesas(await getTableMap(fechaHora));
+			} catch (err) {
+				registrarError(err, "reserva: plano de mesas");
+				setFallo(true);
+			} finally {
+				setCargando(false);
+			}
+		})();
+	}, [fechaHora]);
 
-  if (loading) {
-    return (
-      <div className="flex flex-col justify-center items-center h-64 bg-surface border border-border rounded-xl shadow-sm">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-brand"></div>
-        <span className="ml-3 text-text-sec text-sm mt-2">Buscando mesas disponibles...</span>
-      </div>
-    );
-  }
+	if (cargando) return <CargadorMarca texto="Buscando mesas libres…" className="py-12" />;
+	if (fallo)
+		return (
+			<Aviso tono="error" titulo="No pudimos ver las mesas libres">
+				Vuelve atrás y elige otra hora, o inténtalo de nuevo en un momento.
+			</Aviso>
+		);
+	if (mesas.length === 0)
+		return (
+			<Aviso tono="info" titulo="No hay mesas libres a esa hora">
+				Vuelve atrás y prueba con otra hora o con otro día.
+			</Aviso>
+		);
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-center">
-        {error}
-      </div>
-    );
-  }
+	const areas = mesas.reduce(
+		(acc, m) => {
+			(acc[m.areaId] ??= { nombre: m.areaNombre, mesas: [] }).mesas.push(m);
+			return acc;
+		},
+		{} as Record<number, { nombre: string; mesas: Mesa[] }>,
+	);
 
-  const areas = tables.reduce((acc, t) => {
-    if (!acc[t.areaId]) acc[t.areaId] = { nombre: t.areaNombre, tables: [] };
-    acc[t.areaId].tables.push(t);
-    return acc;
-  }, {} as Record<number, { nombre: string; tables: Table[] }>);
-
-  return (
-    <div className="space-y-8 bg-surface border border-border p-6 rounded-xl shadow-sm">
-      <div>
-        <h2 className="text-xl font-bold text-text">Selecciona tu Mesa</h2>
-        <p className="text-xs text-text-sec">Haz clic sobre la mesa disponible de tu preferencia.</p>
-      </div>
-      {Object.entries(areas).map(([areaId, area]) => (
-        <div key={areaId}>
-          <h3 className="text-sm font-bold tracking-wider text-text-sec uppercase mb-4 border-b border-border pb-1">
-            {area.nombre}
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {area.tables.map((table) => (
-              <button
-                key={table.id}
-                type="button"
-                onClick={() => {
-                  if (table.estado === 'disponible') onSelectTable(table.id);
-                }}
-                disabled={table.estado === 'ocupada'}
-                className={`
-                  relative p-4 rounded-xl border-2 transition-all duration-200 text-left w-full
-                  ${table.estado === 'ocupada'
-                    ? 'bg-surface-muted border-border cursor-not-allowed opacity-40'
-                    : 'bg-surface hover:shadow-md hover:border-brand/50 cursor-pointer'
-                  }
-                  ${selectedTableId === table.id
-                    ? 'border-brand ring-2 ring-brand/30 bg-brand/5'
-                    : 'border-border'
-                  }
-                `}
-              >
-                <div className="flex flex-col items-center justify-center text-center">
-                  <span className="text-base font-bold text-text">Mesa {table.numero}</span>
-                  <span className="text-xs text-text-sec mt-0.5">Cap: {table.capacidad} pers.</span>
-                  <div className="mt-2 text-[11px] font-medium">
-                    {table.estado === 'disponible' ? (
-                      <span className="text-green-600 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-                        Disponible
-                      </span>
-                    ) : (
-                      <span className="text-red-600 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>
-                        Ocupada
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+	return (
+		<div className="flex flex-col gap-(--espacio-lg)">
+			{Object.entries(areas).map(([areaId, area]) => (
+				<section key={areaId} aria-labelledby={`area-${areaId}`} className="flex flex-col gap-(--espacio-sm)">
+					<h3 id={`area-${areaId}`} className="m-0 border-b border-borde-sutil pb-1 text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] text-texto-secundario">
+						{area.nombre}
+					</h3>
+					<div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+						{area.mesas.map((m) => {
+							const libre = m.estado === "disponible";
+							const elegida = selectedTableId === m.id;
+							return (
+								<button
+									key={m.id}
+									type="button"
+									aria-pressed={elegida}
+									disabled={!libre}
+									onClick={() => libre && onSelectTable(m.id)}
+									className={cn(
+										"flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-control border p-2 text-center",
+										"transition-[background-color,border-color] duration-(--duracion-breve) ease-estandar",
+										"focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
+										!libre && "cursor-not-allowed border-dashed border-borde-control text-texto-tenue",
+										libre && !elegida && "border-borde-control al-pasar:bg-superficie-cafe",
+										elegida && "border-acento bg-superficie-cafe",
+									)}
+								>
+									<span className="font-titulos text-(length:--texto-titulo-3) leading-none numeros-tabulares">Mesa {m.numero}</span>
+									<span className="text-(length:--texto-pequeno) text-texto-secundario">
+										{m.capacidad} {m.capacidad === 1 ? "persona" : "personas"}
+									</span>
+									<span className={cn("text-(length:--texto-pequeno)", libre ? "text-texto-secundario" : "text-texto-tenue")}>{libre ? (elegida ? "Elegida" : "Libre") : "Ocupada"}</span>
+								</button>
+							);
+						})}
+					</div>
+				</section>
+			))}
+		</div>
+	);
 }
