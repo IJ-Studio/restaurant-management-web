@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10000';
+import { nombrePropio } from "@/lib/formato/caja";
+// Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 /**
  * Obtiene el token JWT desde:
@@ -36,8 +38,7 @@ function getHeaders(withAuth: boolean = false): Record<string, string> {
 
 export async function getAvailability(fecha: string, hora: string, numComensales: number) {
   const res = await fetch(
-    `${API_URL}/reservations/availability?fecha=${fecha}&hora=${hora}&numComensales=${numComensales}`
-  );
+    `${API_URL}/reservations/availability?fecha=${fecha}&hora=${hora}&numComensales=${numComensales}`, { cache: "no-store" });
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Error al consultar disponibilidad' }));
     throw new Error(error.message || `Error al consultar disponibilidad (${res.status})`);
@@ -49,7 +50,7 @@ export async function getTableMap(fechaHora?: string) {
   const url = fechaHora
     ? `${API_URL}/reservations/map?fechaHora=${encodeURIComponent(fechaHora)}`
     : `${API_URL}/reservations/map`;
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Error al cargar el mapa de mesas' }));
     throw new Error(error.message || `Error al cargar el mapa de mesas (${res.status})`);
@@ -57,8 +58,8 @@ export async function getTableMap(fechaHora?: string) {
   return res.json();
 }
 
-export async function createReservation(data: any) {
-  const res = await fetch(`${API_URL}/reservations`, {
+export async function createReservation(data: Record<string, unknown>) {
+  const res = await fetch(`${API_URL}/reservations`, { cache: "no-store",
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -85,7 +86,7 @@ export async function getReservations(filters?: {
     });
   }
 
-  const res = await fetch(`${API_URL}/reservations?${params.toString()}`, {
+  const res = await fetch(`${API_URL}/reservations?${params.toString()}`, { cache: "no-store",
     headers: getHeaders(true),
   });
 
@@ -93,11 +94,27 @@ export async function getReservations(filters?: {
     const error = await res.json().catch(() => ({ message: 'Error al obtener reservas' }));
     throw new Error(error.message || `Error al obtener reservas (${res.status})`);
   }
-  return res.json();
+  const datos = await res.json();
+  // El API guarda los nombres en MAYÚSCULAS; aquí se presentan como nombre propio.
+  return Array.isArray(datos)
+    ? datos.map((r: Record<string, unknown>) => (typeof r?.clienteNombre === "string" ? { ...r, clienteNombre: nombrePropio(r.clienteNombre) } : r))
+    : datos;
+}
+
+/** Si la predicción de ausencias está activa en el API (Prioridad 3.5). Ante un fallo, no se muestra. */
+export async function getNoShowEstado(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/reservations/no-show-model/estado`, { cache: "no-store", headers: getHeaders(true) });
+    if (!res.ok) return false;
+    const datos = (await res.json()) as { activa?: unknown };
+    return datos.activa === true;
+  } catch {
+    return false;
+  }
 }
 
 export async function getNoShowRisk(id: string): Promise<{ probabilidad: number; clasificacion: 'Alto' | 'Medio' | 'Bajo' }> {
-  const res = await fetch(`${API_URL}/reservations/${id}/no-show-risk`, {
+  const res = await fetch(`${API_URL}/reservations/${id}/no-show-risk`, { cache: "no-store",
     headers: getHeaders(true),
   });
 
@@ -108,8 +125,8 @@ export async function getNoShowRisk(id: string): Promise<{ probabilidad: number;
   return res.json();
 }
 
-export async function updateReservation(id: string, data: any) {
-  const res = await fetch(`${API_URL}/reservations/${id}`, {
+export async function updateReservation(id: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_URL}/reservations/${id}`, { cache: "no-store",
     method: 'PATCH',
     headers: getHeaders(true),
     body: JSON.stringify(data),

@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from "react";
 
-interface AsyncActionOptions<T> {
+interface AsyncActionOptions<T, A extends unknown[]> {
   /** Función asíncrona a ejecutar */
-  action: (...args: any[]) => Promise<T>;
+  action: (...args: A) => Promise<T>;
   /** Mensaje de éxito opcional */
   successMessage?: string;
   /** Callback al completar con éxito */
@@ -20,20 +20,20 @@ interface AsyncActionOptions<T> {
   };
 }
 
-export function useAsyncAction<T>({
+export function useAsyncAction<T, A extends unknown[] = []>({
   action,
   successMessage,
   onSuccess,
   onError,
   onFinally,
   lockout,
-}: AsyncActionOptions<T>) {
+}: AsyncActionOptions<T, A>) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const execute = useCallback(
-    async (...args: Parameters<typeof action>) => {
+    async (...args: A) => {
       setLoading(true);
       setError(null);
       setSuccess(null);
@@ -47,10 +47,10 @@ export function useAsyncAction<T>({
         setSuccess(msg);
         onSuccess?.(result);
         return result;
-      } catch (err: any) {
-        const errorMsg = err.message || "Ocurrió un error";
+      } catch (err) {
+        const errorMsg = (err as Error).message || "Ocurrió un error";
         setError(errorMsg);
-        onError?.(err);
+        onError?.(err as Error);
 
         // Si hay lockout y el error activa bloqueo, lo procesa
         if (lockout && lockout.checkLockout(errorMsg)) {

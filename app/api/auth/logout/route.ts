@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:10000";
+import { resultadoCierre } from "@/lib/sesion/resultado-cierre";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+
+/**
+ * Caduca las cookies de sesión en la respuesta. Se aplica en todas las salidas de la ruta, también
+ * cuando el backend falla o no responde: la limpieza local no depende de la invalidación remota
+ * (NP-41, excepción autorizada por el usuario el 2026-11-03).
+ */
+function caducarCookiesDeSesion(res: NextResponse) {
+  res.cookies.set("access_token", "", { path: "/", maxAge: 0 });
+  res.cookies.set("session", "", { path: "/", maxAge: 0 });
+  return res;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,27 +31,17 @@ export async function POST(req: NextRequest) {
       headersToSend["Authorization"] = `Bearer ${cookieToken}`;
     }
 
-    // 2. Notificar al backend de NestJS para invalidar la sesión en la base de datos/redis
-    const response = await fetch(`${BACKEND_URL}/auth/sign-out`, {
-      method: "POST",
-      headers: headersToSend,
-    });
-
-    // 3. Crear la respuesta del proxy
-    const responseData = response.ok ? { success: true } : await response.json();
-    const res = NextResponse.json(responseData, { status: response.status });
-
-    // 4. LIMPIEZA ABSOLUTA DE LAS COOKIES LOCALES
-    // Esto destruye los identificadores de sesión en el navegador inmediatamente
-    res.cookies.set("access_token", "", { path: "/", maxAge: 0 });
-    res.cookies.set("session", "", { path: "/", maxAge: 0 });
-
-    return res;
-  } catch (error: any) {
-    console.error("Logout proxy error:", error);
-    return NextResponse.json(
-      { error: "Error al procesar el cierre de sesión" },
-      { status: 500 }
+    // Sin token no hay sesión que invalidar en el backend (estado null): solo se limpian las cookies.
+    const response = headersToSend["Authorization"]
+      ? await fetch(`${BACKEND_URL}/auth/sign-out`, { method: "POST", headers: headersToSend })
+      : null;
+    const { status, cuerpo } = resultadoCierre(response?.status ?? null);
+    return caducarCookiesDeSesion(NextResponse.json(cuerpo, { status }));
+  } catch (error: unknown) {
+    console.error("Logout proxy error:", error instanceof Error ? error.name : "desconocido");
+    // Aunque el backend falle, el navegador queda sin sesión.
+    return caducarCookiesDeSesion(
+      NextResponse.json({ error: "Error al procesar el cierre de sesión" }, { status: 500 }),
     );
   }
 }

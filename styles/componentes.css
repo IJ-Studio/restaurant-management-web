@@ -1,0 +1,545 @@
+/* styles/componentes.css — clases de nombre explícito (DESIGN.md § Tokens).
+   Solo usan tokens de styles/tokens.css; ningún valor de diseño se define aquí. */
+/* Solo para lectores de pantalla. Es una `@utility` (no una clase del bloque de componentes) para que
+   admita variantes: `max-sm:solo-lectores`, `max-xl:solo-lectores` (PLAN 4.14; hasta ahora esas
+   variantes no se generaban y el texto se veía). */
+@utility solo-lectores {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@layer components {
+  .contenedor-pagina {
+    inline-size: 100%;
+    max-inline-size: var(--ancho-contenido);
+    margin-inline: auto;
+    padding-inline-start: calc(var(--margen-pagina) + env(safe-area-inset-left, 0px));
+    padding-inline-end: calc(var(--margen-pagina) + env(safe-area-inset-right, 0px));
+  }
+
+  .seccion-landing {
+    padding-block: var(--espacio-entre-secciones);
+    scroll-margin-top: calc(var(--alto-cabecera) + var(--espacio-md));
+  }
+
+  /* Pila de la etiqueta de sección: lote, rótulo, filete doble, título y entradilla. */
+  .etiqueta-seccion {
+    display: grid;
+    justify-items: start;
+    gap: var(--espacio-sm);
+  }
+
+  .filete-doble {
+    display: block;
+    inline-size: 3rem;
+    block-size: calc(var(--grosor-filete) * 2 + 3px);
+    border-block: var(--grosor-filete) solid var(--color-acento);
+  }
+
+  /* Rótulo a su ancho y valor en el resto, alineado al final: un valor largo pasa de línea sin
+     estrechar el rótulo. Rótulo y valor ocupan la fila entera y centran su contenido, así que
+     sus filetes quedan siempre a la misma altura. */
+  .contraetiqueta {
+    display: grid;
+    /* El rótulo ocupa lo que necesita, hasta el 55 %, y se parte en líneas si es largo; antes, con
+       `auto`, un rótulo largo con texto al 125 % dejaba la cifra sin sitio y se montaban (PLAN 5.3). */
+    grid-template-columns: fit-content(55%) minmax(min-content, 1fr);
+    margin: 0;
+  }
+  .contraetiqueta > dt,
+  .contraetiqueta > dd {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding-block: var(--espacio-sm);
+    border-block-end: var(--grosor-filete) solid var(--color-borde-sutil);
+  }
+  .contraetiqueta > dt {
+    padding-inline-end: var(--espacio-md);
+    font-size: var(--texto-etiqueta);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-texto-secundario);
+  }
+  .contraetiqueta > dd {
+    justify-content: flex-end;
+    font-size: var(--texto-cifra-tabla);
+    font-weight: 500;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+    color: var(--color-texto-principal);
+  }
+  .contraetiqueta > dd[data-tipo="texto"] {
+    font-weight: 400;
+    font-variant-numeric: normal;
+  }
+  .contraetiqueta[data-sin-filete-final] > :nth-last-child(-n + 2) {
+    border-block-end: 0;
+  }
+  /* En una tarjeta estrecha (menos de 16rem: móvil con el texto al 125 %), cada rótulo va encima de
+     su valor; si no, un valor ancho (una insignia, un rango de fechas) no cabría al lado (PLAN 5.10).
+     Hace falta un contenedor por encima: las tarjetas de `Tabla` lo son. */
+  @container (max-width: 16rem) {
+    .contraetiqueta {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .contraetiqueta > dt {
+      padding-block-end: 0;
+      border-block-end: 0;
+    }
+    .contraetiqueta > dd {
+      justify-content: flex-start;
+      padding-block-start: var(--espacio-2xs);
+      text-align: start;
+    }
+  }
+  /* Dos pares por fila desde 768 px; el margen corta el filete entre las dos columnas. */
+  @media (min-width: 48rem) {
+    .contraetiqueta[data-columnas="2"] {
+      grid-template-columns: fit-content(30%) minmax(min-content, 1fr) fit-content(30%) minmax(min-content, 1fr);
+    }
+    .contraetiqueta[data-columnas="2"] > dd:nth-of-type(odd) {
+      margin-inline-end: var(--espacio-xl);
+    }
+    .contraetiqueta[data-columnas="2"][data-sin-filete-final] > :nth-last-child(-n + 4) {
+      border-block-end: 0;
+    }
+  }
+
+  .texto-cifra-destacada {
+    font-family: var(--font-titulos);
+    font-size: var(--texto-cifra-destacada);
+    font-weight: 500;
+    line-height: 1;
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+  /* Indicador (PLAN 5.4): la tarjeta es un contenedor y su cifra no pasa del 15 % de su ancho. En
+     tarjetas estrechas (cuatro por fila junto a la barra lateral) un importe como «$ 6,140.00»
+     encoge lo justo para caber; en móvil y en la protagonista manda el token. */
+  .indicador {
+    container-type: inline-size;
+  }
+  .indicador-cifra {
+    font-size: min(var(--texto-cifra-destacada), 15cqi);
+  }
+
+  .numeros-tabulares {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Folios, horas, cantidades e importes de línea en cocina, sala y caja (P5.2): se leen de un
+     vistazo en una pantalla de servicio, sin que las cifras bailen y con el cero distinto de la O. */
+  .cifras-consola {
+    font-family: var(--font-consola);
+    font-variant-numeric: tabular-nums slashed-zero;
+    letter-spacing: 0;
+  }
+
+  .enlace-subrayado {
+    color: inherit;
+    text-decoration-line: underline;
+    text-decoration-thickness: var(--grosor-filete);
+    text-underline-offset: 0.2em;
+    text-decoration-color: var(--color-borde-control);
+    transition: text-decoration-color var(--duracion-breve) var(--ease-estandar);
+  }
+  .enlace-subrayado:hover {
+    text-decoration-color: var(--color-acento);
+  }
+
+  .area-tactil-minima {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 2.75rem;
+    min-block-size: 2.75rem;
+  }
+
+  .salto-al-contenido {
+    position: absolute;
+    inset-block-start: var(--espacio-xs);
+    inset-inline-start: var(--espacio-xs);
+    z-index: 100;
+    padding: var(--espacio-sm) var(--espacio-md);
+    border-radius: var(--radius-control);
+    background-color: var(--color-superficie-elevada);
+    color: var(--color-texto-principal);
+    transform: translateY(-200%);
+  }
+  .salto-al-contenido:focus-visible {
+    transform: none;
+  }
+
+  .titulo-equilibrado {
+    text-wrap: balance;
+  }
+
+  /* Visible por defecto: solo se oculta si el script marca data-visible="false"
+     antes de entrar en pantalla, así que sin JavaScript el contenido se ve. */
+  .aparece-al-entrar {
+    transition:
+      opacity var(--duracion-pausada) var(--ease-salida),
+      transform var(--duracion-pausada) var(--ease-salida);
+  }
+  .aparece-al-entrar[data-visible="false"] {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-movimiento="completo"]) .aparece-al-entrar[data-visible="false"] {
+      transform: none;
+    }
+  }
+  :root[data-movimiento="reducido"] .aparece-al-entrar[data-visible="false"] {
+    transform: none;
+  }
+
+
+  /* Diálogos y panel lateral (DESIGN.md § Otros componentes base). Solo se animan la opacidad
+     y el transform; las duraciones son tokens, así que con movimiento reducido duran 0,01 ms
+     y Radix sigue recibiendo el fin de la animación para desmontar. */
+  .velo-dialogo {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--velo-dialogo);
+  }
+  .velo-dialogo[data-state="open"] {
+    animation: velo-entra var(--duracion-media) var(--ease-salida);
+  }
+  .velo-dialogo[data-state="closed"] {
+    animation: velo-sale var(--duracion-breve) var(--ease-estandar) forwards;
+  }
+
+  .caja-dialogo {
+    position: fixed;
+    z-index: 201;
+    inset: 0;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    block-size: fit-content;
+    inline-size: min(32rem, 100% - 2 * var(--margen-pagina));
+    max-block-size: calc(
+      100dvh - 2 * var(--margen-pagina) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+    background: var(--color-superficie-elevada);
+    color: var(--color-texto-principal);
+    border: var(--grosor-filete) solid var(--color-borde-sutil);
+    border-radius: var(--radius-dialogo);
+    box-shadow: var(--shadow-flotante);
+    outline: none;
+  }
+  .caja-dialogo[data-ancho="amplio"] {
+    inline-size: min(44rem, 100% - 2 * var(--margen-pagina));
+  }
+  .caja-dialogo[data-state="open"] {
+    animation: dialogo-entra var(--duracion-media) var(--ease-salida);
+  }
+  .caja-dialogo[data-state="closed"] {
+    animation: dialogo-sale var(--duracion-breve) var(--ease-estandar) forwards;
+  }
+
+  .panel-lateral {
+    position: fixed;
+    z-index: 201;
+    inset-block: 0;
+    inset-inline-end: 0;
+    display: flex;
+    flex-direction: column;
+    inline-size: min(24rem, 100vw - 3rem);
+    padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+    padding-inline-end: env(safe-area-inset-right, 0px);
+    background: var(--color-superficie-elevada);
+    color: var(--color-texto-principal);
+    border-inline-start: var(--grosor-filete) solid var(--color-borde-sutil);
+    box-shadow: var(--shadow-flotante);
+    outline: none;
+  }
+  .panel-lateral[data-ancho="amplio"] {
+    inline-size: min(40rem, 100vw - 3rem);
+  }
+  .panel-lateral[data-lado="inicio"] {
+    inset-inline: 0 auto;
+    padding-inline: env(safe-area-inset-left, 0px) 0;
+    border-inline-start: 0;
+    border-inline-end: var(--grosor-filete) solid var(--color-borde-sutil);
+  }
+  .panel-lateral[data-state="open"] {
+    animation: panel-entra-fin var(--duracion-media) var(--ease-salida);
+  }
+  .panel-lateral[data-state="closed"] {
+    animation: panel-sale-fin var(--duracion-breve) var(--ease-estandar) forwards;
+  }
+  .panel-lateral[data-lado="inicio"][data-state="open"] {
+    animation-name: panel-entra-inicio;
+  }
+  .panel-lateral[data-lado="inicio"][data-state="closed"] {
+    animation-name: panel-sale-inicio;
+  }
+
+  /* Cuerpo desplazable: el desplazamiento no se encadena a la página de detrás. */
+  .cuerpo-dialogo {
+    min-block-size: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* Si desborda, se enfoca para desplazarlo con el teclado; el anillo va por dentro para no recortarse. */
+  .cuerpo-dialogo:focus-visible {
+    outline-offset: -2px;
+  }
+
+  /* Notificaciones (DESIGN.md § Otros componentes base): abajo, a todo el ancho en móvil y en
+     la esquina final desde 40rem, por encima de las zonas seguras. La pila no captura el
+     puntero; cada notificación, sí. */
+  .pila-notificaciones {
+    position: fixed;
+    z-index: 300;
+    inset-inline: calc(var(--margen-pagina) + env(safe-area-inset-left, 0px))
+      calc(var(--margen-pagina) + env(safe-area-inset-right, 0px));
+    inset-block-end: calc(var(--margen-pagina) + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+  }
+  @media (min-width: 40rem) {
+    .pila-notificaciones {
+      inset-inline-start: auto;
+      inline-size: 24rem;
+    }
+  }
+  .notificacion {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--espacio-sm);
+    padding-block: var(--espacio-sm);
+    padding-inline: var(--espacio-md) var(--espacio-xs);
+    background: var(--color-superficie-elevada);
+    border: var(--grosor-filete) solid;
+    border-radius: var(--radius-tarjeta);
+    box-shadow: var(--shadow-flotante);
+    pointer-events: auto;
+    animation: notificacion-entra var(--duracion-media) var(--ease-salida);
+  }
+  .notificacion[data-saliendo] {
+    animation: notificacion-sale var(--duracion-breve) var(--ease-estandar) forwards;
+  }
+
+  /* Cabecera del sitio (DESIGN.md § Navigation): fija arriba, con la zona segura superior; al
+     desplazar la página gana la sombra. `data-fija="no"` la deja en el flujo (catálogo). */
+  .cabecera-sitio {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 100;
+    padding-block-start: env(safe-area-inset-top, 0px);
+    background-color: var(--color-fondo);
+    color: var(--color-texto-principal);
+    transition: box-shadow var(--duracion-breve) var(--ease-estandar);
+  }
+  .cabecera-sitio[data-desplazada] {
+    box-shadow: var(--sombra-cabecera);
+  }
+  .cabecera-sitio[data-fija="no"] {
+    position: relative;
+  }
+  /* Sobre la foto de la portada (PLAN 4.3): sin fondo, con un velo propio que garantiza el
+     contraste del texto claro (`.sobre-fotografia`) en los dos temas. */
+  .cabecera-sitio[data-sobre-portada] {
+    background-color: transparent;
+    background-image: var(--velo-cabecera);
+    background-size: 100% calc(100% + var(--espacio-xl));
+    background-repeat: no-repeat;
+  }
+
+  /* Portada: a sangre bajo la cabecera transparente, del alto de la pantalla (con tope para que
+     en pantallas muy altas no se estire la foto de 1426 px). */
+  .portada {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-end;
+    min-block-size: min(100svh, 60rem);
+    margin-block-start: calc(-1 * (var(--alto-cabecera) + env(safe-area-inset-top, 0px)));
+    padding-block: calc(var(--alto-cabecera) + var(--espacio-3xl)) var(--espacio-3xl);
+    scroll-margin-block-start: 0;
+  }
+  .portada__foto {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .portada__velo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--velo-portada);
+  }
+  @media (min-width: 48rem) {
+    .portada__velo {
+      background-image: var(--velo-portada), var(--velo-portada-lateral);
+    }
+  }
+
+  /* Secciones de la landing (PLAN 4.2): ritmo vertical amplio y ancla que la cabecera fija no tapa. */
+  .seccion-landing {
+    padding-block: var(--espacio-entre-secciones);
+    scroll-margin-block-start: calc(var(--alto-cabecera) + env(safe-area-inset-top, 0px));
+  }
+
+  /* Marco público (PLAN 4.1): el contenido empieza bajo la cabecera fija y su zona segura. */
+  .marco-sitio-contenido {
+    display: block;
+    min-block-size: 100dvh;
+    padding-block-start: calc(var(--alto-cabecera) + env(safe-area-inset-top, 0px));
+  }
+  .marco-sitio-contenido:focus {
+    outline: none;
+  }
+  /* «Saltar al contenido»: oculto hasta recibir el foco; entonces aparece sobre la cabecera. */
+  .saltar-contenido {
+    position: fixed;
+    inset-block-start: calc(env(safe-area-inset-top, 0px) + var(--espacio-xs));
+    inset-inline-start: var(--espacio-xs);
+    z-index: 110;
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    padding-inline: var(--espacio-md);
+    border-radius: var(--radius-control);
+    background-color: var(--color-acento);
+    color: var(--color-texto-sobre-acento);
+    font-weight: 600;
+    text-decoration: none;
+    transform: translateY(calc(-100% - var(--espacio-md) - env(safe-area-inset-top, 0px)));
+  }
+  .saltar-contenido:focus-visible {
+    transform: none;
+    outline: 2px solid var(--color-foco);
+    outline-offset: 2px;
+  }
+
+  /* Marco de los paneles (PLAN 5.1): barra lateral de 16rem desde 1024 px, fija a la altura de la
+     ventana con su propio scroll; el contenido ocupa el resto. Sin márgenes medidos en JavaScript. */
+  .marco-panel {
+    display: flex;
+    min-block-size: 100dvh;
+    background-color: var(--color-fondo);
+  }
+  .marco-panel-lateral {
+    position: sticky;
+    inset-block-start: 0;
+    flex-direction: column;
+    flex-shrink: 0;
+    inline-size: 16rem;
+    block-size: 100dvh;
+  }
+
+  /* Menús flotantes (Popover de Radix: cuenta y opciones de accesibilidad). Aparecen como los
+     diálogos, desde su disparador; con movimiento reducido, las duraciones son 0,01 ms. */
+  .menu-flotante {
+    transform-origin: var(--radix-popover-content-transform-origin);
+  }
+  .menu-flotante[data-state="open"] {
+    animation: dialogo-entra var(--duracion-media) var(--ease-salida);
+  }
+  .menu-flotante[data-state="closed"] {
+    animation: dialogo-sale var(--duracion-breve) var(--ease-estandar) forwards;
+  }
+
+  /* Esqueleto (DESIGN.md § Otros componentes base): superficie elevada con pulso de opacidad.
+     Sobre una superficie, café: la elevada es blanca sobre hueso en el tema claro. Sin pulso
+     con movimiento reducido, salvo que la persona elija movimiento completo en el panel. */
+  .esqueleto {
+    border-radius: var(--radius-control);
+    background-color: var(--color-superficie-elevada);
+    animation: esqueleto-pulso 2s var(--ease-estandar) infinite;
+  }
+  .esqueleto[data-sobre="superficie"] {
+    background-color: var(--color-superficie-cafe);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-movimiento="completo"]) .esqueleto {
+      animation: none;
+    }
+  }
+  :root[data-movimiento="reducido"] .esqueleto {
+    animation: none;
+  }
+}
+
+/* Cargador de marca (PLAN 4.0.1, D-20): las aspas giran despacio alrededor del eje. Es el único
+   bucle permitido (DESIGN.md § Motion) y se detiene con movimiento reducido, salvo que la persona
+   elija «completo» en el panel. */
+.cargador-marca__aspas {
+  transform-box: view-box;
+  transform-origin: 50px 40px;
+  animation: cargador-aspas var(--duracion-vuelta-cargador) linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-movimiento="completo"]) .cargador-marca__aspas {
+    animation: none;
+  }
+}
+:root[data-movimiento="reducido"] .cargador-marca__aspas {
+  animation: none;
+}
+@keyframes cargador-aspas { to { transform: rotate(360deg); } }
+
+/* Ilustraciones de las páginas de estado (PLAN 4.0.2, D-21): un gesto breve que se repite dos o
+   tres veces y vuelve a su sitio. Nada se mueve con movimiento reducido. */
+.ilustracion .ilus-flota { animation: ilus-flota var(--duracion-ilustracion) var(--ease-estandar) 2; }
+.ilustracion .ilus-mece { transform-box: view-box; animation: ilus-mece var(--duracion-ilustracion) var(--ease-estandar) 2; }
+.ilustracion .ilus-mece--llave { transform-origin: 80px 12px; }
+.ilustracion .ilus-mece--candado { transform-origin: 80px 62px; }
+.ilustracion .ilus-respira { animation: ilus-respira var(--duracion-ilustracion) var(--ease-estandar) 3; }
+.ilustracion .ilus-arena { animation: ilus-arena calc(var(--duracion-ilustracion) / 2) linear 6; }
+.ilustracion .ilus-viento { animation: ilus-viento var(--duracion-ilustracion) var(--ease-salida) 1 both; }
+.ilustracion .ilus-cae { transform-box: fill-box; animation: ilus-cae var(--duracion-ilustracion) var(--ease-estandar) 3; }
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-movimiento="completo"]) .ilustracion * { animation: none; }
+}
+:root[data-movimiento="reducido"] .ilustracion * { animation: none; }
+@keyframes ilus-flota { 50% { transform: translateY(-3px); } }
+@keyframes ilus-mece { 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
+@keyframes ilus-respira { 50% { opacity: 0.35; } }
+@keyframes ilus-arena { to { stroke-dashoffset: -10; } }
+@keyframes ilus-viento { from { opacity: 0; transform: translateX(-6px); } }
+@keyframes ilus-cae { 70% { transform: translateY(4px); opacity: 1; } 100% { transform: translateY(5px); opacity: 0; } }
+
+@keyframes velo-entra { from { opacity: 0; } }
+@keyframes velo-sale { to { opacity: 0; } }
+@keyframes dialogo-entra { from { opacity: 0; transform: scale(0.98); } }
+@keyframes dialogo-sale { to { opacity: 0; transform: scale(0.98); } }
+@keyframes panel-entra-fin { from { transform: translateX(100%); } }
+@keyframes panel-sale-fin { to { transform: translateX(100%); } }
+@keyframes panel-entra-inicio { from { transform: translateX(-100%); } }
+@keyframes panel-sale-inicio { to { transform: translateX(-100%); } }
+@keyframes notificacion-entra { from { opacity: 0; transform: translateY(0.5rem); } }
+@keyframes notificacion-sale { to { opacity: 0; } }
+@keyframes esqueleto-pulso { 50% { opacity: 0.5; } }
+
+/* Landing (D-35): ajuste suave entre secciones por proximidad, solo con movimiento permitido. Con
+   «proximity» el navegador solo ajusta cerca de un borde de sección: el teclado, la rueda y el
+   tacto se desplazan con normalidad y las secciones más altas que la ventana no se traban. */
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-movimiento="reducido"]):has(.portada[data-portada]) {
+    scroll-snap-type: y proximity;
+  }
+}
+:root[data-movimiento="completo"]:has(.portada[data-portada]) {
+  scroll-snap-type: y proximity;
+}
+.portada[data-portada],
+.seccion-landing {
+  scroll-snap-align: start;
+}

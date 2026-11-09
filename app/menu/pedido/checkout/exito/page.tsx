@@ -1,96 +1,89 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { CheckCircle2, FileDown, Loader2 } from "lucide-react";
+import { FileDown } from "lucide-react";
+import { Boton } from "@/components/ui/Boton";
+import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { MigasDePan } from "@/components/ui/MigasDePan";
+import { CargadorMarca } from "@/components/marca/CargadorMarca";
+import { SelloCasa } from "@/components/marca/SelloCasa";
+import { registrarError } from "@/lib/registro/registrar-error";
 
-// 👇 Forzar modo dinámico para evitar prerrenderizado
-export const dynamic = 'force-dynamic';
+/**
+ * Confirmación del pago (`/menu/pedido/checkout/exito`, PLAN 4.15). La lógica no cambia: busca
+ * la factura del pedido (`/facturas/{ordenId}`) y la descarga en PDF o XML en otra pestaña.
+ * Lo nuevo: el sello de la casa como firma, un mensaje sin promesas que nadie ha comprobado
+ * (antes: «Te avisaremos cuando salga a reparto»), los botones del sistema y el cargador de
+ * marca mientras busca la factura, sin «Cargando…» (D-20).
+ */
+export const dynamic = "force-dynamic";
 
-// Componente interno que usa useSearchParams
-function ExitoContent() {
-  const searchParams = useSearchParams();
-  const ordenId = searchParams?.get("ordenId");
+function Confirmacion() {
+	const searchParams = useSearchParams();
+	const ordenId = searchParams?.get("ordenId");
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- la factura del API no tiene contrato tipado (NP-17)
+	const [factura, setFactura] = useState<any>(null);
+	const [buscando, setBuscando] = useState(Boolean(ordenId));
 
-  const [factura, setFactura] = useState<any>(null);
-  const [loadingFactura, setLoadingFactura] = useState(true);
+	useEffect(() => {
+		if (!ordenId) return;
+		(async () => {
+			try {
+				const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/facturas/${encodeURIComponent(ordenId)}`, { cache: "no-store" });
+				if (res.ok) setFactura(await res.json());
+			} catch (e) {
+				registrarError(e, "confirmación: factura");
+			} finally {
+				setBuscando(false);
+			}
+		})();
+	}, [ordenId]);
 
-  useEffect(() => {
-    if (!ordenId) {
-      setLoadingFactura(false);
-      return;
-    }
+	const descargarFactura = (tipo: "pdf" | "xml") => {
+		window.open(
+			`${process.env.NEXT_PUBLIC_API_URL}/facturas/${encodeURIComponent(ordenId ?? "")}/descargar?tipo=${encodeURIComponent(tipo)}`,
+			"_blank",
+			"noopener,noreferrer",
+		);
+	};
 
-    const buscarFactura = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiUrl}/facturas/${ordenId}`);
-        if (res.ok) {
-          setFactura(await res.json());
-        }
-      } catch (e) {
-        console.error("Error al buscar factura:", e);
-      } finally {
-        setLoadingFactura(false);
-      }
-    };
-
-    buscarFactura();
-  }, [ordenId]);
-
-  const descargarFactura = (tipo: "pdf" | "xml") => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    window.open(`${apiUrl}/facturas/${ordenId}/descargar?tipo=${tipo}`, "_blank");
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 pt-24 px-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
-        <CheckCircle2 className="text-green-500" size={36} />
-      </div>
-
-      <div>
-        <h1 className="text-2xl font-bold text-text">¡Pago confirmado!</h1>
-        <p className="text-text-sec text-sm mt-1">
-          Tu pedido está en camino. Te avisaremos cuando salga a reparto.
-        </p>
-      </div>
-
-      {loadingFactura ? (
-        <Loader2 className="animate-spin text-brand" size={20} />
-      ) : factura ? (
-        <div className="flex gap-3">
-          <button
-            onClick={() => descargarFactura("pdf")}
-            className="flex items-center gap-2 bg-surface border border-border text-text text-xs font-bold px-4 py-3 rounded-xl uppercase tracking-wider hover:bg-surface-hover transition-all"
-          >
-            <FileDown size={14} /> Descargar PDF
-          </button>
-          <button
-            onClick={() => descargarFactura("xml")}
-            className="flex items-center gap-2 bg-surface border border-border text-text text-xs font-bold px-4 py-3 rounded-xl uppercase tracking-wider hover:bg-surface-hover transition-all"
-          >
-            <FileDown size={14} /> Descargar XML
-          </button>
-        </div>
-      ) : null}
-
-      <Link
-        href="/menu/pedido?tab=domicilio"
-        className="bg-brand text-white text-xs font-bold px-6 py-3 rounded-xl uppercase tracking-wider mt-2"
-      >
-        Ver mis pedidos
-      </Link>
-    </div>
-  );
+	return (
+		<section aria-labelledby="exito-titulo" className="mx-auto flex max-w-[40rem] flex-col items-center gap-(--espacio-lg) py-(--espacio-3xl) text-center">
+			<SelloCasa className="text-texto-principal" />
+			<span aria-hidden="true" className="filete-doble" />
+			<h1 id="exito-titulo" className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] [text-wrap:balance]">
+				Gracias, tu pedido está pagado
+			</h1>
+			<p className="m-0 max-w-[44ch] text-(length:--texto-entradilla) leading-[1.6] text-texto-secundario [text-wrap:pretty]">
+				Ya lo estamos preparando. Puedes seguir su estado desde tu pedido.
+			</p>
+			{buscando ? (
+				<CargadorMarca tamano="compacto" texto="Buscando tu factura…" />
+			) : factura ? (
+				<div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row" data-prueba="factura">
+					<Boton variante="secundario" icono={<FileDown />} onClick={() => descargarFactura("pdf")}>
+						Factura en PDF
+					</Boton>
+					<Boton variante="secundario" icono={<FileDown />} onClick={() => descargarFactura("xml")}>
+						Factura en XML
+					</Boton>
+				</div>
+			) : null}
+			<BotonEnlace href="/menu/pedido?tab=domicilio" variante="primario">
+				Ver tu pedido
+			</BotonEnlace>
+		</section>
+	);
 }
 
-// Componente principal envuelto en Suspense
-export default function CheckoutExitoPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
-      <ExitoContent />
-    </Suspense>
-  );
+export default function PaginaPagoConfirmado() {
+	return (
+		<div className="contenedor-pagina pt-(--espacio-xl) pb-(--espacio-entre-secciones)">
+			<MigasDePan ruta="/menu/pedido/checkout/exito" />
+			<Suspense fallback={<CargadorMarca pagina tamano="amplio" texto="Un momento, por favor…" />}>
+				<Confirmacion />
+			</Suspense>
+		</div>
+	);
 }

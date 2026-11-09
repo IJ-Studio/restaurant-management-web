@@ -1,18 +1,6 @@
-import '@/styles/globals.css';
+import { CargadorMarca } from "@/components/marca/CargadorMarca";
 
-export default function Loading() {
-    return (
-        <div className="container">
-            <div className="loader">
-                <div className="panWrapper">
-                    <div className="pan">
-                        <div className="food"></div>
-                        <div className="panBase"></div>
-                        <div className="panHandle"></div>
-                    </div>
-                    <div className="panShadow"></div>
-                </div>
-            </div>
-        </div>
-    );
+// Carga de la raíz (PLAN 4.23, D-20): el cargador de marca, con el texto solo para lectores.
+export default function Cargando() {
+	return <CargadorMarca pagina tamano="amplio" texto="Un momento, por favor…" />;
 }

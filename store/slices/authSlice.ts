@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { AuthState, SessionUser } from "@/types/auth";
+import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 
 const initialState: AuthState = {
   user:    null,
@@ -13,7 +14,7 @@ export const hydrateSession = createAsyncThunk(
   async (_, { dispatch }) => {
     dispatch(setLoading(true));
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await pedirSesion();
       if (!res.ok) {
         throw new Error("No hay sesión activa");
       }
@@ -24,7 +25,7 @@ export const hydrateSession = createAsyncThunk(
       }
       dispatch(setUser(null));
       return null;
-    } catch (err: any) {
+    } catch {
       dispatch(setUser(null));
       // No seteamos error en UI para no mostrar alert en páginas públicas
       dispatch(setLoading(false));
@@ -54,9 +55,14 @@ const authSlice = createSlice({
       state.loading = false;
       state.error   = null;
     },
+    /** Cierre de sesión (PLAN 2.14): el reductor raíz (store/index.ts) reinicia todo el store. */
+    sesionCerrada() {
+      return initialState;
+    },
   },
 });
 
-export const { setUser, setLoading, setError, clearAuth } = authSlice.actions;
+export const { setUser, setLoading, setError, clearAuth, sesionCerrada } = authSlice.actions;
+export { initialState as estadoInicialAuth };
 export default authSlice.reducer;
 

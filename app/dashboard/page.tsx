@@ -1,22 +1,22 @@
-import { getSession } from "@/lib/session";
+import { verificarSesion } from "@/lib/sesion/dal";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  // Rol desde el DTO de la DAL (PLAN 2.11).
+  const sesion = await verificarSesion();
+  if (!sesion) redirect("/login");
 
-  const roleId = session.roleId as number;
-
-  switch (roleId) {
-    case 1:
+  switch (sesion.rol) {
+    case "admin":
       redirect("/dashboard/admin");
-    case 2:
+    case "cajero":
       redirect("/dashboard/cajero");
-    case 3:
+    case "mesero":
       redirect("/dashboard/mesero");
-    case 4:
+    case "cocina":
       redirect("/dashboard/cocina");
     default:
-      redirect("/dashboard/cliente");
+      // NP-19: el cliente no tiene panel; su página es «Tu cuenta».
+      redirect("/profile");
   }
 }

@@ -7,6 +7,7 @@
 import { jwtVerify, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
 import type { SessionUser } from "@/types/auth";
+import { claveJwt } from "@/lib/seguridad/secreto-jwt";
 
 export interface SessionPayload extends JWTPayload {
   id?: string;
@@ -15,20 +16,17 @@ export interface SessionPayload extends JWTPayload {
   tokenId?: string;
 }
 
-function getSecretKey(): Uint8Array {
-  const secret =
-    process.env.JWT_SECRET || "fallback_secret_key_for_development";
-  return new TextEncoder().encode(secret);
-}
-
 export async function getSession(): Promise<SessionPayload | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("session")?.value;
 
     if (!token) return null;
+    // Sin JWT_SECRET no hay sesión válida (PLAN 2.9).
+    const clave = claveJwt();
+    if (!clave) return null;
 
-    const { payload } = await jwtVerify(token, getSecretKey());
+    const { payload } = await jwtVerify(token, clave);
     return payload as SessionPayload;
   } catch (err) {
     return null; /* Invalid token or no token */

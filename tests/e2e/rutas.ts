@@ -1,0 +1,51 @@
+export const ANCHOS = [360, 390, 768, 1024, 1440] as const;
+
+/** Rutas públicas: se recorren sin sesión. */
+export const RUTAS_PUBLICAS = [
+	"/",
+	"/login",
+	"/register",
+	"/reset",
+	"/frm_reset",
+	"/about",
+	"/ayuda",
+	"/condiciones",
+	"/corporativo",
+	"/devoluciones",
+	"/privacidad",
+	"/privacidad/personal",
+	"/eliminar-cuenta",
+	"/cookies",
+	"/promociones",
+	"/reservations",
+	"/seguridad",
+	"/menu",
+	"/forbidden",
+	"/unauthorized",
+	"/maintenance",
+	"/offline",
+] as const;
+
+/** Rutas de panel: requieren sesión simulada (paso 0.7). */
+export const RUTAS_PANEL = [
+	"/dashboard",
+	"/dashboard/admin",
+	"/dashboard/admin/finance",
+	"/dashboard/admin/finance/invoices",
+	"/dashboard/admin/inventory",
+	"/dashboard/admin/inventory/suppliers",
+	"/dashboard/admin/menu",
+	"/dashboard/admin/mesas",
+	"/dashboard/admin/payroll",
+	"/dashboard/admin/promociones",
+	"/dashboard/admin/reports",
+	"/dashboard/admin/reservations",
+	"/dashboard/admin/users",
+	"/dashboard/cajero",
+	"/dashboard/cocina",
+	"/dashboard/mesero",
+	"/profile",
+	"/menu/pedido",
+	"/menu/pedido/checkout",
+	"/menu/pedido/checkout/exito",
+] as const;
