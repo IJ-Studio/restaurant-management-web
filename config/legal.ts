@@ -26,8 +26,6 @@ export const DATOS_LEGALES = {
 	alojamiento: "Vercel",
 	/** Nombre de la app móvil del personal, tal como aparece en Google Play. */
 	nombreApp: "Restaurante El Quijote",
-	/** Nombre del desarrollador de la app tal como aparece en Google Play Console. */
-	desarrolladorApp: "Angel Uriel Martinez Hernandez",
 	/** Fecha de la versión de los textos legales publicados. */
 	ultimaActualizacion: "9 de noviembre de 2026",
 } as const;
