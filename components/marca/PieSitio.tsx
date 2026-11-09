@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Clock, Facebook, Instagram, MapPin, Phone } from "lucide-react";
+import { Clock, Facebook, Instagram, Mail, MapPin, Phone } from "lucide-react";
 import { restaurantConfig } from "@/config/restaurant.config";
 import { PanelAccesibilidad } from "@/components/accesibilidad/PanelAccesibilidad";
 import { Logo } from "@/components/marca/Logo";
@@ -19,6 +19,9 @@ import { ReportarProblema } from "./ReportarProblema";
  * Los datos salen de `config/restaurant.config.ts`. Los textos se reescribieron con D-17 (PLAN 4.1):
  * una línea de identidad sin datos inventados y el aviso de derechos sin el año ni la razón social
  * de una plantilla ajena. `DistanceToRestaurant` no se incluye: lo decide la fase 4.
+ *
+ * Los datos completos del proveedor (D-36) viven en /corporativo y en las páginas legales; aquí
+ * solo quedan nombre, teléfono, correo y los enlaces legales, incluido «Eliminar cuenta» (Google Play).
  */
 const CASA = [
 	{ nombre: "Conoce la casa", href: "/about" },
@@ -34,6 +37,7 @@ const LEGALES = [
 	{ nombre: "Términos y condiciones", href: "/condiciones" },
 	{ nombre: "Aviso de privacidad", href: "/privacidad" },
 	{ nombre: "Cookies", href: "/cookies" },
+	{ nombre: "Eliminar cuenta", href: "/eliminar-cuenta" },
 ];
 
 const CLASE_ENLACE =
@@ -89,6 +93,16 @@ export function PieSitio({ anio = new Date().getFullYear() }: { anio?: number })
 								{contact.phone}
 							</a>
 						</p>
+						<p className="m-0 flex items-center gap-2" data-prueba="correo-contacto">
+							<Mail aria-hidden="true" className="!mt-0" />
+							{DATOS_LEGALES.correoContacto.trim() ? (
+								<a href={`mailto:${DATOS_LEGALES.correoContacto}`} className={CLASE_ENLACE}>
+									{DATOS_LEGALES.correoContacto}
+								</a>
+							) : (
+								<DatoLegal valor={DATOS_LEGALES.correoContacto} />
+							)}
+						</p>
 					</address>
 					<ul className="m-0 flex list-none gap-2 p-0" aria-label="Redes sociales">
 						{[
@@ -111,22 +125,6 @@ export function PieSitio({ anio = new Date().getFullYear() }: { anio?: number })
 				</div>
 				<Columna titulo="Nosotros" enlaces={CASA} />
 				<Columna titulo="Ayuda" enlaces={AYUDA} extra={<ReportarProblema />} />
-			</div>
-
-			{/* Datos del proveedor (D-36, Art. 76 BIS LFPC): de `config/legal.ts`; los que faltan, «Dato por confirmar». */}
-			<div className="border-t border-borde-sutil">
-				<p className="contenedor-pagina m-0 py-4 text-(length:--texto-pequeno) leading-[1.6] text-texto-tenue" data-prueba="datos-proveedor">
-					{"Razón social: "}
-					<DatoLegal valor={DATOS_LEGALES.razonSocial} />
-					{" · RFC: "}
-					<DatoLegal valor={DATOS_LEGALES.rfc} />
-					{" · Domicilio fiscal: "}
-					<DatoLegal valor={DATOS_LEGALES.domicilioFiscal} />
-					{` · Teléfono: ${contact.phone} · Correo: `}
-					<DatoLegal valor={DATOS_LEGALES.correoContacto} />
-					{" · Atención al cliente: "}
-					<DatoLegal valor={DATOS_LEGALES.horarioAtencion} />
-				</p>
 			</div>
 
 			{/* Última fila: legales y el acceso del personal, discreto. */}

@@ -10,6 +10,7 @@ const PAGINAS = [
 	["/corporativo", "Información corporativa"],
 	["/devoluciones", "Cancelaciones y reembolsos"],
 	["/privacidad", "Aviso de privacidad"],
+	["/eliminar-cuenta", "Eliminar cuenta"],
 	["/seguridad", "Alertas de seguridad"],
 ] as const;
 
