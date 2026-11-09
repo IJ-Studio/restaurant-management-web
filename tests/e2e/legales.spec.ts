@@ -39,6 +39,5 @@ test("el aviso de privacidad sigue el texto legal público y muestra al responsa
 	await expect(main).toContainText("20 días hábiles");
 	await expect(main).toContainText(DATOS_LEGALES.razonSocial);
 	await expect(main).toContainText(DATOS_LEGALES.correoPrivacidad);
-	await expect(main).toContainText(DATOS_LEGALES.desarrolladorApp);
 	await expect(main.locator("[data-dato-pendiente]")).toHaveCount(0);
 });

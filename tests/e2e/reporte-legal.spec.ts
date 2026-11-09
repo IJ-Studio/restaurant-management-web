@@ -85,6 +85,7 @@ test("pie: nombre, teléfono, correo y enlaces legales; los datos del proveedor 
 test("Google Play: /privacidad describe la app y enlaza a /eliminar-cuenta, que funciona sin sesión", async ({ page }) => {
 	await page.goto("/privacidad", { waitUntil: "load" });
 	await expect(page.locator("#app-movil")).toContainText("Restaurante El Quijote");
+	await expect(page.locator("main")).not.toContainText("Angel Uriel");
 	await expect(page.locator("#eliminacion").getByRole("link", { name: "Eliminar cuenta" })).toHaveAttribute("href", "/eliminar-cuenta");
 	await page.goto("/eliminar-cuenta", { waitUntil: "load" });
 	await expect(page.getByRole("heading", { level: 1, name: "Eliminar cuenta" })).toBeVisible();

@@ -73,8 +73,7 @@ export default function PrivacidadPage() {
 
 			<SeccionLegal titulo={`Aplicación móvil «${d.nombreApp}»`} id="app-movil">
 				<p>
-					{`«${d.nombreApp}» es la app de Android para el personal del restaurante (meseros, cajeros, cocina y administración), publicada en Google Play por `}
-					<DatoLegal valor={d.desarrolladorApp} />. No está pensada para el público ni permite crear cuentas: las cuentas las da de alta la administración.
+					{`«${d.nombreApp}» es la app de Android para el personal del restaurante (meseros, cajeros, cocina y administración), publicada en Google Play. No está pensada para el público ni permite crear cuentas: las cuentas las da de alta la administración.`}
 				</p>
 				<p>La app trata estos datos:</p>
 				<ul>
