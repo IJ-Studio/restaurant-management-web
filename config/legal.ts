@@ -9,12 +9,13 @@
  * alojamiento del sitio (Vercel, por `vercel.json`).
  */
 export const DATOS_LEGALES = {
-	razonSocial: "",
+	/** Responsable del tratamiento: el dueño del restaurante (persona física). */
+	razonSocial: "Alejandro Daniel Monterrubio Caballero",
 	rfc: "",
-	domicilioFiscal: "",
-	correoContacto: "",
+	domicilioFiscal: "Pzla. Hidalgo 5-1, Centro, 43000 Huejutla de Reyes, Hgo.",
+	correoContacto: "elquijote.atencion@gmail.com",
 	/** Correo para ejercer los derechos ARCO. */
-	correoPrivacidad: "",
+	correoPrivacidad: "elquijote.atencion@gmail.com",
 	horarioAtencion: "",
 	/** Correo o enlace para pedir un reembolso, y en cuánto se procesa. */
 	contactoReembolsos: "",
@@ -26,7 +27,7 @@ export const DATOS_LEGALES = {
 	/** Nombre de la app móvil del personal, tal como aparece en Google Play. */
 	nombreApp: "Restaurante El Quijote",
 	/** Nombre del desarrollador de la app tal como aparece en Google Play Console. */
-	desarrolladorApp: "",
+	desarrolladorApp: "Angel Uriel Hernandez Martinez",
 	/** Fecha de la versión de los textos legales publicados. */
 	ultimaActualizacion: "9 de noviembre de 2026",
 } as const;

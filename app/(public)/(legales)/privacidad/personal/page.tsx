@@ -52,7 +52,7 @@ export default function PrivacidadPersonalPage() {
 
 			<SeccionLegal titulo="Derechos ARCO">
 				<p>
-					En los mismos términos que el aviso para clientes. Contacto: <DatoLegal valor={d.correoPrivacidad} />.
+					En los mismos términos que el aviso para clientes. Contacto: <DatoLegal valor={d.correoPrivacidad} correo />.
 				</p>
 				<p>{`Última actualización: ${d.ultimaActualizacion}.`}</p>
 			</SeccionLegal>

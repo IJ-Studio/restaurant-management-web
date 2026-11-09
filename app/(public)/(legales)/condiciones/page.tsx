@@ -27,7 +27,7 @@ export default function CondicionesPage() {
 						Domicilio: <DatoLegal valor={d.domicilioFiscal} />
 					</li>
 					<li>
-						Contacto: <a href={restaurantConfig.contact.phoneHref}>{restaurantConfig.contact.phone}</a> · <DatoLegal valor={d.correoContacto} />
+						Contacto: <a href={restaurantConfig.contact.phoneHref}>{restaurantConfig.contact.phone}</a> · <DatoLegal valor={d.correoContacto} correo />
 					</li>
 				</ul>
 			</SeccionLegal>

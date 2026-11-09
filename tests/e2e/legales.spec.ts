@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { DATOS_LEGALES } from "../../config/legal";
 
 // Páginas legales y de ayuda (PLAN 4.22): de servidor, mismas URL, migas y la redacción de siempre.
 test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de producción");
@@ -29,12 +30,15 @@ for (const [ruta, titulo] of PAGINAS) {
 }
 
 // D-36: el aviso sigue el texto del documento legal público (finalidades primarias y secundarias,
-// derechos ARCO en 20 días hábiles) y no inventa los datos del responsable.
-test("el aviso de privacidad sigue el texto legal público y marca los datos por confirmar", async ({ page }) => {
+// derechos ARCO en 20 días hábiles) con los datos del responsable de `config/legal.ts`.
+test("el aviso de privacidad sigue el texto legal público y muestra al responsable y su correo", async ({ page }) => {
 	await page.goto("/privacidad", { waitUntil: "load" });
 	const main = page.locator("main");
 	await expect(main.getByRole("heading", { name: "Finalidades primarias" })).toBeVisible();
 	await expect(main.getByRole("heading", { name: "Finalidades secundarias" })).toBeVisible();
 	await expect(main).toContainText("20 días hábiles");
-	await expect(main.locator("[data-dato-pendiente]").first()).toHaveText("Dato por confirmar");
+	await expect(main).toContainText(DATOS_LEGALES.razonSocial);
+	await expect(main).toContainText(DATOS_LEGALES.correoPrivacidad);
+	await expect(main).toContainText(DATOS_LEGALES.desarrolladorApp);
+	await expect(main.locator("[data-dato-pendiente]")).toHaveCount(0);
 });

@@ -100,7 +100,7 @@ export function PieSitio({ anio = new Date().getFullYear() }: { anio?: number })
 									{DATOS_LEGALES.correoContacto}
 								</a>
 							) : (
-								<DatoLegal valor={DATOS_LEGALES.correoContacto} />
+								<DatoLegal valor={DATOS_LEGALES.correoContacto} correo />
 							)}
 						</p>
 					</address>

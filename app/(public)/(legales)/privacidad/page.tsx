@@ -106,7 +106,7 @@ export default function PrivacidadPage() {
 
 			<SeccionLegal titulo="Derechos ARCO">
 				<p>
-					Puedes acceder, rectificar, cancelar u oponerte al tratamiento de tus datos personales escribiendo a <DatoLegal valor={d.correoPrivacidad} />, con tu nombre completo y
+					Puedes acceder, rectificar, cancelar u oponerte al tratamiento de tus datos personales escribiendo a <DatoLegal valor={d.correoPrivacidad} correo />, con tu nombre completo y
 					una identificación oficial. Respondemos en un máximo de 20 días hábiles.
 				</p>
 			</SeccionLegal>

@@ -39,7 +39,7 @@ export default function EliminarCuentaPage() {
 				<p>No necesitas tener la app instalada ni poder iniciar sesión.</p>
 				<ul>
 					<li>
-						Escribe a <DatoLegal valor={d.correoPrivacidad} /> con el asunto «Eliminar cuenta», desde el correo con el que te registraste. Si ya no tienes acceso a
+						Escribe a <DatoLegal valor={d.correoPrivacidad} correo /> con el asunto «Eliminar cuenta», desde el correo con el que te registraste. Si ya no tienes acceso a
 						ese correo, dinos cuál era y te pediremos una identificación para confirmar que la cuenta es tuya.
 					</li>
 					<li>
