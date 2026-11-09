@@ -64,21 +64,32 @@ test("el reporte también está en la barra de los paneles, con el aviso del per
 	await contexto.close();
 });
 
-test("pie: datos del proveedor sin inventar nada y enlaces a términos, privacidad y cookies", async ({ page }) => {
+test("pie: nombre, teléfono, correo y enlaces legales; los datos del proveedor quedan en /corporativo", async ({ page }) => {
 	await page.goto("/", { waitUntil: "load" });
 	const pie = page.locator("footer");
-	const proveedor = pie.locator('[data-prueba="datos-proveedor"]');
-	await expect(proveedor).toContainText("Razón social");
-	await expect(proveedor).toContainText("RFC");
-	await expect(proveedor).toContainText("+52 771 702 8172");
-	await expect(proveedor.locator("[data-dato-pendiente]").first()).toHaveText("Dato por confirmar");
+	await expect(pie.locator('[data-prueba="datos-proveedor"]')).toHaveCount(0);
+	await expect(pie).toContainText("+52 771 702 8172");
+	await expect(pie.locator('[data-prueba="correo-contacto"]')).toBeVisible();
 	for (const [nombre, href] of [
 		["Términos y condiciones", "/condiciones"],
 		["Aviso de privacidad", "/privacidad"],
 		["Cookies", "/cookies"],
+		["Eliminar cuenta", "/eliminar-cuenta"],
 		["Cancelaciones y reembolsos", "/devoluciones"],
 	])
 		await expect(pie.getByRole("link", { name: nombre, exact: true })).toHaveAttribute("href", href);
+	await page.goto("/corporativo", { waitUntil: "load" });
+	await expect(page.locator("main")).toContainText("Razón social");
+});
+
+test("Google Play: /privacidad describe la app y enlaza a /eliminar-cuenta, que funciona sin sesión", async ({ page }) => {
+	await page.goto("/privacidad", { waitUntil: "load" });
+	await expect(page.locator("#app-movil")).toContainText("Restaurante El Quijote");
+	await expect(page.locator("#eliminacion").getByRole("link", { name: "Eliminar cuenta" })).toHaveAttribute("href", "/eliminar-cuenta");
+	await page.goto("/eliminar-cuenta", { waitUntil: "load" });
+	await expect(page.getByRole("heading", { level: 1, name: "Eliminar cuenta" })).toBeVisible();
+	await expect(page.locator("main")).toContainText("Restaurante El Quijote");
+	await expect(page.locator("main")).toContainText("Qué se conserva");
 });
 
 test("registro y reserva: consentimientos con las casillas desmarcadas y enlace al aviso", async ({ page }) => {
@@ -90,7 +101,7 @@ test("registro y reserva: consentimientos con las casillas desmarcadas y enlace 
 	await expect(page.locator("main").getByRole("link", { name: "aviso de privacidad" })).toHaveAttribute("href", "/privacidad");
 });
 
-for (const ruta of ["/privacidad", "/privacidad/personal", "/condiciones", "/devoluciones", "/cookies", "/corporativo"]) {
+for (const ruta of ["/privacidad", "/privacidad/personal", "/eliminar-cuenta", "/condiciones", "/devoluciones", "/cookies", "/corporativo"]) {
 	test(`${ruta}: texto legal sin violaciones de axe ni desbordes a 360 px`, async ({ page }) => {
 		await page.setViewportSize({ width: 360, height: 800 });
 		await page.goto(ruta, { waitUntil: "load" });

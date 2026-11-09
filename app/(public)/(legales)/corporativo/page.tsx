@@ -16,7 +16,7 @@ export default function CorporativoPage() {
           <li>RFC: <DatoLegal valor={DATOS_LEGALES.rfc} /></li>
           <li>Domicilio fiscal: <DatoLegal valor={DATOS_LEGALES.domicilioFiscal} /></li>
           <li>Teléfono: <a href="tel:+527717028172">+52 771 702 8172</a></li>
-          <li>Correo de contacto: <DatoLegal valor={DATOS_LEGALES.correoContacto} /></li>
+          <li>Correo de contacto: <DatoLegal valor={DATOS_LEGALES.correoContacto} correo /></li>
           <li>Horario de atención al cliente: <DatoLegal valor={DATOS_LEGALES.horarioAtencion} /></li>
         </ul>
       </SeccionLegal>

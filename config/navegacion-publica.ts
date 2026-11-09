@@ -65,6 +65,7 @@ export const RUTAS_PUBLICAS: RutaPublica[] = [
 	{ patron: "/corporativo", titulo: "Información corporativa", padres: [], origen: inicio },
 	{ patron: "/privacidad", titulo: "Aviso de privacidad", padres: [], origen: inicio },
 	{ patron: "/privacidad/personal", titulo: "Aviso de privacidad del personal", padres: [{ nombre: "Aviso de privacidad", href: "/privacidad" }], origen: { nombre: "Aviso de privacidad", href: "/privacidad", volver: "Volver al aviso de privacidad" } },
+	{ patron: "/eliminar-cuenta", titulo: "Eliminar cuenta", padres: [], origen: inicio },
 	{ patron: "/condiciones", titulo: "Términos y condiciones", padres: [], origen: inicio },
 	{ patron: "/devoluciones", titulo: "Cancelaciones y reembolsos", padres: [], origen: inicio },
 	{ patron: "/cookies", titulo: "Política de cookies", padres: [], origen: inicio },

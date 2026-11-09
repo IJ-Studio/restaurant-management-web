@@ -59,12 +59,54 @@ export default function PrivacidadPage() {
 					<li>{`Pasarela de pago: ${d.pasarelaPago}.`}</li>
 					<li>{`Alojamiento del sitio: ${d.alojamiento}.`}</li>
 				</ul>
+				<p>Además, estos proveedores tratan datos por nuestra cuenta, solo para prestar el servicio (encargados):</p>
+				<ul>
+					<li>Supabase: base de datos y almacenamiento de archivos.</li>
+					<li>Render: servidor de la API que usan la web y la app.</li>
+					<li>Cloudinary: imágenes del menú y de las promociones.</li>
+					<li>Facturapi: emisión de facturas electrónicas (CFDI).</li>
+					<li>Sentry: reportes de errores de la app, sin contraseñas ni datos de pago.</li>
+					<li>Expo y Firebase Cloud Messaging (Google): envío de notificaciones a la app.</li>
+				</ul>
 				<p>Estas transferencias requieren tu consentimiento expreso, que otorgas al aceptar este aviso.</p>
+			</SeccionLegal>
+
+			<SeccionLegal titulo={`Aplicación móvil «${d.nombreApp}»`} id="app-movil">
+				<p>
+					{`«${d.nombreApp}» es la app de Android para el personal del restaurante (meseros, cajeros, cocina y administración), publicada en Google Play por `}
+					<DatoLegal valor={d.desarrolladorApp} />. No está pensada para el público ni permite crear cuentas: las cuentas las da de alta la administración.
+				</p>
+				<p>La app trata estos datos:</p>
+				<ul>
+					<li>Del personal: nombre, correo, rol y la contraseña, que se guarda cifrada en el servidor. La sesión se guarda solo en el almacenamiento seguro del teléfono.</li>
+					<li>De los clientes, al registrar una reservación o un pedido: nombre, teléfono, número de comensales y notas del pedido.</li>
+					<li>Operación: pedidos, cobros, cortes de caja, incidencias y mermas, con el usuario que los registró.</li>
+					<li>El identificador del teléfono para notificaciones, solo si se aceptan las notificaciones, para avisar de pedidos listos.</li>
+					<li>Reportes de errores (Sentry): tipo de teléfono, versión de la app y el error, sin contraseñas, tokens ni datos de pago.</li>
+				</ul>
+				<p>
+					La app no usa la ubicación, los contactos, la cámara ni publicidad, y no vende ni comparte datos con fines publicitarios. Toda la comunicación con el servidor
+					va cifrada (HTTPS).
+				</p>
+			</SeccionLegal>
+
+			<SeccionLegal titulo="Conservación de los datos">
+				<p>
+					Guardamos tus datos mientras tengas una cuenta o una relación con el restaurante. Las facturas y los registros contables se conservan el plazo que exige la
+					ley fiscal (cinco años, artículo 30 del Código Fiscal de la Federación). Los reportes de errores se borran solos en un máximo de 90 días.
+				</p>
+			</SeccionLegal>
+
+			<SeccionLegal titulo="Eliminación de tu cuenta y tus datos" id="eliminacion">
+				<p>
+					Puedes pedir que eliminemos tu cuenta y tus datos personales en cualquier momento, tanto de la web como de la app «{d.nombreApp}». Los pasos, qué se borra y
+					qué se conserva están en <Link href="/eliminar-cuenta">Eliminar cuenta</Link>.
+				</p>
 			</SeccionLegal>
 
 			<SeccionLegal titulo="Derechos ARCO">
 				<p>
-					Puedes acceder, rectificar, cancelar u oponerte al tratamiento de tus datos personales escribiendo a <DatoLegal valor={d.correoPrivacidad} />, con tu nombre completo y
+					Puedes acceder, rectificar, cancelar u oponerte al tratamiento de tus datos personales escribiendo a <DatoLegal valor={d.correoPrivacidad} correo />, con tu nombre completo y
 					una identificación oficial. Respondemos en un máximo de 20 días hábiles.
 				</p>
 			</SeccionLegal>

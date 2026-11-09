@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { DatoLegal } from "@/components/marca/DatoLegal";
 import { PaginaLegal, SeccionLegal } from "@/components/marca/PaginaLegal";
 import { DATOS_LEGALES } from "@/config/legal";
@@ -35,12 +36,23 @@ export default function PrivacidadPersonalPage() {
 					<li>Identificación, contacto, datos bancarios para el pago y RFC o CURP cuando aplique.</li>
 					<li>Geolocalización durante los turnos activos de reparto (no se rastrea fuera de la jornada).</li>
 					<li>Registros de uso de los sistemas internos (auditoría de seguridad).</li>
+					<li>
+						{`En la app «${d.nombreApp}»: el identificador del teléfono para notificaciones y reportes de errores. El detalle está en el `}
+						<Link href="/privacidad#app-movil">aviso de privacidad</Link>.
+					</li>
 				</ul>
+			</SeccionLegal>
+
+			<SeccionLegal titulo="Eliminación de la cuenta">
+				<p>
+					Al terminar la relación laboral, la administración da de baja la cuenta. También puedes pedirlo tú, como se explica en{" "}
+					<Link href="/eliminar-cuenta">Eliminar cuenta</Link>.
+				</p>
 			</SeccionLegal>
 
 			<SeccionLegal titulo="Derechos ARCO">
 				<p>
-					En los mismos términos que el aviso para clientes. Contacto: <DatoLegal valor={d.correoPrivacidad} />.
+					En los mismos términos que el aviso para clientes. Contacto: <DatoLegal valor={d.correoPrivacidad} correo />.
 				</p>
 				<p>{`Última actualización: ${d.ultimaActualizacion}.`}</p>
 			</SeccionLegal>
