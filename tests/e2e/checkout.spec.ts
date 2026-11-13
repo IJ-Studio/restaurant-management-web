@@ -17,6 +17,8 @@ async function abrir(browser: Browser, ruta: string, { direcciones = DIRECCIONES
 	const contexto = await browser.newContext({ storageState: archivoSesion("cliente") });
 	const page = await contexto.newPage();
 	const envios: { ruta: string; cuerpo: unknown }[] = [];
+	// El API toma al cliente del token: toda llamada al API debe llevar la sesión.
+	const sinToken: string[] = [];
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);
 	page.on("dialog", () => {
 		throw new Error("La página abrió un alert() o confirm()");
@@ -27,6 +29,7 @@ async function abrir(browser: Browser, ruta: string, { direcciones = DIRECCIONES
 			const p = r.request();
 			if (!["fetch", "xhr"].includes(p.resourceType()) || p.headers()["rsc"]) return r.fallback();
 			const url = new URL(p.url());
+			if (!url.pathname.startsWith("/api/") && !p.headers()["authorization"]?.startsWith("Bearer ")) sinToken.push(`${p.method()} ${url.pathname}`);
 			if (p.method() === "POST") {
 				envios.push({ ruta: url.pathname, cuerpo: JSON.parse(p.postData() ?? "{}") });
 				const cuerpo = url.pathname === "/pagos/crear-intento" ? { clientSecret: "pi_e2e_secret", status: "succeeded" } : url.pathname === "/direcciones" ? { id: 9, alias: "Casa" } : {};
@@ -41,12 +44,12 @@ async function abrir(browser: Browser, ruta: string, { direcciones = DIRECCIONES
 		},
 	);
 	await page.goto(ruta, { waitUntil: "load" });
-	return { contexto, page, envios };
+	return { contexto, page, envios, sinToken };
 }
 const continuar = (page: Page) => page.getByRole("button", { name: "Continuar" }).click();
 
 test("los cinco pasos con la dirección y la tarjeta guardadas, el mismo payload de pago y la redirección", async ({ browser }) => {
-	const { contexto, page, envios } = await abrir(browser, "/menu/pedido/checkout?orderId=dom12345");
+	const { contexto, page, envios, sinToken } = await abrir(browser, "/menu/pedido/checkout?orderId=dom12345");
 	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Pago");
 	await expect(page.getByRole("list", { name: "Pasos del pago" }).locator('[aria-current="step"]')).toContainText("Resumen");
 	await expect(page.locator("#paso-titulo")).toHaveText("Resumen de tu pedido");
@@ -66,7 +69,8 @@ test("los cinco pasos con la dirección y la tarjeta guardadas, el mismo payload
 	await page.getByRole("checkbox", { name: /acepto los términos y condiciones/i }).check();
 	await page.getByRole("button", { name: "Pagar $ 290" }).click();
 	await expect(page).toHaveURL(/\/menu\/pedido\/checkout\/exito\?ordenId=dom12345$/);
-	expect(envios).toEqual([{ ruta: "/pagos/crear-intento", cuerpo: { usuarioId: 41, ordenId: "dom12345", direccionId: 3, metodoPagoGuardadoId: "pm_1" } }]);
+	expect(envios).toEqual([{ ruta: "/pagos/crear-intento", cuerpo: { ordenId: "dom12345", direccionId: 3, metodoPagoGuardadoId: "pm_1" } }]);
+	expect(sinToken).toEqual([]);
 	await contexto.close();
 });
 
@@ -89,7 +93,7 @@ test("dirección nueva: etiquetas, autocomplete, errores por campo y se guarda c
 	await expect(page.locator("#paso-titulo")).toHaveText("Factura");
 	expect(envios[0]).toEqual({
 		ruta: "/direcciones",
-		cuerpo: { usuarioId: 41, alias: "Casa", linea1: "Juárez 12", linea2: "", colonia: "Centro", ciudad: "Huejutla", estado: "Hidalgo", codigoPostal: "43000", referencias: "" },
+		cuerpo: { alias: "Casa", linea1: "Juárez 12", linea2: "", colonia: "Centro", ciudad: "Huejutla", estado: "Hidalgo", codigoPostal: "43000", referencias: "" },
 	});
 	await contexto.close();
 });
@@ -149,25 +153,26 @@ for (const tema of ["oscuro", "claro"] as const) {
 }
 
 // PLAN 4.15: confirmación del pago, con la factura en PDF y XML si existe.
-test("confirmación: sello, mensaje sin promesas y descarga de la factura en otra pestaña", async ({ browser }) => {
+test("confirmación: sello, mensaje sin promesas y descarga de la factura con la sesión", async ({ browser }) => {
 	const contexto = await browser.newContext({ storageState: archivoSesion("cliente") });
 	const page = await contexto.newPage();
-	await page.addInitScript(() => {
-		(window as unknown as { abiertas: string[] }).abiertas = [];
-		window.open = ((url: string) => {
-			(window as unknown as { abiertas: string[] }).abiertas.push(url);
-			return null;
-		}) as typeof window.open;
-	});
+	const sinToken: string[] = [];
 	await page.route(
 		(url) => url.origin === "http://localhost:3100" && url.pathname.startsWith("/facturas/"),
-		(r) => r.fulfill({ status: 200, contentType: "application/json", body: '{"id":1}' }),
+		(r) => {
+			const p = r.request();
+			if (!p.headers()["authorization"]?.startsWith("Bearer ")) sinToken.push(new URL(p.url()).pathname);
+			if (p.url().includes("/descargar")) return r.fulfill({ status: 200, contentType: "application/pdf", body: "%PDF-1.4 e2e" });
+			return r.fulfill({ status: 200, contentType: "application/json", body: '{"id":1}' });
+		},
 	);
 	await page.goto("/menu/pedido/checkout/exito?ordenId=dom12345", { waitUntil: "load" });
 	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Gracias, tu pedido está pagado");
 	await expect(page.locator("main")).not.toContainText(/Cargando|Te avisaremos/);
+	const descarga = page.waitForEvent("download");
 	await page.getByRole("button", { name: "Factura en PDF" }).click();
-	expect(await page.evaluate(() => (window as unknown as { abiertas: string[] }).abiertas)).toEqual(["http://localhost:3100/facturas/dom12345/descargar?tipo=pdf"]);
+	expect((await descarga).suggestedFilename()).toBe("factura-dom12345.pdf");
+	expect(sinToken).toEqual([]);
 	await expect(page.getByRole("link", { name: "Ver tu pedido" })).toHaveAttribute("href", "/menu/pedido?tab=domicilio");
 	const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
 	expect(r.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);

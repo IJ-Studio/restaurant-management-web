@@ -79,7 +79,6 @@ function Asistente() {
 	const stripe = useStripe();
 	const elements = useElements();
 
-	const [usuarioId, setUsuarioId] = useState<string | null>(null);
 	const [pasoActual, setPasoActual] = useState(1);
 	const [loading, setLoading] = useState(true);
 	const [procesando, setProcesando] = useState(false);
@@ -101,7 +100,6 @@ function Asistente() {
 	const [metodoSeleccionadoId, setMetodoSeleccionadoId] = useState<string | "nueva" | null>(null);
 	const [guardarTarjeta, setGuardarTarjeta] = useState(false);
 
-	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 	// Carga inicial: usuario, pedido, direcciones y métodos de pago guardados.
 	useEffect(() => {
@@ -124,32 +122,28 @@ function Asistente() {
 					router.push("/login");
 					return;
 				}
-				setUsuarioId(activeUser.id);
 
-				const resOrdenes = await fetch(`${apiUrl}/pedidos/usuario?usuarioId=${activeUser.id}&tipo=domicilio`, { cache: "no-store" });
-				if (resOrdenes.ok) {
-					const ordenesData = await resOrdenes.json();
-					const ordenEncontrada = ordenesData.find((o: any) => o.id === orderId);
-					if (!ordenEncontrada) setFallaCarga("no-encontrado");
-					else setOrden(ordenEncontrada);
-				}
+				// Con la sesión (Bearer): el API toma al cliente del token, no de la URL.
+				const ordenesData = await api.get<any[]>("/pedidos/usuario", { params: { tipo: "domicilio" } });
+				const ordenEncontrada = ordenesData.find((o: any) => o.id === orderId);
+				if (!ordenEncontrada) setFallaCarga("no-encontrado");
+				else setOrden(ordenEncontrada);
 
-				const resDirecciones = await fetch(`${apiUrl}/direcciones?usuarioId=${activeUser.id}`, { cache: "no-store" });
-				if (resDirecciones.ok) {
-					const data = await resDirecciones.json();
+				// Direcciones y tarjetas guardadas son opcionales: si fallan, se capturan nuevas.
+				const data = await api.get<any[]>("/direcciones").catch((e) => (registrarError(e, "checkout: direcciones"), null));
+				if (data) {
 					setDirecciones(data);
 					const principal = data.find((d: any) => d.esPrincipal);
 					if (principal) setDireccionSeleccionadaId(principal.id);
 					else if (data.length === 0) setDireccionSeleccionadaId("nueva");
 				}
 
-				const resMetodos = await fetch(`${apiUrl}/metodos-pago?usuarioId=${activeUser.id}`, { cache: "no-store" });
-				if (resMetodos.ok) {
-					const data = await resMetodos.json();
-					setMetodosGuardados(data);
-					const principalMetodo = data.find((m: any) => m.esPrincipal);
+				const metodos = await api.get<any[]>("/metodos-pago").catch((e) => (registrarError(e, "checkout: tarjetas"), null));
+				if (metodos) {
+					setMetodosGuardados(metodos);
+					const principalMetodo = metodos.find((m: any) => m.esPrincipal);
 					if (principalMetodo) setMetodoSeleccionadoId(principalMetodo.id);
-					else if (data.length === 0) setMetodoSeleccionadoId("nueva");
+					else if (metodos.length === 0) setMetodoSeleccionadoId("nueva");
 				}
 			} catch (e) {
 				registrarError(e, "checkout: carga");
@@ -203,14 +197,7 @@ function Asistente() {
 			if (direccionSeleccionadaId === "nueva" && guardarDireccion) {
 				setProcesando(true);
 				try {
-					const res = await fetch(`${apiUrl}/direcciones`, {
-						cache: "no-store",
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ usuarioId: Number(usuarioId), ...nuevaDireccion }),
-					});
-					if (!res.ok) throw new Error(`direccion ${res.status}`);
-					const guardada = await res.json();
+					const guardada = await api.post<any>("/direcciones", nuevaDireccion);
 					setDirecciones((prev) => [...prev, guardada]);
 					setDireccionSeleccionadaId(guardada.id);
 				} catch (e) {
@@ -234,25 +221,17 @@ function Asistente() {
 			if (metodoSeleccionadoId === "nueva" && guardarTarjeta) {
 				setProcesando(true);
 				try {
-					const resSetup = await fetch(`${apiUrl}/metodos-pago/setup-intent`, {
-						cache: "no-store",
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ usuarioId: Number(usuarioId) }),
+					const { clientSecret } = await api.post<{ clientSecret: string }>("/metodos-pago/setup-intent").catch((e) => {
+						registrarError(e, "checkout: setup-intent");
+						throw new Error("No pudimos preparar el guardado de la tarjeta.");
 					});
-					if (!resSetup.ok) throw new Error("No pudimos preparar el guardado de la tarjeta.");
-					const { clientSecret } = await resSetup.json();
 					const result = await stripe!.confirmCardSetup(clientSecret, { payment_method: { card: elements!.getElement(CardElement)! } });
 					// El mensaje de Stripe es para la persona («Tu tarjeta fue rechazada»).
 					if (result.error) throw new Error(result.error.message || "No pudimos validar la tarjeta.");
-					const resGuardar = await fetch(`${apiUrl}/metodos-pago`, {
-						cache: "no-store",
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ usuarioId: Number(usuarioId), paymentMethodId: result.setupIntent!.payment_method }),
+					const nuevoMetodo = await api.post<any>("/metodos-pago", { paymentMethodId: result.setupIntent!.payment_method }).catch((e) => {
+						registrarError(e, "checkout: guardar método");
+						throw new Error("No pudimos guardar la tarjeta.");
 					});
-					if (!resGuardar.ok) throw new Error("No pudimos guardar la tarjeta.");
-					const nuevoMetodo = await resGuardar.json();
 					setMetodosGuardados((prev) => [...prev, nuevoMetodo]);
 					setMetodoSeleccionadoId(nuevoMetodo.id);
 				} catch (e) {
@@ -276,18 +255,14 @@ function Asistente() {
 		setError(null);
 		setProcesando(true);
 		try {
-			const body: any = { usuarioId: Number(usuarioId), ordenId: orden.id };
+			const body: any = { ordenId: orden.id };
 			if (typeof direccionSeleccionadaId === "number") body.direccionId = direccionSeleccionadaId;
 			if (metodoSeleccionadoId !== "nueva") body.metodoPagoGuardadoId = metodoSeleccionadoId;
 
-			const resIntento = await fetch(`${apiUrl}/pagos/crear-intento`, {
-				cache: "no-store",
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(body),
+			const { clientSecret, status } = await api.post<{ clientSecret: string; status: string }>("/pagos/crear-intento", body).catch((e) => {
+				registrarError(e, "checkout: crear intento");
+				throw new Error("No pudimos iniciar el pago. Inténtalo de nuevo en un momento.");
 			});
-			if (!resIntento.ok) throw new Error("No pudimos iniciar el pago. Inténtalo de nuevo en un momento.");
-			const { clientSecret, status } = await resIntento.json();
 
 			// Con tarjeta guardada (off_session) el backend puede haber confirmado ya el pago.
 			if (status !== "succeeded") {

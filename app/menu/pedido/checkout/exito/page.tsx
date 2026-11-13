@@ -8,6 +8,8 @@ import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { MigasDePan } from "@/components/ui/MigasDePan";
 import { CargadorMarca } from "@/components/marca/CargadorMarca";
 import { SelloCasa } from "@/components/marca/SelloCasa";
+import { downloadAsFile } from "@/features/dashboard/admin/utils/menuUtils";
+import { api, APIError } from "@/lib/api";
 import { registrarError } from "@/lib/registro/registrar-error";
 
 /**
@@ -30,23 +32,22 @@ function Confirmacion() {
 		if (!ordenId) return;
 		(async () => {
 			try {
-				const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/facturas/${encodeURIComponent(ordenId)}`, { cache: "no-store" });
-				if (res.ok) setFactura(await res.json());
+				// Con la sesión: la factura es del cliente que pagó. 404 = aún no hay factura.
+				setFactura(await api.get(`/facturas/${encodeURIComponent(ordenId)}`));
 			} catch (e) {
-				registrarError(e, "confirmación: factura");
+				if (!(e instanceof APIError && e.statusCode === 404)) registrarError(e, "confirmación: factura");
 			} finally {
 				setBuscando(false);
 			}
 		})();
 	}, [ordenId]);
 
-	const descargarFactura = (tipo: "pdf" | "xml") => {
-		window.open(
+	// Descarga con la sesión (una pestaña nueva no lleva el token).
+	const descargarFactura = (tipo: "pdf" | "xml") =>
+		void downloadAsFile(
 			`${process.env.NEXT_PUBLIC_API_URL}/facturas/${encodeURIComponent(ordenId ?? "")}/descargar?tipo=${encodeURIComponent(tipo)}`,
-			"_blank",
-			"noopener,noreferrer",
-		);
-	};
+			`factura-${ordenId}.${tipo}`,
+		).catch((e) => registrarError(e, "confirmación: descargar factura"));
 
 	return (
 		<section aria-labelledby="exito-titulo" className="mx-auto flex max-w-[40rem] flex-col items-center gap-(--espacio-lg) py-(--espacio-3xl) text-center">
