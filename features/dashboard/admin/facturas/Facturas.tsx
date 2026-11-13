@@ -16,6 +16,7 @@ import { primeraMayuscula } from "@/lib/formato/caja";
 import { formatearDia } from "@/lib/formato/fecha";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { SolicitudesFactura } from "./SolicitudesFactura";
 
 /**
  * Facturas (PLAN 5.5; PLAN-AMPLIACION D-24): el listado del administrador con `GET /facturas`,
@@ -103,6 +104,7 @@ export function Facturas() {
 	const filtrando = busqueda.trim() !== "" || estatus !== "todas";
 	return (
 		<PlantillaPanel titulo="Facturas" descripcion="Las facturas que piden los clientes al pagar su pedido.">
+			<SolicitudesFactura alEmitir={() => void cargar()} />
 			<BloquePanel
 				titulo="Todas las facturas"
 				acciones={

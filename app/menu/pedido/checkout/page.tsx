@@ -18,6 +18,7 @@ import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { formatearPrecio } from "@/lib/formato/precio";
+import { api } from "@/lib/api";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaDatosFiscales, esquemaDireccionEnvio } from "@/lib/validacion/formularios";
@@ -296,12 +297,10 @@ function Asistente() {
 			}
 
 			if (requiereFactura) {
-				await fetch(`${apiUrl}/facturas`, {
-					cache: "no-store",
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ usuarioId: Number(usuarioId), ordenId: orden.id, ...datosFiscales }),
-				}).catch((e) => registrarError(e, "checkout: factura"));
+				// Va a la cola (Fase 4.1): se registra aunque el webhook aún no confirme el pago, con la sesión del cliente.
+				await api
+					.post("/solicitudes-factura", { ordenId: orden.id, ...datosFiscales })
+					.catch((e) => registrarError(e, "checkout: solicitud de factura"));
 			}
 			router.push(`/menu/pedido/checkout/exito?ordenId=${orden.id}`);
 		} catch (e) {
