@@ -146,7 +146,8 @@ export function UsuariosAdmin() {
 	const cargar = useCallback(async () => {
 		setEstado("cargando");
 		try {
-			const datos = await api.get<Usuario[]>("/users");
+			// Con los dados de baja, para poder reactivarlos. shortcut: una página de 100; paginar con X-Next-Cursor si el personal pasa de 100.
+			const datos = await api.get<Usuario[]>("/users", { params: { incluirInactivos: "true", limit: 100 } });
 			setUsuarios(Array.isArray(datos) ? datos.map((u) => ({ ...u, name: nombrePropio(u.name), lastname: nombrePropio(u.lastname) })) : []);
 			setEstado("listo");
 		} catch (e) {
