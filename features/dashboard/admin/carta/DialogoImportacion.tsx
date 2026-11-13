@@ -1,82 +1,74 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Upload } from "lucide-react";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
-import { Buscador } from "@/components/ui/Buscador";
-import { Selector } from "@/components/ui/Campo";
-import { Casilla } from "@/components/ui/Casilla";
 import { Dialogo } from "@/components/ui/Dialogo";
-import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Insignia, type TonoInsignia } from "@/components/ui/Insignia";
 import { contar } from "@/lib/formato/plural";
-import { registrarError } from "@/lib/registro/registrar-error";
-import { calcularDiferencias, subirImportacion, type Fila, type TipoDiferencia } from "./importacion";
+import { formatearImporte } from "@/lib/formato/precio";
+import { enviarImportacion, type ModoImportacion, type PlanImportacion, type Problema } from "./importacion";
 
 /**
- * Vista previa de una importación (PLAN 5.9). Sustituye a `ImportPreviewModal` (86 hex, estilos en
- * línea y `text-[Npx]`): las mismas diferencias por nombre, la misma selección (los iguales empiezan
- * sin marcar) y la misma subida. Cada fila es una casilla con su nombre y sus cambios «antes → después».
+ * Vista previa de la importación de la carta (Fase 4.2). El API ya comparó el archivo con la carta:
+ * aquí se muestra qué entra, qué cambia, qué queda deshabilitado (al reemplazar) y los problemas.
+ * Con errores solo se ofrece «Importar de todas formas», que omite esas filas; si faltan columnas
+ * obligatorias no se puede importar.
  */
 
-const TIPOS: Record<TipoDiferencia, { texto: string; tono: TonoInsignia }> = {
-	nuevo: { texto: "Nuevo", tono: "exito" },
-	modificado: { texto: "Cambia", tono: "aviso" },
-	igual: { texto: "Sin cambios", tono: "neutro" },
-};
+const filaDe = (p: Problema) => (p.fila === null ? p.mensaje : `Fila ${p.fila}: ${p.mensaje}`);
+
+function Lista({ titulo, tono, elementos }: { titulo: string; tono: TonoInsignia; elementos: { clave: string; texto: string; detalle?: string }[] }) {
+	if (!elementos.length) return null;
+	return (
+		<section aria-label={titulo} className="flex flex-col gap-2">
+			<h3 className="m-0 flex items-center gap-2 text-(length:--texto-base) font-semibold">
+				{titulo} <Insignia tono={tono}>{elementos.length}</Insignia>
+			</h3>
+			<ul className="m-0 flex list-none flex-col p-0">
+				{elementos.map((e) => (
+					<li key={e.clave} className="flex flex-wrap justify-between gap-2 border-b border-borde-sutil py-1 last:border-b-0">
+						<span className="[overflow-wrap:anywhere]">{e.texto}</span>
+						{e.detalle && <span className="text-texto-secundario">{e.detalle}</span>}
+					</li>
+				))}
+			</ul>
+		</section>
+	);
+}
 
 export function DialogoImportacion({
 	archivo,
-	filas,
-	filasBd,
+	modo,
+	plan,
 	api,
 	alCerrar,
 	alTerminar,
 }: {
 	archivo: File;
-	filas: Fila[];
-	filasBd: Fila[];
+	modo: ModoImportacion;
+	plan: PlanImportacion;
 	api: string;
 	alCerrar: () => void;
-	alTerminar: (r: { inserted: number; updated: number }) => void;
+	alTerminar: (plan: PlanImportacion) => void;
 }) {
-	const diferencias = useMemo(() => calcularDiferencias(filas, filasBd), [filas, filasBd]);
-	const [elegidas, setElegidas] = useState(() => new Set(diferencias.filter((d) => d.tipo !== "igual").map((d) => d.indice)));
-	const [busqueda, setBusqueda] = useState("");
-	const [tipo, setTipo] = useState<"todos" | TipoDiferencia>("todos");
 	const [subiendo, setSubiendo] = useState(false);
-	const [error, setError] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-	const cuenta = (t: TipoDiferencia) => diferencias.filter((d) => d.tipo === t).length;
-	const visibles = diferencias.filter((d) => {
-		if (tipo !== "todos" && d.tipo !== tipo) return false;
-		const q = busqueda.trim().toLowerCase();
-		return !q || d.nombre.toLowerCase().includes(q) || d.categoria.toLowerCase().includes(q);
-	});
+	const faltanColumnas = plan.errores.some((e) => e.fila === null);
+	const conErrores = plan.errores.length > 0;
+	const cambios = plan.nuevos.length + plan.actualizados.length + plan.deshabilitar.length;
+	const platillo = (f: PlanImportacion["nuevos"][number]) => ({ clave: `f${f.fila}`, texto: f.nombre, detalle: `${f.categoria} · ${formatearImporte(f.precio) ?? "—"}` });
 
 	async function importar() {
-		const seleccion = diferencias.filter((d) => elegidas.has(d.indice)).map((d) => d.fila);
-		if (!seleccion.length) return;
-		setError(false);
+		setError(null);
 		setSubiendo(true);
-		try {
-			alTerminar(await subirImportacion(archivo, seleccion, api));
-		} catch (e) {
-			registrarError(e, "carta: importar");
-			setError(true);
-		} finally {
-			setSubiendo(false);
-		}
+		const r = await enviarImportacion(api, archivo, modo, { confirmar: true, forzar: conErrores });
+		setSubiendo(false);
+		if ("error" in r) setError(r.error);
+		else alTerminar(r.plan);
 	}
-
-	const alternar = (indice: number) =>
-		setElegidas((s) => {
-			const n = new Set(s);
-			if (n.has(indice)) n.delete(indice);
-			else n.add(indice);
-			return n;
-		});
 
 	return (
 		<Dialogo
@@ -85,14 +77,14 @@ export function DialogoImportacion({
 			alCambiarAbierto={(a) => !a && alCerrar()}
 			cerrable={!subiendo}
 			titulo="Revisar la importación"
-			descripcion={`${archivo.name}: ${contar(cuenta("nuevo"), "platillo nuevo", "platillos nuevos")}, ${contar(cuenta("modificado"), "con cambios", "con cambios")} y ${contar(cuenta("igual"), "sin cambios", "sin cambios")}.`}
+			descripcion={`${archivo.name} (${modo === "reemplazar" ? "reemplazar la carta" : "agregar a la carta"}): ${contar(plan.nuevos.length, "platillo nuevo", "platillos nuevos")}, ${contar(plan.actualizados.length, "actualizado", "actualizados")} y ${contar(plan.deshabilitar.length, "a deshabilitar", "a deshabilitar")}.`}
 			pie={
 				<>
 					<Boton variante="secundario" deshabilitado={subiendo} onClick={alCerrar}>
 						Cancelar
 					</Boton>
-					<Boton icono={<Upload />} deshabilitado={elegidas.size === 0} cargando={subiendo} textoCargando="Importando…" onClick={importar}>
-						{elegidas.size === 0 ? "Elige al menos uno" : `Importar ${contar(elegidas.size, "platillo")}`}
+					<Boton icono={<Upload />} deshabilitado={faltanColumnas || cambios === 0} cargando={subiendo} textoCargando="Importando…" onClick={importar}>
+						{conErrores ? "Importar de todas formas" : "Importar"}
 					</Boton>
 				</>
 			}
@@ -100,63 +92,31 @@ export function DialogoImportacion({
 			<div className="flex flex-col gap-(--espacio-md)">
 				{error && (
 					<Aviso tono="error" titulo="No se completó la importación.">
-						Revisa que el archivo siga la plantilla y vuelve a intentarlo.
+						{error}
 					</Aviso>
 				)}
-				<div className="flex flex-wrap items-end gap-3">
-					<Buscador etiqueta="Buscar por nombre o categoría" valor={busqueda} alCambiar={setBusqueda} marcador="Nombre o categoría" />
-					<Selector
-						etiqueta="Mostrar"
-						opciones={[
-							{ valor: "todos", texto: "Todos" },
-							{ valor: "nuevo", texto: "Nuevos" },
-							{ valor: "modificado", texto: "Con cambios" },
-							{ valor: "igual", texto: "Sin cambios" },
-						]}
-						value={tipo}
-						onChange={(e) => setTipo(e.target.value as typeof tipo)}
-					/>
-				</div>
-				<div className="flex flex-wrap gap-2">
-					<Boton variante="fantasma" tamano="compacto" onClick={() => setElegidas(new Set(diferencias.map((d) => d.indice)))}>
-						Marcar todos
-					</Boton>
-					<Boton variante="fantasma" tamano="compacto" onClick={() => setElegidas(new Set())}>
-						Desmarcar todos
-					</Boton>
-				</div>
-				{visibles.length === 0 ? (
-					<EstadoVacio titulo="Nada que mostrar" descripcion="Prueba con otra búsqueda o con otro filtro." />
+				{faltanColumnas ? (
+					<Aviso tono="error" titulo="El archivo no sigue la plantilla.">
+						{plan.errores.filter((e) => e.fila === null).map(filaDe).join(" ")} Descarga la plantilla y vuelve a intentarlo.
+					</Aviso>
 				) : (
-					<ul className="m-0 flex list-none flex-col p-0" aria-label="Platillos del archivo">
-						{visibles.map((d) => {
-							const cambios = d.campos.filter((c) => c.cambia && c.campo !== "nombre");
-							return (
-								<li key={d.indice} className="flex flex-col gap-2 border-b border-borde-sutil py-(--espacio-sm) last:border-b-0">
-									<div className="flex flex-wrap items-center justify-between gap-2">
-										<Casilla etiqueta={d.nombre} checked={elegidas.has(d.indice)} onChange={() => alternar(d.indice)} />
-										<Insignia tono={TIPOS[d.tipo].tono}>{TIPOS[d.tipo].texto}</Insignia>
-									</div>
-									{d.tipo === "modificado" && cambios.length > 0 && (
-										<dl className="m-0 grid grid-cols-[fit-content(40%)_minmax(0,1fr)] gap-x-4 gap-y-1 ps-8 text-(length:--texto-pequeno)">
-											{cambios.map((c) => (
-												<div key={c.campo} className="contents">
-													<dt className="text-texto-secundario">{c.rotulo}</dt>
-													<dd className="m-0 text-texto-principal [overflow-wrap:anywhere]">
-														<span className="text-texto-secundario line-through">{c.antes}</span>
-														<span className="solo-lectores"> pasa a </span>
-														<span aria-hidden="true"> → </span>
-														{c.despues}
-													</dd>
-												</div>
-											))}
-										</dl>
-									)}
-								</li>
-							);
-						})}
-					</ul>
+					conErrores && (
+						<Aviso tono="aviso" titulo={`${contar(plan.errores.length, "fila tiene errores", "filas tienen errores")} y no se importará.`}>
+							Corrige el archivo o usa «Importar de todas formas» para guardar solo las filas válidas.
+						</Aviso>
+					)
 				)}
+				{!faltanColumnas && cambios === 0 && <Aviso titulo="No hay nada que importar.">El archivo no trae platillos válidos.</Aviso>}
+				<Lista titulo="Errores" tono="error" elementos={plan.errores.map((p, i) => ({ clave: `e${i}`, texto: filaDe(p) }))} />
+				<Lista titulo="Avisos" tono="aviso" elementos={plan.avisos.map((p, i) => ({ clave: `a${i}`, texto: filaDe(p) }))} />
+				<Lista titulo="Platillos nuevos" tono="exito" elementos={plan.nuevos.map(platillo)} />
+				<Lista titulo="Platillos actualizados" tono="info" elementos={plan.actualizados.map(platillo)} />
+				<Lista
+					titulo="Quedarán deshabilitados (no se borran)"
+					tono="neutro"
+					elementos={plan.deshabilitar.map((d) => ({ clave: `d${d.id}`, texto: d.nombre }))}
+				/>
+				<Lista titulo="Categorías nuevas" tono="exito" elementos={plan.categoriasNuevas.map((c) => ({ clave: c, texto: c }))} />
 			</div>
 		</Dialogo>
 	);

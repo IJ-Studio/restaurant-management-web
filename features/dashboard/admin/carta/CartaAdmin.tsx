@@ -20,10 +20,9 @@ import { Tabla, type ColumnaTabla } from "@/components/ui/Tabla";
 import type { MenuItem } from "./tipos";
 import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
-import { ACEPTA } from "@/lib/validacion/archivos";
 import { DialogoImportacion } from "./DialogoImportacion";
 import { DialogoPlatillo, ETIQUETAS } from "./DialogoPlatillo";
-import { leerArchivo, type Fila } from "./importacion";
+import { ACEPTA_CARTA, enviarImportacion, validarArchivo, type ModoImportacion, type PlanImportacion } from "./importacion";
 import { API, useCartaAdmin } from "./useCartaAdmin";
 import { conteo } from "@/lib/paneles/calculo";
 
@@ -31,13 +30,13 @@ import { conteo } from "@/lib/paneles/calculo";
  * Carta en administración (PLAN 5.9). Misma lógica (`useCartaAdmin`), otra forma: indicadores,
  * una tabla por categoría (tarjetas por debajo de 1024 px), diálogos del catálogo, importar y
  * exportar en diálogos con opciones nombradas (antes, menús desplegables hechos a mano) y, al
- * importar, el archivo se valida antes de leerlo (`leerArchivo`).
+ * importar, el archivo se valida antes de subirlo y el API devuelve la vista previa (Fase 4.2).
  */
 
 const importe = (n: number) => formatearImporte(n) ?? "—";
 const entero = new Intl.NumberFormat("es-MX");
 
-type Pendiente = { archivo: File; filas: Fila[]; filasBd: Fila[] };
+type Pendiente = { archivo: File; modo: ModoImportacion; plan: PlanImportacion };
 
 export function CartaAdmin() {
 	const carta = useCartaAdmin();
@@ -47,7 +46,7 @@ export function CartaAdmin() {
 	const [leyendo, setLeyendo] = useState(false);
 	const [dialogo, setDialogo] = useState<null | "importar" | "exportar">(null);
 	const entrada = useRef<HTMLInputElement>(null);
-	const formato = useRef<"csv" | "xlsx">("xlsx");
+	const [modo, setModo] = useState<ModoImportacion>("agregar");
 	const { notificar } = useNotificaciones();
 	const { confirmar, dialogo: confirmacion } = useConfirmacion();
 
@@ -60,7 +59,8 @@ export function CartaAdmin() {
 			items.filter(
 				(i) =>
 					(!q || i.name.toLowerCase().includes(q) || i.description?.toLowerCase().includes(q)) &&
-					(disponibilidad === "todos" || (disponibilidad === "disponibles" ? i.available : !i.available)),
+					(disponibilidad === "todos" ||
+						(disponibilidad === "disponibles" ? i.available : disponibilidad === "sin-imagen" ? !i.imageUrl : !i.available)),
 			);
 	}, [busqueda, disponibilidad]);
 
@@ -88,32 +88,23 @@ export function CartaAdmin() {
 		return ok;
 	}
 
-	function elegirArchivo(f: "csv" | "xlsx") {
-		formato.current = f;
+	function elegirArchivo() {
 		setDialogo(null);
-		// `accept` se fija aquí, antes del clic: el selector se abre antes de que React vuelva a pintar.
-		if (entrada.current) {
-			entrada.current.accept = f === "xlsx" ? ACEPTA.hoja : ".csv,text/csv";
-			entrada.current.click();
-		}
+		entrada.current?.click();
 	}
 
 	async function alElegir(archivo: File | undefined) {
 		if (entrada.current) entrada.current.value = "";
 		if (!archivo) return;
 		setLeyendo(true);
-		const leido = await leerArchivo(archivo, formato.current);
-		if ("error" in leido) {
-			setLeyendo(false);
-			notificar({ tono: "error", titulo: "No se puede importar ese archivo", descripcion: leido.error, duracionMs: null });
-			return;
-		}
-		const filasBd = await carta.filasActualesBd();
+		const invalido = await validarArchivo(archivo);
+		const r = invalido ? { error: invalido } : await enviarImportacion(API, archivo, modo, { confirmar: false });
 		setLeyendo(false);
-		setPendiente({ archivo, filas: leido.filas, filasBd });
+		if ("error" in r) notificar({ tono: "error", titulo: "No se puede importar ese archivo", descripcion: r.error, duracionMs: null });
+		else setPendiente({ archivo, modo, plan: r.plan });
 	}
 
-	async function descargar(tipo: "excel" | "plantilla-csv" | "plantilla-xlsx") {
+	async function descargar(tipo: "excel" | "plantilla-csv") {
 		setDialogo(null);
 		if (!(await carta.descargarDelApi(tipo))) notificar({ tono: "error", titulo: "No se pudo descargar", descripcion: "Vuelve a intentarlo en un momento." });
 	}
@@ -169,7 +160,7 @@ export function CartaAdmin() {
 					</>
 				}
 		>
-			<input ref={entrada} type="file" hidden onChange={(e) => void alElegir(e.target.files?.[0])} />
+			<input ref={entrada} type="file" accept={ACEPTA_CARTA} hidden onChange={(e) => void alElegir(e.target.files?.[0])} />
 
 			<div className={REJILLA_INDICADORES}>
 				<Indicador rotulo="Platillos en la carta" calculo={conteo("platillos = todos los platillos de todas las categorías", todos, (i) => i.name, (i) => (i.available ? "disponible" : "agotado"))} valorCalculo={todos.length} valor={entero.format(todos.length)} detalle={contar(carta.categorias.length, "categoría")} className={INDICADOR_PROTAGONISTA} estado={carta.carga.estado} alReintentar={carta.recargar} />
@@ -185,7 +176,8 @@ export function CartaAdmin() {
 					opciones={[
 						{ valor: "todos", texto: "Todos" },
 						{ valor: "disponibles", texto: "Disponibles" },
-						{ valor: "agotados", texto: "Agotados" },
+						{ valor: "agotados", texto: "Deshabilitados (agotados)" },
+						{ valor: "sin-imagen", texto: "Sin imagen" },
 					]}
 					value={disponibilidad}
 					onChange={(e) => setDisponibilidad(e.target.value)}
@@ -265,21 +257,29 @@ export function CartaAdmin() {
 				descripcion="Descarga la plantilla, rellénala y súbela. Antes de guardar verás qué cambia."
 			>
 				<div className="flex flex-col gap-(--espacio-md)">
+					<Selector
+						etiqueta="¿Agregar a la carta o reemplazarla?"
+						ayuda={
+							modo === "reemplazar"
+								? "Los platillos que no vengan en el archivo quedan deshabilitados; no se borran y se pueden volver a activar."
+								: "Se añaden los platillos nuevos y se actualizan los que ya existen; el resto no cambia."
+						}
+						opciones={[
+							{ valor: "agregar", texto: "Agregar a la carta" },
+							{ valor: "reemplazar", texto: "Reemplazar la carta" },
+						]}
+						value={modo}
+						onChange={(e) => setModo(e.target.value as ModoImportacion)}
+					/>
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-						<Boton variante="secundario" icono={<FileSpreadsheet />} onClick={() => descargar("plantilla-xlsx")}>
-							Plantilla de Excel
+						<Boton variante="secundario" icono={<FileSpreadsheet />} onClick={() => descargar("plantilla-csv")}>
+							Descargar plantilla
 						</Boton>
-						<Boton variante="secundario" icono={<Download />} onClick={() => descargar("plantilla-csv")}>
-							Plantilla CSV
-						</Boton>
-						<Boton icono={<Upload />} onClick={() => elegirArchivo("xlsx")}>
-							Subir Excel
-						</Boton>
-						<Boton icono={<Upload />} onClick={() => elegirArchivo("csv")}>
-							Subir CSV
+						<Boton icono={<Upload />} onClick={elegirArchivo}>
+							Subir Excel o CSV
 						</Boton>
 					</div>
-					<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">Excel (.xlsx) o CSV, de hasta 2 MB.</p>
+					<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">Excel (.xlsx) o CSV, de hasta 2 MB. La plantilla se abre en Excel.</p>
 				</div>
 			</Dialogo>
 
@@ -312,13 +312,17 @@ export function CartaAdmin() {
 			{pendiente && (
 				<DialogoImportacion
 					archivo={pendiente.archivo}
-					filas={pendiente.filas}
-					filasBd={pendiente.filasBd}
+					modo={pendiente.modo}
+					plan={pendiente.plan}
 					api={API}
 					alCerrar={() => setPendiente(null)}
 					alTerminar={(r) => {
 						setPendiente(null);
-						notificar({ tono: "exito", titulo: "Importación completa", descripcion: `${contar(r.inserted, "nuevo")} y ${contar(r.updated, "actualizado")}.` });
+						notificar({
+							tono: "exito",
+							titulo: "Importación completa",
+							descripcion: `${contar(r.nuevos.length, "nuevo")}, ${contar(r.actualizados.length, "actualizado")} y ${contar(r.deshabilitar.length, "deshabilitado")}.`,
+						});
 						void carta.recargar({ silenciosa: true });
 					}}
 				/>

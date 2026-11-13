@@ -121,14 +121,6 @@ export function useCartaAdmin() {
 		return operar("carta: eliminar", () => api.delete(`/platillos/${actual.id}`));
 	}
 
-	async function filasActualesBd(): Promise<Record<string, unknown>[]> {
-		try {
-			return filasDe(presentarCarta(await api.get<unknown>("/platillos/export.json")));
-		} catch {
-			return [];
-		}
-	}
-
 	function exportarJson() {
 		descargar(new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), categories: categorias }, null, 2)], { type: "application/json" }), `menu_${hoy()}.json`);
 	}
@@ -142,11 +134,10 @@ export function useCartaAdmin() {
 	}
 
 	/** Descargas del API: `true` si salieron bien. */
-	async function descargarDelApi(tipo: "excel" | "plantilla-csv" | "plantilla-xlsx"): Promise<boolean> {
+	async function descargarDelApi(tipo: "excel" | "plantilla-csv"): Promise<boolean> {
 		try {
 			if (tipo === "excel") await downloadAsFile(`${API}/platillos/export/dishes/excel`, `platillos_${hoy()}.xlsx`);
-			else if (tipo === "plantilla-xlsx") await downloadAsFile(`${API}/platillos/export/dishes/excel`, "template_platillos.xlsx");
-			else await downloadAsFile(`${API}/platillos/template.csv`, "template_platillos.csv");
+			else await downloadAsFile(`${API}/platillos/plantilla.csv`, "plantilla-carta.csv");
 			return true;
 		} catch (e) {
 			registrarError(e, `carta: descargar ${tipo}`);
@@ -154,5 +145,5 @@ export function useCartaAdmin() {
 		}
 	}
 
-	return { carga, categorias, recargar, guardar, alternarDisponible, eliminar, filasActualesBd, exportarJson, exportarCsv, descargarDelApi };
+	return { carga, categorias, recargar, guardar, alternarDisponible, eliminar, exportarJson, exportarCsv, descargarDelApi };
 }
