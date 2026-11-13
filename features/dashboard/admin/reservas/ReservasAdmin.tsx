@@ -158,6 +158,30 @@ function BotonWhatsApp({ reserva }: { reserva: Reserva }) {
 	);
 }
 
+/** Escribir al cliente por correo (Fase 4.6): abre el programa de correo con asunto y mensaje. */
+function BotonCorreo({ reserva }: { reserva: Reserva }) {
+	const nombre = reserva.clienteNombre || "el cliente";
+	const correo = reserva.clienteEmail?.trim() ?? "";
+	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo))
+		return (
+			<Boton variante="fantasma" tamano="compacto" deshabilitado aria-label={`Sin correo: no hay un correo válido de ${nombre}`}>
+				Sin correo
+			</Boton>
+		);
+	const asunto = `Tu reserva en El Quijote del ${escribirFecha(reserva.fechaHora)}`;
+	const cuerpo = `Hola, ${nombre}.\n\nTe escribimos de El Quijote por tu reserva del ${escribirFecha(reserva.fechaHora)}.\n\n`;
+	return (
+		<BotonEnlace
+			href={`mailto:${correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`}
+			variante="fantasma"
+			tamano="compacto"
+			aria-label={`Escribir a ${nombre} por correo`}
+		>
+			Correo
+		</BotonEnlace>
+	);
+}
+
 export function ReservasAdmin() {
 	const router = useRouter();
 	const [verificada, setVerificada] = useState(false);
@@ -337,6 +361,7 @@ export function ReservasAdmin() {
 					acciones={(r) => (
 						<>
 							<BotonWhatsApp reserva={r} />
+							<BotonCorreo reserva={r} />
 							<DialogoEstado reserva={r} alGuardar={guardarEstado} />
 						</>
 					)}
