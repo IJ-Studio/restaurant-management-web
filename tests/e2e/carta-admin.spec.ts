@@ -14,6 +14,16 @@ const FILAS_BD = [
 	{ id: 21, categoria_id: 2, nombre: "Paella valenciana", descripcion_corta: "Para dos", precio: 640, disponible: true, tiempo_preparacion: 35 },
 ];
 
+// Lo que devuelve `POST /platillos/importar` al reemplazar: una fila con error, y la paella no viene.
+const PLAN = {
+	nuevos: [{ fila: 2, nombre: "Tortilla de patatas", categoria: "Categoría 1", precio: 140, existenteId: null }],
+	actualizados: [{ fila: 3, nombre: "Croquetas de jamón", categoria: "Categoría 1", precio: 125, existenteId: 11 }],
+	deshabilitar: [{ id: 21, nombre: "Paella valenciana" }],
+	categoriasNuevas: [],
+	avisos: [],
+	errores: [{ fila: 4, mensaje: "El precio debe ser un número mayor que 0." }],
+};
+
 async function abrir(browser: Browser, opciones: { ancho?: number; preferencias?: Record<string, string> } = {}) {
 	const contexto = await browser.newContext({ storageState: archivoSesion("admin"), viewport: { width: opciones.ancho ?? 1440, height: 900 } });
 	const page = await contexto.newPage();
@@ -35,7 +45,7 @@ async function abrir(browser: Browser, opciones: { ancho?: number; preferencias?
 			if (url.pathname.startsWith("/menu/categories")) return json([]);
 			if (url.pathname === "/imagenes/firma") return json({ cloudName: "dcb1tspbj", apiKey: "clave-publica-ficticia", timestamp: 1_800_000_000, signature: "firma-ficticia", folder: "ElQuijote/menu" });
 			if (metodo === "GET") return json(filas);
-			if (url.pathname.includes("import")) return json({ inserted: 1, updated: 1 });
+			if (url.pathname === "/platillos/importar") return json({ ...PLAN, aplicado: url.searchParams.get("confirmar") === "true" });
 			const id = Number(url.pathname.split("/").pop());
 			if (metodo === "PATCH") {
 				const cuerpo = JSON.parse(p.postData() ?? "{}") as Record<string, unknown>;
@@ -60,10 +70,12 @@ async function abrir(browser: Browser, opciones: { ancho?: number; preferencias?
 	return { contexto, page, pedidos };
 }
 
-async function subir(page: Page, boton: string, archivo: { name: string; mimeType: string; buffer: Buffer }) {
+async function subir(page: Page, modo: "agregar" | "reemplazar", archivo: { name: string; mimeType: string; buffer: Buffer }) {
 	await page.locator("main").getByRole("button", { name: "Importar" }).click();
+	const dialogo = page.getByRole("dialog", { name: "Importar platillos" });
+	await dialogo.getByLabel("¿Agregar a la carta o reemplazarla?").selectOption(modo);
 	const selector = page.waitForEvent("filechooser");
-	await page.getByRole("dialog", { name: "Importar platillos" }).getByRole("button", { name: boton }).click();
+	await dialogo.getByRole("button", { name: "Subir Excel o CSV" }).click();
 	await (await selector).setFiles(archivo);
 }
 
@@ -78,6 +90,11 @@ test("la carta de la BD, por categorías, con filtro y disponibilidad", async ({
 	await expect(tabla.locator("tbody tr").filter({ hasText: "Croquetas" })).toContainText("Agotado");
 	await main.getByLabel("Mostrar").selectOption("disponibles");
 	await expect(tabla.locator("tbody tr")).toHaveCount(0);
+	await main.getByLabel("Mostrar").selectOption("agotados");
+	await expect(tabla.locator("tbody tr")).toHaveCount(2);
+	// Ningún platillo de prueba tiene imagen: «Sin imagen» los muestra todos.
+	await main.getByLabel("Mostrar").selectOption("sin-imagen");
+	await expect(tabla.locator("tbody tr")).toHaveCount(2);
 	await contexto.close();
 });
 
@@ -103,22 +120,25 @@ test("editar y añadir platillo: PATCH y POST con el contrato de siempre", async
 	await contexto.close();
 });
 
-test("importar: un .xlsx que no es Excel se rechaza antes de leerlo; un CSV válido se revisa y se sube", async ({ browser }) => {
+test("importar: un .xlsx que no es Excel se rechaza antes de subirlo; al reemplazar se revisa y se importa de todas formas", async ({ browser }) => {
 	const { contexto, page, pedidos } = await abrir(browser);
-	await subir(page, "Subir Excel", { name: "carta.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from("nombre,precio\nNo es Excel,1") });
+	await subir(page, "agregar", { name: "carta.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from("nombre,precio\nNo es Excel,1") });
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Elige una hoja de cálculo de Excel (.xlsx).");
 	await expect(page.getByRole("dialog", { name: "Revisar la importación" })).toHaveCount(0);
+	expect(pedidos.filter((p) => p.ruta.includes("importar"))).toEqual([]);
 
-	const csv = "nombre,precio,categoria_id\nGazpacho,99,1\nTortilla de patatas,140,1\nCroquetas de jamón,120,1\n";
-	await subir(page, "Subir CSV", { name: "carta.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+	const csv = "nombre,categoria,precio\nTortilla de patatas,Categoría 1,140\nCroquetas de jamón,Categoría 1,125\nGazpacho,Categoría 1,0\n";
+	await subir(page, "reemplazar", { name: "carta.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
 	const revision = page.getByRole("dialog", { name: "Revisar la importación" });
 	await expect(revision).toContainText("1 platillo nuevo");
-	await expect(revision.getByRole("checkbox", { name: "Croquetas de jamón" })).not.toBeChecked();
-	await expect(revision.getByRole("checkbox", { name: "Gazpacho" })).toBeChecked();
-	await expect(revision).toContainText("$ 95.00");
-	await revision.getByRole("button", { name: "Importar 2 platillos" }).click();
+	await expect(revision.getByRole("region", { name: "Quedarán deshabilitados (no se borran)" })).toContainText("Paella valenciana");
+	await expect(revision.getByRole("region", { name: "Errores" })).toContainText("Fila 4: El precio debe ser un número mayor que 0.");
+	await revision.getByRole("button", { name: "Importar de todas formas" }).click();
 	await expect(revision).toBeHidden();
-	expect(pedidos.filter((p) => p.ruta.includes("import"))).toEqual([{ metodo: "POST", ruta: "/platillos/import.csv?mode=upsert", cuerpo: "form-data" }]);
+	expect(pedidos.filter((p) => p.ruta.includes("importar")).map((p) => p.ruta)).toEqual([
+		"/platillos/importar?modo=reemplazar&confirmar=false&forzar=false",
+		"/platillos/importar?modo=reemplazar&confirmar=true&forzar=true",
+	]);
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Importación completa");
 	await contexto.close();
 });
