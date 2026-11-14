@@ -52,6 +52,25 @@ async function abrir(browser: Browser, ancho = 390, preferencias: Record<string,
 	return { contexto, page, peticiones };
 }
 
+test("notas por platillo y nota general para cocina, como en la móvil", async ({ browser }) => {
+	const { contexto, page, peticiones } = await abrir(browser);
+	const main = page.locator("main");
+	await main.getByRole("button", { name: "Tomar pedido de Mesa 1" }).click();
+	const panel = page.getByRole("dialog", { name: "Pedido de Mesa 1" });
+	await panel.getByRole("button", { name: "Añadir un Enchiladas suizas" }).click();
+	await panel.getByLabel("Nota de Enchiladas suizas").fill("  Sin crema ");
+	await panel.getByLabel("Nota general para cocina").fill("Alérgico a la nuez");
+	await panel.getByLabel("Comensales").fill("2");
+	await panel.getByRole("button", { name: /^Enviar a cocina/ }).click();
+	await expect(panel).toBeHidden();
+	expect(peticiones[0]).toEqual({
+		metodo: "POST",
+		ruta: "/pedidos/mesa",
+		cuerpo: { mesa: "1", items: [{ platilloId: 101, cantidad: 1, notas: "Sin crema" }], numComensales: 2, notasCocina: "Alérgico a la nuez" },
+	});
+	await contexto.close();
+});
+
 test("tomar un pedido: el mismo alta y confirmación de la móvil, y la mesa pasa a ocupada", async ({ browser }) => {
 	const { contexto, page, peticiones } = await abrir(browser);
 	const main = page.locator("main");

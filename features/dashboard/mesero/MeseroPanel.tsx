@@ -7,7 +7,7 @@ import { AppOperaciones } from "@/components/paneles/AppOperaciones";
 import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { PROTAGONISTA_DE_TRES, REJILLA_TRES_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
-import { Campo, Selector } from "@/components/ui/Campo";
+import { AreaTexto, Campo, Selector } from "@/components/ui/Campo";
 import { PanelLateral } from "@/components/ui/Dialogo";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
@@ -61,7 +61,8 @@ const ACTIVOS = new Set(["abierta", "en_preparacion", "lista", "entregada"]);
 
 function PanelPedido({ mesa, carta, abierto, alCerrar, alEnviado }: { mesa: Mesa; carta: CategoriaCarta[]; abierto: boolean; alCerrar: () => void; alEnviado: () => void }) {
 	const [categoria, setCategoria] = useState(String(carta[0]?.id ?? ""));
-	const [carrito, setCarrito] = useState<{ plato: PlatoCarta; cantidad: number }[]>([]);
+	const [carrito, setCarrito] = useState<{ plato: PlatoCarta; cantidad: number; notas?: string }[]>([]);
+	const [notaCocina, setNotaCocina] = useState("");
 	const [comensales, setComensales] = useState(String(Math.min(mesa.capacidad || 2, 2)));
 	const [enviando, setEnviando] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -86,8 +87,10 @@ function PanelPedido({ mesa, carta, abierto, alCerrar, alEnviado }: { mesa: Mesa
 		try {
 			const creado = await api.post<{ ordenId: string }>("/pedidos/mesa", {
 				mesa: mesa.numero,
-				items: carrito.map((c) => ({ platilloId: c.plato.id, cantidad: c.cantidad })),
+				// Mismas notas que la móvil: por platillo (200) y general para cocina (500); vacías no se envían.
+				items: carrito.map((c) => ({ platilloId: c.plato.id, cantidad: c.cantidad, ...(c.notas?.trim() ? { notas: c.notas.trim() } : {}) })),
 				numComensales: personas,
+				...(notaCocina.trim() ? { notasCocina: notaCocina.trim() } : {}),
 			});
 			await api.post(`/pedidos/confirmar/${encodeURIComponent(creado.ordenId)}`, {});
 			notificar({ tono: "exito", titulo: `Pedido de ${nombreMesa(mesa)} enviado a cocina`, descripcion: contar(carrito.reduce((a, c) => a + c.cantidad, 0), "plato") });
@@ -164,12 +167,34 @@ function PanelPedido({ mesa, carta, abierto, alCerrar, alEnviado }: { mesa: Mesa
 						</h3>
 						<ul className="m-0 flex list-none flex-col gap-1 p-0 text-(length:--texto-pequeno)">
 							{carrito.map((c) => (
-								<li key={c.plato.id} className="flex justify-between gap-3">
-									<span>{`${c.cantidad} × ${c.plato.nombre}`}</span>
-									<span className="cifras-consola">{importe((c.plato.precio ?? 0) * c.cantidad)}</span>
+								<li key={c.plato.id} className="flex flex-col gap-1">
+									<span className="flex justify-between gap-3">
+										<span>{`${c.cantidad} × ${c.plato.nombre}`}</span>
+										<span className="cifras-consola">{importe((c.plato.precio ?? 0) * c.cantidad)}</span>
+									</span>
+									<Campo
+										etiqueta="Nota para cocina"
+										aria-label={`Nota de ${c.plato.nombre}`}
+										opcional
+										value={c.notas ?? ""}
+										onChange={(e) => {
+											const notas = e.target.value;
+											setCarrito((cs) => cs.map((x) => (x.plato.id === c.plato.id ? { ...x, notas } : x)));
+										}}
+										placeholder="Sin cebolla, término medio…"
+										maxLength={200}
+									/>
 								</li>
 							))}
 						</ul>
+						<AreaTexto
+							etiqueta="Nota general para cocina"
+							opcional
+							value={notaCocina}
+							onChange={(e) => setNotaCocina(e.target.value)}
+							maxLength={500}
+							rows={2}
+						/>
 						<p className="m-0 flex items-baseline justify-between gap-3 border-t border-borde-sutil pt-(--espacio-sm)" aria-live="polite">
 							<span className="text-texto-secundario">Total</span>
 							<span className="font-titulos text-(length:--texto-titulo-3) numeros-tabulares">{importe(total)}</span>
