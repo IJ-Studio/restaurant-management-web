@@ -10,10 +10,9 @@ import { Boton } from "@/components/ui/Boton";
 import { Campo } from "@/components/ui/Campo";
 import { CampoTrampa } from "@/components/ui/CampoTrampa";
 import { Casilla } from "@/components/ui/Casilla";
-import { Imagen } from "@/components/ui/Imagen";
+import { FotoAcceso } from "@/components/auth/FotoAcceso";
 import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import { useEnvioFormulario } from "@/hooks/useEnvioFormulario";
-import { restaurantConfig } from "@/config/restaurant.config";
 import { requisitosContrasena, tieneSecuenciaPredecible } from "@/lib/validacion/campos";
 import { aPayloadRegistro, esquemaRegistro, type DatosRegistro } from "@/lib/validacion/formularios";
 import { cn } from "@/lib/utils";
@@ -172,14 +171,7 @@ export default function PaginaRegistro() {
 				)}
 			</div>
 			<div className="relative hidden aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie-cafe lg:mt-(--espacio-xl) lg:block">
-				<Imagen
-					src={restaurantConfig.images.fondoAcceso}
-					fill
-					decorativa
-					preload
-					className="object-cover"
-					sizes="(min-width: 1024px) 50vw, 100vw"
-				/>
+				<FotoAcceso tipo="registro" />
 			</div>
 		</div>
 	);

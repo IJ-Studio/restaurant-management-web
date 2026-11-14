@@ -1,6 +1,7 @@
 import { CalendarDays, UtensilsCrossed } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { Imagen } from "@/components/ui/Imagen";
+import { CarruselPortada } from "./CarruselPortada";
 
 /**
  * Portada de la landing (`#inicio`, PLAN 4.3, DESIGN.md § Composición de la landing):
@@ -28,6 +29,8 @@ export function Portada() {
 				sizes="100vw"
 				className="portada__foto object-cover object-[62%_center]"
 			/>
+			{/* P1.5: las fotos del administrador se funden encima al llegar del API. */}
+			<CarruselPortada />
 			<span aria-hidden="true" className="portada__velo" />
 			<div className="contenedor-pagina flex flex-col items-start gap-(--espacio-lg)">
 				<h1

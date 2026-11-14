@@ -2,6 +2,7 @@ import { Facebook, Instagram, MapPin } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { Contraetiqueta } from "@/components/marca/Contraetiqueta";
 import { restaurantConfig } from "@/config/restaurant.config";
+import { TelefonoSitio, WhatsAppSitio } from "./ContactoSitio";
 import { SeccionLanding } from "./SeccionLanding";
 
 /**
@@ -26,12 +27,10 @@ export function Visitanos() {
 							{ rotulo: "Horario", valor: hours.display, tipo: "texto" },
 							{
 								rotulo: "Teléfono",
-								valor: (
-									<a href={contact.phoneHref} className="enlace-subrayado">
-										{contact.phone}
-									</a>
-								),
+								// P1.5: el teléfono y el WhatsApp que guarda el administrador; si no, los de la configuración.
+								valor: <TelefonoSitio porDefecto={contact.phone} />,
 							},
+							{ rotulo: "WhatsApp", valor: <WhatsAppSitio porDefecto={contact.whatsapp} mensaje={`Hola, quiero información de ${name}.`} /> },
 						]}
 					/>
 					<div className="[&>*]:max-w-full [&>*]:whitespace-normal">

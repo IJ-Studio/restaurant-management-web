@@ -206,7 +206,9 @@ test("pedir: los dos modos con enlace a sus páginas, horario y teléfono de la 
 test("visítanos: dirección, horario y teléfono; mapa enlazado sin iframe y redes con nombre", async ({ page }) => {
 	await abrir(page);
 	const seccion = page.locator("section#visitanos");
-	await expect(seccion.locator("dd")).toHaveText([/Pzla\. Hidalgo 5-1/, /Lunes a Domingo/, /771 702 8172/]);
+	// P1.5: con WhatsApp sin configurar, la fila lo dice; el número lo pone el admin en «Sitio web».
+	await expect(seccion.locator("dd")).toHaveText([/Pzla\. Hidalgo 5-1/, /Lunes a Domingo/, /771 702 8172/, "Por ahora, solo por teléfono."]);
+	await expect(seccion.getByRole("link", { name: "+52 771 702 8172" })).toHaveAttribute("href", "tel:+527717028172");
 	const mapa = seccion.getByRole("link", { name: /Cómo llegar/ });
 	await expect(mapa).toHaveAttribute("href", /^https:\/\/maps\.google\.com\//);
 	await expect(mapa).toHaveAttribute("target", "_blank");
@@ -247,4 +249,36 @@ test("el menú es de anclas y las secciones solo salen a la carta completa y a l
 		expect(href === "/" || href.startsWith("/#") || href.startsWith("#") || href === "/login").toBe(true);
 	const fuera = await page.locator("main section a[href^='/']").evaluateAll((es) => es.map((e) => e.getAttribute("href")));
 	expect(fuera.filter((h) => !["/menu", "/menu/pedido?tab=domicilio"].includes(h ?? ""))).toEqual([]);
+});
+
+test("P1.5: las fotos y el contacto del administrador llegan sin retrasar la portada", async ({ page }) => {
+	await page.route(
+		(url) => url.origin === "http://localhost:3100" && url.pathname === "/sitio",
+		(r) =>
+			r.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					portada: [
+						{ url: "https://res.cloudinary.com/dcb1tspbj/image/upload/v1/ElQuijote/landing/a.jpg", publicId: "a", alt: "Comedor" },
+						{ url: "https://res.cloudinary.com/dcb1tspbj/image/upload/v1/ElQuijote/landing/b.jpg", publicId: "b", alt: "Terraza" },
+					],
+					login: null,
+					registro: null,
+					colorRespaldo: "#3B2A1A",
+					telefono: "+52 771 111 2233",
+					whatsapp: "7711112233",
+				}),
+			}),
+	);
+	// Las fotos de prueba no salen a Cloudinary.
+	await page.route("https://res.cloudinary.com/**/ElQuijote/landing/**", (r) => r.fulfill({ status: 404, body: "" }));
+	await page.goto("/", { waitUntil: "load" });
+	// La foto de siempre sigue en el HTML (LCP); la del administrador se funde encima.
+	await expect(page.locator(".portada img").first()).toHaveAttribute("fetchpriority", "high");
+	await expect(page.locator('[data-foto-portada="actual"]')).toHaveCSS("opacity", "1");
+	await expect(page.locator("[data-foto-portada]")).toHaveCount(2);
+	const visitanos = page.locator("section#visitanos");
+	await expect(visitanos.getByRole("link", { name: "+52 771 111 2233" })).toHaveAttribute("href", "tel:+527711112233");
+	await expect(visitanos.getByRole("link", { name: /Escríbenos/ })).toHaveAttribute("href", /^https:\/\/wa\.me\/527711112233\?text=/);
 });
