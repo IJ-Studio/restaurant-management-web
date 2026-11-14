@@ -41,11 +41,12 @@ test("edita portada, contacto y guarda con PUT /sitio", async ({ browser }) => {
 	await expect(main.getByLabel("Descripción de la imagen (foto 1 de la portada)")).toHaveValue("Comedor");
 	await main.getByLabel("Teléfono").fill("+52 771 111 2233");
 	await main.getByLabel(/^WhatsApp/).fill("7711112233");
+	await main.getByLabel(/^Titular de la portada/).fill("  Sabor de Huejutla ");
 	await main.getByRole("button", { name: "Añadir foto a la portada" }).click();
 	await main.getByRole("button", { name: "Guardar cambios" }).click();
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Sitio web guardado");
 	// La foto añadida sin imagen no se envía.
-	expect(envios).toEqual([{ portada: SITIO.portada, login: null, registro: null, colorRespaldo: "#2B2119", telefono: "+52 771 111 2233", whatsapp: "7711112233" }]);
+	expect(envios).toEqual([{ portada: SITIO.portada, login: null, registro: null, colorRespaldo: "#2B2119", telefono: "+52 771 111 2233", whatsapp: "7711112233", textos: { titulo: "Sabor de Huejutla", subtitulo: null, nosotros: null } }]);
 	const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
 	expect(r.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
 	await contexto.close();

@@ -2,6 +2,7 @@ import { CalendarDays, UtensilsCrossed } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { Imagen } from "@/components/ui/Imagen";
 import { CarruselPortada } from "./CarruselPortada";
+import { TextoSitio } from "./TextoSitio";
 
 /**
  * Portada de la landing (`#inicio`, PLAN 4.3, DESIGN.md § Composición de la landing):
@@ -37,10 +38,10 @@ export function Portada() {
 					id="inicio-titulo"
 					className="m-0 max-w-[14ch] font-titulos text-(length:--texto-portada) font-[380] leading-[1.02] text-texto-principal [font-variation-settings:'SOFT'_30] [text-wrap:balance]"
 				>
-					Cocina mexicana con alma
+					<TextoSitio campo="titulo" porDefecto="Cocina mexicana con alma" />
 				</h1>
 				<p className="m-0 max-w-[44ch] text-(length:--texto-entradilla) leading-[1.6] text-texto-principal [text-wrap:pretty]">
-					Comida mexicana en el centro de Huejutla, servida a su tiempo. Sabor con alma, sin prisa.
+					<TextoSitio campo="subtitulo" porDefecto="Comida mexicana en el centro de Huejutla, servida a su tiempo. Sabor con alma, sin prisa." />
 				</p>
 				<div className="flex w-full flex-col gap-3 pt-(--espacio-xs) sm:w-auto sm:flex-row">
 					<BotonEnlace href="#reservas" variante="primario" icono={<CalendarDays />}>

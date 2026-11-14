@@ -24,6 +24,18 @@ test("las siete secciones llegan en el HTML del servidor, en orden y con un solo
 	expect(html.match(/<h1\b/g)?.length).toBe(1);
 });
 
+test("los textos que guarda el administrador (/sitio) sustituyen a los de siempre", async ({ page }) => {
+	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1 })]);
+	await simularApi(page);
+	await page.route("**/sitio", (r) =>
+		r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ portada: [], textos: { titulo: "Sabor de Huejutla", subtitulo: null, nosotros: "Desde 1998." } }) }),
+	);
+	await page.goto("/", { waitUntil: "load" });
+	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sabor de Huejutla");
+	await expect(page.locator("#inicio p").first()).toContainText("Comida mexicana en el centro de Huejutla");
+	await expect(page.locator("#nosotros")).toContainText("Desde 1998.");
+});
+
 test("la navegación es de anclas y marca la sección visible", async ({ page }) => {
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await abrir(page);
