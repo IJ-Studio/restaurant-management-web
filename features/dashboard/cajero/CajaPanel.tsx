@@ -77,6 +77,17 @@ const PORCENTAJES_PROPINA = [0, 10, 15, 20] as const;
 const propinaDe = (total: number, pct: number) => Math.round((Math.round(total * 100) * pct) / 100) / 100;
 /** Igual que la móvil (`equalShare`): lo que falta entre las personas que faltan, en centavos. */
 const parteIgual = (restante: number, personas: number) => (personas <= 1 ? restante : Math.round(Math.round(restante * 100) / personas) / 100);
+/** Igual que la móvil (`itemsLabel`, 60 caracteres como el API): «2× Enchiladas, 1× Agua». */
+const etiquetaPlatillos = (l: { nombre: string; cantidad: number }[]) => {
+	const t = l.map((p) => `${p.cantidad}× ${p.nombre}`).join(", ");
+	return t.length > 60 ? `${t.slice(0, 59)}…` : t;
+};
+interface LineaCuenta {
+	id: number;
+	nombre: string;
+	cantidad: number;
+	precio: number;
+}
 
 function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: () => void }) {
 	const [abierto, setAbierto] = useState(false);
@@ -88,18 +99,25 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 	const [restante, setRestante] = useState(cuenta.total);
 	const [personas, setPersonas] = useState("1");
 	const [referencia, setReferencia] = useState("");
+	const [lineas, setLineas] = useState<LineaCuenta[]>([]);
+	const [elegidos, setElegidos] = useState<Record<number, number>>({});
 	const { notificar } = useNotificaciones();
 	const metodo = metodos.find((m) => m.id === metodoId) ?? null;
 	const montoPropina = propina.trim() === "" ? 0 : numeroCampo(propina);
-	// Cuenta dividida (paridad con la móvil): esta parte es lo que falta entre las personas que faltan.
-	const parte = parteIgual(restante, Number(personas));
-	const dividida = parte < restante;
+	// Cuenta dividida (paridad con la móvil): en partes iguales, lo que falta entre las personas que
+	// faltan; por platillo, lo elegido sin pasar de lo que falta.
+	const porPlatillo = personas === "platillos";
+	const elegidas = lineas.filter((l) => (elegidos[l.id] ?? 0) > 0).map((l) => ({ ...l, cantidad: elegidos[l.id] }));
+	const sumaElegida = Math.round(elegidas.reduce((t, l) => t + Math.round(l.precio * 100) * l.cantidad, 0)) / 100;
+	const parte = porPlatillo ? Math.min(restante, sumaElegida) : parteIgual(restante, Number(personas));
+	const dividida = porPlatillo || parte < restante;
 	const aCobrar = parte + (Number.isFinite(montoPropina) ? montoPropina : 0);
 	const cantidad = numeroCampo(recibido);
 	const diferencia = Number.isFinite(cantidad) ? cantidad - aCobrar : null;
 
 	async function cobrar() {
 		if (!metodo) return setError("Elige la forma de pago.");
+		if (porPlatillo && elegidas.length === 0) return setError("Elige los platillos que paga esta persona.");
 		if (!Number.isFinite(montoPropina) || montoPropina < 0) return setError("La propina tiene que ser una cantidad en pesos.");
 		if (metodo.esEfectivo && !(cantidad >= aCobrar)) return setError(Number.isFinite(cantidad) ? `Faltan ${importe(aCobrar - cantidad)}.` : "Escribe cuánto te dan.");
 		setEnviando(true);
@@ -109,6 +127,7 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 				...(metodo.aplicaPropina && montoPropina > 0 ? { propina: montoPropina } : {}),
 				...(metodo.esEfectivo ? { montoRecibido: cantidad } : {}),
 				...(dividida ? { monto: parte } : {}),
+				...(porPlatillo ? { etiqueta: etiquetaPlatillos(elegidas) } : {}),
 				...(!metodo.esEfectivo && referencia.trim() ? { referencia: referencia.trim() } : {}),
 			});
 			const cambio = Number(respuesta?.cambio ?? 0);
@@ -136,12 +155,23 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 					setReferencia("");
 					setError(null);
 					setRestante(cuenta.total);
-					// Lo que falta, por si ya se cobró una parte (`GET /pedidos/:id`); sin respuesta, el total.
+					setLineas([]);
+					setElegidos({});
+					// Lo que falta, por si ya se cobró una parte, y los platillos con su precio para cobrar por
+					// platillo (`GET /pedidos/:id`); sin respuesta, el total y sin la opción por platillo.
 					void api
-						.get<{ restante?: string | number }>(`/pedidos/${encodeURIComponent(cuenta.id)}`)
+						.get<{
+							restante?: string | number;
+							items?: { id: number; cantidad: number; precioUnitario: string | number; platillo?: { nombre?: string } }[];
+						}>(`/pedidos/${encodeURIComponent(cuenta.id)}`)
 						.then((d) => {
 							const r = Number(d?.restante);
 							if (Number.isFinite(r) && r > 0) setRestante(r);
+							setLineas(
+								(d?.items ?? [])
+									.map((i) => ({ id: i.id, nombre: i.platillo?.nombre ?? "Platillo", cantidad: i.cantidad, precio: Number(i.precioUnitario) }))
+									.filter((l) => l.cantidad > 0 && Number.isFinite(l.precio)),
+							);
 						})
 						.catch(() => undefined);
 				}
@@ -171,14 +201,46 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 				</p>
 				<Selector
 					etiqueta="Dividir la cuenta"
-					opciones={[{ valor: "1", texto: "No, toda la cuenta" }, ...[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ valor: String(n), texto: `En partes iguales entre ${n}` }))]}
+					opciones={[
+						{ valor: "1", texto: "No, toda la cuenta" },
+						...[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ valor: String(n), texto: `En partes iguales entre ${n}` })),
+						...(lineas.length > 0 ? [{ valor: "platillos", texto: "Por platillo" }] : []),
+					]}
 					value={personas}
 					onChange={(e) => {
 						setPersonas(e.target.value);
 						setPropina("");
 					}}
-					ayuda={dividida ? `Esta parte: ${importe(parte)}. Elige cuántas personas faltan por pagar; la última paga el resto exacto.` : undefined}
+					ayuda={
+						porPlatillo
+							? `Esta parte: ${importe(parte)}. Elige cuántos de cada platillo paga esta persona.`
+							: dividida
+								? `Esta parte: ${importe(parte)}. Elige cuántas personas faltan por pagar; la última paga el resto exacto.`
+								: undefined
+					}
 				/>
+				{porPlatillo && (
+					<fieldset className="m-0 flex min-w-0 flex-col gap-(--espacio-sm) border-0 p-0">
+						<legend className="mb-(--espacio-xs) p-0 font-semibold text-texto-principal">Platillos de esta persona</legend>
+						{lineas.map((l) => (
+							<Campo
+								key={l.id}
+								etiqueta={`${l.nombre} (${importe(l.precio)} c/u, pidieron ${l.cantidad})`}
+								type="number"
+								inputMode="numeric"
+								min={0}
+								max={l.cantidad}
+								step={1}
+								value={String(elegidos[l.id] ?? 0)}
+								onChange={(e) => {
+									const n = Math.max(0, Math.min(l.cantidad, Math.trunc(Number(e.target.value) || 0)));
+									setElegidos((prev) => ({ ...prev, [l.id]: n }));
+									setPropina("");
+								}}
+							/>
+						))}
+					</fieldset>
+				)}
 				{metodos.length === 0 ? (
 					<Aviso tono="error" rol={null} titulo="No hay formas de pago disponibles.">
 						Pide a administración que las active en el sistema.
