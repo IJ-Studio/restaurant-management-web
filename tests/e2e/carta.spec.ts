@@ -48,6 +48,24 @@ test("secciones con sus platos, precios, enlaces de siempre y migas", async ({ p
 	await expect(page.getByRole("navigation", { name: "Secciones de la carta" }).getByRole("link")).toHaveText(["Entrantes", "Arroces"]);
 });
 
+for (const ancho of [360, 1440]) {
+	test(`el índice de secciones sigue a la vista al bajar (Fase 4.7): ${ancho} px`, async ({ page }) => {
+		await page.setViewportSize({ width: ancho, height: 700 });
+		await abrir(page, conDatos);
+		const indice = page.getByRole("navigation", { name: "Secciones de la carta" });
+		// Baja hasta la última sección (más abajo empieza el pie, donde el índice ya no aplica).
+		await page.locator("section#seccion-2").evaluate((e) => window.scrollTo(0, e.getBoundingClientRect().bottom + window.scrollY - window.innerHeight));
+		await page.waitForTimeout(300);
+		const caja = (await indice.boundingBox())!;
+		// Fijo bajo la cabecera, dentro de la ventana y sin desbordar a lo ancho.
+		expect(caja.y).toBeGreaterThanOrEqual(0);
+		expect(caja.y).toBeLessThan(200);
+		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(ancho);
+		await indice.getByRole("link", { name: "Arroces" }).click();
+		await expect(page.getByRole("heading", { level: 2, name: "Arroces" })).toBeInViewport();
+	});
+}
+
 test("buscar sin tildes ni mayúsculas, anunciar el resultado y volver a la carta", async ({ page }) => {
 	await abrir(page, conDatos);
 	const campo = page.getByRole("searchbox", { name: "Buscar en la carta" });

@@ -190,18 +190,24 @@ function FilaPlato({ plato, enlace }: { plato: Plato; enlace?: boolean }) {
 
 function Secciones({ categorias }: { categorias: Categoria[] }) {
 	return (
-		<div className="flex flex-col gap-(--espacio-2xl)">
-			<nav aria-label="Secciones de la carta">
-				<ul className="m-0 flex list-none flex-wrap gap-x-(--espacio-lg) gap-y-1 p-0">
+		<div className="flex flex-col gap-(--espacio-lg) lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:items-start lg:gap-(--espacio-2xl)">
+			{/* Fase 4.7: el índice sigue a la vista. En móvil, franja fija bajo la cabecera con desplazamiento
+			    horizontal; desde 1024 px, columna lateral fija con su propio desplazamiento. */}
+			<nav
+				aria-label="Secciones de la carta"
+				className="sticky top-(--alto-cabecera) z-20 -mx-(--margen-pagina) border-b border-borde-sutil bg-fondo px-(--margen-pagina) lg:top-[calc(var(--alto-cabecera)+var(--espacio-lg))] lg:mx-0 lg:max-h-[calc(100dvh-var(--alto-cabecera)-2*var(--espacio-lg))] lg:overflow-y-auto lg:border-b-0 lg:px-0"
+			>
+				<ul className="m-0 flex list-none gap-x-(--espacio-lg) overflow-x-auto p-0 [scrollbar-width:thin] lg:flex-col lg:gap-y-1 lg:overflow-x-visible">
 					{categorias.map((c) => (
-						<li key={c.id}>
-							<a href={`#seccion-${c.id}`} className="enlace-subrayado inline-flex min-h-11 items-center text-texto-secundario al-pasar:text-texto-principal">
+						<li key={c.id} className="shrink-0">
+							<a href={`#seccion-${c.id}`} className="enlace-subrayado inline-flex min-h-11 items-center whitespace-nowrap text-texto-secundario al-pasar:text-texto-principal lg:whitespace-normal">
 								{c.nombre}
 							</a>
 						</li>
 					))}
 				</ul>
 			</nav>
+			<div className="flex min-w-0 flex-col gap-(--espacio-2xl)">
 			{categorias.map((c, i) => {
 				// Sin foto propia, la del primer plato que la tenga; si ninguna, el respaldo de Imagen.
 				const foto = c.imagenUrl || c.platillos?.find((p) => p.imagenUrl)?.imagenUrl;
@@ -212,7 +218,7 @@ function Secciones({ categorias }: { categorias: Categoria[] }) {
 						id={`seccion-${c.id}`}
 						aria-labelledby={`seccion-${c.id}-titulo`}
 						className={cn(
-							"grid scroll-mt-[calc(var(--alto-cabecera)+var(--espacio-md))] items-start gap-(--espacio-xl) border-t border-borde-sutil pt-(--espacio-2xl)",
+							"grid scroll-mt-[calc(var(--alto-cabecera)+3.5rem)] items-start lg:scroll-mt-[calc(var(--alto-cabecera)+var(--espacio-md))] gap-(--espacio-xl) border-t border-borde-sutil pt-(--espacio-2xl)",
 							// La foto va siempre en la columna estrecha, a la izquierda o a la derecha.
 							i % 2 === 1 ? "md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]" : "md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",
 						)}
@@ -250,6 +256,7 @@ function Secciones({ categorias }: { categorias: Categoria[] }) {
 					</section>
 				);
 			})}
+			</div>
 		</div>
 	);
 }
