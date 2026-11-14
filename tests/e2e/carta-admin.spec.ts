@@ -95,6 +95,11 @@ test("la carta de la BD, por categorías, con filtro y disponibilidad", async ({
 	// Ningún platillo de prueba tiene imagen: «Sin imagen» los muestra todos.
 	await main.getByLabel("Mostrar").selectOption("sin-imagen");
 	await expect(tabla.locator("tbody tr")).toHaveCount(2);
+	// Fase 4.7: menú de categorías con su número de platillos; el salto deja la categoría a la vista.
+	const indice = main.getByRole("navigation", { name: "Categorías de la carta" });
+	await expect(indice.getByRole("link")).toHaveText(["Categoría 12", "Categoría 21"]);
+	await indice.getByRole("link", { name: "Categoría 2" }).click();
+	await expect(main.getByRole("heading", { level: 2, name: "Categoría 2" })).toBeInViewport();
 	await contexto.close();
 });
 

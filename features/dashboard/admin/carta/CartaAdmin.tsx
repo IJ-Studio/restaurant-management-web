@@ -191,12 +191,31 @@ export function CartaAdmin() {
 				<EstadoVacio icono={<UtensilsCrossed />} titulo="La carta está vacía" descripcion="Importa los platillos desde una plantilla para empezar." />
 			)}
 
+			{carta.categorias.length > 1 && (
+				// Fase 4.7: saltar a una categoría sin recorrer toda la carta; queda fijo bajo la cabecera del panel.
+				<nav aria-label="Categorías de la carta" className="sticky top-(--alto-cabecera) z-20 -mx-1 bg-fondo px-1 py-2">
+					<ul className="m-0 flex list-none gap-2 overflow-x-auto p-0 [scrollbar-width:thin]">
+						{carta.categorias.map((c) => (
+							<li key={c.id} className="shrink-0">
+								<a
+									href={`#categoria-${c.id}`}
+									className="inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-pastilla border border-borde-sutil px-3 text-(length:--texto-pequeno) text-texto-secundario al-pasar:text-texto-principal"
+								>
+									{c.name}
+									<span className="text-texto-tenue">{entero.format(c.items.length)}</span>
+								</a>
+							</li>
+						))}
+					</ul>
+				</nav>
+			)}
+
 			{carta.categorias.map((c) => {
 				const filas = filtrar(c.items);
 				if (filas.length === 0 && busqueda) return null;
 				return (
+					<div key={c.id} id={`categoria-${c.id}`} className="scroll-mt-[calc(var(--alto-cabecera)+4.5rem)]">
 					<BloquePanel
-						key={c.id}
 						titulo={c.name}
 						descripcion={`Disponibles: ${entero.format(c.items.filter((i) => i.available).length)} de ${entero.format(c.items.length)}`}
 						acciones={
@@ -247,6 +266,7 @@ export function CartaAdmin() {
 							vacio={<EstadoVacio icono={<UtensilsCrossed />} titulo="Nada que mostrar" descripcion={busqueda || disponibilidad !== "todos" ? "Prueba con otro filtro." : "Añade el primer platillo de esta categoría."} />}
 						/>
 					</BloquePanel>
+					</div>
 				);
 			})}
 
