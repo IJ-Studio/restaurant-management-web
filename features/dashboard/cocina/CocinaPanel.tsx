@@ -30,7 +30,7 @@ import { conteo } from "@/lib/paneles/calculo";
  *
  * Datos del API, los mismos que usa la app móvil del personal:
  * - comandas de hoy: `GET /pedidos/admin/recent` (abiertas, en preparación y listas), cada 15 s;
- * - «Empezar» y «Marcar lista»: `PATCH /pedidos/:id/estatus` (`en_preparacion`, `lista`);
+ * - «Empezar a preparar» y «Marcar como lista» (textos de la móvil): `PATCH /pedidos/:id/estatus` (`en_preparacion`, `lista`);
  * - existencias: `GET /inventario/productos`. El nivel «bajo» solo se marca si el API da el mínimo
  *   de cada producto (`minStock`); si no, se listan sin juzgar el nivel.
  * - «Registrar merma»: `POST /inventario/mermas` (solo personal operativo; el admin solo consulta).
@@ -55,8 +55,8 @@ interface Producto {
 }
 
 const COLUMNAS = [
-	{ estado: "abierta", titulo: "Nuevas", accion: "Empezar", siguiente: "en_preparacion", vacio: "No hay comandas nuevas." },
-	{ estado: "en_preparacion", titulo: "En preparación", accion: "Marcar lista", siguiente: "lista", vacio: "Nada en el fuego." },
+	{ estado: "abierta", titulo: "Nuevas", accion: "Empezar a preparar", siguiente: "en_preparacion", vacio: "No hay comandas nuevas." },
+	{ estado: "en_preparacion", titulo: "En preparación", accion: "Marcar como lista", siguiente: "lista", vacio: "Nada en el fuego." },
 	{ estado: "lista", titulo: "Listas para la mesa", vacio: "Nada esperando al mesero." },
 ] as const;
 const entero = new Intl.NumberFormat("es-MX");

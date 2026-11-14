@@ -68,12 +68,12 @@ test("avanzar una comanda de nueva a en preparación y a lista con el mismo PATC
 	await expect(main.getByText("Datos de ejemplo")).toHaveCount(0);
 	const nuevas = main.getByRole("list", { name: "Comandas: nuevas" });
 	await expect(nuevas).toContainText("Enchiladas suizas");
-	const boton = nuevas.getByRole("button", { name: /^Empezar la comanda/ });
+	const boton = nuevas.getByRole("button", { name: /^Empezar a preparar la comanda/ });
 	expect((await boton.boundingBox())!.height).toBeGreaterThanOrEqual(56);
 	await boton.click();
 	const enFuego = main.getByRole("list", { name: "Comandas: en preparación" });
 	await expect(enFuego).toContainText("Enchiladas suizas");
-	await enFuego.getByRole("button", { name: /^Marcar lista la comanda/ }).click();
+	await enFuego.getByRole("button", { name: /^Marcar como lista la comanda/ }).click();
 	await expect(main.getByRole("list", { name: "Comandas: listas para la mesa" })).toContainText("Enchiladas suizas");
 	expect(cambios).toEqual([
 		{ id: ID, estatus: "en_preparacion" },

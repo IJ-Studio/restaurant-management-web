@@ -138,7 +138,7 @@ test("tomar un pedido: el mismo alta y confirmación de la móvil, y la mesa pas
 
 test("un plato listo se marca servido con el PATCH de estatus", async ({ browser }) => {
 	const { contexto, page, peticiones } = await abrir(browser);
-	const boton = page.locator("main").getByRole("button", { name: "Marcar servido el pedido de Mesa 2" });
+	const boton = page.locator("main").getByRole("button", { name: "Entregar en la mesa el pedido de Mesa 2" });
 	expect((await boton.boundingBox())!.height).toBeGreaterThanOrEqual(48);
 	await boton.click();
 	await expect(boton).toBeHidden();
