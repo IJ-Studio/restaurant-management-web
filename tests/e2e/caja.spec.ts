@@ -53,7 +53,15 @@ async function abrir(browser: Browser, ancho = 1024, preferencias: Record<string
 			if (camino.endsWith("/pedidos/admin/recent")) return json(cuentas);
 			if (camino.endsWith("/pedidos/metodos-pago")) return json(METODOS);
 			// Mesa 7 ya pagó $120 de $320: el detalle dice lo que falta.
-			if (p.method() === "GET" && camino.endsWith("/pedidos/a1b2c3d4-0000-4000-8000-000000000002")) return json({ total: "320.00", pagado: "120.00", restante: "200.00" });
+			if (p.method() === "GET" && camino.endsWith("/pedidos/a1b2c3d4-0000-4000-8000-000000000002")) return json({
+					total: "320.00",
+					pagado: "120.00",
+					restante: "200.00",
+					items: [
+						{ id: 1, cantidad: 2, precioUnitario: "80.00", platillo: { nombre: "Paella valenciana" } },
+						{ id: 2, cantidad: 1, precioUnitario: "160.00", platillo: { nombre: "Vino tinto" } },
+					],
+				});
 			const cobro = camino.match(/\/pedidos\/([^/]+)\/cobrar$/);
 			if (cobro && p.method() === "POST") {
 				cobros.push({ ruta: camino, cuerpo: p.postDataJSON() });
@@ -165,6 +173,22 @@ test("cuenta dividida en partes iguales sobre lo que falta, con referencia de la
 	await dialogo.getByRole("button", { name: /^Cobrar \$\s100\.00$/ }).click();
 	await expect(dialogo).toBeHidden();
 	expect(cobros[0].cuerpo).toEqual({ metodoPagoId: 2, monto: 100, referencia: "AUT-4821" });
+	await contexto.close();
+});
+
+test("cuenta por platillo: cobra lo elegido con su etiqueta, como la móvil", async ({ browser }) => {
+	const { contexto, page, cobros } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: /^Cobrar .* de Mesa 7$/ }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cobrar Mesa 7" });
+	await dialogo.getByLabel("Dividir la cuenta").selectOption("platillos");
+	await dialogo.getByText("Tarjeta").click();
+	await dialogo.getByRole("button", { name: /^Cobrar \$\s0\.00$/ }).click();
+	await expect(dialogo).toContainText("Elige los platillos que paga esta persona.");
+	await dialogo.getByRole("spinbutton", { name: /^Paella valenciana/ }).fill("1");
+	await expect(dialogo).toContainText(/Esta parte: \$\s80\.00/);
+	await dialogo.getByRole("button", { name: /^Cobrar \$\s80\.00$/ }).click();
+	await expect(dialogo).toBeHidden();
+	expect(cobros[0].cuerpo).toEqual({ metodoPagoId: 2, monto: 80, etiqueta: "1× Paella valenciana" });
 	await contexto.close();
 });
 
