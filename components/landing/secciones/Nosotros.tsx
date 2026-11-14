@@ -2,6 +2,7 @@ import { Imagen } from "@/components/ui/Imagen";
 import { MolinoAnimado } from "@/components/marca/MolinoAnimado";
 import type { PlatoDestacado } from "@/lib/publico/seleccion-platos";
 import { SeccionLanding } from "./SeccionLanding";
+import { TextoSitio } from "./TextoSitio";
 
 /**
  * «Nosotros» (`#nosotros`, PLAN 4.4, D-19): el contenido de `/about` reescrito con D-17, el molino
@@ -21,8 +22,10 @@ export function Nosotros({ galeria }: { galeria: PlatoDestacado[] }) {
 			<div className="grid items-center gap-(--espacio-2xl) md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
 				<div className="flex max-w-(--ancho-lectura) flex-col gap-(--espacio-md) text-texto-secundario [text-wrap:pretty]">
 					<p className="m-0">
-						En El Quijote cocinamos con calma y servimos con cuidado. La carta reúne cocina nacional e internacional, con la comida
-						mexicana al centro de la mesa.
+						<TextoSitio
+							campo="nosotros"
+							porDefecto="En El Quijote cocinamos con calma y servimos con cuidado. La carta reúne cocina nacional e internacional, con la comida mexicana al centro de la mesa."
+						/>
 					</p>
 					<p className="m-0">Queremos que cada visita sea una sobremesa que apetezca alargar.</p>
 				</div>

@@ -2,6 +2,11 @@
  * Fotos y contacto que administra el restaurante (P1.5, `GET /sitio`, público), pedidos una sola vez
  * en el navegador. Si falla, `null` y la página sigue con lo de la configuración.
  */
+export interface TextosSitio {
+	titulo: string | null;
+	subtitulo: string | null;
+	nosotros: string | null;
+}
 export interface SitioPublico {
 	portada: { url: string; alt: string }[];
 	login: string | null;
@@ -9,6 +14,7 @@ export interface SitioPublico {
 	colorRespaldo: string | null;
 	telefono: string | null;
 	whatsapp: string | null;
+	textos: TextosSitio;
 }
 
 let pendiente: Promise<SitioPublico | null> | null = null;
@@ -28,6 +34,7 @@ export function pedirSitio(): Promise<SitioPublico | null> {
 				colorRespaldo: texto(d.colorRespaldo),
 				telefono: texto(d.telefono),
 				whatsapp: texto(d.whatsapp),
+				textos: { titulo: texto(d.textos?.titulo), subtitulo: texto(d.textos?.subtitulo), nosotros: texto(d.textos?.nosotros) },
 			};
 		} catch {
 			return null;

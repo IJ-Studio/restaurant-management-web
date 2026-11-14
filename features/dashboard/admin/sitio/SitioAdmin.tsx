@@ -5,7 +5,7 @@ import { Plus, Save } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { Boton } from "@/components/ui/Boton";
-import { Campo } from "@/components/ui/Campo";
+import { AreaTexto, Campo } from "@/components/ui/Campo";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { SubidaImagen } from "@/features/dashboard/admin/comun/SubidaImagen";
@@ -31,7 +31,9 @@ interface Sitio {
 	colorRespaldo: string;
 	telefono: string | null;
 	whatsapp: string | null;
+	textos?: { titulo: string | null; subtitulo: string | null; nosotros: string | null };
 }
+type CampoTexto = "titulo" | "subtitulo" | "nosotros";
 const VACIA: ImagenSitio = { url: "", publicId: "", alt: "" };
 const MAX_PORTADA = 5;
 
@@ -61,6 +63,10 @@ export function SitioAdmin() {
 		if (carga.estado === "listo" && carga.datos) setF(carga.datos);
 	}, [carga]);
 
+	function cambiarTexto(campo: CampoTexto, valor: string) {
+		setF((prev) => (prev ? { ...prev, textos: { titulo: null, subtitulo: null, nosotros: null, ...prev.textos, [campo]: valor } } : prev));
+	}
+
 	async function guardar() {
 		if (!f) return;
 		const conImagen = (i: ImagenSitio | null) => (i && i.url ? { ...i, alt: i.alt.trim() || "Fotografía de El Quijote" } : null);
@@ -71,6 +77,11 @@ export function SitioAdmin() {
 			colorRespaldo: f.colorRespaldo,
 			telefono: (f.telefono ?? "").trim(),
 			whatsapp: (f.whatsapp ?? "").trim() || null,
+			textos: {
+				titulo: f.textos?.titulo?.trim() || null,
+				subtitulo: f.textos?.subtitulo?.trim() || null,
+				nosotros: f.textos?.nosotros?.trim() || null,
+			},
 		};
 		setGuardando(true);
 		setErrores([]);
@@ -129,6 +140,13 @@ export function SitioAdmin() {
 				<div className="grid grid-cols-1 gap-(--espacio-md) lg:grid-cols-2">
 					<EditorImagen titulo="Foto del inicio de sesión" valor={f.login ?? VACIA} alCambiar={(v) => setF({ ...f, login: v })} />
 					<EditorImagen titulo="Foto del registro" valor={f.registro ?? VACIA} alCambiar={(v) => setF({ ...f, registro: v })} />
+				</div>
+			</BloquePanel>
+			<BloquePanel titulo="Textos de la página" descripcion="Vacío = el texto de siempre.">
+				<div className="grid grid-cols-1 gap-(--espacio-md)">
+					<Campo etiqueta="Titular de la portada" opcional value={f.textos?.titulo ?? ""} onChange={(e) => cambiarTexto("titulo", e.target.value)} maxLength={80} />
+					<Campo etiqueta="Entradilla de la portada" opcional value={f.textos?.subtitulo ?? ""} onChange={(e) => cambiarTexto("subtitulo", e.target.value)} maxLength={200} />
+					<AreaTexto etiqueta="Párrafo de «Nosotros»" opcional value={f.textos?.nosotros ?? ""} onChange={(e) => cambiarTexto("nosotros", e.target.value)} maxLength={600} rows={4} />
 				</div>
 			</BloquePanel>
 			<BloquePanel titulo="Color y contacto">
