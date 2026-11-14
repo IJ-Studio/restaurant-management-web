@@ -105,3 +105,25 @@ Propuestas para otra sesión, sin tocar el repo de la móvil:
 - Incidencias y mermas en el panel de cocina (`/cocina/incidencias`, `/inventario/mermas`).
 - Aviso de demora en cocina a los 20 minutos.
 - Cambio de contraseña en `/profile` con `PATCH /users/:id/password`.
+
+## 5. Estado al 13-nov (Fase 2 del plan de entrega)
+
+Hecho en la móvil (PRs #464–#474, pendientes de aprobación) para igualar a la web:
+
+| Sección (admin) | Web | Móvil ahora |
+|---|---|---|
+| Reservaciones | Cambiar estado, cancelar con motivo, WhatsApp y correo | Igual (#465, #473); al reservar se elige mesa (#466) |
+| Carta | Alta, edición, imagen, importar, agotar | Agotar y corregir precio (#467); alta, imágenes e importación siguen en la web (formularios largos) |
+| Personal | Alta, edición, rol, activar/desactivar | Igual (#469); `GET /users?incluirInactivos=true` (API #148) |
+| Nómina | Periodo Desde/Hasta, empleados, sumar/restar | Igual (#470) |
+| Facturas | Bandeja de solicitudes, emitir, rechazar; historial y descarga | Bandeja, emitir y rechazar (#474); historial y descarga en la web |
+| Cocina | Existencias bajas | Igual (#468) |
+| Estilo | Tokens de `styles/tokens.css` | Generados desde la web, tema claro (#471) |
+
+Hecho en la web: correo en reservaciones (#21), importar carta con vista previa y filtros
+«Deshabilitados» y «Sin imagen» (#18), personal inactivo visible (#19), checkout con sesión (#20),
+índice fijo en la carta y menú de categorías en la del admin (#23, #24).
+
+Sigue pendiente (sección 4 y análisis del 13-nov): en la web, cobro con cuenta separada y propina por
+porcentaje, notas por platillo, incidencias de cocina, cancelar pedido, reservaciones del mesero y
+corte con diferencia en vivo; en la móvil, inventario/proveedores, promociones y reportes.
