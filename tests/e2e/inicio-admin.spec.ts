@@ -55,12 +55,14 @@ async function abrir(browser: Browser, ancho = 1440, respuestas: Respuestas = {}
 		ventas: { status: 200, cuerpo: VENTAS },
 		...respuestas,
 	};
+	const peticiones: { metodo: string; ruta: string; cuerpo: unknown }[] = [];
 	await page.route(
 		(url) => url.origin === "http://localhost:3100" && !url.pathname.startsWith("/_next"),
 		async (r) => {
 			const p = r.request();
 			if (!["fetch", "xhr"].includes(p.resourceType()) || p.headers()["rsc"]) return r.fallback();
 			const ruta = new URL(p.url()).pathname;
+			if (p.method() !== "GET") peticiones.push({ metodo: p.method(), ruta, cuerpo: p.postDataJSON() });
 			const clave = ruta.endsWith("/dashboard/admin/stats")
 				? "stats"
 				: ruta.endsWith("/inventario/productos")
@@ -77,7 +79,7 @@ async function abrir(browser: Browser, ancho = 1440, respuestas: Respuestas = {}
 		},
 	);
 	await page.goto("/dashboard/admin", { waitUntil: "load" });
-	return { contexto, page };
+	return { contexto, page, peticiones };
 }
 
 test("indicadores, alerta accionable, pedidos con filtro y ventas por hora", async ({ browser }) => {
@@ -105,6 +107,23 @@ test("indicadores, alerta accionable, pedidos con filtro y ventas por hora", asy
 	// La gráfica empieza en «cargando» y mide su zona cuando llegan los datos: tiene que dibujar barras.
 	await expect(main.locator("svg.font-texto path").first()).toBeVisible();
 	expect(await main.locator("svg.font-texto path").count()).toBeGreaterThanOrEqual(6);
+	await contexto.close();
+});
+
+test("el admin atiende pedidos desde el Inicio con los pasos de la móvil", async ({ browser }) => {
+	const pedido = (id: string, status: string) => ({ id, customer: `Cliente ${id}`, time: "21:10", item: "Paella", table: `Mesa ${id}`, status, total: 100 });
+	const { contexto, page, peticiones } = await abrir(browser, 1440, {
+		pedidos: { status: 200, cuerpo: [pedido("1", "lista"), pedido("2", "pendiente"), pedido("3", "entregada")] },
+	});
+	const tabla = page.locator("main").getByRole("table", { name: "Pedidos recientes" });
+	await expect(tabla.getByRole("button")).toHaveCount(2);
+	await tabla.getByRole("button", { name: "Entregar en la mesa: Mesa 1" }).click();
+	await tabla.getByRole("button", { name: "Confirmar y enviar a cocina: Mesa 2" }).click();
+	await expect.poll(() => peticiones.length).toBe(2);
+	expect(peticiones).toEqual([
+		{ metodo: "PATCH", ruta: "/pedidos/1/estatus", cuerpo: { estatus: "entregada" } },
+		{ metodo: "POST", ruta: "/pedidos/confirmar/2", cuerpo: {} },
+	]);
 	await contexto.close();
 });
 
