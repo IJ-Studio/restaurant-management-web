@@ -41,6 +41,7 @@ async function abrir(browser: Browser, ancho = 1024, preferencias: Record<string
 		throw new Error("La página abrió un alert() o confirm()");
 	});
 	const cobros: { ruta: string; cuerpo: unknown }[] = [];
+	const solicitudes: unknown[] = [];
 	let cuentas = [...CUENTAS];
 	await page.route(
 		(url) => url.origin === "http://localhost:3100" && !url.pathname.startsWith("/_next"),
@@ -62,6 +63,10 @@ async function abrir(browser: Browser, ancho = 1024, preferencias: Record<string
 						{ id: 2, cantidad: 1, precioUnitario: "160.00", platillo: { nombre: "Vino tinto" } },
 					],
 				});
+			if (camino.endsWith("/solicitudes-factura") && p.method() === "POST") {
+				solicitudes.push(p.postDataJSON());
+				return json({ id: 9, estatus: "pendiente" });
+			}
 			const cobro = camino.match(/\/pedidos\/([^/]+)\/cobrar$/);
 			if (cobro && p.method() === "POST") {
 				cobros.push({ ruta: camino, cuerpo: p.postDataJSON() });
@@ -72,7 +77,7 @@ async function abrir(browser: Browser, ancho = 1024, preferencias: Record<string
 		},
 	);
 	await page.goto("/dashboard/cajero", { waitUntil: "load" });
-	return { contexto, page, cobros };
+	return { contexto, page, cobros, solicitudes };
 }
 
 test("cobrar en efectivo: método del API, cambio en vivo, faltante avisado y el mismo POST de la móvil", async ({ browser }) => {
@@ -96,8 +101,46 @@ test("cobrar en efectivo: método del API, cambio en vivo, faltante avisado y el
 	await dialogo.getByRole("button", { name: /^Cobrar/ }).click();
 	await expect(dialogo).toBeHidden();
 	expect(cobros).toEqual([{ ruta: "/pedidos/a1b2c3d4-0000-4000-8000-000000000001/cobrar", cuerpo: { metodoPagoId: 1, montoRecibido: 50 } }]);
+	// Al cerrar la cuenta se ofrece la factura; sin pedirla no se manda nada.
+	await page.getByRole("dialog", { name: "¿El cliente quiere factura?" }).getByRole("button", { name: "No, gracias" }).click();
 	await expect(porCobrar).toHaveCount(1);
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Mesa 4 cobrada");
+	await contexto.close();
+});
+
+test("al cerrar la cuenta ofrece la factura: valida los datos fiscales y la manda a la cola", async ({ browser }) => {
+	const { contexto, page, solicitudes } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: /^Cobrar \$\s48\.50 de Mesa 4$/ }).click();
+	const cobro = page.getByRole("dialog", { name: "Cobrar Mesa 4" });
+	await cobro.getByLabel("Recibido").fill("50");
+	await cobro.getByRole("button", { name: /^Cobrar/ }).click();
+	const factura = page.getByRole("dialog", { name: "¿El cliente quiere factura?" });
+	await expect(factura).toContainText("Mesa 4 quedó cobrada");
+	await factura.getByRole("button", { name: "Pedir factura" }).click();
+	await expect(factura.getByText("La razón social es requerida.")).toBeVisible();
+	expect(solicitudes).toHaveLength(0);
+	await factura.getByLabel("RFC").fill("eku9003173c9");
+	await factura.getByLabel("Razón social").fill("Escuela Kemper Urgate");
+	await factura.getByLabel("Régimen fiscal").selectOption("601");
+	await factura.getByLabel("Código postal fiscal").fill("42501");
+	await factura.getByRole("button", { name: "Pedir factura" }).click();
+	await expect(factura).toBeHidden();
+	expect(solicitudes).toEqual([
+		{ ordenId: "a1b2c3d4-0000-4000-8000-000000000001", rfc: "EKU9003173C9", razonSocial: "Escuela Kemper Urgate", usoCfdi: "G03", regimenFiscal: "601", codigoPostalFiscal: "42501" },
+	]);
+	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Factura solicitada");
+	await contexto.close();
+});
+
+test("una parte de una cuenta dividida no ofrece factura todavía", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: /^Cobrar .* de Mesa 7$/ }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cobrar Mesa 7" });
+	await dialogo.getByLabel("Dividir la cuenta").selectOption("2");
+	await dialogo.getByText("Tarjeta").click();
+	await dialogo.getByRole("button", { name: /^Cobrar \$\s100\.00$/ }).click();
+	await expect(dialogo).toBeHidden();
+	await expect(page.getByRole("dialog", { name: "¿El cliente quiere factura?" })).toHaveCount(0);
 	await contexto.close();
 });
 

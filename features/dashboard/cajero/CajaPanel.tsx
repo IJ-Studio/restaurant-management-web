@@ -25,6 +25,7 @@ import { pedirPanel } from "@/lib/paneles/api-panel";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { cn } from "@/lib/utils";
 import { presentarCarta } from "@/lib/formato/caja";
+import { DialogoFactura } from "./DialogoFactura";
 import { suma } from "@/lib/paneles/calculo";
 import type { Calculo } from "@/components/ui/VerCalculo";
 
@@ -89,7 +90,7 @@ interface LineaCuenta {
 	precio: number;
 }
 
-function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: () => void }) {
+function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: (cerrada: boolean) => void }) {
 	const [abierto, setAbierto] = useState(false);
 	const [metodoId, setMetodoId] = useState<number | null>(null);
 	const [recibido, setRecibido] = useState("");
@@ -122,7 +123,7 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 		if (metodo.esEfectivo && !(cantidad >= aCobrar)) return setError(Number.isFinite(cantidad) ? `Faltan ${importe(aCobrar - cantidad)}.` : "Escribe cuánto te dan.");
 		setEnviando(true);
 		try {
-			const respuesta = await api.post<{ cambio?: string }>(`/pedidos/${encodeURIComponent(cuenta.id)}/cobrar`, {
+			const respuesta = await api.post<{ cambio?: string; cerrada?: boolean }>(`/pedidos/${encodeURIComponent(cuenta.id)}/cobrar`, {
 				metodoPagoId: metodo.id,
 				...(metodo.aplicaPropina && montoPropina > 0 ? { propina: montoPropina } : {}),
 				...(metodo.esEfectivo ? { montoRecibido: cantidad } : {}),
@@ -133,7 +134,7 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 			const cambio = Number(respuesta?.cambio ?? 0);
 			notificar({ tono: "exito", titulo: dividida ? `${cuenta.table}: parte cobrada` : `${cuenta.table} cobrada`, descripcion: cambio > 0 ? `Cambio: ${importe(cambio)}.` : `${importe(aCobrar)} en ${metodo.nombre.toLowerCase()}.` });
 			setAbierto(false);
-			alCobrado();
+			alCobrado(respuesta?.cerrada ?? !dividida);
 		} catch (err) {
 			registrarError(err, "caja: cobrar");
 			setError("No se pudo registrar el cobro. Revisa los datos y vuelve a intentarlo.");
@@ -389,7 +390,7 @@ const POR_COBRAR = ["entregada", "para_cobrar"];
 const EN_SERVICIO = ["abierta", "en_preparacion", "lista"];
 const ESTADO_CUENTA: Record<string, string> = { abierta: "Abierta", en_preparacion: "En preparación", lista: "Lista" };
 
-function TarjetaCuenta({ cuenta: c, metodos, alCobrado, conEstado = false }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: () => void; conEstado?: boolean }) {
+function TarjetaCuenta({ cuenta: c, metodos, alCobrado, conEstado = false }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: (cuenta: Cuenta, cerrada: boolean) => void; conEstado?: boolean }) {
 	return (
 		<li className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
 			<div className="flex items-start justify-between gap-3">
@@ -403,7 +404,7 @@ function TarjetaCuenta({ cuenta: c, metodos, alCobrado, conEstado = false }: { c
 				{conEstado && c.status && <Insignia tono="info">{ESTADO_CUENTA[c.status] ?? c.status}</Insignia>}
 				{`${contar(c.items.length, "plato")} · abierta a las ${c.time}`}
 			</p>
-			<DialogoCobro cuenta={c} metodos={metodos} alCobrado={alCobrado} />
+			<DialogoCobro cuenta={c} metodos={metodos} alCobrado={(cerrada) => alCobrado(c, cerrada)} />
 		</li>
 	);
 }
@@ -413,6 +414,7 @@ export function CajaPanel() {
 	const [cuentas, recargarCuentas] = useCarga(() => pedirPanel<Cuenta[]>("/pedidos/admin/recent").then(presentarCarta), "caja: cuentas por cobrar");
 	const [metodos] = useCarga(() => pedirPanel<Metodo[]>("/pedidos/metodos-pago"), "caja: formas de pago");
 	const [busqueda, setBusqueda] = useState("");
+	const [facturaDe, setFacturaDe] = useState<Cuenta | null>(null);
 
 	useEffect(() => {
 		const t = setInterval(() => void recargarCuentas({ silenciosa: true }), 20000);
@@ -436,9 +438,11 @@ export function CajaPanel() {
 	const actual = caja.estado === "listo" ? caja.datos : null;
 	const abierta = actual?.abierta === true ? actual : null;
 	const listaMetodos = metodos.estado === "listo" && Array.isArray(metodos.datos) ? metodos.datos : [];
-	const alCobrado = () => {
+	const alCobrado = (cuenta: Cuenta, cerrada: boolean) => {
 		void recargarCuentas({ silenciosa: true });
 		void recargarCaja({ silenciosa: true });
+		// Al cerrar la cuenta se ofrece la factura (la tarjeta de la cuenta ya desaparece de la lista).
+		if (cerrada) setFacturaDe(cuenta);
 	};
 
 	return (
@@ -505,6 +509,7 @@ export function CajaPanel() {
 					</ul>
 				</BloquePanel>
 			)}
+			<DialogoFactura cuenta={facturaDe} alCerrar={() => setFacturaDe(null)} />
 			<AppOperaciones />
 		</PlantillaPanel>
 	);

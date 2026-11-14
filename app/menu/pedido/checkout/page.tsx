@@ -23,6 +23,7 @@ import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaDatosFiscales, esquemaDireccionEnvio } from "@/lib/validacion/formularios";
 import { cn } from "@/lib/utils";
+import { REGIMENES_FISCALES, USOS_CFDI } from "@/lib/facturacion/catalogos";
 
 /**
  * Pago del pedido a domicilio (`/menu/pedido/checkout`, PLAN 4.14). La lógica no cambia: la
@@ -42,21 +43,6 @@ import { cn } from "@/lib/utils";
 // Una sola instancia de Stripe, fuera del componente.
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 
-const USOS_CFDI = [
-	{ valor: "G01", texto: "G01 · Adquisición de mercancías" },
-	{ valor: "G03", texto: "G03 · Gastos en general" },
-	{ valor: "P01", texto: "P01 · Por definir" },
-];
-const REGIMENES_FISCALES = [
-	{ valor: "601", texto: "601 · General de Ley Personas Morales" },
-	{ valor: "603", texto: "603 · Personas Morales con Fines no Lucrativos" },
-	{ valor: "605", texto: "605 · Sueldos y Salarios" },
-	{ valor: "606", texto: "606 · Arrendamiento" },
-	{ valor: "612", texto: "612 · Personas Físicas con Actividades Empresariales" },
-	{ valor: "616", texto: "616 · Sin obligaciones fiscales" },
-	{ valor: "621", texto: "621 · Incorporación Fiscal" },
-	{ valor: "626", texto: "626 · Régimen Simplificado de Confianza" },
-];
 const PASOS = ["Resumen", "Entrega", "Factura", "Pago", "Confirmar"] as const;
 
 type Errores = Record<string, string>;

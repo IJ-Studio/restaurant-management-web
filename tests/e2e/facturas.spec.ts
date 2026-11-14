@@ -135,3 +135,33 @@ test("bandeja: rechazar exige motivo y lo manda al API", async ({ browser }) => 
 	expect(acciones).toEqual([{ ruta: "/solicitudes-factura/1/rechazar", cuerpo: { motivo: "El RFC no coincide con la razón social" } }]);
 	await contexto.close();
 });
+
+test("cancelar una factura vigente: elige el motivo del SAT y la lista se actualiza", async ({ browser }) => {
+	const contexto = await browser.newContext({ storageState: archivoSesion("admin"), viewport: { width: 1440, height: 900 } });
+	const page = await contexto.newPage();
+	const cancelaciones: { ruta: string; cuerpo: unknown }[] = [];
+	await page.route(
+		(u) => u.origin === "http://localhost:3100" && (u.pathname.startsWith("/facturas") || u.pathname.startsWith("/solicitudes-factura")),
+		async (r) => {
+			const url = new URL(r.request().url());
+			const json = (cuerpo: unknown, status = 200) => r.fulfill({ status, contentType: "application/json", body: JSON.stringify(cuerpo) });
+			if (url.pathname.startsWith("/solicitudes-factura")) return json([]);
+			if (r.request().method() === "POST") {
+				cancelaciones.push({ ruta: url.pathname, cuerpo: r.request().postDataJSON() });
+				return json({ id: "f-1", estatus: "cancelada", cancelacion: "accepted" }, 201);
+			}
+			return json({ facturas: [factura(1, cancelaciones.length ? { estatus: "cancelada" } : {})], pagina: 1, haySiguiente: false });
+		},
+	);
+	await page.goto("/dashboard/admin/finance/invoices", { waitUntil: "load" });
+	const main = page.locator("main");
+	await main.getByRole("button", { name: "Cancelar la factura A-1" }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cancelar la factura A-1" });
+	await dialogo.getByLabel("Motivo").selectOption("03");
+	await dialogo.getByRole("button", { name: "Cancelar factura" }).click();
+	await expect(dialogo).toBeHidden();
+	expect(cancelaciones).toEqual([{ ruta: "/facturas/f-1/cancelar", cuerpo: { motivo: "03" } }]);
+	await expect(page.getByText("Factura A-1 cancelada")).toBeVisible();
+	await expect(main.getByRole("button", { name: "Cancelar la factura A-1" })).toHaveCount(0);
+	await contexto.close();
+});
