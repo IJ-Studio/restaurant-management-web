@@ -8,6 +8,9 @@ import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/panele
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
+import { useNotificaciones } from "@/components/ui/Notificacion";
+import { api } from "@/lib/api";
+import { registrarError } from "@/lib/registro/registrar-error";
 import { Selector } from "@/components/ui/Campo";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
@@ -68,6 +71,14 @@ interface Pedido {
 }
 
 const entero = new Intl.NumberFormat("es-MX");
+
+/** Siguiente paso de un pedido para el admin (paridad con la móvil: mismos textos y mismas rutas). */
+const SIGUIENTE: Record<string, { texto: string; estatus?: string }> = {
+	pendiente: { texto: "Confirmar y enviar a cocina" },
+	abierta: { texto: "Empezar a preparar", estatus: "en_preparacion" },
+	en_preparacion: { texto: "Marcar como lista", estatus: "lista" },
+	lista: { texto: "Entregar en la mesa", estatus: "entregada" },
+};
 const num = (n: unknown) => (typeof n === "number" && Number.isFinite(n) ? n : 0);
 
 /** Fecha local de hoy en `AAAA-MM-DD`, el formato del filtro de reservas. */
@@ -195,6 +206,26 @@ function PedidosRecientes() {
 	const [pedidos, recargar] = useCarga(() => pedirPanel<Pedido[]>("/pedidos/admin/recent"), "inicio admin: pedidos");
 	const [filtro, setFiltro] = useState("todas");
 	const [visibles, setVisibles] = useState(POR_PAGINA);
+	const [avanzando, setAvanzando] = useState<string | null>(null);
+	const { notificar } = useNotificaciones();
+
+	async function avanzar(p: Pedido) {
+		const paso = SIGUIENTE[p.status];
+		if (!paso) return;
+		setAvanzando(p.id);
+		try {
+			const id = encodeURIComponent(p.id);
+			if (paso.estatus) await api.patch(`/pedidos/${id}/estatus`, { estatus: paso.estatus });
+			else await api.post(`/pedidos/confirmar/${id}`, {});
+			notificar({ tono: "exito", titulo: `${p.table || "Pedido"}: ${paso.texto.toLowerCase()}` });
+			await recargar({ silenciosa: true });
+		} catch (e) {
+			registrarError(e, "inicio admin: avanzar pedido");
+			notificar({ tono: "error", titulo: "No se pudo actualizar el pedido", descripcion: e instanceof Error ? e.message : "Vuelve a intentarlo en un momento." });
+		} finally {
+			setAvanzando(null);
+		}
+	}
 	const filtrados = useMemo(() => {
 		const lista = pedidos.estado === "listo" && Array.isArray(pedidos.datos) ? pedidos.datos : [];
 		return filtro === "todas" ? lista : lista.filter((p) => p.status === filtro);
@@ -234,6 +265,14 @@ function PedidosRecientes() {
 			<Tabla
 				leyenda="Pedidos recientes"
 				columnas={columnas}
+				tituloAcciones="Atender"
+				acciones={(p) =>
+					SIGUIENTE[p.status] ? (
+						<Boton tamano="compacto" variante="secundario" cargando={avanzando === p.id} deshabilitado={avanzando !== null} aria-label={`${SIGUIENTE[p.status].texto}: ${p.table || p.customer}`} onClick={() => void avanzar(p)}>
+							{SIGUIENTE[p.status].texto}
+						</Boton>
+					) : null
+				}
 				filas={filtrados.slice(0, visibles)}
 				claveFila={(p) => p.id}
 				estado={pedidos.estado === "cargando" ? "cargando" : "listo"}
