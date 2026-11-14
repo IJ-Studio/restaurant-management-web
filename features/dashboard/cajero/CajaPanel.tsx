@@ -9,7 +9,7 @@ import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/panele
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Buscador } from "@/components/ui/Buscador";
-import { Campo } from "@/components/ui/Campo";
+import { Campo, Selector } from "@/components/ui/Campo";
 import { Dialogo } from "@/components/ui/Dialogo";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
@@ -75,6 +75,8 @@ const numeroCampo = (t: string) => (t.trim() === "" ? Number.NaN : Number(t));
 /** Igual que la móvil (`TIP_PERCENTAGES`, `tipFromPercent`): porcentajes sobre el total, en centavos. */
 const PORCENTAJES_PROPINA = [0, 10, 15, 20] as const;
 const propinaDe = (total: number, pct: number) => Math.round((Math.round(total * 100) * pct) / 100) / 100;
+/** Igual que la móvil (`equalShare`): lo que falta entre las personas que faltan, en centavos. */
+const parteIgual = (restante: number, personas: number) => (personas <= 1 ? restante : Math.round(Math.round(restante * 100) / personas) / 100);
 
 function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: () => void }) {
 	const [abierto, setAbierto] = useState(false);
@@ -83,10 +85,16 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 	const [propina, setPropina] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [enviando, setEnviando] = useState(false);
+	const [restante, setRestante] = useState(cuenta.total);
+	const [personas, setPersonas] = useState("1");
+	const [referencia, setReferencia] = useState("");
 	const { notificar } = useNotificaciones();
 	const metodo = metodos.find((m) => m.id === metodoId) ?? null;
 	const montoPropina = propina.trim() === "" ? 0 : numeroCampo(propina);
-	const aCobrar = cuenta.total + (Number.isFinite(montoPropina) ? montoPropina : 0);
+	// Cuenta dividida (paridad con la móvil): esta parte es lo que falta entre las personas que faltan.
+	const parte = parteIgual(restante, Number(personas));
+	const dividida = parte < restante;
+	const aCobrar = parte + (Number.isFinite(montoPropina) ? montoPropina : 0);
 	const cantidad = numeroCampo(recibido);
 	const diferencia = Number.isFinite(cantidad) ? cantidad - aCobrar : null;
 
@@ -100,9 +108,11 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 				metodoPagoId: metodo.id,
 				...(metodo.aplicaPropina && montoPropina > 0 ? { propina: montoPropina } : {}),
 				...(metodo.esEfectivo ? { montoRecibido: cantidad } : {}),
+				...(dividida ? { monto: parte } : {}),
+				...(!metodo.esEfectivo && referencia.trim() ? { referencia: referencia.trim() } : {}),
 			});
 			const cambio = Number(respuesta?.cambio ?? 0);
-			notificar({ tono: "exito", titulo: `${cuenta.table} cobrada`, descripcion: cambio > 0 ? `Cambio: ${importe(cambio)}.` : `${importe(aCobrar)} en ${metodo.nombre.toLowerCase()}.` });
+			notificar({ tono: "exito", titulo: dividida ? `${cuenta.table}: parte cobrada` : `${cuenta.table} cobrada`, descripcion: cambio > 0 ? `Cambio: ${importe(cambio)}.` : `${importe(aCobrar)} en ${metodo.nombre.toLowerCase()}.` });
 			setAbierto(false);
 			alCobrado();
 		} catch (err) {
@@ -122,7 +132,18 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 					setMetodoId(metodos[0]?.id ?? null);
 					setRecibido("");
 					setPropina("");
+					setPersonas("1");
+					setReferencia("");
 					setError(null);
+					setRestante(cuenta.total);
+					// Lo que falta, por si ya se cobró una parte (`GET /pedidos/:id`); sin respuesta, el total.
+					void api
+						.get<{ restante?: string | number }>(`/pedidos/${encodeURIComponent(cuenta.id)}`)
+						.then((d) => {
+							const r = Number(d?.restante);
+							if (Number.isFinite(r) && r > 0) setRestante(r);
+						})
+						.catch(() => undefined);
 				}
 			}}
 			disparador={
@@ -145,9 +166,19 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 		>
 			<div className="flex flex-col gap-(--espacio-lg)">
 				<p className="m-0 flex items-baseline justify-between gap-3">
-					<span className="text-texto-secundario">Consumo</span>
-					<span className="texto-cifra-destacada">{importe(cuenta.total)}</span>
+					<span className="text-texto-secundario">{restante < cuenta.total ? "Falta por cobrar" : "Consumo"}</span>
+					<span className="texto-cifra-destacada">{importe(restante)}</span>
 				</p>
+				<Selector
+					etiqueta="Dividir la cuenta"
+					opciones={[{ valor: "1", texto: "No, toda la cuenta" }, ...[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ valor: String(n), texto: `En partes iguales entre ${n}` }))]}
+					value={personas}
+					onChange={(e) => {
+						setPersonas(e.target.value);
+						setPropina("");
+					}}
+					ayuda={dividida ? `Esta parte: ${importe(parte)}. Elige cuántas personas faltan por pagar; la última paga el resto exacto.` : undefined}
+				/>
 				{metodos.length === 0 ? (
 					<Aviso tono="error" rol={null} titulo="No hay formas de pago disponibles.">
 						Pide a administración que las active en el sistema.
@@ -178,7 +209,7 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 				{metodo?.aplicaPropina && (
 					<div role="group" aria-label="Propina sugerida" className="flex flex-wrap gap-2">
 						{PORCENTAJES_PROPINA.map((pct) => {
-							const valor = pct === 0 ? "" : propinaDe(cuenta.total, pct).toFixed(2);
+							const valor = pct === 0 ? "" : propinaDe(parte, pct).toFixed(2);
 							return (
 								<Boton key={pct} variante={propina === valor ? "primario" : "secundario"} tamano="compacto" aria-pressed={propina === valor} onClick={() => setPropina(valor)}>
 									{pct === 0 ? "Sin propina" : `${pct} %`}
@@ -189,6 +220,9 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 				)}
 				{metodo?.aplicaPropina && (
 					<Campo etiqueta="Propina" opcional type="number" inputMode="decimal" min={0} step="0.01" value={propina} onChange={(e) => setPropina(e.target.value)} ayuda="En pesos. Elige un porcentaje o escribe otra cantidad." />
+				)}
+				{metodo && !metodo.esEfectivo && (
+					<Campo etiqueta="Referencia o folio" opcional value={referencia} onChange={(e) => setReferencia(e.target.value)} maxLength={100} ayuda="De la terminal o de la transferencia." />
 				)}
 				{metodo?.esEfectivo && (
 					<div className="flex flex-col gap-(--espacio-sm)">

@@ -52,6 +52,8 @@ async function abrir(browser: Browser, ancho = 1024, preferencias: Record<string
 			if (camino.endsWith("/caja/actual")) return json(caja);
 			if (camino.endsWith("/pedidos/admin/recent")) return json(cuentas);
 			if (camino.endsWith("/pedidos/metodos-pago")) return json(METODOS);
+			// Mesa 7 ya pagó $120 de $320: el detalle dice lo que falta.
+			if (p.method() === "GET" && camino.endsWith("/pedidos/a1b2c3d4-0000-4000-8000-000000000002")) return json({ total: "320.00", pagado: "120.00", restante: "200.00" });
 			const cobro = camino.match(/\/pedidos\/([^/]+)\/cobrar$/);
 			if (cobro && p.method() === "POST") {
 				cobros.push({ ruta: camino, cuerpo: p.postDataJSON() });
@@ -142,11 +144,27 @@ test("propina sugerida por porcentaje, como la móvil: llena el campo y se puede
 	const dialogo = page.getByRole("dialog", { name: "Cobrar Mesa 7" });
 	await dialogo.getByText("Tarjeta").click();
 	await dialogo.getByRole("button", { name: "15 %" }).click();
-	await expect(dialogo.getByRole("spinbutton", { name: /^Propina/ })).toHaveValue("48.00");
+	// Sobre lo que se cobra ahora: Mesa 7 ya pagó $120 y faltan $200 → 15 % = $30.
+	await expect(dialogo.getByRole("spinbutton", { name: /^Propina/ })).toHaveValue("30.00");
 	await expect(dialogo.getByRole("button", { name: "15 %" })).toHaveAttribute("aria-pressed", "true");
 	await dialogo.getByRole("button", { name: /^Cobrar/ }).click();
 	await expect(dialogo).toBeHidden();
-	expect(cobros[0].cuerpo).toEqual({ metodoPagoId: 2, propina: 48 });
+	expect(cobros[0].cuerpo).toEqual({ metodoPagoId: 2, propina: 30 });
+	await contexto.close();
+});
+
+test("cuenta dividida en partes iguales sobre lo que falta, con referencia de la terminal (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, page, cobros } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: /^Cobrar .* de Mesa 7$/ }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cobrar Mesa 7" });
+	await expect(dialogo).toContainText(/Falta por cobrar\s*\$\s200\.00/);
+	await dialogo.getByLabel("Dividir la cuenta").selectOption("2");
+	await expect(dialogo).toContainText(/Esta parte: \$\s100\.00/);
+	await dialogo.getByText("Tarjeta").click();
+	await dialogo.getByLabel(/^Referencia o folio/).fill("AUT-4821");
+	await dialogo.getByRole("button", { name: /^Cobrar \$\s100\.00$/ }).click();
+	await expect(dialogo).toBeHidden();
+	expect(cobros[0].cuerpo).toEqual({ metodoPagoId: 2, monto: 100, referencia: "AUT-4821" });
 	await contexto.close();
 });
 
