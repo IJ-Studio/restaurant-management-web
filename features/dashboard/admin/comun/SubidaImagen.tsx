@@ -42,7 +42,7 @@ export function SubidaImagen({
 	alCambiar,
 	textoAlternativo,
 }: {
-	destino: "platillos" | "promociones";
+	destino: "platillos" | "promociones" | "landing";
 	valor: ValorImagen;
 	alCambiar: (v: ValorImagen) => void;
 	textoAlternativo: string;

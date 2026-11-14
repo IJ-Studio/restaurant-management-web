@@ -8,12 +8,15 @@ interface RequestOptions extends RequestInit {
 export class APIError extends Error {
   statusCode: number;
   error: string;
+  /** Mensajes por campo de la validación del API (`details`), si los hay. */
+  details: string[];
 
-  constructor(message: string, statusCode: number, error: string) {
+  constructor(message: string, statusCode: number, error: string, details: string[] = []) {
     super(message);
     this.name = "APIError";
     this.statusCode = statusCode;
     this.error = error;
+    this.details = details;
   }
 }
 
@@ -57,7 +60,7 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
   });
 
   if (!response.ok) {
-    let errorData: { message?: string; statusCode?: number; error?: string } = {};
+    let errorData: { message?: string; statusCode?: number; error?: string; details?: unknown } = {};
     try {
       errorData = await response.json();
     } catch {
@@ -68,7 +71,9 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
     const statusCode = errorData.statusCode || response.status;
     const error = errorData.error || response.statusText;
 
-    throw new APIError(message, statusCode, error);
+    const details = Array.isArray(errorData.details) ? errorData.details.filter((d): d is string => typeof d === "string") : [];
+
+    throw new APIError(message, statusCode, error, details);
   }
 
   if (response.status === 204) {
