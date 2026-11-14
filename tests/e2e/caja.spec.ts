@@ -91,6 +91,19 @@ test("cobrar en efectivo: método del API, cambio en vivo, faltante avisado y el
 	await contexto.close();
 });
 
+test("cuentas en servicio: se ven aparte con su estado y se pueden cobrar por adelantado (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const main = page.locator("main");
+	const enServicio = main.getByRole("list", { name: "Cuentas en servicio" }).getByRole("listitem");
+	await expect(enServicio).toHaveCount(1);
+	await expect(enServicio.first()).toContainText("Mesa 2");
+	await expect(enServicio.first()).toContainText("En preparación");
+	await expect(main.getByRole("list", { name: "Cuentas por cobrar" })).not.toContainText("Mesa 2");
+	await main.getByRole("button", { name: /^Cobrar \$\s150\.00 de Mesa 2$/ }).click();
+	await expect(page.getByRole("dialog", { name: "Cobrar Mesa 2" })).toBeVisible();
+	await contexto.close();
+});
+
 test("con tarjeta no pide lo recibido y envía la propina; la búsqueda filtra", async ({ browser }) => {
 	const { contexto, page, cobros } = await abrir(browser);
 	const main = page.locator("main");
