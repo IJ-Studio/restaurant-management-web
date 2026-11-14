@@ -289,7 +289,7 @@ export function MeseroPanel() {
 	}
 
 	return (
-		<PlantillaPanel titulo="Mesas" descripcion="Toma pedidos y marca lo servido.">
+		<PlantillaPanel titulo="Mesas" descripcion="Toma pedidos y entrega lo que está listo.">
 			<div className={REJILLA_TRES_INDICADORES}>
 				<Indicador estado={estadoIndicadores} alReintentar={() => Promise.all([recargarMesas(), recargarPedidos()])} rotulo="Libres" {...desglose("libres = mesas activas sin pedidos abiertos", ["libre"])} valor={entero.format(cuantas("libre"))} detalle={`De ${entero.format(listaMesas.length)} mesas`} className={PROTAGONISTA_DE_TRES} />
 				<Indicador estado={estadoIndicadores} rotulo="Ocupadas" {...desglose("ocupadas = mesas activas con algún pedido abierto", ["ocupada", "lista"])} valor={entero.format(cuantas("ocupada") + cuantas("lista"))} />
@@ -335,8 +335,8 @@ export function MeseroPanel() {
 									</div>
 									<div className="flex flex-col gap-2">
 										{listo && (
-											<Boton className="min-h-12 w-full" icono={<HandPlatter />} cargando={sirviendo === listo.id} aria-label={`Marcar servido el pedido de ${nombreMesa(m)}`} onClick={() => void servir(listo, m)}>
-												Marcar servido
+											<Boton className="min-h-12 w-full" icono={<HandPlatter />} cargando={sirviendo === listo.id} aria-label={`Entregar en la mesa el pedido de ${nombreMesa(m)}`} onClick={() => void servir(listo, m)}>
+												Entregar en la mesa
 											</Boton>
 										)}
 										{revocable && (
