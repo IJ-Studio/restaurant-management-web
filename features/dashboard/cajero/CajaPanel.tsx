@@ -71,6 +71,9 @@ const entero = new Intl.NumberFormat("es-MX");
 const hora = new Intl.DateTimeFormat("es-MX", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 const folio = (id: string) => id.slice(0, 6).toUpperCase();
 const numeroCampo = (t: string) => (t.trim() === "" ? Number.NaN : Number(t));
+/** Igual que la móvil (`TIP_PERCENTAGES`, `tipFromPercent`): porcentajes sobre el total, en centavos. */
+const PORCENTAJES_PROPINA = [0, 10, 15, 20] as const;
+const propinaDe = (total: number, pct: number) => Math.round((Math.round(total * 100) * pct) / 100) / 100;
 
 function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: () => void }) {
 	const [abierto, setAbierto] = useState(false);
@@ -172,7 +175,19 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 					</fieldset>
 				)}
 				{metodo?.aplicaPropina && (
-					<Campo etiqueta="Propina" opcional type="number" inputMode="decimal" min={0} step="0.01" value={propina} onChange={(e) => setPropina(e.target.value)} ayuda="En pesos." />
+					<div role="group" aria-label="Propina sugerida" className="flex flex-wrap gap-2">
+						{PORCENTAJES_PROPINA.map((pct) => {
+							const valor = pct === 0 ? "" : propinaDe(cuenta.total, pct).toFixed(2);
+							return (
+								<Boton key={pct} variante={propina === valor ? "primario" : "secundario"} tamano="compacto" aria-pressed={propina === valor} onClick={() => setPropina(valor)}>
+									{pct === 0 ? "Sin propina" : `${pct} %`}
+								</Boton>
+							);
+						})}
+					</div>
+				)}
+				{metodo?.aplicaPropina && (
+					<Campo etiqueta="Propina" opcional type="number" inputMode="decimal" min={0} step="0.01" value={propina} onChange={(e) => setPropina(e.target.value)} ayuda="En pesos. Elige un porcentaje o escribe otra cantidad." />
 				)}
 				{metodo?.esEfectivo && (
 					<div className="flex flex-col gap-(--espacio-sm)">
