@@ -8,20 +8,21 @@
     var p = JSON.parse(localStorage.getItem("elquijote:preferencias") || "null");
     if (!p) {
       var t = localStorage.getItem("theme");
-      p = { tema: t === "light" ? "claro" : "oscuro" };
+      p = { tema: t === "dark" ? "oscuro" : "claro" };
     }
-    var claro = p.tema === "claro";
-    r.setAttribute("data-tema", claro ? "claro" : "oscuro");
+    // Claro por defecto (mismo valor que PREFERENCIAS_POR_DEFECTO); solo «oscuro» si se eligió.
+    var oscuro = p.tema === "oscuro";
+    r.setAttribute("data-tema", oscuro ? "oscuro" : "claro");
     if (p.tamanoTexto === "grande" || p.tamanoTexto === "muy-grande") r.setAttribute("data-tamano-texto", p.tamanoTexto);
     if (p.movimiento === "reducido") r.setAttribute("data-movimiento", "reducido");
 
-    // El HTML sale con theme-color del tema oscuro (el de por defecto). En claro se añade
+    // El HTML sale con theme-color del tema claro (el de por defecto). En oscuro se añade
     // otra etiqueta delante, que es la que usa el navegador. No se edita la de Next: React
     // reconoce sus <meta> por los atributos y, si cambian, crea una nueva al hidratar.
-    if (claro) {
+    if (oscuro) {
       var barra = document.createElement("meta");
       barra.name = "theme-color";
-      barra.content = "#F4EEE3";
+      barra.content = "#14100C";
       var deNext = document.querySelector('meta[name="theme-color"]');
       document.head.insertBefore(barra, deNext || document.head.firstChild);
     }
