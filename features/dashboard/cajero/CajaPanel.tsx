@@ -193,6 +193,22 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 	);
 }
 
+/** Diferencia del corte en vivo, como la móvil: en centavos para no arrastrar errores de redondeo. */
+function diferenciaCorte(esperado: number, contado: number): number {
+	return (Math.round(contado * 100) - Math.round(esperado * 100)) / 100;
+}
+
+function DiferenciaCorte({ esperado, contado }: { esperado: number; contado: number }) {
+	if (!Number.isFinite(contado)) return null;
+	const d = diferenciaCorte(esperado, contado);
+	const texto = d === 0 ? "Cuadra" : d > 0 ? `Sobran ${importe(d)}` : `Faltan ${importe(-d)}`;
+	return (
+		<p role="status" className={cn("m-0 font-semibold", d === 0 ? "text-exito" : "text-aviso")}>
+			{texto}
+		</p>
+	);
+}
+
 function DialogoCaja({ abierta, esperado, alHecho }: { abierta: boolean; esperado?: number; alHecho: () => void }) {
 	const [abierto, setAbierto] = useState(false);
 	const [monto, setMonto] = useState("");
@@ -250,6 +266,7 @@ function DialogoCaja({ abierta, esperado, alHecho }: { abierta: boolean; esperad
 		>
 			<div className="flex flex-col gap-(--espacio-md)">
 				<Campo etiqueta={abierta ? "Efectivo contado" : "Fondo inicial"} type="number" inputMode="decimal" min={0} step="0.01" value={monto} onChange={(e) => setMonto(e.target.value)} error={error} ayuda="En pesos." />
+				{abierta && esperado !== undefined && <DiferenciaCorte esperado={esperado} contado={numeroCampo(monto)} />}
 				{abierta && <Campo etiqueta="Notas" opcional value={notas} onChange={(e) => setNotas(e.target.value)} maxLength={300} />}
 			</div>
 		</Dialogo>
@@ -318,7 +335,7 @@ export function CajaPanel() {
 			acciones={
 				<>
 					<Buscador etiqueta="Buscar por cuenta, mesa o cliente" valor={busqueda} alCambiar={setBusqueda} marcador="Cuenta, mesa o cliente" />
-					{actual && <DialogoCaja abierta={!!abierta} esperado={abierta?.efectivoEsperado} alHecho={() => void recargarCaja()} />}
+					{actual && <DialogoCaja abierta={!!abierta} esperado={abierta ? Number(abierta.efectivoEsperado) : undefined} alHecho={() => void recargarCaja()} />}
 				</>
 			}
 		>

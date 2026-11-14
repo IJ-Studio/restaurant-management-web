@@ -104,6 +104,20 @@ test("cuentas en servicio: se ven aparte con su estado y se pueden cobrar por ad
 	await contexto.close();
 });
 
+test("cerrar caja: la diferencia del corte se ve en vivo, como en la móvil", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: "Cerrar caja" }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cerrar caja" });
+	const campo = dialogo.getByLabel("Efectivo contado");
+	await campo.fill("1350");
+	await expect(dialogo.getByRole("status")).toHaveText("Cuadra");
+	await campo.fill("1300.5");
+	await expect(dialogo.getByRole("status")).toHaveText(/^Faltan \$\s49\.50$/);
+	await campo.fill("1400");
+	await expect(dialogo.getByRole("status")).toHaveText(/^Sobran \$\s50\.00$/);
+	await contexto.close();
+});
+
 test("con tarjeta no pide lo recibido y envía la propina; la búsqueda filtra", async ({ browser }) => {
 	const { contexto, page, cobros } = await abrir(browser);
 	const main = page.locator("main");
