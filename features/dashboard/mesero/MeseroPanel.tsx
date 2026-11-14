@@ -9,6 +9,7 @@ import { PROTAGONISTA_DE_TRES, REJILLA_TRES_INDICADORES } from "@/components/pan
 import { Boton } from "@/components/ui/Boton";
 import { AreaTexto, Campo, Selector } from "@/components/ui/Campo";
 import { PanelLateral } from "@/components/ui/Dialogo";
+import { DialogoMotivo } from "@/components/ui/DialogoMotivo";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Indicador } from "@/components/ui/Indicador";
@@ -46,6 +47,7 @@ interface PedidoActivo {
 	table: string;
 	status: string | null;
 	total: number;
+	openedAt?: string | null;
 }
 type EstadoMesa = "libre" | "ocupada" | "lista";
 
@@ -58,6 +60,12 @@ const importe = (n: unknown) => formatearImporte(Number(n) || 0) ?? "—";
 const entero = new Intl.NumberFormat("es-MX");
 const nombreMesa = (m: Mesa) => m.nombre?.trim() || `Mesa ${m.numero}`;
 const ACTIVOS = new Set(["abierta", "en_preparacion", "lista", "entregada"]);
+/** Igual que el API y la móvil: un pedido recién enviado se puede cancelar 2 minutos. */
+const VENTANA_CANCELAR_MS = 2 * 60 * 1000;
+const cancelable = (p: PedidoActivo, ahora: number) => {
+	const abierto = p.openedAt ? Date.parse(p.openedAt) : Number.NaN;
+	return p.status === "abierta" && ahora - abierto >= 0 && ahora - abierto <= VENTANA_CANCELAR_MS;
+};
 
 function PanelPedido({ mesa, carta, abierto, alCerrar, alEnviado }: { mesa: Mesa; carta: CategoriaCarta[]; abierto: boolean; alCerrar: () => void; alEnviado: () => void }) {
 	const [categoria, setCategoria] = useState(String(carta[0]?.id ?? ""));
@@ -218,6 +226,13 @@ export function MeseroPanel() {
 	const [filtro, setFiltro] = useState("todas");
 	const [abierta, setAbierta] = useState<Mesa | null>(null);
 	const [sirviendo, setSirviendo] = useState<string | null>(null);
+	const [cancelando, setCancelando] = useState<{ pedido: PedidoActivo; mesa: Mesa } | null>(null);
+	// Reloj de 10 s: el botón «Cancelar pedido» se va al vencer la ventana aunque no llegue un refresco.
+	const [ahora, setAhora] = useState(() => Date.now());
+	useEffect(() => {
+		const t = setInterval(() => setAhora(Date.now()), 10_000);
+		return () => clearInterval(t);
+	}, []);
 	const { notificar } = useNotificaciones();
 
 	useEffect(() => {
@@ -256,6 +271,22 @@ export function MeseroPanel() {
 		}
 	}
 
+	async function cancelar(motivo: string): Promise<boolean> {
+		if (!cancelando) return false;
+		const { pedido, mesa } = cancelando;
+		try {
+			await api.patch(`/pedidos/cancelar/${encodeURIComponent(pedido.id)}`, { motivo: motivo.trim() });
+			notificar({ tono: "exito", titulo: `Pedido de ${nombreMesa(mesa)} cancelado`, descripcion: "Cocina dejará de prepararlo." });
+			await recargarPedidos({ silenciosa: true });
+			return true;
+		} catch (err) {
+			registrarError(err, "sala: cancelar pedido");
+			// El API explica el motivo (p. ej., ya pasaron los 2 minutos).
+			notificar({ tono: "error", titulo: "No se pudo cancelar", descripcion: err instanceof Error ? err.message : "Vuelve a intentarlo en un momento." });
+			return false;
+		}
+	}
+
 	return (
 		<PlantillaPanel titulo="Mesas" descripcion="Toma pedidos y marca lo servido.">
 			<div className={REJILLA_TRES_INDICADORES}>
@@ -289,6 +320,7 @@ export function MeseroPanel() {
 						{visibles.map((m) => {
 							const estado = estadoDe(m);
 							const listo = pedidosDe(m).find((p) => p.status === "lista");
+							const revocable = pedidosDe(m).find((p) => cancelable(p, ahora));
 							return (
 								<li key={m.id} className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-md)">
 									<div className="flex items-start justify-between gap-3">
@@ -304,6 +336,11 @@ export function MeseroPanel() {
 										{listo && (
 											<Boton className="min-h-12 w-full" icono={<HandPlatter />} cargando={sirviendo === listo.id} aria-label={`Marcar servido el pedido de ${nombreMesa(m)}`} onClick={() => void servir(listo, m)}>
 												Marcar servido
+											</Boton>
+										)}
+										{revocable && (
+											<Boton variante="fantasma" className="min-h-12 w-full" aria-label={`Cancelar el pedido de ${nombreMesa(m)}`} onClick={() => setCancelando({ pedido: revocable, mesa: m })}>
+												Cancelar pedido
 											</Boton>
 										)}
 										<Boton
@@ -337,6 +374,16 @@ export function MeseroPanel() {
 				/>
 			)}
 			<AppOperaciones />
+			<DialogoMotivo
+				abierto={cancelando !== null}
+				alCambiarAbierto={(a) => !a && setCancelando(null)}
+				titulo={cancelando ? `¿Cancelar el pedido de ${nombreMesa(cancelando.mesa)}?` : "Cancelar pedido"}
+				descripcion="Cocina dejará de prepararlo. Solo se puede en los 2 minutos después de enviarlo."
+				etiqueta="Motivo de la cancelación"
+				textoConfirmar="Sí, cancelar"
+				textoCancelar="No"
+				alConfirmar={cancelar}
+			/>
 		</PlantillaPanel>
 	);
 }
