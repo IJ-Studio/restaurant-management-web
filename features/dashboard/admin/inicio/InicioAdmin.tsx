@@ -24,6 +24,7 @@ import { Nomina } from "@/features/dashboard/admin/nomina/Nomina";
 import { PanelReportes } from "@/features/dashboard/admin/reportes/Reportes";
 import { getReservations } from "@/features/reservations/services/reservations.service";
 import { useCarga } from "@/hooks/useCarga";
+import { useEventosPedidos } from "@/hooks/useEventosPedidos";
 import { formatearImporte } from "@/lib/formato/precio";
 import { pedirPanel } from "@/lib/paneles/api-panel";
 import { conteo } from "@/lib/paneles/calculo";
@@ -204,6 +205,7 @@ function Indicadores() {
 
 function PedidosRecientes() {
 	const [pedidos, recargar] = useCarga(() => pedirPanel<Pedido[]>("/pedidos/admin/recent"), "inicio admin: pedidos");
+	useEventosPedidos(() => void recargar({ silenciosa: true }));
 	const [filtro, setFiltro] = useState("todas");
 	const [visibles, setVisibles] = useState(POR_PAGINA);
 	const [avanzando, setAvanzando] = useState<string | null>(null);

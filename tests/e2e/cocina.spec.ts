@@ -18,13 +18,14 @@ const INVENTARIO = [
 	{ id: 2, name: "Queso", unit: "kg", stock: "9", minStock: "3", costPerUnit: "90.00" },
 ];
 
-async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string, string> = {}) {
+async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string, string> = {}, conEventos = false) {
 	const contexto = await browser.newContext({ storageState: archivoSesion("cocina"), viewport: { width: ancho, height: 900 } });
 	const page = await contexto.newPage();
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);
 	const cambios: unknown[] = [];
 	let comandas = COMANDAS.map((c) => ({ ...c }));
 	let incidencias: unknown[] = [];
+	const lecturas = { comandas: 0, flujo: 0 };
 	await page.route(
 		(url) => url.origin === "http://localhost:3100" && !url.pathname.startsWith("/_next"),
 		async (r) => {
@@ -32,7 +33,16 @@ async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string
 			if (!["fetch", "xhr"].includes(p.resourceType()) || p.headers()["rsc"]) return r.fallback();
 			const camino = new URL(p.url()).pathname;
 			const json = (cuerpo: unknown) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(cuerpo) });
-			if (camino.endsWith("/pedidos/admin/recent")) return json(comandas);
+			if (camino.endsWith("/pedidos/admin/recent")) {
+				lecturas.comandas++;
+				return json(comandas);
+			}
+			if (camino.endsWith("/pedidos/stream")) {
+				lecturas.flujo++;
+				if (!conEventos) return r.fulfill({ status: 503, body: "" });
+				expect(p.headers()["authorization"]).toMatch(/^Bearer /);
+				return r.fulfill({ status: 200, contentType: "text/event-stream", body: 'event: ready\ndata: {}\n\nevent: order\ndata: {"change":"status"}\n\n' });
+			}
 			if (camino.endsWith("/inventario/productos")) return json(INVENTARIO);
 			const estatus = camino.match(/\/pedidos\/([^/]+)\/estatus$/);
 			if (estatus && p.method() === "PATCH") {
@@ -59,7 +69,7 @@ async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string
 	);
 	await page.goto("/dashboard/cocina", { waitUntil: "load" });
 	await expect(page.locator("main").getByRole("heading", { level: 2, name: /Nuevas/ })).toBeVisible();
-	return { contexto, page, cambios };
+	return { contexto, page, cambios, lecturas };
 }
 
 test("avanzar una comanda de nueva a en preparación y a lista con el mismo PATCH de la móvil", async ({ browser }) => {
@@ -108,6 +118,14 @@ test("reportar una incidencia: un retraso pide los minutos y aparece en las de h
 	await expect(lista).toContainText("Retraso");
 	await expect(lista).toContainText("+15 min");
 	await expect(lista).toContainText("Se acabó el gas del comal");
+	await contexto.close();
+});
+
+test("tiempo real: un evento del API recarga las comandas sin esperar al sondeo (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, lecturas } = await abrir(browser, 1280, {}, true);
+	// El sondeo es cada 15 s: en 5 s solo puede haber otra lectura por el evento del flujo.
+	await expect.poll(() => lecturas.comandas, { timeout: 5000 }).toBeGreaterThanOrEqual(2);
+	expect(lecturas.flujo).toBeGreaterThanOrEqual(1);
 	await contexto.close();
 });
 
