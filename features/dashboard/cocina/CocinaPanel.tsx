@@ -15,6 +15,7 @@ import { Indicador } from "@/components/ui/Indicador";
 import { Insignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { useCarga } from "@/hooks/useCarga";
+import { useEventosPedidos } from "@/hooks/useEventosPedidos";
 import { api } from "@/lib/api";
 import { contar } from "@/lib/formato/plural";
 import { registrarError } from "@/lib/registro/registrar-error";
@@ -112,6 +113,8 @@ export function CocinaPanel() {
 		const t = setInterval(() => void recargar({ silenciosa: true }), 15000);
 		return () => clearInterval(t);
 	}, [recargar]);
+	// Tiempo real: una comanda nueva o un cambio de estado llega sin esperar al sondeo.
+	useEventosPedidos(() => void recargar({ silenciosa: true }));
 
 	async function avanzar(p: Comanda, siguiente: "en_preparacion" | "lista") {
 		setAvanzando(p.id);

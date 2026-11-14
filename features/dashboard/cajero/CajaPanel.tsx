@@ -17,6 +17,7 @@ import { Indicador } from "@/components/ui/Indicador";
 import { Insignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { useCarga } from "@/hooks/useCarga";
+import { useEventosPedidos } from "@/hooks/useEventosPedidos";
 import { api } from "@/lib/api";
 import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
@@ -321,6 +322,7 @@ export function CajaPanel() {
 		const t = setInterval(() => void recargarCuentas({ silenciosa: true }), 20000);
 		return () => clearInterval(t);
 	}, [recargarCuentas]);
+	useEventosPedidos(() => void recargarCuentas({ silenciosa: true }));
 
 	const lista = useMemo(() => (cuentas.estado === "listo" && Array.isArray(cuentas.datos) ? cuentas.datos : []), [cuentas]);
 	const porCobrar = useMemo(() => lista.filter((c) => POR_COBRAR.includes(c.status ?? "")), [lista]);

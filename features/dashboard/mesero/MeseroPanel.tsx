@@ -17,6 +17,7 @@ import { Indicador } from "@/components/ui/Indicador";
 import { Insignia, type TonoInsignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { useCarga } from "@/hooks/useCarga";
+import { useEventosPedidos } from "@/hooks/useEventosPedidos";
 import { api } from "@/lib/api";
 import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
@@ -240,6 +241,7 @@ export function MeseroPanel() {
 		const t = setInterval(() => void recargarPedidos({ silenciosa: true }), 20000);
 		return () => clearInterval(t);
 	}, [recargarPedidos]);
+	useEventosPedidos(() => void recargarPedidos({ silenciosa: true }));
 
 	const listaMesas = useMemo(() => (mesas.estado === "listo" && Array.isArray(mesas.datos) ? mesas.datos.filter((m) => m.activa !== false) : []), [mesas]);
 	const activos = useMemo(() => (pedidos.estado === "listo" && Array.isArray(pedidos.datos) ? pedidos.datos.filter((p) => p.status && ACTIVOS.has(p.status)) : []), [pedidos]);
