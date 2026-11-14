@@ -8,6 +8,7 @@ import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/panele
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { PanelLateral } from "@/components/ui/Dialogo";
+import { IncidenciasCocina } from "./IncidenciasCocina";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Indicador } from "@/components/ui/Indicador";
@@ -239,6 +240,8 @@ export function CocinaPanel() {
 					})}
 				</div>
 			)}
+
+			<IncidenciasCocina />
 
 			<PanelLateral abierto={existencias} alCambiarAbierto={setExistencias} titulo="Existencias" descripcion="Primero lo que está en el mínimo o por debajo.">
 				{inventario.estado === "error" ? (

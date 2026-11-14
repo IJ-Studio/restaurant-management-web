@@ -24,6 +24,7 @@ async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);
 	const cambios: unknown[] = [];
 	let comandas = COMANDAS.map((c) => ({ ...c }));
+	let incidencias: unknown[] = [];
 	await page.route(
 		(url) => url.origin === "http://localhost:3100" && !url.pathname.startsWith("/_next"),
 		async (r) => {
@@ -39,6 +40,15 @@ async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string
 				cambios.push({ id: estatus[1], ...cuerpo });
 				comandas = comandas.map((c) => (c.id === estatus[1] ? { ...c, status: cuerpo.estatus } : c));
 				return json({ success: true });
+			}
+			if (camino.endsWith("/cocina/incidencias")) {
+				if (p.method() === "POST") {
+					const cuerpo = p.postDataJSON() as { tipo: string; minutos?: number; mensaje?: string };
+					cambios.push({ incidencia: cuerpo });
+					incidencias = [{ id: "1", tipo: cuerpo.tipo, mensaje: cuerpo.mensaje ?? null, minutos: cuerpo.minutos ?? null, mesa: null, reportadoPor: "Cocina Prueba", creadoEn: new Date().toISOString() }, ...incidencias];
+					return json({ success: true });
+				}
+				return json(incidencias);
 			}
 			if (camino.endsWith("/inventario/mermas") && p.method() === "POST") {
 				cambios.push({ merma: p.postDataJSON() });
@@ -78,6 +88,26 @@ test("las notas por platillo y la nota general llegan a la comanda", async ({ br
 	const comanda = page.locator("main").getByRole("list", { name: /^Platos de la comanda/ }).first().locator("..");
 	await expect(comanda).toContainText("Nota: Sin crema");
 	await expect(comanda).toContainText("Nota para cocina: Alérgico a la nuez");
+	await contexto.close();
+});
+
+test("reportar una incidencia: un retraso pide los minutos y aparece en las de hoy (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, page, cambios } = await abrir(browser);
+	const main = page.locator("main");
+	await expect(main).toContainText("Sin incidencias hoy.");
+	await main.getByRole("button", { name: "Reportar incidencia" }).click();
+	const dialogo = page.getByRole("dialog", { name: "Reportar incidencia" });
+	await dialogo.getByRole("button", { name: "Enviar reporte" }).click();
+	await expect(dialogo.getByRole("alert")).toHaveText("Elige cuántos minutos más va a tardar.");
+	await dialogo.getByLabel("¿Cuánto más va a tardar?").selectOption("15");
+	await dialogo.getByLabel("Detalle (opcional)").fill("Se acabó el gas del comal");
+	await dialogo.getByRole("button", { name: "Enviar reporte" }).click();
+	await expect(dialogo).toBeHidden();
+	expect(cambios).toContainEqual({ incidencia: { tipo: "retraso", minutos: 15, mensaje: "Se acabó el gas del comal" } });
+	const lista = main.getByRole("list", { name: "Incidencias de hoy" });
+	await expect(lista).toContainText("Retraso");
+	await expect(lista).toContainText("+15 min");
+	await expect(lista).toContainText("Se acabó el gas del comal");
 	await contexto.close();
 });
 
