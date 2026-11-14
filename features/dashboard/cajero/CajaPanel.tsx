@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Banknote, CreditCard, Lock, LockOpen, Receipt } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { AppOperaciones } from "@/components/paneles/AppOperaciones";
@@ -14,6 +14,7 @@ import { Dialogo } from "@/components/ui/Dialogo";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Indicador } from "@/components/ui/Indicador";
+import { Insignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { useCarga } from "@/hooks/useCarga";
 import { api } from "@/lib/api";
@@ -255,6 +256,29 @@ function DialogoCaja({ abierta, esperado, alHecho }: { abierta: boolean; esperad
 	);
 }
 
+const POR_COBRAR = ["entregada", "para_cobrar"];
+const EN_SERVICIO = ["abierta", "en_preparacion", "lista"];
+const ESTADO_CUENTA: Record<string, string> = { abierta: "Abierta", en_preparacion: "En preparación", lista: "Lista" };
+
+function TarjetaCuenta({ cuenta: c, metodos, alCobrado, conEstado = false }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: () => void; conEstado?: boolean }) {
+	return (
+		<li className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
+			<div className="flex items-start justify-between gap-3">
+				<div className="flex min-w-0 flex-col gap-1">
+					<h3 className="m-0 font-titulos text-(length:--texto-titulo-3) font-normal leading-[1.15] text-texto-principal">{c.table}</h3>
+					<p className="m-0 text-texto-secundario">{`${c.customer} · cuenta ${folio(c.id)}`}</p>
+				</div>
+				<p className="m-0 texto-cifra-destacada whitespace-nowrap">{importe(c.total)}</p>
+			</div>
+			<p className="m-0 flex flex-wrap items-center gap-2 text-(length:--texto-pequeno) text-texto-secundario">
+				{conEstado && c.status && <Insignia tono="info">{ESTADO_CUENTA[c.status] ?? c.status}</Insignia>}
+				{`${contar(c.items.length, "plato")} · abierta a las ${c.time}`}
+			</p>
+			<DialogoCobro cuenta={c} metodos={metodos} alCobrado={alCobrado} />
+		</li>
+	);
+}
+
 export function CajaPanel() {
 	const [caja, recargarCaja] = useCarga(() => pedirPanel<Caja>("/caja/actual"), "caja: estado de la caja");
 	const [cuentas, recargarCuentas] = useCarga(() => pedirPanel<Cuenta[]>("/pedidos/admin/recent").then(presentarCarta), "caja: cuentas por cobrar");
@@ -266,11 +290,19 @@ export function CajaPanel() {
 		return () => clearInterval(t);
 	}, [recargarCuentas]);
 
-	const porCobrar = useMemo(() => (cuentas.estado === "listo" && Array.isArray(cuentas.datos) ? cuentas.datos.filter((c) => c.status === "entregada") : []), [cuentas]);
-	const filtradas = useMemo(() => {
-		const q = busqueda.trim().toLowerCase();
-		return q ? porCobrar.filter((c) => `${folio(c.id)} ${c.table} ${c.customer}`.toLowerCase().includes(q)) : porCobrar;
-	}, [porCobrar, busqueda]);
+	const lista = useMemo(() => (cuentas.estado === "listo" && Array.isArray(cuentas.datos) ? cuentas.datos : []), [cuentas]);
+	const porCobrar = useMemo(() => lista.filter((c) => POR_COBRAR.includes(c.status ?? "")), [lista]);
+	// Paridad con la móvil: el API deja cobrar desde que la cuenta está abierta (pago por adelantado).
+	const enServicio = useMemo(() => lista.filter((c) => EN_SERVICIO.includes(c.status ?? "")), [lista]);
+	const coincide = useCallback(
+		(c: Cuenta) => {
+			const q = busqueda.trim().toLowerCase();
+			return !q || `${folio(c.id)} ${c.table} ${c.customer}`.toLowerCase().includes(q);
+		},
+		[busqueda],
+	);
+	const filtradas = useMemo(() => porCobrar.filter(coincide), [porCobrar, coincide]);
+	const enServicioFiltradas = useMemo(() => enServicio.filter(coincide), [enServicio, coincide]);
 	const actual = caja.estado === "listo" ? caja.datos : null;
 	const abierta = actual?.abierta === true ? actual : null;
 	const listaMetodos = metodos.estado === "listo" && Array.isArray(metodos.datos) ? metodos.datos : [];
@@ -328,21 +360,21 @@ export function CajaPanel() {
 				) : (
 					<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-md) p-0 md:grid-cols-2 2xl:grid-cols-3" aria-label="Cuentas por cobrar">
 						{filtradas.map((c) => (
-							<li key={c.id} className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
-								<div className="flex items-start justify-between gap-3">
-									<div className="flex min-w-0 flex-col gap-1">
-										<h3 className="m-0 font-titulos text-(length:--texto-titulo-3) font-normal leading-[1.15] text-texto-principal">{c.table}</h3>
-										<p className="m-0 text-texto-secundario">{`${c.customer} · cuenta ${folio(c.id)}`}</p>
-									</div>
-									<p className="m-0 texto-cifra-destacada whitespace-nowrap">{importe(c.total)}</p>
-								</div>
-								<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">{`${contar(c.items.length, "plato")} · abierta a las ${c.time}`}</p>
-								<DialogoCobro cuenta={c} metodos={listaMetodos} alCobrado={alCobrado} />
-							</li>
+							<TarjetaCuenta key={c.id} cuenta={c} metodos={listaMetodos} alCobrado={alCobrado} />
 						))}
 					</ul>
 				)}
 			</BloquePanel>
+
+			{enServicioFiltradas.length > 0 && (
+				<BloquePanel titulo="En servicio" descripcion="Cuentas que aún se preparan o están en la mesa. Se pueden cobrar por adelantado.">
+					<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-md) p-0 md:grid-cols-2 2xl:grid-cols-3" aria-label="Cuentas en servicio">
+						{enServicioFiltradas.map((c) => (
+							<TarjetaCuenta key={c.id} cuenta={c} metodos={listaMetodos} alCobrado={alCobrado} conEstado />
+						))}
+					</ul>
+				</BloquePanel>
+			)}
 			<AppOperaciones />
 		</PlantillaPanel>
 	);
