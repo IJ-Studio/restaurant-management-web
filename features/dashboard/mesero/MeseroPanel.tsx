@@ -10,6 +10,7 @@ import { Boton } from "@/components/ui/Boton";
 import { AreaTexto, Campo, Selector } from "@/components/ui/Campo";
 import { PanelLateral } from "@/components/ui/Dialogo";
 import { DialogoMotivo } from "@/components/ui/DialogoMotivo";
+import { ReservasSala } from "./ReservasSala";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Indicador } from "@/components/ui/Indicador";
@@ -373,6 +374,7 @@ export function MeseroPanel() {
 					}}
 				/>
 			)}
+			<ReservasSala />
 			<AppOperaciones />
 			<DialogoMotivo
 				abierto={cancelando !== null}

@@ -41,6 +41,14 @@ async function abrir(browser: Browser, ancho = 390, preferencias: Record<string,
 				pedidos = [...pedidos, { id: "nuevo-1", table: "Mesa 1", status: "abierta", total: 300, openedAt: new Date().toISOString() }];
 				return json({ success: true, ordenId: "nuevo-1" });
 			}
+			if (camino.endsWith("/reservations")) {
+				const en = (min: number) => new Date(Date.now() + min * 60_000).toISOString();
+				return json([
+					{ id: "r2", clienteNombre: "Luis Gil", fechaHora: en(90), numComensales: 2, estatus: "pendiente", mesaNumero: null },
+					{ id: "r1", clienteNombre: "Ana Ruiz", fechaHora: en(30), numComensales: 4, estatus: "confirmada", mesaNumero: "A02" },
+					{ id: "r3", clienteNombre: "Eva Mora", fechaHora: en(45), numComensales: 3, estatus: "cancelada", mesaNumero: "B01" },
+				]);
+			}
 			if (camino.includes("/pedidos/cancelar/")) {
 				pedidos = pedidos.filter((x) => !camino.includes(x.id));
 				return json({ success: true });
@@ -73,6 +81,18 @@ test("cancelar un pedido recién enviado con motivo, dentro de los 2 minutos (pa
 	expect(peticiones.at(-1)).toEqual({ metodo: "PATCH", ruta: "/pedidos/cancelar/nuevo-1", cuerpo: { motivo: "El cliente se equivocó de platillo" } });
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Pedido de Mesa 1 cancelado");
 	await expect(main.getByRole("button", { name: "Cancelar el pedido de Mesa 1" })).toHaveCount(0);
+	await contexto.close();
+});
+
+test("reservaciones de hoy para sala: por hora y sin canceladas (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const filas = page.locator("main").getByRole("list", { name: "Reservaciones de hoy" }).getByRole("listitem");
+	await expect(filas).toHaveCount(2);
+	await expect(filas.nth(0)).toContainText("Ana Ruiz");
+	await expect(filas.nth(0)).toContainText("4 personas · Mesa A02");
+	await expect(filas.nth(0)).toContainText("Confirmada");
+	await expect(filas.nth(1)).toContainText("Luis Gil");
+	await expect(filas.nth(1)).toContainText("sin mesa");
 	await contexto.close();
 });
 
