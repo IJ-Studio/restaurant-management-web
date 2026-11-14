@@ -11,9 +11,17 @@ const MESA = process.env.MESA ?? "P32";
 
 test.skip(!/^http:\/\/(localhost|127\.0\.0\.1)/.test(API) || !(PLATILLO > 0), "solo contra el API local con datos de prueba");
 
-async function token(rol: string) {
-	const r = await fetch(`${API}/auth/sign-in`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: `${rol}@prueba.local`, password: CLAVE }) });
-	return ((await r.json()) as { accessToken: string }).accessToken;
+// Un inicio de sesión por rol: el API admite 5 por minuto.
+const tokens = new Map<string, Promise<string>>();
+function token(rol: string) {
+	if (!tokens.has(rol))
+		tokens.set(
+			rol,
+			fetch(`${API}/auth/sign-in`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: `${rol}@prueba.local`, password: CLAVE }) })
+				.then((r) => r.json() as Promise<{ accessToken: string }>)
+				.then((d) => d.accessToken),
+		);
+	return tokens.get(rol)!;
 }
 async function api(rol: string, metodo: string, ruta: string, cuerpo?: unknown) {
 	const r = await fetch(`${API}${ruta}`, {
@@ -107,8 +115,8 @@ test("cuenta de $100.01 entre 3 con efectivo y tarjeta, factura desde caja, emis
 	await entrar(page, "admin");
 	await page.goto("/dashboard/admin/finance/invoices");
 	// La cola va de la más antigua a la más reciente: la nuestra es la última que se puede emitir.
-	await main.locator("button:enabled").filter({ hasText: /^Emitir$/ }).last().click();
-	await expect(page.getByText(/Factura .* emitida/)).toBeVisible({ timeout: 30_000 });
+	await main.getByRole("button", { name: /^Emitir la factura de /, disabled: false }).last().click();
+	await expect(page.getByText(/Factura .* emitida/).first()).toBeVisible({ timeout: 30_000 });
 	await captura(page, "web-factura-2-emitida");
 	await main.getByRole("searchbox", { name: /Buscar por RFC/ }).fill("EKU9003173C9");
 	const cancelar = main.getByRole("button", { name: /^Cancelar la factura / }).first();
@@ -117,6 +125,6 @@ test("cuenta de $100.01 entre 3 con efectivo y tarjeta, factura desde caja, emis
 	await dialogo.getByLabel("Motivo").selectOption("02");
 	await captura(page, "web-factura-3-cancelar");
 	await dialogo.getByRole("button", { name: "Cancelar factura" }).click();
-	await expect(page.getByText(/Factura .* cancelada/)).toBeVisible({ timeout: 30_000 });
+	await expect(page.getByText(/Factura .* cancelada/).first()).toBeVisible({ timeout: 30_000 });
 	await captura(page, "web-factura-4-cancelada");
 });
