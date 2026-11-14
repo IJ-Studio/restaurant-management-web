@@ -10,7 +10,7 @@ test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de produ
 const CLAVE = "elquijote:preferencias";
 const ID = "c0c1a000-0000-4000-8000-000000000001";
 const COMANDAS = [
-	{ id: ID, customer: "Ana", table: "Mesa 3", time: "20:10", status: "abierta", total: 300, items: [{ nombre: "Enchiladas suizas", cantidad: 2 }] },
+	{ id: ID, customer: "Ana", table: "Mesa 3", time: "20:10", status: "abierta", total: 300, items: [{ nombre: "Enchiladas suizas", cantidad: 2, notas: "Sin crema" }], notasCocina: "Alérgico a la nuez" },
 	{ id: "c0c1a000-0000-4000-8000-000000000002", customer: "Luis", table: "Mesa 5", time: "20:05", status: "lista", total: 120, items: [{ nombre: "Sopa de tortilla", cantidad: 1 }] },
 ];
 const INVENTARIO = [
@@ -70,6 +70,14 @@ test("avanzar una comanda de nueva a en preparación y a lista con el mismo PATC
 		{ id: ID, estatus: "lista" },
 	]);
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("lista");
+	await contexto.close();
+});
+
+test("las notas por platillo y la nota general llegan a la comanda", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const comanda = page.locator("main").getByRole("list", { name: /^Platos de la comanda/ }).first().locator("..");
+	await expect(comanda).toContainText("Nota: Sin crema");
+	await expect(comanda).toContainText("Nota para cocina: Alérgico a la nuez");
 	await contexto.close();
 });
 

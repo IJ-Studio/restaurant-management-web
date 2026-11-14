@@ -40,7 +40,9 @@ interface Comanda {
 	table: string;
 	time: string;
 	status: string | null;
-	items: { nombre: string; cantidad: number }[];
+	items: { nombre: string; cantidad: number; notas?: string | null }[];
+	/** Nota general para cocina (API #155; antes no venía). */
+	notasCocina?: string | null;
 }
 interface Producto {
 	id: number;
@@ -78,9 +80,15 @@ function TarjetaComanda({ pedido, accion, ocupado, alAvanzar }: { pedido: Comand
 					<li key={`${it.nombre}-${i}`} className="text-(length:--texto-titulo-interfaz) text-texto-principal">
 						<span className="me-2 font-semibold cifras-consola">{`${it.cantidad} ×`}</span>
 						{it.nombre}
+						{it.notas && <span className="block text-(length:--texto-pequeno) text-aviso">{`Nota: ${it.notas}`}</span>}
 					</li>
 				))}
 			</ul>
+			{pedido.notasCocina && (
+				<p className="m-0 rounded-control border border-aviso px-3 py-2 text-aviso">
+					<strong>Nota para cocina:</strong> {pedido.notasCocina}
+				</p>
+			)}
 			{accion ? (
 				<Boton className="min-h-14 w-full" cargando={ocupado} aria-label={`${accion} la comanda ${folio(pedido.id)}`} onClick={alAvanzar}>
 					{accion}
