@@ -124,6 +124,12 @@ Hecho en la web: correo en reservaciones (#21), importar carta con vista previa 
 «Deshabilitados» y «Sin imagen» (#18), personal inactivo visible (#19), checkout con sesión (#20),
 índice fijo en la carta y menú de categorías en la del admin (#23, #24).
 
-Sigue pendiente (sección 4 y análisis del 13-nov): en la web, cobro con cuenta separada y propina por
-porcentaje, notas por platillo, incidencias de cocina, cancelar pedido, reservaciones del mesero y
-corte con diferencia en vivo; en la móvil, inventario/proveedores, promociones y reportes.
+Después, la web adoptó lo de la sección 4 (13-nov, #26–#39): cuentas en servicio y cobro por
+adelantado, cuenta dividida en partes iguales, referencia de terminal y propina por porcentaje, notas
+por platillo y generales en sala y cocina, incidencias de cocina, cancelar un pedido en sus primeros
+2 minutos, reservaciones de hoy para el mesero, el admin atiende pedidos desde Inicio, corte con
+diferencia en vivo, tiempo real con el flujo de eventos del API y los mismos textos de acciones
+(«Empezar a preparar», «Marcar como lista», «Entregar en la mesa»).
+
+Sigue pendiente: en la móvil, inventario/proveedores, promociones y reportes (se usan desde la web);
+cuenta dividida por platillo en la web (la móvil la tiene).
