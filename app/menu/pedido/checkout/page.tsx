@@ -18,7 +18,7 @@ import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { formatearPrecio } from "@/lib/formato/precio";
-import { api } from "@/lib/api";
+import { api, mensajeDeError } from "@/lib/api";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaDatosFiscales, esquemaDireccionEnvio } from "@/lib/validacion/formularios";
@@ -189,7 +189,7 @@ function Asistente() {
 					setDireccionSeleccionadaId(guardada.id);
 				} catch (e) {
 					registrarError(e, "checkout: guardar dirección");
-					setError("No pudimos guardar la dirección. Inténtalo de nuevo o desmarca «Guardar esta dirección».");
+					setError(mensajeDeError(e, "No pudimos guardar la dirección. Inténtalo de nuevo o desmarca «Guardar esta dirección»."));
 					setProcesando(false);
 					return;
 				}
@@ -210,14 +210,14 @@ function Asistente() {
 				try {
 					const { clientSecret } = await api.post<{ clientSecret: string }>("/metodos-pago/setup-intent").catch((e) => {
 						registrarError(e, "checkout: setup-intent");
-						throw new Error("No pudimos preparar el guardado de la tarjeta.");
+						throw new Error(mensajeDeError(e, "No pudimos preparar el guardado de la tarjeta."));
 					});
 					const result = await stripe!.confirmCardSetup(clientSecret, { payment_method: { card: elements!.getElement(CardElement)! } });
 					// El mensaje de Stripe es para la persona («Tu tarjeta fue rechazada»).
 					if (result.error) throw new Error(result.error.message || "No pudimos validar la tarjeta.");
 					const nuevoMetodo = await api.post<any>("/metodos-pago", { paymentMethodId: result.setupIntent!.payment_method }).catch((e) => {
 						registrarError(e, "checkout: guardar método");
-						throw new Error("No pudimos guardar la tarjeta.");
+						throw new Error(mensajeDeError(e, "No pudimos guardar la tarjeta."));
 					});
 					setMetodosGuardados((prev) => [...prev, nuevoMetodo]);
 					setMetodoSeleccionadoId(nuevoMetodo.id);
@@ -248,7 +248,7 @@ function Asistente() {
 
 			const { clientSecret, status } = await api.post<{ clientSecret: string; status: string }>("/pagos/crear-intento", body).catch((e) => {
 				registrarError(e, "checkout: crear intento");
-				throw new Error("No pudimos iniciar el pago. Inténtalo de nuevo en un momento.");
+				throw new Error(mensajeDeError(e, "No pudimos iniciar el pago. Inténtalo de nuevo en un momento."));
 			});
 
 			// Con tarjeta guardada (off_session) el backend puede haber confirmado ya el pago.
@@ -340,8 +340,11 @@ function Asistente() {
 					/>
 				)}
 				{pasoActual === 3 && <PasoFacturacion requiereFactura={requiereFactura} onCambiarRequiere={setRequiereFactura} datos={datosFiscales} onCambiarDatos={setDatosFiscales} errores={errores} />}
-				{pasoActual === 4 && (
-					<PasoPago metodos={metodosGuardados} seleccionadoId={metodoSeleccionadoId} onSeleccionar={setMetodoSeleccionadoId} guardarTarjeta={guardarTarjeta} onCambiarGuardarTarjeta={setGuardarTarjeta} />
+				{/* Montado también al confirmar: `confirmCardPayment` necesita el CardElement vivo (si se desmonta, getElement da null). */}
+				{(pasoActual === 4 || pasoActual === 5) && (
+					<div hidden={pasoActual !== 4} className={pasoActual === 4 ? "contents" : undefined}>
+						<PasoPago metodos={metodosGuardados} seleccionadoId={metodoSeleccionadoId} onSeleccionar={setMetodoSeleccionadoId} guardarTarjeta={guardarTarjeta} onCambiarGuardarTarjeta={setGuardarTarjeta} oculto={pasoActual !== 4} />
+					</div>
 				)}
 				{pasoActual === 5 && <PasoConfirmar orden={orden} direccion={direccionElegida} requiereFactura={requiereFactura} datosFiscales={datosFiscales} metodo={metodoElegido} />}
 				{pasoActual === 5 && (
@@ -546,11 +549,12 @@ function useEstiloTarjeta(): StripeCardElementOptions {
 	}, [preferencias.tema]);
 }
 
-function PasoPago({ metodos, seleccionadoId, onSeleccionar, guardarTarjeta, onCambiarGuardarTarjeta }: any) {
+function PasoPago({ metodos, seleccionadoId, onSeleccionar, guardarTarjeta, onCambiarGuardarTarjeta, oculto = false }: any) {
 	const estilo = useEstiloTarjeta();
 	return (
 		<>
-			<TituloPaso>¿Cómo quieres pagar?</TituloPaso>
+			{/* Oculto (paso de confirmación) no pinta su título: el id «paso-titulo» es del paso visible. */}
+			{!oculto && <TituloPaso>¿Cómo quieres pagar?</TituloPaso>}
 			<fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
 				<legend className="solo-lectores">Método de pago</legend>
 				{metodos.map((m: any) => (
