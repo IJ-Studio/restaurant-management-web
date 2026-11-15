@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FileDown } from "lucide-react";
+import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { MigasDePan } from "@/components/ui/MigasDePan";
@@ -24,6 +25,7 @@ export const dynamic = "force-dynamic";
 function Confirmacion() {
 	const searchParams = useSearchParams();
 	const ordenId = searchParams?.get("ordenId");
+	const facturaNoRegistrada = searchParams?.get("factura") === "no-registrada";
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- la factura del API no tiene contrato tipado (NP-17)
 	const [factura, setFactura] = useState<any>(null);
 	const [buscando, setBuscando] = useState(Boolean(ordenId));
@@ -59,6 +61,11 @@ function Confirmacion() {
 			<p className="m-0 max-w-[44ch] text-(length:--texto-entradilla) leading-[1.6] text-texto-secundario [text-wrap:pretty]">
 				Ya lo estamos preparando. Puedes seguir su estado desde tu pedido.
 			</p>
+			{facturaNoRegistrada && (
+				<Aviso tono="aviso" titulo="No pudimos registrar tu solicitud de factura">
+					Tu pago sí quedó. Pídenos la factura por teléfono o en caja con el número de tu pedido: {ordenId}.
+				</Aviso>
+			)}
 			{buscando ? (
 				<CargadorMarca tamano="compacto" texto="Buscando tu factura…" />
 			) : factura ? (
