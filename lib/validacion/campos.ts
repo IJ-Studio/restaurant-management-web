@@ -31,10 +31,10 @@ import {
 	phoneRegex,
 	emailRegex,
 	emailNavegadorRegex,
-	letters,
-	haveAnVowel,
-	noRepeatMoreThreeTimes,
-	noRepeatConsonantsMoreThreeTimes,
+	NAME_MIN_LENGTH,
+	NOMBRE_PERSONA,
+	LADAS,
+	digitosDeLada,
 	length,
 	lowercase,
 	uppercase,
@@ -55,8 +55,10 @@ export const MENSAJES = {
 	accesoIncorrecto: "Correo o contraseña incorrectos.",
 	correo: "Ingresa un correo electrónico válido.",
 	correoVacio: "Escribe tu correo electrónico.",
-	nombre: "Solo letras: máximo 30 por palabra y 50 en total.",
-	telefono: "Debe contener 10 dígitos.",
+	// Mismos textos que el API (src/common/validacion/campos.ts).
+	nombre: "Escribe el nombre: solo letras, espacios, guion o apóstrofo (2 a 60).",
+	nombreReserva: "Escribe el nombre de quien reserva: solo letras, espacios, guion o apóstrofo (2 a 120).",
+	telefono: "Escribe un teléfono válido: 10 dígitos en México o de 6 a 12 con otra lada.",
 	contrasenaRequisitos: "La contraseña no cumple todos los requisitos.",
 	contrasenaSecuencia: "La contraseña contiene secuencias predecibles.",
 	contrasenaPersonal: "La contraseña contiene información personal.",
@@ -97,28 +99,18 @@ export const textoLibre = (max = LONGITUD_MAXIMA_ENTRADA) =>
 // ─── Nombre ────────────────────────────────────────────────────────────────────────────────
 
 /** La regla de nombre del registro, sobre el texto ya saneado. */
-export function esNombreValido(nombre: string): boolean {
-	if (!nombre || nombre.length > NAME_MAX_LENGTH) return false;
-	const partes = nombre.split(" ");
-	if (partes.length < 1 || partes.length > 2) return false;
-	return partes.every(
-		(p) =>
-			letters.test(p) &&
-			haveAnVowel.test(p) &&
-			!noRepeatMoreThreeTimes.test(p) &&
-			!noRepeatConsonantsMoreThreeTimes.test(p),
-	);
+export function esNombreValido(nombre: string, max: number = NAME_MAX_LENGTH): boolean {
+	return nombre.length >= NAME_MIN_LENGTH && nombre.length <= max && NOMBRE_PERSONA.test(nombre);
 }
 
-/** Nombre o apellido del registro (HU-01): una o dos palabras, solo letras, 50 en total. */
-export const nombrePersona = (vacio: string) =>
+export const nombrePersona = (vacio: string, max: number = NAME_MAX_LENGTH, mensaje: string = MENSAJES.nombre) =>
 	textoCrudo(vacio)
 		.transform(sanearNombre)
 		.pipe(
 			z
 				.string()
 				.min(1, { error: vacio, abort: true })
-				.refine(esNombreValido, { error: MENSAJES.nombre }),
+				.refine((v) => esNombreValido(v, max), { error: mensaje }),
 		);
 
 // ─── Correo ────────────────────────────────────────────────────────────────────────────────
@@ -184,10 +176,27 @@ export const telefono = textoCrudo(MENSAJES.telefono)
 	.pipe(z.string().regex(phoneRegex, { error: MENSAJES.telefono }));
 
 /** Lada del registro: hoy la única opción es +52. */
-export const lada = z.literal(LADA_MEXICO, { error: "Elige una lada válida." });
+export const lada = z.string({ error: "Elige una lada válida." }).refine((v) => LADAS.some((l) => l.valor === v), { error: "Elige una lada válida." });
 
 /** Teléfono completo con lada, como lo espera el API del registro (`+52` + 10 dígitos). */
 export const telefonoConLada = (diezDigitos: string) => `${LADA_MEXICO}${diezDigitos}`;
+
+/** Error del teléfono nacional para esa lada, o `null` si vale (DV-05). */
+export function errorTelefono(lada: string, valor: string): string | null {
+	const digitos = soloDigitos(valor);
+	const { min, max } = digitosDeLada(lada);
+	return LADAS.some((l) => l.valor === lada) && digitos.length >= min && digitos.length <= max ? null : MENSAJES.telefono;
+}
+
+/** Lada + número nacional → E.164 (`+527711234567`). */
+export const aE164 = (lada: string, valor: string) => `${lada}${soloDigitos(valor)}`;
+
+/** E.164 guardado → lada conocida y número nacional, para rellenar el formulario. */
+export function separarTelefono(e164: string | null | undefined): { lada: string; telefono: string } {
+	const limpio = (e164 ?? "").replace(/[^\d+]/g, "");
+	const lada = [...LADAS].sort((a, b) => b.valor.length - a.valor.length).find((l) => limpio.startsWith(l.valor));
+	return lada ? { lada: lada.valor, telefono: limpio.slice(lada.valor.length) } : { lada: LADA_MEXICO, telefono: limpio.replace(/^\+/, "") };
+}
 
 // ─── Contraseña ────────────────────────────────────────────────────────────────────────────
 

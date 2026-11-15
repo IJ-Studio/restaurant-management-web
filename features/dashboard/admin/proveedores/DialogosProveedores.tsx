@@ -12,6 +12,7 @@ import type { OrderItem, OrderStatus, Product, PurchaseOrder, Supplier } from "@
 import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
 import { correoBasicoOpcional } from "@/lib/validacion/campos";
+import { LIMITES_CAMPO } from "@/lib/validacion/reglas";
 
 /**
  * Diálogos de proveedores y órdenes de compra (PLAN 5.8). Sustituyen a `SupplierModal` y
@@ -107,7 +108,7 @@ export function DialogoProveedor({ proveedor, disparador, alGuardar }: { proveed
 				<div className="grid grid-cols-1 gap-(--espacio-md) sm:grid-cols-2">
 					<Campo etiqueta="Nombre" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} error={d.errores.name} maxLength={120} autoComplete="off" />
 					<Campo etiqueta="Persona de contacto" opcional value={f.contact} onChange={(e) => setF({ ...f, contact: e.target.value })} maxLength={120} autoComplete="off" />
-					<Campo etiqueta="Correo" opcional type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} error={d.errores.email} autoComplete="off" />
+					<Campo maxLength={LIMITES_CAMPO.correo} etiqueta="Correo" opcional type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} error={d.errores.email} autoComplete="off" />
 					<Campo etiqueta="Teléfono" opcional type="tel" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} maxLength={20} autoComplete="off" />
 					<Campo etiqueta="Categoría" opcional value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })} maxLength={60} ayuda="Carnes, verduras, bebidas…" />
 					<Campo etiqueta="Sitio web" opcional type="url" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} maxLength={200} autoComplete="off" />

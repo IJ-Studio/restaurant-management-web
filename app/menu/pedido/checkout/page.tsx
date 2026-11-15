@@ -24,6 +24,7 @@ import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaDatosFiscales, esquemaDireccionEnvio } from "@/lib/validacion/formularios";
 import { cn } from "@/lib/utils";
 import { REGIMENES_FISCALES, USOS_CFDI } from "@/lib/facturacion/catalogos";
+import { LIMITES_CAMPO } from "@/lib/validacion/reglas";
 
 /**
  * Pago del pedido a domicilio (`/menu/pedido/checkout`, PLAN 4.14). La lógica no cambia: la
@@ -468,12 +469,12 @@ function PasoDireccion({ direcciones, seleccionadaId, onSeleccionar, nuevaDirecc
 
 			{seleccionadaId === "nueva" && (
 				<div className="grid gap-(--espacio-md) sm:grid-cols-2">
-					<Campo etiqueta="Nombre de la dirección" ayuda="Casa, oficina…" value={nuevaDireccion.alias} onChange={cambiar("alias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.alias} />
-					<Campo etiqueta="Calle y número" value={nuevaDireccion.linea1} onChange={cambiar("linea1")} autoComplete="address-line1" className="sm:col-span-2" error={errores.linea1} />
-					<Campo etiqueta="Interior, piso o depto." value={nuevaDireccion.linea2} onChange={cambiar("linea2")} opcional autoComplete="address-line2" className="sm:col-span-2" error={errores.linea2} />
-					<Campo etiqueta="Colonia" value={nuevaDireccion.colonia} onChange={cambiar("colonia")} autoComplete="address-level3" error={errores.colonia} />
-					<Campo etiqueta="Ciudad" value={nuevaDireccion.ciudad} onChange={cambiar("ciudad")} autoComplete="address-level2" error={errores.ciudad} />
-					<Campo etiqueta="Estado" value={nuevaDireccion.estado} onChange={cambiar("estado")} autoComplete="address-level1" error={errores.estado} />
+					<Campo maxLength={LIMITES_CAMPO.alias} etiqueta="Nombre de la dirección" ayuda="Casa, oficina…" value={nuevaDireccion.alias} onChange={cambiar("alias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.alias} />
+					<Campo maxLength={LIMITES_CAMPO.lineaCorta} etiqueta="Calle y número" value={nuevaDireccion.linea1} onChange={cambiar("linea1")} autoComplete="address-line1" className="sm:col-span-2" error={errores.linea1} />
+					<Campo maxLength={LIMITES_CAMPO.lineaMedia} etiqueta="Interior, piso o depto." value={nuevaDireccion.linea2} onChange={cambiar("linea2")} opcional autoComplete="address-line2" className="sm:col-span-2" error={errores.linea2} />
+					<Campo maxLength={LIMITES_CAMPO.lineaMedia} etiqueta="Colonia" value={nuevaDireccion.colonia} onChange={cambiar("colonia")} autoComplete="address-level3" error={errores.colonia} />
+					<Campo maxLength={LIMITES_CAMPO.lineaMedia} etiqueta="Ciudad" value={nuevaDireccion.ciudad} onChange={cambiar("ciudad")} autoComplete="address-level2" error={errores.ciudad} />
+					<Campo maxLength={LIMITES_CAMPO.lineaMedia} etiqueta="Estado" value={nuevaDireccion.estado} onChange={cambiar("estado")} autoComplete="address-level1" error={errores.estado} />
 					<Campo
 						etiqueta="Código postal"
 						codigo
@@ -484,7 +485,7 @@ function PasoDireccion({ direcciones, seleccionadaId, onSeleccionar, nuevaDirecc
 						onChange={(e) => onCambiarNuevaDireccion({ ...nuevaDireccion, codigoPostal: e.target.value.replace(/\D/g, "") })}
 						error={errores.codigoPostal}
 					/>
-					<Campo etiqueta="Referencias" ayuda="Entre qué calles, color de la fachada…" value={nuevaDireccion.referencias} onChange={cambiar("referencias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.referencias} />
+					<Campo maxLength={LIMITES_CAMPO.referencias} etiqueta="Referencias" ayuda="Entre qué calles, color de la fachada…" value={nuevaDireccion.referencias} onChange={cambiar("referencias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.referencias} />
 					<Casilla etiqueta="Guardar esta dirección para otras compras" checked={guardar} onChange={(e) => onCambiarGuardar(e.target.checked)} className="sm:col-span-2" />
 				</div>
 			)}
@@ -501,7 +502,7 @@ function PasoFacturacion({ requiereFactura, onCambiarRequiere, datos, onCambiarD
 			{requiereFactura && (
 				<div className="grid gap-(--espacio-md) sm:grid-cols-2">
 					<Campo etiqueta="RFC" codigo autoComplete="off" value={datos.rfc} onChange={cambiar("rfc", (v) => v.toUpperCase())} maxLength={13} error={errores.rfc} />
-					<Campo etiqueta="Razón social" autoComplete="organization" value={datos.razonSocial} onChange={cambiar("razonSocial")} error={errores.razonSocial} />
+					<Campo maxLength={LIMITES_CAMPO.razonSocial} etiqueta="Razón social" autoComplete="organization" value={datos.razonSocial} onChange={cambiar("razonSocial")} error={errores.razonSocial} />
 					<Selector etiqueta="Uso del CFDI" opciones={USOS_CFDI} value={datos.usoCfdi} onChange={cambiar("usoCfdi")} error={errores.usoCfdi} />
 					<Selector etiqueta="Régimen fiscal" marcador="Elige tu régimen fiscal" opciones={REGIMENES_FISCALES} value={datos.regimenFiscal} onChange={cambiar("regimenFiscal")} error={errores.regimenFiscal} />
 					<Campo
@@ -514,7 +515,7 @@ function PasoFacturacion({ requiereFactura, onCambiarRequiere, datos, onCambiarD
 						onChange={cambiar("codigoPostalFiscal", (v) => v.replace(/\D/g, ""))}
 						error={errores.codigoPostalFiscal}
 					/>
-					<Campo etiqueta="Correo para enviarte la factura" type="email" inputMode="email" autoComplete="email" opcional value={datos.email} onChange={cambiar("email")} error={errores.email} />
+					<Campo maxLength={LIMITES_CAMPO.correo} etiqueta="Correo para enviarte la factura" type="email" inputMode="email" autoComplete="email" opcional value={datos.email} onChange={cambiar("email")} error={errores.email} />
 				</div>
 			)}
 		</>

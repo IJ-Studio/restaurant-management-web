@@ -1,4 +1,7 @@
 import { test, expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { MENSAJES } from "@/lib/validacion/campos";
+import { EMAIL_MAX_LENGTH, LIMITES_CAMPO, NAME_MAX_LENGTH, NOMBRE_COMPLETO_MAX_LENGTH, NOMBRE_PERSONA } from "@/lib/validacion/reglas";
+import { LIMITES_RESERVA } from "@/lib/validacion/formularios";
 
 // Flujos públicos de punta a punta contra el API local real, sin simular respuestas (ver
 // playwright.integracion.config.ts): pedido desde la ficha del platillo con la sesión del cliente,
@@ -45,7 +48,7 @@ test.beforeAll(async ({ browser }) => {
 	reglas = (await (await fetch(`${API}/reglas`)).json()) as Reglas;
 	const especiales = new Set(reglas.diasEspeciales.map((d) => d.fecha));
 	// Un día abierto lejano y distinto en cada corrida: no choca con reservas anteriores.
-	for (let n = 30 + Math.floor(Math.random() * 300); ; n++) {
+	for (let n = 7 + Math.floor(Math.random() * 45); ; n++) {
 		const f = new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 		const dia = reglas.horario.find((h) => h.dia === new Date(`${f}T12:00:00Z`).getUTCDay());
 		if (dia && !dia.cerrado && !especiales.has(f)) {
@@ -69,6 +72,25 @@ test.beforeAll(async ({ browser }) => {
 async function conSesion(browser: Browser) {
 	return (await browser.newContext({ storageState: sesion })).newPage();
 }
+
+test("paridad: límites, patrón y textos de la web son los de GET /reglas", async () => {
+	const { campos } = (await (await fetch(`${API}/reglas`)).json()) as {
+		campos: { limites: Record<string, number>; patrones: Record<string, string>; mensajes: Record<string, string> };
+	};
+	expect(NAME_MAX_LENGTH).toBe(campos.limites.nombrePersona);
+	expect(NOMBRE_COMPLETO_MAX_LENGTH).toBe(campos.limites.nombreCompleto);
+	expect(EMAIL_MAX_LENGTH).toBe(campos.limites.correo);
+	expect(LIMITES_CAMPO.notas).toBe(campos.limites.notas);
+	expect(LIMITES_CAMPO.referencias).toBe(campos.limites.referencias);
+	expect(LIMITES_CAMPO.alias).toBe(campos.limites.alias);
+	expect(LIMITES_CAMPO.razonSocial).toBe(campos.limites.razonSocial);
+	expect(LIMITES_RESERVA.ocasion).toBe(campos.limites.ocasion);
+	expect(NOMBRE_PERSONA.source).toBe(campos.patrones.nombrePersona);
+	expect(MENSAJES.nombre).toBe(campos.mensajes.nombre);
+	expect(MENSAJES.nombreReserva).toBe(campos.mensajes.nombreReserva);
+	expect(MENSAJES.correo).toBe(campos.mensajes.correo);
+	expect(MENSAJES.telefono).toBe(campos.mensajes.telefono);
+});
 
 test.describe("pedido desde la ficha del platillo", () => {
 	let platillo: number;

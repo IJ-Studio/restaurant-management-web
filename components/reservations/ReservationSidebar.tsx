@@ -8,7 +8,8 @@ import { AnuncioFormulario } from "@/components/ui/AnuncioFormulario";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import Link from "next/link";
-import { AreaTexto, Campo } from "@/components/ui/Campo";
+import { AreaTexto, Campo, Selector } from "@/components/ui/Campo";
+import { aE164, EMAIL_MAX_LENGTH, LADA_MEXICO, LADAS, NOMBRE_COMPLETO_MAX_LENGTH, separarTelefono } from "@/lib/validacion/campos";
 import { Casilla } from "@/components/ui/Casilla";
 import { CampoTrampa } from "@/components/ui/CampoTrampa";
 import { CargadorMarca } from "@/components/marca/CargadorMarca";
@@ -18,9 +19,11 @@ import { mensajeDeError } from "@/lib/api";
 import { useEnvioFormulario } from "@/hooks/useEnvioFormulario";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
-import { crearEsquemaReservaHorario, esquemaReservaContacto, esquemaReservaMesa } from "@/lib/validacion/formularios";
+import { crearEsquemaReservaHorario, esquemaReservaContacto, esquemaReservaMesa, LIMITES_RESERVA } from "@/lib/validacion/formularios";
 import { cn } from "@/lib/utils";
 import TableMap from "./TableMap";
+import SelectorDiaHora, { instanteDelRestaurante, textoAnticipacion } from "./SelectorDiaHora";
+import { useReglas } from "@/hooks/useReglas";
 
 /**
  * Formulario de reserva (PLAN 4.16): el mismo flujo de cuatro pasos (contacto, cuándo, mesa en el
@@ -48,18 +51,18 @@ const fechaLegible = (fecha: string, hora: string) => {
 };
 
 export default function ReservationForm({ onSuccess }: Props) {
-	const today = new Date().toISOString().split("T")[0];
 	const [step, setStep] = useState(1);
 	const [isLogged, setIsLogged] = useState(false);
 	const [checkingSession, setCheckingSession] = useState(true);
 	const [selectedTableId, setSelectedTableId] = useState<number | undefined>(undefined);
 	const [formData, setFormData] = useState({
 		clienteNombre: "",
+		lada: LADA_MEXICO,
 		clienteTelefono: "",
 		clienteEmail: "",
 		privacidad: false,
-		fecha: today,
-		hora: "13:00",
+		fecha: "",
+		hora: "",
 		numComensales: 2,
 		peticionesEspeciales: "",
 		ocasion: "",
@@ -79,7 +82,11 @@ export default function ReservationForm({ onSuccess }: Props) {
 							...prev,
 							clienteNombre: `${data.user.name || ""} ${data.user.lastname || ""}`.trim(),
 							clienteEmail: data.user.email || "",
-							clienteTelefono: data.user.phone || "",
+							// La cuenta guarda E.164 (+527711234567): se separa en lada y número.
+							...(() => {
+								const { lada, telefono } = separarTelefono(data.user.phone);
+								return { lada, clienteTelefono: telefono };
+							})(),
 						}));
 						setIsLogged(true);
 						setStep(1);
@@ -93,6 +100,7 @@ export default function ReservationForm({ onSuccess }: Props) {
 		})();
 	}, []);
 
+	const { reglas, fallo: falloReglas } = useReglas();
 	const targetFechaHora = `${formData.fecha}T${formData.hora}`;
 
 	const validateStep = (paso: number) => {
@@ -100,7 +108,7 @@ export default function ReservationForm({ onSuccess }: Props) {
 			paso === 1
 				? erroresDe(esquemaReservaContacto.safeParse(formData))
 				: paso === 2
-					? erroresDe(crearEsquemaReservaHorario().safeParse(formData))
+					? erroresDe(crearEsquemaReservaHorario(reglas?.reservas.comensalesMax).safeParse(formData))
 					: paso === 3
 						? Object.fromEntries(Object.entries(erroresDe(esquemaReservaMesa.safeParse({ mesaId: selectedTableId }))).map(([, v]) => ["mesa", v]))
 						: {};
@@ -125,9 +133,10 @@ export default function ReservationForm({ onSuccess }: Props) {
 			try {
 				const res = await createReservation({
 					clienteNombre: formData.clienteNombre,
-					clienteTelefono: formData.clienteTelefono,
+					clienteTelefono: aE164(formData.lada, formData.clienteTelefono),
 					clienteEmail: formData.clienteEmail,
-					fechaHora: new Date(`${formData.fecha}T${formData.hora}:00`).toISOString(),
+					// Hora del restaurante, no la del navegador de quien reserva.
+					fechaHora: instanteDelRestaurante(formData.fecha, formData.hora, reglas?.utcOffsetMin ?? -360),
 					numComensales: Number(formData.numComensales),
 					mesaId: selectedTableId,
 					peticionesEspeciales: formData.peticionesEspeciales,
@@ -195,9 +204,12 @@ export default function ReservationForm({ onSuccess }: Props) {
 			{step === 1 && (
 				<div className="flex flex-col gap-(--espacio-md)">
 					<TituloPaso texto={isLogged ? "Confirma tus datos" : "¿A nombre de quién?"} ayuda={isLogged ? "Los tomamos de tu cuenta; cámbialos si hace falta." : "O inicia sesión y los rellenamos por ti."} />
-					<Campo etiqueta="Nombre completo" autoComplete="name" value={formData.clienteNombre} onChange={cambiar("clienteNombre")} error={errors.clienteNombre} />
-					<Campo etiqueta="Teléfono" type="tel" inputMode="tel" autoComplete="tel" value={formData.clienteTelefono} onChange={cambiar("clienteTelefono")} error={errors.clienteTelefono} />
-					<Campo etiqueta="Correo" type="email" inputMode="email" autoComplete="email" value={formData.clienteEmail} onChange={cambiar("clienteEmail")} error={errors.clienteEmail} />
+					<Campo etiqueta="Nombre completo" autoComplete="name" maxLength={NOMBRE_COMPLETO_MAX_LENGTH} value={formData.clienteNombre} onChange={cambiar("clienteNombre")} error={errors.clienteNombre} />
+					<div className="grid gap-(--espacio-md) sm:grid-cols-[minmax(0,13rem)_1fr]">
+						<Selector etiqueta="Lada" autoComplete="tel-country-code" opciones={[...LADAS]} value={formData.lada} onChange={(e) => setFormData((f) => ({ ...f, lada: e.target.value }))} error={errors.lada} />
+						<Campo etiqueta="Teléfono" type="tel" inputMode="numeric" autoComplete="tel-national" maxLength={15} ayuda="Sin la lada. En México, 10 dígitos." value={formData.clienteTelefono} onChange={cambiar("clienteTelefono")} error={errors.clienteTelefono} />
+					</div>
+					<Campo etiqueta="Correo" type="email" inputMode="email" autoComplete="email" maxLength={EMAIL_MAX_LENGTH} value={formData.clienteEmail} onChange={cambiar("clienteEmail")} error={errors.clienteEmail} />
 					{/* D-36: aviso de privacidad simplificado, con la casilla desmarcada. */}
 					<Casilla
 						etiqueta={
@@ -224,21 +236,36 @@ export default function ReservationForm({ onSuccess }: Props) {
 			{step === 2 && (
 				<div className="flex flex-col gap-(--espacio-md)">
 					<TituloPaso texto="¿Cuándo nos visitas?" ayuda={isLogged && formData.clienteNombre ? `${formData.clienteNombre.split(" ")[0]}, elige día, hora y cuántos seréis.` : "Elige día, hora y cuántos seréis."} />
-					<div className="grid gap-(--espacio-md) sm:grid-cols-2">
-						<Campo etiqueta="Fecha" type="date" min={today} value={formData.fecha} onChange={cambiar("fecha")} error={errors.fecha} />
-						<Campo etiqueta="Hora" type="time" value={formData.hora} onChange={cambiar("hora")} error={errors.hora} />
-					</div>
+					{reglas && <Aviso tono="info">{textoAnticipacion(reglas.reservas.anticipacionMin)}</Aviso>}
 					<Campo
 						etiqueta="Comensales"
 						type="number"
 						inputMode="numeric"
 						min={1}
+						max={reglas?.reservas.comensalesMax}
 						value={formData.numComensales}
 						onChange={(e) => setFormData({ ...formData, numComensales: parseInt(e.target.value) || 1 })}
 						error={errors.numComensales}
 					/>
-					<Campo etiqueta="Ocasión" opcional ayuda="Aniversario, cumpleaños, comida de trabajo…" value={formData.ocasion} onChange={cambiar("ocasion")} error={errors.ocasion} />
-					<AreaTexto etiqueta="Peticiones especiales" opcional ayuda="Silla para niños, alergias…" rows={3} value={formData.peticionesEspeciales} onChange={cambiar("peticionesEspeciales")} error={errors.peticionesEspeciales} />
+					{falloReglas ? (
+						<Aviso tono="error" titulo="No pudimos ver los horarios">
+							Inténtalo de nuevo en un momento o llámanos.
+						</Aviso>
+					) : !reglas ? (
+						<CargadorMarca texto="Cargando horarios…" className="py-6" />
+					) : (
+						<SelectorDiaHora
+							reglas={reglas}
+							fecha={formData.fecha}
+							hora={formData.hora}
+							numComensales={formData.numComensales}
+							alCambiar={(cambio) => setFormData((f) => ({ ...f, ...cambio }))}
+							errorFecha={errors.fecha}
+							errorHora={errors.hora}
+						/>
+					)}
+					<Campo etiqueta="Ocasión" opcional ayuda="Aniversario, cumpleaños, comida de trabajo…" maxLength={LIMITES_RESERVA.ocasion} value={formData.ocasion} onChange={cambiar("ocasion")} error={errors.ocasion} />
+					<AreaTexto etiqueta="Peticiones especiales" opcional ayuda="Silla para niños, alergias…" rows={3} maxLength={LIMITES_RESERVA.peticiones} contador value={formData.peticionesEspeciales} onChange={cambiar("peticionesEspeciales")} error={errors.peticionesEspeciales} />
 					{botones(
 						<Boton variante="primario" onClick={nextStep}>
 							Ver mesas libres

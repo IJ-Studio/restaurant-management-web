@@ -21,6 +21,7 @@ import { destinoTrasLogin, esRutaInternaSegura, rutaConParametros } from "@/lib/
 import { olvidarSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaAcceso } from "@/lib/validacion/formularios";
 import { nombrePropio } from "@/lib/formato/caja";
+import { LIMITES_CAMPO } from "@/lib/validacion/reglas";
 
 /**
  * Iniciar sesión (`/login`, PLAN 4.17). La lógica no cambia: `POST /api/auth/login`, el token en
@@ -148,7 +149,7 @@ export default function PaginaAcceso() {
 							</Aviso>
 						)}
 						{mensajeError && <Aviso tono="error">{mensajeError}</Aviso>}
-						<Campo
+						<Campo maxLength={LIMITES_CAMPO.correo}
 							id="email"
 							name="email"
 							etiqueta="Correo"
@@ -159,7 +160,7 @@ export default function PaginaAcceso() {
 							onChange={(e) => setEmail(e.target.value)}
 							error={errores.email}
 						/>
-						<Campo
+						<Campo maxLength={LIMITES_CAMPO.contrasenaAcceso}
 							id="password"
 							name="password"
 							etiqueta="Contraseña"

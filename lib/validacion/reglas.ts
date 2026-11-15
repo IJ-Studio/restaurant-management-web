@@ -6,15 +6,47 @@
  * Son las reglas de hoy, alineadas con el API en HU-01; no se relajan sin acuerdo con el API (NP-06).
  */
 
-// Límites de las columnas de `users` y del DTO del API.
-export const NAME_MAX_LENGTH = 50;
-export const EMAIL_MAX_LENGTH = 100;
+// Límites del API (`GET /reglas` → campos.limites; docs/validaciones-publicas.md §2, DV-03 y DV-04).
+export const NAME_MIN_LENGTH = 2;
+export const NAME_MAX_LENGTH = 60;
+export const NOMBRE_COMPLETO_MAX_LENGTH = 120;
+export const EMAIL_MAX_LENGTH = 254;
+
+/** `maxLength` de cada tipo de campo de texto (DV-11); los mismos que `LIMITES` del API. */
+export const LIMITES_CAMPO = {
+	nombre: 60,
+	correo: 254,
+	telefono: 15,
+	contrasena: 64,
+	contrasenaAcceso: 128,
+	lineaCorta: 150,
+	lineaMedia: 100,
+	alias: 40,
+	referencias: 300,
+	notas: 500,
+	codigoPostal: 5,
+	rfc: 13,
+	razonSocial: 300,
+	buscador: 80,
+} as const;
 export const EMAIL_LOCAL_MAX_LENGTH = 64; // parte antes de la @ (límite del RFC que aplica el API)
 export const PASSWORD_MAX_LENGTH = 64;
 export const EMAIL_DOMAIN_LABEL_MAX_LENGTH = 63; // cada parte del dominio entre puntos (RFC 1035)
 
-// Teléfono: la única lada disponible es +52 (México), que son exactamente 10 dígitos.
+// Teléfono (DV-05): lada elegible, +52 por defecto; México son exactamente 10 dígitos y las demás
+// ladas de 6 a 12. Se envía en E.164 (`+52XXXXXXXXXX`), igual que lo guarda el API.
 export const LADA_MEXICO = "+52";
+export const LADAS = [
+	{ valor: "+52", texto: "México (+52)" },
+	{ valor: "+1", texto: "EE. UU. y Canadá (+1)" },
+	{ valor: "+502", texto: "Guatemala (+502)" },
+	{ valor: "+57", texto: "Colombia (+57)" },
+	{ valor: "+54", texto: "Argentina (+54)" },
+	{ valor: "+56", texto: "Chile (+56)" },
+	{ valor: "+51", texto: "Perú (+51)" },
+	{ valor: "+34", texto: "España (+34)" },
+] as const;
+export const digitosDeLada = (lada: string) => (lada === LADA_MEXICO ? { min: 10, max: 10 } : { min: 6, max: 12 });
 export const PHONE_DIGITS = 10;
 export const phoneRegex = /^\d{10}$/;
 
@@ -30,8 +62,11 @@ export const emailRegex =
 export const emailNavegadorRegex =
 	/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
-// Nombre: cada palabra solo con letras (1–30), con al menos una vocal y sin un carácter
-// repetido tres veces seguidas.
+// Nombre (DV-03): letras de cualquier alfabeto; espacio, guion o apóstrofo solo entre letras. Igual
+// que `NOMBRE_PERSONA` del API.
+export const NOMBRE_PERSONA = /^\p{L}+(?:[ '’-]\p{L}+)*$/u;
+
+// Heredadas (las reexporta utils/validators.tsx); ya no las usa ningún esquema.
 export const letters = /^[A-Za-záéíóúüñÁÉÍÓÚÜÑ]{1,30}$/;
 export const haveAnVowel = /[aeiouáéíóú]/i;
 export const noRepeatMoreThreeTimes = /(.)\1{2,}/;
