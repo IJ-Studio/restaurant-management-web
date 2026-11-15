@@ -38,7 +38,7 @@ async function pedidoPendiente() {
 	return ((await r.json()) as { ordenId: string }).ordenId;
 }
 
-async function hastaPagar(page: Page, ordenId: string, tarjeta: string) {
+async function hastaPagar(page: Page, ordenId: string, tarjeta: string, factura = false) {
 	await page.goto(`/menu/pedido/checkout?orderId=${ordenId}`);
 	const continuar = page.getByRole("button", { name: /^Continuar$/i });
 	await expect(page.locator("#paso-titulo")).toHaveText("Resumen de tu pedido", { timeout: 60_000 });
@@ -54,6 +54,15 @@ async function hastaPagar(page: Page, ordenId: string, tarjeta: string) {
 	}
 	await continuar.click();
 	await expect(page.locator("#paso-titulo")).toHaveText("Factura");
+	if (factura) {
+		// Público en general (RFC genérico del SAT), como la prueba de caja en el sandbox.
+		await page.getByRole("checkbox", { name: "Necesito factura de esta compra" }).check();
+		await page.getByLabel("RFC").fill("XAXX010101000");
+		await page.getByLabel("Razón social").fill("PUBLICO EN GENERAL");
+		await page.getByLabel("Uso del CFDI").selectOption("S01");
+		await page.getByLabel("Régimen fiscal").selectOption("616");
+		await page.getByLabel("Código postal fiscal").fill("43000");
+	}
 	await continuar.click();
 	await expect(page.locator("#paso-titulo")).toHaveText("¿Cómo quieres pagar?");
 	// Tarjeta nueva en el iframe de Stripe Elements (nunca pasa por la web ni por el API).
@@ -108,4 +117,29 @@ test("3D Secure (…3184): el banco pide autenticar y al aprobar se completa el 
 	}
 	await page.waitForURL(/\/menu\/pedido\/checkout\/exito/, { timeout: 60_000 });
 	await page.screenshot({ path: `${CAPTURAS}/pago-3ds-aprobado.png`, fullPage: true });
+});
+
+test("con «Necesito factura»: se paga y la solicitud queda en la cola del administrador", async ({ browser }) => {
+	// Cliente nuevo: el carrito del cliente de siempre sigue «pendiente» (sin webhook) y ya tiene solicitud.
+	const correo = `factura-${Date.now()}@prueba.local`;
+	const alta = await fetch(`${API}/auth/sign-up`, {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ name: "Fernanda", lastname: "Prueba", email: correo, phone: `+5277${String(Date.now()).slice(-8)}`, password: "Quijote#Mancha7", passwordConfirm: "Quijote#Mancha7" }),
+	});
+	expect(alta.status).toBeLessThan(300);
+	const page = await (await browser.newContext()).newPage();
+	await page.goto("/login");
+	await page.getByLabel("Correo").fill(correo);
+	await page.getByLabel("Contraseña").fill("Quijote#Mancha7");
+	await page.getByRole("button", { name: "Iniciar sesión" }).click();
+	await page.waitForURL((u) => !u.pathname.startsWith("/login"));
+	token = (await page.evaluate(() => localStorage.getItem("authToken")))!;
+	const ordenId = await pedidoPendiente();
+	await hastaPagar(page, ordenId, "4242 4242 4242 4242", true);
+	await page.waitForURL(/\/menu\/pedido\/checkout\/exito/, { timeout: 60_000 });
+	const r = await fetch(`${API}/solicitudes-factura/orden/${ordenId}`, { headers: { authorization: `Bearer ${token}` } });
+	expect(r.status).toBe(200);
+	expect(((await r.json()) as { estatus: string }).estatus).toBe("pendiente");
+	await page.screenshot({ path: `${CAPTURAS}/pago-con-factura.png`, fullPage: true });
 });
