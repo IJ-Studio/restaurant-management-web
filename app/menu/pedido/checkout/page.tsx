@@ -258,13 +258,15 @@ function Asistente() {
 				if (result.error) throw new Error(result.error.message || "El pago no se completó.");
 			}
 
-			if (requiereFactura) {
-				// Va a la cola (Fase 4.1): se registra aunque el webhook aún no confirme el pago, con la sesión del cliente.
-				await api
+			// Va a la cola (Fase 4.1) aunque el webhook aún no confirme el pago. El pago ya se hizo: si la
+			// solicitud falla no se bloquea, pero la página de éxito lo avisa.
+			const facturaRegistrada =
+				!requiereFactura ||
+				(await api
 					.post("/solicitudes-factura", { ordenId: orden.id, ...datosFiscales })
-					.catch((e) => registrarError(e, "checkout: solicitud de factura"));
-			}
-			router.push(`/menu/pedido/checkout/exito?ordenId=${orden.id}`);
+					.then(() => true)
+					.catch((e) => (registrarError(e, "checkout: solicitud de factura"), false)));
+			router.push(`/menu/pedido/checkout/exito?ordenId=${orden.id}${facturaRegistrada ? "" : "&factura=no-registrada"}`);
 		} catch (e) {
 			registrarError(e, "checkout: pago");
 			setError(e instanceof Error ? e.message : "No pudimos completar el pago. Inténtalo de nuevo.");

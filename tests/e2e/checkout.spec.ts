@@ -74,6 +74,29 @@ test("los cinco pasos con la dirección y la tarjeta guardadas, el mismo payload
 	await contexto.close();
 });
 
+test("si la solicitud de factura falla tras pagar, la confirmación lo avisa y el pago no se repite", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser, "/menu/pedido/checkout?orderId=dom12345");
+	// Registrada después: tiene prioridad sobre la ruta general de `abrir`.
+	await page.route("**/solicitudes-factura", (r) =>
+		r.fulfill({ status: 409, contentType: "application/json", body: '{"statusCode":409,"message":"Esta solicitud ya fue atendida."}' }),
+	);
+	await continuar(page);
+	await continuar(page);
+	await page.getByLabel("Necesito factura de esta compra").check();
+	await page.getByLabel("RFC").fill("XAXX010101000");
+	await page.getByLabel("Razón social").fill("Público en general");
+	await page.getByLabel("Régimen fiscal").selectOption("616");
+	await page.getByLabel("Código postal fiscal").fill("43000");
+	await continuar(page);
+	await continuar(page);
+	await page.getByRole("checkbox", { name: /acepto los términos y condiciones/i }).check();
+	await page.getByRole("button", { name: "Pagar $ 290" }).click();
+	await expect(page).toHaveURL(/\/menu\/pedido\/checkout\/exito\?ordenId=dom12345&factura=no-registrada$/);
+	await expect(page.getByText("No pudimos registrar tu solicitud de factura")).toBeVisible();
+	await expect(page.getByText("Tu pago sí quedó.", { exact: false })).toBeVisible();
+	await contexto.close();
+});
+
 test("dirección nueva: etiquetas, autocomplete, errores por campo y se guarda con el mismo payload", async ({ browser }) => {
 	const { contexto, page, envios } = await abrir(browser, "/menu/pedido/checkout?orderId=dom12345", { direcciones: [] });
 	await continuar(page);
