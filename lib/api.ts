@@ -107,3 +107,32 @@ export const api = {
   delete: <T>(endpoint: string, options?: RequestOptions) =>
     apiFetch<T>(endpoint, { ...options, method: "DELETE" }),
 };
+
+/** Textos por tipo de fallo, iguales en toda la web. */
+export const MENSAJES_ERROR = {
+	sesion: "Tu sesión caducó. Inicia sesión de nuevo y vuelve a intentarlo.",
+	permiso: "Tu cuenta no tiene permiso para hacer esto.",
+	limite: "Demasiados intentos seguidos. Espera un minuto y vuelve a intentarlo.",
+	red: "No hay conexión con el restaurante. Revisa tu internet e inténtalo de nuevo.",
+} as const;
+
+/**
+ * Mensaje para la persona según el tipo de error: validación, conflicto o regla de negocio (4xx) con
+ * el texto del API, que ya dice qué corregir; sesión, permiso, límite y red con su texto; un fallo
+ * del servidor o desconocido, con `generico`.
+ */
+export function mensajeDeError(error: unknown, generico: string): string {
+	if (error instanceof APIError) {
+		if (error.statusCode === 401) return MENSAJES_ERROR.sesion;
+		if (error.statusCode === 403) return MENSAJES_ERROR.permiso;
+		if (error.statusCode === 429) return MENSAJES_ERROR.limite;
+		if (error.statusCode >= 400 && error.statusCode < 500) {
+			// «Datos inválidos.» sola no dice qué corregir: se muestra el primer motivo.
+			return error.details[0] && error.message === "Datos inválidos." ? error.details[0] : error.message || generico;
+		}
+		return generico;
+	}
+	// fetch rechaza con TypeError cuando no hay red o el servidor no responde.
+	if (error instanceof TypeError) return MENSAJES_ERROR.red;
+	return generico;
+}
