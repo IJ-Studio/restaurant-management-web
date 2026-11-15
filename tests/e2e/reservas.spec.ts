@@ -83,23 +83,29 @@ test("los cuatro pasos, la mesa en el plano, el mismo payload y la confirmación
 	]);
 });
 
-test("mientras se consulta la disponibilidad, «Continuar» espera", async ({ page }) => {
-	let responder: () => void = () => {};
-	const pendiente = new Promise<void>((r) => (responder = r));
+test("el plano pide las mesas para la hora y los comensales, y dice por qué una mesa no se puede elegir", async ({ page }) => {
 	const consultas: string[] = [];
 	await abrir(page);
-	await page.route("**/reservations/availability?**", async (r) => {
+	await page.route("**/reservations/map?**", async (r) => {
 		consultas.push(new URL(r.request().url()).search);
-		await pendiente;
-		await r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+		await r.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify([
+				{ ...MESAS[0], estado: "sin-lugar", motivo: "Para 2 personas" },
+				{ ...MESAS[1], estado: "ocupada", motivo: "Reservada a esa hora" },
+				MESAS[2],
+			]),
+		});
 	});
 	await rellenarHastaMesa(page);
-	await page.getByRole("button", { name: /Mesa 4/ }).click();
-	const continuar = page.getByRole("button", { name: "Continuar" });
-	await expect(continuar).toHaveAttribute("aria-disabled", "true");
-	responder();
-	await expect(continuar).not.toHaveAttribute("aria-disabled", "true");
-	expect(consultas.at(-1)).toBe("?fecha=2030-06-15&hora=14:30&numComensales=2");
+	expect(consultas.at(-1)).toBe("?fechaHora=2030-06-15T14%3A30&numComensales=2");
+	await expect(page.getByRole("button", { name: /Mesa 4/ })).toBeDisabled();
+	await expect(page.getByRole("button", { name: /Mesa 4/ })).toContainText("Para 2 personas");
+	await expect(page.getByRole("button", { name: /Mesa 5/ })).toContainText("Reservada a esa hora");
+	await expect(page.getByRole("button", { name: /Mesa 9/ })).toBeEnabled();
+	// No se consulta /availability en cada tecla: solo el plano.
+	expect(consultas.length).toBe(1);
 });
 
 test("errores por campo con los mensajes de siempre", async ({ page }) => {
