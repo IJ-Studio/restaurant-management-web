@@ -14,8 +14,8 @@ import { CampoTrampa } from "@/components/ui/CampoTrampa";
 import { CargadorMarca } from "@/components/marca/CargadorMarca";
 import { Contraetiqueta } from "@/components/marca/Contraetiqueta";
 import { createReservation } from "@/features/reservations/services/reservations.service";
+import { mensajeDeError } from "@/lib/api";
 import { useEnvioFormulario } from "@/hooks/useEnvioFormulario";
-import { useReservationAvailability } from "@/hooks/useReservationAvailability";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 import { crearEsquemaReservaHorario, esquemaReservaContacto, esquemaReservaMesa } from "@/lib/validacion/formularios";
@@ -93,7 +93,6 @@ export default function ReservationForm({ onSuccess }: Props) {
 		})();
 	}, []);
 
-	const { loading: availabilityLoading } = useReservationAvailability(formData.fecha, formData.hora, formData.numComensales);
 	const targetFechaHora = `${formData.fecha}T${formData.hora}`;
 
 	const validateStep = (paso: number) => {
@@ -140,8 +139,8 @@ export default function ReservationForm({ onSuccess }: Props) {
 				setStep(1);
 			} catch (err) {
 				registrarError(err, "reserva: crear");
-				// Sin el mensaje del servidor: el hook muestra su texto cálido.
-				throw new Error("No pudimos confirmar tu reserva. Inténtalo de nuevo en un momento o llámanos.");
+				// El motivo del API (mesa ya reservada, fuera de horario…) o el texto de su tipo de fallo.
+				throw new Error(mensajeDeError(err, "No pudimos confirmar tu reserva. Inténtalo de nuevo en un momento o llámanos."));
 			}
 		},
 	});
@@ -251,10 +250,10 @@ export default function ReservationForm({ onSuccess }: Props) {
 			{step === 3 && (
 				<div className="flex flex-col gap-(--espacio-md)">
 					<TituloPaso texto="Elige tu mesa" ayuda={`Mesas libres para ${fechaLegible(formData.fecha, formData.hora)}.`} />
-					<TableMap selectedTableId={selectedTableId} onSelectTable={setSelectedTableId} fechaHora={targetFechaHora} />
+					<TableMap selectedTableId={selectedTableId} onSelectTable={setSelectedTableId} fechaHora={targetFechaHora} numComensales={formData.numComensales} />
 					{errors.mesa && <Aviso tono="error">{errors.mesa}</Aviso>}
 					{botones(
-						<Boton variante="primario" onClick={nextStep} deshabilitado={!selectedTableId || availabilityLoading}>
+						<Boton variante="primario" onClick={nextStep} deshabilitado={!selectedTableId}>
 							Continuar
 						</Boton>,
 					)}

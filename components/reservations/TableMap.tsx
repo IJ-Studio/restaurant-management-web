@@ -8,10 +8,11 @@ import { registrarError } from "@/lib/registro/registrar-error";
 import { cn } from "@/lib/utils";
 
 /**
- * Plano de mesas de la reserva (PLAN 4.16). La lógica no cambia: `getTableMap(fechaHora)`, las
- * mesas por área y solo las disponibles se pueden elegir.
+ * Plano de mesas de la reserva (PLAN 4.16): `getTableMap(fechaHora, numComensales)` con las mismas
+ * reglas que el API aplica al crear (capacidad, solapes y hora del restaurante). Se muestran todas
+ * las mesas; solo las disponibles se pueden elegir.
  *
- * Cada mesa es un botón con `aria-pressed`; la ocupada queda deshabilitada y lo dice con texto.
+ * Cada mesa es un botón con `aria-pressed`; la que no se puede elegir queda deshabilitada y dice por qué.
  * Mientras busca, el cargador de marca; si falla, un aviso cálido sin el mensaje del servidor (D-20).
  */
 interface Mesa {
@@ -20,16 +21,19 @@ interface Mesa {
 	capacidad: number;
 	areaId: number;
 	areaNombre: string;
-	estado: "disponible" | "ocupada";
+	estado: "disponible" | "ocupada" | "sin-lugar";
+	/** Por qué no se puede elegir («Reservada a esa hora», «Para 2 personas»). */
+	motivo?: string | null;
 }
 
 interface Props {
 	selectedTableId?: number;
 	onSelectTable: (tableId: number) => void;
 	fechaHora?: string;
+	numComensales: number;
 }
 
-export default function TableMap({ selectedTableId, onSelectTable, fechaHora }: Props) {
+export default function TableMap({ selectedTableId, onSelectTable, fechaHora, numComensales }: Props) {
 	const [mesas, setMesas] = useState<Mesa[]>([]);
 	const [cargando, setCargando] = useState(true);
 	const [fallo, setFallo] = useState(false);
@@ -40,7 +44,7 @@ export default function TableMap({ selectedTableId, onSelectTable, fechaHora }: 
 			try {
 				setCargando(true);
 				setFallo(false);
-				setMesas(await getTableMap(fechaHora));
+				setMesas(await getTableMap(fechaHora, numComensales));
 			} catch (err) {
 				registrarError(err, "reserva: plano de mesas");
 				setFallo(true);
@@ -48,7 +52,7 @@ export default function TableMap({ selectedTableId, onSelectTable, fechaHora }: 
 				setCargando(false);
 			}
 		})();
-	}, [fechaHora]);
+	}, [fechaHora, numComensales]);
 
 	if (cargando) return <CargadorMarca texto="Buscando mesas libres…" className="py-12" />;
 	if (fallo)
@@ -57,12 +61,7 @@ export default function TableMap({ selectedTableId, onSelectTable, fechaHora }: 
 				Vuelve atrás y elige otra hora, o inténtalo de nuevo en un momento.
 			</Aviso>
 		);
-	if (mesas.length === 0)
-		return (
-			<Aviso tono="info" titulo="No hay mesas libres a esa hora">
-				Vuelve atrás y prueba con otra hora o con otro día.
-			</Aviso>
-		);
+	const sinLibres = !mesas.some((m) => m.estado === "disponible");
 
 	const areas = mesas.reduce(
 		(acc, m) => {
@@ -74,6 +73,11 @@ export default function TableMap({ selectedTableId, onSelectTable, fechaHora }: 
 
 	return (
 		<div className="flex flex-col gap-(--espacio-lg)">
+			{sinLibres && (
+				<Aviso tono="info" titulo="No hay mesas libres a esa hora">
+					Vuelve atrás y prueba con otra hora o con otro día.
+				</Aviso>
+			)}
 			{Object.entries(areas).map(([areaId, area]) => (
 				<section key={areaId} aria-labelledby={`area-${areaId}`} className="flex flex-col gap-(--espacio-sm)">
 					<h3 id={`area-${areaId}`} className="m-0 border-b border-borde-sutil pb-1 text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] text-texto-secundario">
@@ -103,7 +107,7 @@ export default function TableMap({ selectedTableId, onSelectTable, fechaHora }: 
 									<span className="text-(length:--texto-pequeno) text-texto-secundario">
 										{m.capacidad} {m.capacidad === 1 ? "persona" : "personas"}
 									</span>
-									<span className={cn("text-(length:--texto-pequeno)", libre ? "text-texto-secundario" : "text-texto-tenue")}>{libre ? (elegida ? "Elegida" : "Libre") : "Ocupada"}</span>
+									<span className={cn("text-(length:--texto-pequeno)", libre ? "text-texto-secundario" : "text-texto-tenue")}>{libre ? (elegida ? "Elegida" : "Libre") : (m.motivo ?? "Ocupada")}</span>
 								</button>
 							);
 						})}
