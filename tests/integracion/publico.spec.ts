@@ -138,9 +138,11 @@ test.describe("reserva", () => {
 		await page.getByLabel("Correo", { exact: true }).fill("ana@correo.mx");
 		await page.getByRole("checkbox", { name: /aviso de privacidad/ }).check();
 		await page.getByRole("button", { name: "Continuar" }).click();
-		await page.getByLabel("Fecha").fill(fecha);
-		await page.getByLabel("Hora").fill(h);
 		await page.getByLabel("Comensales").fill(String(personas));
+		// Día y hora se eligen entre los que ofrece el API (DV-06): botones, no campos de texto.
+		const nombreDia = new Intl.DateTimeFormat("es-MX", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${fecha}T12:00:00Z`));
+		await page.getByRole("button", { name: new RegExp(`^${nombreDia}$`, "i") }).click();
+		await page.getByRole("button", { name: h, exact: true }).click();
 		await page.getByRole("button", { name: "Ver mesas libres" }).click();
 		await expect(page.getByText("Buscando mesas libres…")).toHaveCount(0, { timeout: 30_000 });
 	}
