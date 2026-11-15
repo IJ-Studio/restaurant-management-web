@@ -41,6 +41,7 @@ async function abrir(browser: Browser, ancho = 1024, preferencias: Record<string
 		throw new Error("La página abrió un alert() o confirm()");
 	});
 	const cobros: { ruta: string; cuerpo: unknown }[] = [];
+	const solicitudes: unknown[] = [];
 	let cuentas = [...CUENTAS];
 	await page.route(
 		(url) => url.origin === "http://localhost:3100" && !url.pathname.startsWith("/_next"),
@@ -52,6 +53,20 @@ async function abrir(browser: Browser, ancho = 1024, preferencias: Record<string
 			if (camino.endsWith("/caja/actual")) return json(caja);
 			if (camino.endsWith("/pedidos/admin/recent")) return json(cuentas);
 			if (camino.endsWith("/pedidos/metodos-pago")) return json(METODOS);
+			// Mesa 7 ya pagó $120 de $320: el detalle dice lo que falta.
+			if (p.method() === "GET" && camino.endsWith("/pedidos/a1b2c3d4-0000-4000-8000-000000000002")) return json({
+					total: "320.00",
+					pagado: "120.00",
+					restante: "200.00",
+					items: [
+						{ id: 1, cantidad: 2, precioUnitario: "80.00", platillo: { nombre: "Paella valenciana" } },
+						{ id: 2, cantidad: 1, precioUnitario: "160.00", platillo: { nombre: "Vino tinto" } },
+					],
+				});
+			if (camino.endsWith("/solicitudes-factura") && p.method() === "POST") {
+				solicitudes.push(p.postDataJSON());
+				return json({ id: 9, estatus: "pendiente" });
+			}
 			const cobro = camino.match(/\/pedidos\/([^/]+)\/cobrar$/);
 			if (cobro && p.method() === "POST") {
 				cobros.push({ ruta: camino, cuerpo: p.postDataJSON() });
@@ -62,7 +77,7 @@ async function abrir(browser: Browser, ancho = 1024, preferencias: Record<string
 		},
 	);
 	await page.goto("/dashboard/cajero", { waitUntil: "load" });
-	return { contexto, page, cobros };
+	return { contexto, page, cobros, solicitudes };
 }
 
 test("cobrar en efectivo: método del API, cambio en vivo, faltante avisado y el mismo POST de la móvil", async ({ browser }) => {
@@ -86,8 +101,73 @@ test("cobrar en efectivo: método del API, cambio en vivo, faltante avisado y el
 	await dialogo.getByRole("button", { name: /^Cobrar/ }).click();
 	await expect(dialogo).toBeHidden();
 	expect(cobros).toEqual([{ ruta: "/pedidos/a1b2c3d4-0000-4000-8000-000000000001/cobrar", cuerpo: { metodoPagoId: 1, montoRecibido: 50 } }]);
+	// Al cerrar la cuenta se ofrece la factura; sin pedirla no se manda nada.
+	await page.getByRole("dialog", { name: "¿El cliente quiere factura?" }).getByRole("button", { name: "No, gracias" }).click();
 	await expect(porCobrar).toHaveCount(1);
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Mesa 4 cobrada");
+	await contexto.close();
+});
+
+test("al cerrar la cuenta ofrece la factura: valida los datos fiscales y la manda a la cola", async ({ browser }) => {
+	const { contexto, page, solicitudes } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: /^Cobrar \$\s48\.50 de Mesa 4$/ }).click();
+	const cobro = page.getByRole("dialog", { name: "Cobrar Mesa 4" });
+	await cobro.getByLabel("Recibido").fill("50");
+	await cobro.getByRole("button", { name: /^Cobrar/ }).click();
+	const factura = page.getByRole("dialog", { name: "¿El cliente quiere factura?" });
+	await expect(factura).toContainText("Mesa 4 quedó cobrada");
+	await factura.getByRole("button", { name: "Pedir factura" }).click();
+	await expect(factura.getByText("La razón social es requerida.")).toBeVisible();
+	expect(solicitudes).toHaveLength(0);
+	await factura.getByLabel("RFC").fill("eku9003173c9");
+	await factura.getByLabel("Razón social").fill("Escuela Kemper Urgate");
+	await factura.getByLabel("Régimen fiscal").selectOption("601");
+	await factura.getByLabel("Código postal fiscal").fill("42501");
+	await factura.getByRole("button", { name: "Pedir factura" }).click();
+	await expect(factura).toBeHidden();
+	expect(solicitudes).toEqual([
+		{ ordenId: "a1b2c3d4-0000-4000-8000-000000000001", rfc: "EKU9003173C9", razonSocial: "Escuela Kemper Urgate", usoCfdi: "G03", regimenFiscal: "601", codigoPostalFiscal: "42501" },
+	]);
+	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Factura solicitada");
+	await contexto.close();
+});
+
+test("una parte de una cuenta dividida no ofrece factura todavía", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: /^Cobrar .* de Mesa 7$/ }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cobrar Mesa 7" });
+	await dialogo.getByLabel("Dividir la cuenta").selectOption("2");
+	await dialogo.getByText("Tarjeta").click();
+	await dialogo.getByRole("button", { name: /^Cobrar \$\s100\.00$/ }).click();
+	await expect(dialogo).toBeHidden();
+	await expect(page.getByRole("dialog", { name: "¿El cliente quiere factura?" })).toHaveCount(0);
+	await contexto.close();
+});
+
+test("cuentas en servicio: se ven aparte con su estado y se pueden cobrar por adelantado (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const main = page.locator("main");
+	const enServicio = main.getByRole("list", { name: "Cuentas en servicio" }).getByRole("listitem");
+	await expect(enServicio).toHaveCount(1);
+	await expect(enServicio.first()).toContainText("Mesa 2");
+	await expect(enServicio.first()).toContainText("En preparación");
+	await expect(main.getByRole("list", { name: "Cuentas por cobrar" })).not.toContainText("Mesa 2");
+	await main.getByRole("button", { name: /^Cobrar \$\s150\.00 de Mesa 2$/ }).click();
+	await expect(page.getByRole("dialog", { name: "Cobrar Mesa 2" })).toBeVisible();
+	await contexto.close();
+});
+
+test("cerrar caja: la diferencia del corte se ve en vivo, como en la móvil", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: "Cerrar caja" }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cerrar caja" });
+	const campo = dialogo.getByLabel("Efectivo contado");
+	await campo.fill("1350");
+	await expect(dialogo.getByRole("status")).toHaveText("Cuadra");
+	await campo.fill("1300.5");
+	await expect(dialogo.getByRole("status")).toHaveText(/^Faltan \$\s49\.50$/);
+	await campo.fill("1400");
+	await expect(dialogo.getByRole("status")).toHaveText(/^Sobran \$\s50\.00$/);
 	await contexto.close();
 });
 
@@ -102,10 +182,56 @@ test("con tarjeta no pide lo recibido y envía la propina; la búsqueda filtra",
 	const dialogo = page.getByRole("dialog", { name: "Cobrar Mesa 7" });
 	await dialogo.getByText("Tarjeta").click();
 	await expect(dialogo.getByLabel("Recibido")).toHaveCount(0);
-	await dialogo.getByLabel("Propina").fill("30");
+	await dialogo.getByRole("spinbutton", { name: /^Propina/ }).fill("30");
 	await dialogo.getByRole("button", { name: /^Cobrar/ }).click();
 	await expect(dialogo).toBeHidden();
 	expect(cobros[0].cuerpo).toEqual({ metodoPagoId: 2, propina: 30 });
+	await contexto.close();
+});
+
+test("propina sugerida por porcentaje, como la móvil: llena el campo y se puede cambiar", async ({ browser }) => {
+	const { contexto, page, cobros } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: /^Cobrar .* de Mesa 7$/ }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cobrar Mesa 7" });
+	await dialogo.getByText("Tarjeta").click();
+	await dialogo.getByRole("button", { name: "15 %" }).click();
+	// Sobre lo que se cobra ahora: Mesa 7 ya pagó $120 y faltan $200 → 15 % = $30.
+	await expect(dialogo.getByRole("spinbutton", { name: /^Propina/ })).toHaveValue("30.00");
+	await expect(dialogo.getByRole("button", { name: "15 %" })).toHaveAttribute("aria-pressed", "true");
+	await dialogo.getByRole("button", { name: /^Cobrar/ }).click();
+	await expect(dialogo).toBeHidden();
+	expect(cobros[0].cuerpo).toEqual({ metodoPagoId: 2, propina: 30 });
+	await contexto.close();
+});
+
+test("cuenta dividida en partes iguales sobre lo que falta, con referencia de la terminal (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, page, cobros } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: /^Cobrar .* de Mesa 7$/ }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cobrar Mesa 7" });
+	await expect(dialogo).toContainText(/Falta por cobrar\s*\$\s200\.00/);
+	await dialogo.getByLabel("Dividir la cuenta").selectOption("2");
+	await expect(dialogo).toContainText(/Esta parte: \$\s100\.00/);
+	await dialogo.getByText("Tarjeta").click();
+	await dialogo.getByLabel(/^Referencia o folio/).fill("AUT-4821");
+	await dialogo.getByRole("button", { name: /^Cobrar \$\s100\.00$/ }).click();
+	await expect(dialogo).toBeHidden();
+	expect(cobros[0].cuerpo).toEqual({ metodoPagoId: 2, monto: 100, referencia: "AUT-4821" });
+	await contexto.close();
+});
+
+test("cuenta por platillo: cobra lo elegido con su etiqueta, como la móvil", async ({ browser }) => {
+	const { contexto, page, cobros } = await abrir(browser);
+	await page.locator("main").getByRole("button", { name: /^Cobrar .* de Mesa 7$/ }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cobrar Mesa 7" });
+	await dialogo.getByLabel("Dividir la cuenta").selectOption("platillos");
+	await dialogo.getByText("Tarjeta").click();
+	await dialogo.getByRole("button", { name: /^Cobrar \$\s0\.00$/ }).click();
+	await expect(dialogo).toContainText("Elige los platillos que paga esta persona.");
+	await dialogo.getByRole("spinbutton", { name: /^Paella valenciana/ }).fill("1");
+	await expect(dialogo).toContainText(/Esta parte: \$\s80\.00/);
+	await dialogo.getByRole("button", { name: /^Cobrar \$\s80\.00$/ }).click();
+	await expect(dialogo).toBeHidden();
+	expect(cobros[0].cuerpo).toEqual({ metodoPagoId: 2, monto: 80, etiqueta: "1× Paella valenciana" });
 	await contexto.close();
 });
 

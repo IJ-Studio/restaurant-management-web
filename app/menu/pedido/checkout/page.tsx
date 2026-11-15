@@ -18,10 +18,13 @@ import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import { usePreferencias } from "@/components/providers/PreferenciasProvider";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { formatearPrecio } from "@/lib/formato/precio";
+import { api, mensajeDeError } from "@/lib/api";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaDatosFiscales, esquemaDireccionEnvio } from "@/lib/validacion/formularios";
 import { cn } from "@/lib/utils";
+import { REGIMENES_FISCALES, USOS_CFDI } from "@/lib/facturacion/catalogos";
+import { LIMITES_CAMPO } from "@/lib/validacion/reglas";
 
 /**
  * Pago del pedido a domicilio (`/menu/pedido/checkout`, PLAN 4.14). La lógica no cambia: la
@@ -41,21 +44,6 @@ import { cn } from "@/lib/utils";
 // Una sola instancia de Stripe, fuera del componente.
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 
-const USOS_CFDI = [
-	{ valor: "G01", texto: "G01 · Adquisición de mercancías" },
-	{ valor: "G03", texto: "G03 · Gastos en general" },
-	{ valor: "P01", texto: "P01 · Por definir" },
-];
-const REGIMENES_FISCALES = [
-	{ valor: "601", texto: "601 · General de Ley Personas Morales" },
-	{ valor: "603", texto: "603 · Personas Morales con Fines no Lucrativos" },
-	{ valor: "605", texto: "605 · Sueldos y Salarios" },
-	{ valor: "606", texto: "606 · Arrendamiento" },
-	{ valor: "612", texto: "612 · Personas Físicas con Actividades Empresariales" },
-	{ valor: "616", texto: "616 · Sin obligaciones fiscales" },
-	{ valor: "621", texto: "621 · Incorporación Fiscal" },
-	{ valor: "626", texto: "626 · Régimen Simplificado de Confianza" },
-];
 const PASOS = ["Resumen", "Entrega", "Factura", "Pago", "Confirmar"] as const;
 
 type Errores = Record<string, string>;
@@ -78,7 +66,6 @@ function Asistente() {
 	const stripe = useStripe();
 	const elements = useElements();
 
-	const [usuarioId, setUsuarioId] = useState<string | null>(null);
 	const [pasoActual, setPasoActual] = useState(1);
 	const [loading, setLoading] = useState(true);
 	const [procesando, setProcesando] = useState(false);
@@ -100,7 +87,6 @@ function Asistente() {
 	const [metodoSeleccionadoId, setMetodoSeleccionadoId] = useState<string | "nueva" | null>(null);
 	const [guardarTarjeta, setGuardarTarjeta] = useState(false);
 
-	const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 	// Carga inicial: usuario, pedido, direcciones y métodos de pago guardados.
 	useEffect(() => {
@@ -123,32 +109,28 @@ function Asistente() {
 					router.push("/login");
 					return;
 				}
-				setUsuarioId(activeUser.id);
 
-				const resOrdenes = await fetch(`${apiUrl}/pedidos/usuario?usuarioId=${activeUser.id}&tipo=domicilio`, { cache: "no-store" });
-				if (resOrdenes.ok) {
-					const ordenesData = await resOrdenes.json();
-					const ordenEncontrada = ordenesData.find((o: any) => o.id === orderId);
-					if (!ordenEncontrada) setFallaCarga("no-encontrado");
-					else setOrden(ordenEncontrada);
-				}
+				// Con la sesión (Bearer): el API toma al cliente del token, no de la URL.
+				const ordenesData = await api.get<any[]>("/pedidos/usuario", { params: { tipo: "domicilio" } });
+				const ordenEncontrada = ordenesData.find((o: any) => o.id === orderId);
+				if (!ordenEncontrada) setFallaCarga("no-encontrado");
+				else setOrden(ordenEncontrada);
 
-				const resDirecciones = await fetch(`${apiUrl}/direcciones?usuarioId=${activeUser.id}`, { cache: "no-store" });
-				if (resDirecciones.ok) {
-					const data = await resDirecciones.json();
+				// Direcciones y tarjetas guardadas son opcionales: si fallan, se capturan nuevas.
+				const data = await api.get<any[]>("/direcciones").catch((e) => (registrarError(e, "checkout: direcciones"), null));
+				if (data) {
 					setDirecciones(data);
 					const principal = data.find((d: any) => d.esPrincipal);
 					if (principal) setDireccionSeleccionadaId(principal.id);
 					else if (data.length === 0) setDireccionSeleccionadaId("nueva");
 				}
 
-				const resMetodos = await fetch(`${apiUrl}/metodos-pago?usuarioId=${activeUser.id}`, { cache: "no-store" });
-				if (resMetodos.ok) {
-					const data = await resMetodos.json();
-					setMetodosGuardados(data);
-					const principalMetodo = data.find((m: any) => m.esPrincipal);
+				const metodos = await api.get<any[]>("/metodos-pago").catch((e) => (registrarError(e, "checkout: tarjetas"), null));
+				if (metodos) {
+					setMetodosGuardados(metodos);
+					const principalMetodo = metodos.find((m: any) => m.esPrincipal);
 					if (principalMetodo) setMetodoSeleccionadoId(principalMetodo.id);
-					else if (data.length === 0) setMetodoSeleccionadoId("nueva");
+					else if (metodos.length === 0) setMetodoSeleccionadoId("nueva");
 				}
 			} catch (e) {
 				registrarError(e, "checkout: carga");
@@ -202,19 +184,12 @@ function Asistente() {
 			if (direccionSeleccionadaId === "nueva" && guardarDireccion) {
 				setProcesando(true);
 				try {
-					const res = await fetch(`${apiUrl}/direcciones`, {
-						cache: "no-store",
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ usuarioId: Number(usuarioId), ...nuevaDireccion }),
-					});
-					if (!res.ok) throw new Error(`direccion ${res.status}`);
-					const guardada = await res.json();
+					const guardada = await api.post<any>("/direcciones", nuevaDireccion);
 					setDirecciones((prev) => [...prev, guardada]);
 					setDireccionSeleccionadaId(guardada.id);
 				} catch (e) {
 					registrarError(e, "checkout: guardar dirección");
-					setError("No pudimos guardar la dirección. Inténtalo de nuevo o desmarca «Guardar esta dirección».");
+					setError(mensajeDeError(e, "No pudimos guardar la dirección. Inténtalo de nuevo o desmarca «Guardar esta dirección»."));
 					setProcesando(false);
 					return;
 				}
@@ -233,25 +208,17 @@ function Asistente() {
 			if (metodoSeleccionadoId === "nueva" && guardarTarjeta) {
 				setProcesando(true);
 				try {
-					const resSetup = await fetch(`${apiUrl}/metodos-pago/setup-intent`, {
-						cache: "no-store",
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ usuarioId: Number(usuarioId) }),
+					const { clientSecret } = await api.post<{ clientSecret: string }>("/metodos-pago/setup-intent").catch((e) => {
+						registrarError(e, "checkout: setup-intent");
+						throw new Error(mensajeDeError(e, "No pudimos preparar el guardado de la tarjeta."));
 					});
-					if (!resSetup.ok) throw new Error("No pudimos preparar el guardado de la tarjeta.");
-					const { clientSecret } = await resSetup.json();
 					const result = await stripe!.confirmCardSetup(clientSecret, { payment_method: { card: elements!.getElement(CardElement)! } });
 					// El mensaje de Stripe es para la persona («Tu tarjeta fue rechazada»).
 					if (result.error) throw new Error(result.error.message || "No pudimos validar la tarjeta.");
-					const resGuardar = await fetch(`${apiUrl}/metodos-pago`, {
-						cache: "no-store",
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ usuarioId: Number(usuarioId), paymentMethodId: result.setupIntent!.payment_method }),
+					const nuevoMetodo = await api.post<any>("/metodos-pago", { paymentMethodId: result.setupIntent!.payment_method }).catch((e) => {
+						registrarError(e, "checkout: guardar método");
+						throw new Error(mensajeDeError(e, "No pudimos guardar la tarjeta."));
 					});
-					if (!resGuardar.ok) throw new Error("No pudimos guardar la tarjeta.");
-					const nuevoMetodo = await resGuardar.json();
 					setMetodosGuardados((prev) => [...prev, nuevoMetodo]);
 					setMetodoSeleccionadoId(nuevoMetodo.id);
 				} catch (e) {
@@ -275,18 +242,14 @@ function Asistente() {
 		setError(null);
 		setProcesando(true);
 		try {
-			const body: any = { usuarioId: Number(usuarioId), ordenId: orden.id };
+			const body: any = { ordenId: orden.id };
 			if (typeof direccionSeleccionadaId === "number") body.direccionId = direccionSeleccionadaId;
 			if (metodoSeleccionadoId !== "nueva") body.metodoPagoGuardadoId = metodoSeleccionadoId;
 
-			const resIntento = await fetch(`${apiUrl}/pagos/crear-intento`, {
-				cache: "no-store",
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(body),
+			const { clientSecret, status } = await api.post<{ clientSecret: string; status: string }>("/pagos/crear-intento", body).catch((e) => {
+				registrarError(e, "checkout: crear intento");
+				throw new Error(mensajeDeError(e, "No pudimos iniciar el pago. Inténtalo de nuevo en un momento."));
 			});
-			if (!resIntento.ok) throw new Error("No pudimos iniciar el pago. Inténtalo de nuevo en un momento.");
-			const { clientSecret, status } = await resIntento.json();
 
 			// Con tarjeta guardada (off_session) el backend puede haber confirmado ya el pago.
 			if (status !== "succeeded") {
@@ -295,15 +258,15 @@ function Asistente() {
 				if (result.error) throw new Error(result.error.message || "El pago no se completó.");
 			}
 
-			if (requiereFactura) {
-				await fetch(`${apiUrl}/facturas`, {
-					cache: "no-store",
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ usuarioId: Number(usuarioId), ordenId: orden.id, ...datosFiscales }),
-				}).catch((e) => registrarError(e, "checkout: factura"));
-			}
-			router.push(`/menu/pedido/checkout/exito?ordenId=${orden.id}`);
+			// Va a la cola (Fase 4.1) aunque el webhook aún no confirme el pago. El pago ya se hizo: si la
+			// solicitud falla no se bloquea, pero la página de éxito lo avisa.
+			const facturaRegistrada =
+				!requiereFactura ||
+				(await api
+					.post("/solicitudes-factura", { ordenId: orden.id, ...datosFiscales })
+					.then(() => true)
+					.catch((e) => (registrarError(e, "checkout: solicitud de factura"), false)));
+			router.push(`/menu/pedido/checkout/exito?ordenId=${orden.id}${facturaRegistrada ? "" : "&factura=no-registrada"}`);
 		} catch (e) {
 			registrarError(e, "checkout: pago");
 			setError(e instanceof Error ? e.message : "No pudimos completar el pago. Inténtalo de nuevo.");
@@ -379,8 +342,11 @@ function Asistente() {
 					/>
 				)}
 				{pasoActual === 3 && <PasoFacturacion requiereFactura={requiereFactura} onCambiarRequiere={setRequiereFactura} datos={datosFiscales} onCambiarDatos={setDatosFiscales} errores={errores} />}
-				{pasoActual === 4 && (
-					<PasoPago metodos={metodosGuardados} seleccionadoId={metodoSeleccionadoId} onSeleccionar={setMetodoSeleccionadoId} guardarTarjeta={guardarTarjeta} onCambiarGuardarTarjeta={setGuardarTarjeta} />
+				{/* Montado también al confirmar: `confirmCardPayment` necesita el CardElement vivo (si se desmonta, getElement da null). */}
+				{(pasoActual === 4 || pasoActual === 5) && (
+					<div hidden={pasoActual !== 4} className={pasoActual === 4 ? "contents" : undefined}>
+						<PasoPago metodos={metodosGuardados} seleccionadoId={metodoSeleccionadoId} onSeleccionar={setMetodoSeleccionadoId} guardarTarjeta={guardarTarjeta} onCambiarGuardarTarjeta={setGuardarTarjeta} oculto={pasoActual !== 4} />
+					</div>
 				)}
 				{pasoActual === 5 && <PasoConfirmar orden={orden} direccion={direccionElegida} requiereFactura={requiereFactura} datosFiscales={datosFiscales} metodo={metodoElegido} />}
 				{pasoActual === 5 && (
@@ -508,12 +474,12 @@ function PasoDireccion({ direcciones, seleccionadaId, onSeleccionar, nuevaDirecc
 
 			{seleccionadaId === "nueva" && (
 				<div className="grid gap-(--espacio-md) sm:grid-cols-2">
-					<Campo etiqueta="Nombre de la dirección" ayuda="Casa, oficina…" value={nuevaDireccion.alias} onChange={cambiar("alias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.alias} />
-					<Campo etiqueta="Calle y número" value={nuevaDireccion.linea1} onChange={cambiar("linea1")} autoComplete="address-line1" className="sm:col-span-2" error={errores.linea1} />
-					<Campo etiqueta="Interior, piso o depto." value={nuevaDireccion.linea2} onChange={cambiar("linea2")} opcional autoComplete="address-line2" className="sm:col-span-2" error={errores.linea2} />
-					<Campo etiqueta="Colonia" value={nuevaDireccion.colonia} onChange={cambiar("colonia")} autoComplete="address-level3" error={errores.colonia} />
-					<Campo etiqueta="Ciudad" value={nuevaDireccion.ciudad} onChange={cambiar("ciudad")} autoComplete="address-level2" error={errores.ciudad} />
-					<Campo etiqueta="Estado" value={nuevaDireccion.estado} onChange={cambiar("estado")} autoComplete="address-level1" error={errores.estado} />
+					<Campo maxLength={LIMITES_CAMPO.alias} etiqueta="Nombre de la dirección" ayuda="Casa, oficina…" value={nuevaDireccion.alias} onChange={cambiar("alias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.alias} />
+					<Campo maxLength={LIMITES_CAMPO.lineaCorta} etiqueta="Calle y número" value={nuevaDireccion.linea1} onChange={cambiar("linea1")} autoComplete="address-line1" className="sm:col-span-2" error={errores.linea1} />
+					<Campo maxLength={LIMITES_CAMPO.lineaMedia} etiqueta="Interior, piso o depto." value={nuevaDireccion.linea2} onChange={cambiar("linea2")} opcional autoComplete="address-line2" className="sm:col-span-2" error={errores.linea2} />
+					<Campo maxLength={LIMITES_CAMPO.lineaMedia} etiqueta="Colonia" value={nuevaDireccion.colonia} onChange={cambiar("colonia")} autoComplete="address-level3" error={errores.colonia} />
+					<Campo maxLength={LIMITES_CAMPO.lineaMedia} etiqueta="Ciudad" value={nuevaDireccion.ciudad} onChange={cambiar("ciudad")} autoComplete="address-level2" error={errores.ciudad} />
+					<Campo maxLength={LIMITES_CAMPO.lineaMedia} etiqueta="Estado" value={nuevaDireccion.estado} onChange={cambiar("estado")} autoComplete="address-level1" error={errores.estado} />
 					<Campo
 						etiqueta="Código postal"
 						codigo
@@ -524,7 +490,7 @@ function PasoDireccion({ direcciones, seleccionadaId, onSeleccionar, nuevaDirecc
 						onChange={(e) => onCambiarNuevaDireccion({ ...nuevaDireccion, codigoPostal: e.target.value.replace(/\D/g, "") })}
 						error={errores.codigoPostal}
 					/>
-					<Campo etiqueta="Referencias" ayuda="Entre qué calles, color de la fachada…" value={nuevaDireccion.referencias} onChange={cambiar("referencias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.referencias} />
+					<Campo maxLength={LIMITES_CAMPO.referencias} etiqueta="Referencias" ayuda="Entre qué calles, color de la fachada…" value={nuevaDireccion.referencias} onChange={cambiar("referencias")} opcional autoComplete="off" className="sm:col-span-2" error={errores.referencias} />
 					<Casilla etiqueta="Guardar esta dirección para otras compras" checked={guardar} onChange={(e) => onCambiarGuardar(e.target.checked)} className="sm:col-span-2" />
 				</div>
 			)}
@@ -541,7 +507,7 @@ function PasoFacturacion({ requiereFactura, onCambiarRequiere, datos, onCambiarD
 			{requiereFactura && (
 				<div className="grid gap-(--espacio-md) sm:grid-cols-2">
 					<Campo etiqueta="RFC" codigo autoComplete="off" value={datos.rfc} onChange={cambiar("rfc", (v) => v.toUpperCase())} maxLength={13} error={errores.rfc} />
-					<Campo etiqueta="Razón social" autoComplete="organization" value={datos.razonSocial} onChange={cambiar("razonSocial")} error={errores.razonSocial} />
+					<Campo maxLength={LIMITES_CAMPO.razonSocial} etiqueta="Razón social" autoComplete="organization" value={datos.razonSocial} onChange={cambiar("razonSocial")} error={errores.razonSocial} />
 					<Selector etiqueta="Uso del CFDI" opciones={USOS_CFDI} value={datos.usoCfdi} onChange={cambiar("usoCfdi")} error={errores.usoCfdi} />
 					<Selector etiqueta="Régimen fiscal" marcador="Elige tu régimen fiscal" opciones={REGIMENES_FISCALES} value={datos.regimenFiscal} onChange={cambiar("regimenFiscal")} error={errores.regimenFiscal} />
 					<Campo
@@ -554,7 +520,7 @@ function PasoFacturacion({ requiereFactura, onCambiarRequiere, datos, onCambiarD
 						onChange={cambiar("codigoPostalFiscal", (v) => v.replace(/\D/g, ""))}
 						error={errores.codigoPostalFiscal}
 					/>
-					<Campo etiqueta="Correo para enviarte la factura" type="email" inputMode="email" autoComplete="email" opcional value={datos.email} onChange={cambiar("email")} error={errores.email} />
+					<Campo maxLength={LIMITES_CAMPO.correo} etiqueta="Correo para enviarte la factura" type="email" inputMode="email" autoComplete="email" opcional value={datos.email} onChange={cambiar("email")} error={errores.email} />
 				</div>
 			)}
 		</>
@@ -585,11 +551,12 @@ function useEstiloTarjeta(): StripeCardElementOptions {
 	}, [preferencias.tema]);
 }
 
-function PasoPago({ metodos, seleccionadoId, onSeleccionar, guardarTarjeta, onCambiarGuardarTarjeta }: any) {
+function PasoPago({ metodos, seleccionadoId, onSeleccionar, guardarTarjeta, onCambiarGuardarTarjeta, oculto = false }: any) {
 	const estilo = useEstiloTarjeta();
 	return (
 		<>
-			<TituloPaso>¿Cómo quieres pagar?</TituloPaso>
+			{/* Oculto (paso de confirmación) no pinta su título: el id «paso-titulo» es del paso visible. */}
+			{!oculto && <TituloPaso>¿Cómo quieres pagar?</TituloPaso>}
 			<fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
 				<legend className="solo-lectores">Método de pago</legend>
 				{metodos.map((m: any) => (

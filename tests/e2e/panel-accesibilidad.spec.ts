@@ -30,14 +30,15 @@ test.describe("panel de opciones de accesibilidad", () => {
 		// Aparece como los menús flotantes y por encima de la cabecera fija.
 		const estilo = await panel(page).evaluate((e) => [getComputedStyle(e).animationName, getComputedStyle(e).zIndex]);
 		expect(estilo).toEqual(["dialogo-entra", "110"]);
-		const oscuro = panel(page).getByRole("radio", { name: "Oscuro" });
-		await expect(oscuro).toBeFocused();
+		// Claro es el tema por defecto: el foco cae en la opción marcada.
+		const claro = panel(page).getByRole("radio", { name: "Claro" });
+		await expect(claro).toBeFocused();
 		await expect(panel(page).getByRole("group", { name: "Tema" })).toBeVisible();
-		// Flecha: pasa a «Claro» y se aplica al momento, y se guarda.
-		await page.keyboard.press("ArrowDown");
-		await expect(panel(page).getByRole("radio", { name: "Claro" })).toBeChecked();
-		await expect(page.locator("html")).toHaveAttribute("data-tema", "claro");
-		expect(await page.evaluate((c) => JSON.parse(localStorage.getItem(c) ?? "{}").tema, CLAVE)).toBe("claro");
+		// Flecha: pasa a «Oscuro» y se aplica al momento, y se guarda.
+		await page.keyboard.press("ArrowUp");
+		await expect(panel(page).getByRole("radio", { name: "Oscuro" })).toBeChecked();
+		await expect(page.locator("html")).toHaveAttribute("data-tema", "oscuro");
+		expect(await page.evaluate((c) => JSON.parse(localStorage.getItem(c) ?? "{}").tema, CLAVE)).toBe("oscuro");
 		await page.keyboard.press("Escape");
 		await expect(panel(page)).toBeHidden();
 		await expect(boton).toBeFocused();

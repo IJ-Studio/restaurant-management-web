@@ -7,15 +7,18 @@ import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { Boton } from "@/components/ui/Boton";
 import { Buscador } from "@/components/ui/Buscador";
 import { Selector } from "@/components/ui/Campo";
+import { Dialogo } from "@/components/ui/Dialogo";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Insignia } from "@/components/ui/Insignia";
+import { useNotificaciones } from "@/components/ui/Notificacion";
 import { Tabla, type ColumnaTabla } from "@/components/ui/Tabla";
 import { api } from "@/lib/api";
 import { primeraMayuscula } from "@/lib/formato/caja";
 import { formatearDia } from "@/lib/formato/fecha";
 import { formatearImporte } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { SolicitudesFactura } from "./SolicitudesFactura";
 
 /**
  * Facturas (PLAN 5.5; PLAN-AMPLIACION D-24): el listado del administrador con `GET /facturas`,
@@ -41,6 +44,76 @@ interface Pagina {
 }
 
 const importe = (v: Factura["total"]) => (v === null || v === "" ? "—" : (formatearImporte(Number(v)) ?? "—"));
+
+const MOTIVOS_CANCELACION = [
+	{ valor: "02", texto: "02 · Se emitió con errores (se vuelve a emitir)" },
+	{ valor: "03", texto: "03 · La operación no se llevó a cabo (reembolso)" },
+];
+
+/** Cancela el CFDI ante el SAT (`POST /facturas/:id/cancelar`). Con 02 la solicitud vuelve a la cola. */
+function DialogoCancelar({ factura, alCancelar }: { factura: Factura; alCancelar: () => void }) {
+	const { notificar } = useNotificaciones();
+	const [abierto, setAbierto] = useState(false);
+	const [motivo, setMotivo] = useState("02");
+	const [error, setError] = useState<string | null>(null);
+	const [enviando, setEnviando] = useState(false);
+	const nombre = [factura.serie, factura.folio].filter(Boolean).join("-") || "sin folio";
+	async function cancelar() {
+		setEnviando(true);
+		try {
+			const r = await api.post<{ estatus: string }>(`/facturas/${encodeURIComponent(factura.id)}/cancelar`, { motivo });
+			notificar(
+				r.estatus === "cancelada"
+					? { tono: "exito", titulo: `Factura ${nombre} cancelada`, descripcion: motivo === "02" ? "La solicitud volvió a la cola para emitir la corregida." : "Ya no tiene efectos fiscales." }
+					: { tono: "aviso", titulo: "Cancelación en trámite", descripcion: "El SAT espera que el cliente la acepte." },
+			);
+			setAbierto(false);
+			alCancelar();
+		} catch (e) {
+			registrarError(e, "facturas: cancelar");
+			setError(e instanceof Error ? e.message : "No se pudo cancelar. Vuelve a intentarlo.");
+		} finally {
+			setEnviando(false);
+		}
+	}
+	return (
+		<Dialogo
+			abierto={abierto}
+			alCambiarAbierto={(a) => {
+				setAbierto(a);
+				if (a) {
+					setMotivo("02");
+					setError(null);
+				}
+			}}
+			cerrable={!enviando}
+			disparador={
+				<Boton variante="secundario" tamano="compacto" aria-label={`Cancelar la factura ${nombre}`}>
+					Cancelar
+				</Boton>
+			}
+			titulo={`Cancelar la factura ${nombre}`}
+			descripcion="Se cancela ante el SAT y no se puede deshacer."
+			pie={
+				<>
+					<Boton variante="secundario" deshabilitado={enviando} onClick={() => setAbierto(false)}>
+						Volver
+					</Boton>
+					<Boton cargando={enviando} textoCargando="Cancelando…" onClick={() => void cancelar()}>
+						Cancelar factura
+					</Boton>
+				</>
+			}
+		>
+			<Selector etiqueta="Motivo" opciones={MOTIVOS_CANCELACION} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+			{error && (
+				<p role="alert" className="m-0 mt-(--espacio-md) text-error">
+					{error}
+				</p>
+			)}
+		</Dialogo>
+	);
+}
 
 export function Facturas() {
 	const [pagina, setPagina] = useState(1);
@@ -97,12 +170,14 @@ export function Facturas() {
 					<Insignia tono="exito" className="whitespace-nowrap">Vigente</Insignia>
 				),
 		},
+		{ clave: "acciones", titulo: "Acciones", celda: (f) => (f.estatus === "cancelada" ? null : <DialogoCancelar factura={f} alCancelar={() => void cargar()} />) },
 	];
 
 	const filas = datos?.facturas ?? [];
 	const filtrando = busqueda.trim() !== "" || estatus !== "todas";
 	return (
 		<PlantillaPanel titulo="Facturas" descripcion="Las facturas que piden los clientes al pagar su pedido.">
+			<SolicitudesFactura alEmitir={() => void cargar()} />
 			<BloquePanel
 				titulo="Todas las facturas"
 				acciones={

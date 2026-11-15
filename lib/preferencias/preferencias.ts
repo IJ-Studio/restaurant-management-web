@@ -20,7 +20,8 @@ export interface Preferencias {
 
 export const PREFERENCIAS_POR_DEFECTO: Preferencias = {
   v: 1,
-  tema: "oscuro",
+  // Claro por defecto aunque el sistema esté en oscuro; la elección guardada siempre manda.
+  tema: "claro",
   tamanoTexto: "normal",
   movimiento: "sistema",
 };
@@ -59,7 +60,7 @@ export function leerPreferencias(): Preferencias {
     if (guardado) return validarPreferencias(JSON.parse(guardado));
     const antiguo = localStorage.getItem(CLAVE_TEMA_ANTIGUA);
     if (antiguo === "light" || antiguo === "dark") {
-      const migradas = { ...PREFERENCIAS_POR_DEFECTO, tema: antiguo === "light" ? "claro" : "oscuro" } as Preferencias;
+      const migradas = { ...PREFERENCIAS_POR_DEFECTO, tema: antiguo === "dark" ? "oscuro" : "claro" } as Preferencias;
       guardarPreferencias(migradas);
       return migradas;
     }

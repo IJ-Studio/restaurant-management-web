@@ -8,12 +8,14 @@ import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/panele
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { PanelLateral } from "@/components/ui/Dialogo";
+import { IncidenciasCocina } from "./IncidenciasCocina";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Indicador } from "@/components/ui/Indicador";
 import { Insignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { useCarga } from "@/hooks/useCarga";
+import { useEventosPedidos } from "@/hooks/useEventosPedidos";
 import { api } from "@/lib/api";
 import { contar } from "@/lib/formato/plural";
 import { registrarError } from "@/lib/registro/registrar-error";
@@ -29,7 +31,7 @@ import { conteo } from "@/lib/paneles/calculo";
  *
  * Datos del API, los mismos que usa la app móvil del personal:
  * - comandas de hoy: `GET /pedidos/admin/recent` (abiertas, en preparación y listas), cada 15 s;
- * - «Empezar» y «Marcar lista»: `PATCH /pedidos/:id/estatus` (`en_preparacion`, `lista`);
+ * - «Empezar a preparar» y «Marcar como lista» (textos de la móvil): `PATCH /pedidos/:id/estatus` (`en_preparacion`, `lista`);
  * - existencias: `GET /inventario/productos`. El nivel «bajo» solo se marca si el API da el mínimo
  *   de cada producto (`minStock`); si no, se listan sin juzgar el nivel.
  * - «Registrar merma»: `POST /inventario/mermas` (solo personal operativo; el admin solo consulta).
@@ -40,7 +42,9 @@ interface Comanda {
 	table: string;
 	time: string;
 	status: string | null;
-	items: { nombre: string; cantidad: number }[];
+	items: { nombre: string; cantidad: number; notas?: string | null }[];
+	/** Nota general para cocina (API #155; antes no venía). */
+	notasCocina?: string | null;
 }
 interface Producto {
 	id: number;
@@ -52,8 +56,8 @@ interface Producto {
 }
 
 const COLUMNAS = [
-	{ estado: "abierta", titulo: "Nuevas", accion: "Empezar", siguiente: "en_preparacion", vacio: "No hay comandas nuevas." },
-	{ estado: "en_preparacion", titulo: "En preparación", accion: "Marcar lista", siguiente: "lista", vacio: "Nada en el fuego." },
+	{ estado: "abierta", titulo: "Nuevas", accion: "Empezar a preparar", siguiente: "en_preparacion", vacio: "No hay comandas nuevas." },
+	{ estado: "en_preparacion", titulo: "En preparación", accion: "Marcar como lista", siguiente: "lista", vacio: "Nada en el fuego." },
 	{ estado: "lista", titulo: "Listas para la mesa", vacio: "Nada esperando al mesero." },
 ] as const;
 const entero = new Intl.NumberFormat("es-MX");
@@ -78,9 +82,15 @@ function TarjetaComanda({ pedido, accion, ocupado, alAvanzar }: { pedido: Comand
 					<li key={`${it.nombre}-${i}`} className="text-(length:--texto-titulo-interfaz) text-texto-principal">
 						<span className="me-2 font-semibold cifras-consola">{`${it.cantidad} ×`}</span>
 						{it.nombre}
+						{it.notas && <span className="block text-(length:--texto-pequeno) text-aviso">{`Nota: ${it.notas}`}</span>}
 					</li>
 				))}
 			</ul>
+			{pedido.notasCocina && (
+				<p className="m-0 rounded-control border border-aviso px-3 py-2 text-aviso">
+					<strong>Nota para cocina:</strong> {pedido.notasCocina}
+				</p>
+			)}
 			{accion ? (
 				<Boton className="min-h-14 w-full" cargando={ocupado} aria-label={`${accion} la comanda ${folio(pedido.id)}`} onClick={alAvanzar}>
 					{accion}
@@ -103,6 +113,8 @@ export function CocinaPanel() {
 		const t = setInterval(() => void recargar({ silenciosa: true }), 15000);
 		return () => clearInterval(t);
 	}, [recargar]);
+	// Tiempo real: una comanda nueva o un cambio de estado llega sin esperar al sondeo.
+	useEventosPedidos(() => void recargar({ silenciosa: true }));
 
 	async function avanzar(p: Comanda, siguiente: "en_preparacion" | "lista") {
 		setAvanzando(p.id);
@@ -231,6 +243,8 @@ export function CocinaPanel() {
 					})}
 				</div>
 			)}
+
+			<IncidenciasCocina />
 
 			<PanelLateral abierto={existencias} alCambiarAbierto={setExistencias} titulo="Existencias" descripcion="Primero lo que está en el mínimo o por debajo.">
 				{inventario.estado === "error" ? (

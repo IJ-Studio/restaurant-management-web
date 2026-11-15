@@ -7,14 +7,13 @@ import { Check, Circle, UserPlus } from "lucide-react";
 import { AnuncioFormulario } from "@/components/ui/AnuncioFormulario";
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
-import { Campo } from "@/components/ui/Campo";
+import { Campo, Selector } from "@/components/ui/Campo";
 import { CampoTrampa } from "@/components/ui/CampoTrampa";
 import { Casilla } from "@/components/ui/Casilla";
-import { Imagen } from "@/components/ui/Imagen";
+import { FotoAcceso } from "@/components/auth/FotoAcceso";
 import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import { useEnvioFormulario } from "@/hooks/useEnvioFormulario";
-import { restaurantConfig } from "@/config/restaurant.config";
-import { requisitosContrasena, tieneSecuenciaPredecible } from "@/lib/validacion/campos";
+import { EMAIL_MAX_LENGTH, LADA_MEXICO, LADAS, NAME_MAX_LENGTH, requisitosContrasena, tieneSecuenciaPredecible } from "@/lib/validacion/campos";
 import { aPayloadRegistro, esquemaRegistro, type DatosRegistro } from "@/lib/validacion/formularios";
 import { cn } from "@/lib/utils";
 
@@ -61,9 +60,12 @@ export default function PaginaRegistro() {
 			const data = await res.json().catch(() => ({}));
 			if (!res.ok) {
 				// Nest responde { message, error, statusCode }; en validación, `message` es una lista técnica en inglés.
-				const texto = Array.isArray(data.message)
-					? "Revisa los datos del formulario e inténtalo de nuevo."
-					: res.status >= 500
+				// El API explica qué corregir en `details` (en español); si no, su `message`.
+				const texto = Array.isArray(data.details) && typeof data.details[0] === "string"
+					? data.details[0]
+					: Array.isArray(data.message)
+						? "Revisa los datos del formulario e inténtalo de nuevo."
+						: res.status >= 500
 						? "No pudimos completar el registro. Inténtalo de nuevo en unos minutos."
 						: data.message;
 				throw new Error(texto || "No pudimos crear tu cuenta. Inténtalo de nuevo.");
@@ -93,22 +95,24 @@ export default function PaginaRegistro() {
 						<AnuncioFormulario mensaje={anuncio} />
 						{errorGeneral && <Aviso tono="error">{errorGeneral}</Aviso>}
 						<div className="grid gap-(--espacio-md) sm:grid-cols-2">
-							<Campo id="nombre" name="nombre" etiqueta="Nombre" autoComplete="given-name" maxLength={50} error={errores.nombre} />
-							<Campo id="apellido" name="apellido" etiqueta="Apellido" autoComplete="family-name" maxLength={50} error={errores.apellido} />
+							<Campo id="nombre" name="nombre" etiqueta="Nombre" autoComplete="given-name" maxLength={NAME_MAX_LENGTH} error={errores.nombre} />
+							<Campo id="apellido" name="apellido" etiqueta="Apellido" autoComplete="family-name" maxLength={NAME_MAX_LENGTH} error={errores.apellido} />
 						</div>
-						<Campo id="correo" name="correo" etiqueta="Correo" type="email" inputMode="email" autoComplete="email" error={errores.correo} />
-						<input type="hidden" name="lada" value="+52" />
-						<Campo
-							id="telefono"
-							name="telefono"
-							etiqueta="Teléfono"
-							type="tel"
-							inputMode="numeric"
-							autoComplete="tel-national"
-							maxLength={10}
-							ayuda="10 dígitos; la lada es +52."
-							error={errores.telefono}
-						/>
+						<Campo id="correo" name="correo" etiqueta="Correo" type="email" inputMode="email" autoComplete="email" maxLength={EMAIL_MAX_LENGTH} error={errores.correo} />
+						<div className="grid gap-(--espacio-md) sm:grid-cols-[minmax(0,13rem)_1fr]">
+							<Selector id="lada" name="lada" etiqueta="Lada" autoComplete="tel-country-code" opciones={[...LADAS]} defaultValue={LADA_MEXICO} error={errores.lada} />
+							<Campo
+								id="telefono"
+								name="telefono"
+								etiqueta="Teléfono"
+								type="tel"
+								inputMode="numeric"
+								autoComplete="tel-national"
+								maxLength={15}
+								ayuda="Sin la lada. En México, 10 dígitos."
+								error={errores.telefono}
+							/>
+						</div>
 						<div className="flex flex-col gap-(--espacio-sm)">
 							<Campo
 								id="password"
@@ -172,14 +176,7 @@ export default function PaginaRegistro() {
 				)}
 			</div>
 			<div className="relative hidden aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie-cafe lg:mt-(--espacio-xl) lg:block">
-				<Imagen
-					src={restaurantConfig.images.fondoAcceso}
-					fill
-					decorativa
-					preload
-					className="object-cover"
-					sizes="(min-width: 1024px) 50vw, 100vw"
-				/>
+				<FotoAcceso tipo="registro" />
 			</div>
 		</div>
 	);

@@ -38,14 +38,14 @@ export const metadata: Metadata = {
 };
 
 // Sin maximum-scale ni user-scalable: el usuario siempre puede ampliar.
-// El tema no sigue al sistema (oscuro por defecto, claro a elección), así que el HTML sale
-// con el color del oscuro y public/preferencias.js antepone el del claro antes de pintar si toca.
+// El tema no sigue al sistema (claro por defecto, oscuro a elección), así que el HTML sale
+// con el color del claro y public/preferencias.js antepone el del oscuro antes de pintar si toca.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  colorScheme: "dark",
-  themeColor: COLOR_FONDO_POR_TEMA.oscuro,
+  colorScheme: "light",
+  themeColor: COLOR_FONDO_POR_TEMA.claro,
 };
 
 export default async function RootLayout({
@@ -59,6 +59,7 @@ export default async function RootLayout({
   return (
     <html
       lang="es"
+      data-tema="claro"
       className={`${fuenteTitulos.variable} ${fuenteTexto.variable}`}
       suppressHydrationWarning
     >

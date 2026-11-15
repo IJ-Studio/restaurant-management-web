@@ -1,3 +1,4 @@
+import { api } from "@/lib/api";
 import { nombrePropio } from "@/lib/formato/caja";
 // Sin respaldo a localhost: el build exige la variable (PLAN 2.16).
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -46,11 +47,10 @@ export async function getAvailability(fecha: string, hora: string, numComensales
   return res.json();
 }
 
-export async function getTableMap(fechaHora?: string) {
-  const url = fechaHora
-    ? `${API_URL}/reservations/map?fechaHora=${encodeURIComponent(fechaHora)}`
-    : `${API_URL}/reservations/map`;
-  const res = await fetch(url, { cache: "no-store" });
+/** Plano para una hora del restaurante («2026-11-15T14:30», sin zona) y un número de personas. */
+export async function getTableMap(fechaHora: string, numComensales: number) {
+  const params = new URLSearchParams({ fechaHora, numComensales: String(numComensales) });
+  const res = await fetch(`${API_URL}/reservations/map?${params}`, { cache: "no-store" });
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Error al cargar el mapa de mesas' }));
     throw new Error(error.message || `Error al cargar el mapa de mesas (${res.status})`);
@@ -58,17 +58,9 @@ export async function getTableMap(fechaHora?: string) {
   return res.json();
 }
 
-export async function createReservation(data: Record<string, unknown>) {
-  const res = await fetch(`${API_URL}/reservations`, { cache: "no-store",
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Error al crear reserva' }));
-    throw new Error(error.message || `Error al crear reserva (${res.status})`);
-  }
-  return res.json();
+/** Pública: si hay sesión, `api` manda el token y el API lo ignora. Lanza `APIError` con el motivo. */
+export function createReservation(data: Record<string, unknown>) {
+  return api.post<{ mensaje?: string }>("/reservations", data);
 }
 
 export async function getReservations(filters?: {
@@ -137,4 +129,30 @@ export async function updateReservation(id: string, data: Record<string, unknown
     throw new Error(error.message || `Error al actualizar reserva (${res.status})`);
   }
   return res.json();
+}
+
+/** Reglas de operación del API (`GET /reglas`): la web no duplica horarios, anticipación ni límites. */
+export interface ReglasRestaurante {
+  zonaHoraria: string;
+  utcOffsetMin: number;
+  aceptaReservas: boolean;
+  reservas: { anticipacionMin: number; comensalesMax: number; duracionMin: number; intervaloMin: number; diasMaxAdelanto: number };
+  horario: { dia: number; cerrado: boolean }[];
+  diasEspeciales: { fecha: string; cerrado: boolean }[];
+}
+
+export function getReglas() {
+  return api.get<ReglasRestaurante>("/reglas");
+}
+
+export interface HorasDelDia {
+  fecha: string;
+  /** El día entero no se puede elegir: «Cerrado», «Ya pasó» o «Fuera de plazo». */
+  motivo: string | null;
+  horas: { hora: string; disponible: boolean; motivo: string | null }[];
+}
+
+/** Horas del día para N personas, todas visibles; las bloqueadas traen su motivo. */
+export function getHoras(fecha: string, numComensales: number) {
+  return api.get<HorasDelDia>("/reservations/horas", { params: { fecha, numComensales } });
 }

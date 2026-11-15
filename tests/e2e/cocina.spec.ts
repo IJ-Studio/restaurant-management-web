@@ -10,7 +10,7 @@ test.skip(process.env.E2E_MODO === "dev", "se comprueba contra el build de produ
 const CLAVE = "elquijote:preferencias";
 const ID = "c0c1a000-0000-4000-8000-000000000001";
 const COMANDAS = [
-	{ id: ID, customer: "Ana", table: "Mesa 3", time: "20:10", status: "abierta", total: 300, items: [{ nombre: "Enchiladas suizas", cantidad: 2 }] },
+	{ id: ID, customer: "Ana", table: "Mesa 3", time: "20:10", status: "abierta", total: 300, items: [{ nombre: "Enchiladas suizas", cantidad: 2, notas: "Sin crema" }], notasCocina: "Alérgico a la nuez" },
 	{ id: "c0c1a000-0000-4000-8000-000000000002", customer: "Luis", table: "Mesa 5", time: "20:05", status: "lista", total: 120, items: [{ nombre: "Sopa de tortilla", cantidad: 1 }] },
 ];
 const INVENTARIO = [
@@ -18,12 +18,14 @@ const INVENTARIO = [
 	{ id: 2, name: "Queso", unit: "kg", stock: "9", minStock: "3", costPerUnit: "90.00" },
 ];
 
-async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string, string> = {}) {
+async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string, string> = {}, conEventos = false) {
 	const contexto = await browser.newContext({ storageState: archivoSesion("cocina"), viewport: { width: ancho, height: 900 } });
 	const page = await contexto.newPage();
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);
 	const cambios: unknown[] = [];
 	let comandas = COMANDAS.map((c) => ({ ...c }));
+	let incidencias: unknown[] = [];
+	const lecturas = { comandas: 0, flujo: 0 };
 	await page.route(
 		(url) => url.origin === "http://localhost:3100" && !url.pathname.startsWith("/_next"),
 		async (r) => {
@@ -31,7 +33,16 @@ async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string
 			if (!["fetch", "xhr"].includes(p.resourceType()) || p.headers()["rsc"]) return r.fallback();
 			const camino = new URL(p.url()).pathname;
 			const json = (cuerpo: unknown) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(cuerpo) });
-			if (camino.endsWith("/pedidos/admin/recent")) return json(comandas);
+			if (camino.endsWith("/pedidos/admin/recent")) {
+				lecturas.comandas++;
+				return json(comandas);
+			}
+			if (camino.endsWith("/pedidos/stream")) {
+				lecturas.flujo++;
+				if (!conEventos) return r.fulfill({ status: 503, body: "" });
+				expect(p.headers()["authorization"]).toMatch(/^Bearer /);
+				return r.fulfill({ status: 200, contentType: "text/event-stream", body: 'event: ready\ndata: {}\n\nevent: order\ndata: {"change":"status"}\n\n' });
+			}
 			if (camino.endsWith("/inventario/productos")) return json(INVENTARIO);
 			const estatus = camino.match(/\/pedidos\/([^/]+)\/estatus$/);
 			if (estatus && p.method() === "PATCH") {
@@ -39,6 +50,15 @@ async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string
 				cambios.push({ id: estatus[1], ...cuerpo });
 				comandas = comandas.map((c) => (c.id === estatus[1] ? { ...c, status: cuerpo.estatus } : c));
 				return json({ success: true });
+			}
+			if (camino.endsWith("/cocina/incidencias")) {
+				if (p.method() === "POST") {
+					const cuerpo = p.postDataJSON() as { tipo: string; minutos?: number; mensaje?: string };
+					cambios.push({ incidencia: cuerpo });
+					incidencias = [{ id: "1", tipo: cuerpo.tipo, mensaje: cuerpo.mensaje ?? null, minutos: cuerpo.minutos ?? null, mesa: null, reportadoPor: "Cocina Prueba", creadoEn: new Date().toISOString() }, ...incidencias];
+					return json({ success: true });
+				}
+				return json(incidencias);
 			}
 			if (camino.endsWith("/inventario/mermas") && p.method() === "POST") {
 				cambios.push({ merma: p.postDataJSON() });
@@ -49,7 +69,7 @@ async function abrir(browser: Browser, ancho = 1280, preferencias: Record<string
 	);
 	await page.goto("/dashboard/cocina", { waitUntil: "load" });
 	await expect(page.locator("main").getByRole("heading", { level: 2, name: /Nuevas/ })).toBeVisible();
-	return { contexto, page, cambios };
+	return { contexto, page, cambios, lecturas };
 }
 
 test("avanzar una comanda de nueva a en preparación y a lista con el mismo PATCH de la móvil", async ({ browser }) => {
@@ -58,18 +78,54 @@ test("avanzar una comanda de nueva a en preparación y a lista con el mismo PATC
 	await expect(main.getByText("Datos de ejemplo")).toHaveCount(0);
 	const nuevas = main.getByRole("list", { name: "Comandas: nuevas" });
 	await expect(nuevas).toContainText("Enchiladas suizas");
-	const boton = nuevas.getByRole("button", { name: /^Empezar la comanda/ });
+	const boton = nuevas.getByRole("button", { name: /^Empezar a preparar la comanda/ });
 	expect((await boton.boundingBox())!.height).toBeGreaterThanOrEqual(56);
 	await boton.click();
 	const enFuego = main.getByRole("list", { name: "Comandas: en preparación" });
 	await expect(enFuego).toContainText("Enchiladas suizas");
-	await enFuego.getByRole("button", { name: /^Marcar lista la comanda/ }).click();
+	await enFuego.getByRole("button", { name: /^Marcar como lista la comanda/ }).click();
 	await expect(main.getByRole("list", { name: "Comandas: listas para la mesa" })).toContainText("Enchiladas suizas");
 	expect(cambios).toEqual([
 		{ id: ID, estatus: "en_preparacion" },
 		{ id: ID, estatus: "lista" },
 	]);
 	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("lista");
+	await contexto.close();
+});
+
+test("las notas por platillo y la nota general llegan a la comanda", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const comanda = page.locator("main").getByRole("list", { name: /^Platos de la comanda/ }).first().locator("..");
+	await expect(comanda).toContainText("Nota: Sin crema");
+	await expect(comanda).toContainText("Nota para cocina: Alérgico a la nuez");
+	await contexto.close();
+});
+
+test("reportar una incidencia: un retraso pide los minutos y aparece en las de hoy (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, page, cambios } = await abrir(browser);
+	const main = page.locator("main");
+	await expect(main).toContainText("Sin incidencias hoy.");
+	await main.getByRole("button", { name: "Reportar incidencia" }).click();
+	const dialogo = page.getByRole("dialog", { name: "Reportar incidencia" });
+	await dialogo.getByRole("button", { name: "Enviar reporte" }).click();
+	await expect(dialogo.getByRole("alert")).toHaveText("Elige cuántos minutos más va a tardar.");
+	await dialogo.getByLabel("¿Cuánto más va a tardar?").selectOption("15");
+	await dialogo.getByLabel("Detalle (opcional)").fill("Se acabó el gas del comal");
+	await dialogo.getByRole("button", { name: "Enviar reporte" }).click();
+	await expect(dialogo).toBeHidden();
+	expect(cambios).toContainEqual({ incidencia: { tipo: "retraso", minutos: 15, mensaje: "Se acabó el gas del comal" } });
+	const lista = main.getByRole("list", { name: "Incidencias de hoy" });
+	await expect(lista).toContainText("Retraso");
+	await expect(lista).toContainText("+15 min");
+	await expect(lista).toContainText("Se acabó el gas del comal");
+	await contexto.close();
+});
+
+test("tiempo real: un evento del API recarga las comandas sin esperar al sondeo (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, lecturas } = await abrir(browser, 1280, {}, true);
+	// El sondeo es cada 15 s: en 5 s solo puede haber otra lectura por el evento del flujo.
+	await expect.poll(() => lecturas.comandas, { timeout: 5000 }).toBeGreaterThanOrEqual(2);
+	expect(lecturas.flujo).toBeGreaterThanOrEqual(1);
 	await contexto.close();
 });
 

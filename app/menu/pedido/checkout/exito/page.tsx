@@ -3,11 +3,14 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FileDown } from "lucide-react";
+import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
 import { MigasDePan } from "@/components/ui/MigasDePan";
 import { CargadorMarca } from "@/components/marca/CargadorMarca";
 import { SelloCasa } from "@/components/marca/SelloCasa";
+import { downloadAsFile } from "@/features/dashboard/admin/utils/menuUtils";
+import { api, APIError } from "@/lib/api";
 import { registrarError } from "@/lib/registro/registrar-error";
 
 /**
@@ -22,6 +25,7 @@ export const dynamic = "force-dynamic";
 function Confirmacion() {
 	const searchParams = useSearchParams();
 	const ordenId = searchParams?.get("ordenId");
+	const facturaNoRegistrada = searchParams?.get("factura") === "no-registrada";
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- la factura del API no tiene contrato tipado (NP-17)
 	const [factura, setFactura] = useState<any>(null);
 	const [buscando, setBuscando] = useState(Boolean(ordenId));
@@ -30,23 +34,22 @@ function Confirmacion() {
 		if (!ordenId) return;
 		(async () => {
 			try {
-				const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/facturas/${encodeURIComponent(ordenId)}`, { cache: "no-store" });
-				if (res.ok) setFactura(await res.json());
+				// Con la sesión: la factura es del cliente que pagó. 404 = aún no hay factura.
+				setFactura(await api.get(`/facturas/${encodeURIComponent(ordenId)}`));
 			} catch (e) {
-				registrarError(e, "confirmación: factura");
+				if (!(e instanceof APIError && e.statusCode === 404)) registrarError(e, "confirmación: factura");
 			} finally {
 				setBuscando(false);
 			}
 		})();
 	}, [ordenId]);
 
-	const descargarFactura = (tipo: "pdf" | "xml") => {
-		window.open(
+	// Descarga con la sesión (una pestaña nueva no lleva el token).
+	const descargarFactura = (tipo: "pdf" | "xml") =>
+		void downloadAsFile(
 			`${process.env.NEXT_PUBLIC_API_URL}/facturas/${encodeURIComponent(ordenId ?? "")}/descargar?tipo=${encodeURIComponent(tipo)}`,
-			"_blank",
-			"noopener,noreferrer",
-		);
-	};
+			`factura-${ordenId}.${tipo}`,
+		).catch((e) => registrarError(e, "confirmación: descargar factura"));
 
 	return (
 		<section aria-labelledby="exito-titulo" className="mx-auto flex max-w-[40rem] flex-col items-center gap-(--espacio-lg) py-(--espacio-3xl) text-center">
@@ -58,6 +61,11 @@ function Confirmacion() {
 			<p className="m-0 max-w-[44ch] text-(length:--texto-entradilla) leading-[1.6] text-texto-secundario [text-wrap:pretty]">
 				Ya lo estamos preparando. Puedes seguir su estado desde tu pedido.
 			</p>
+			{facturaNoRegistrada && (
+				<Aviso tono="aviso" titulo="No pudimos registrar tu solicitud de factura">
+					Tu pago sí quedó. Pídenos la factura por teléfono o en caja con el número de tu pedido: {ordenId}.
+				</Aviso>
+			)}
 			{buscando ? (
 				<CargadorMarca tamano="compacto" texto="Buscando tu factura…" />
 			) : factura ? (

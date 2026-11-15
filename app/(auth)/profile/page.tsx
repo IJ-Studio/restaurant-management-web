@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaPerfil } from "@/lib/validacion/formularios";
+import { LIMITES_CAMPO } from "@/lib/validacion/reglas";
 
 /**
  * Tu cuenta (`/profile`, PLAN 4.20). La lógica no cambia: los datos salen de la sesión, sin
@@ -210,10 +211,10 @@ export default function PaginaCuenta() {
 						}}
 					>
 						<div className="grid gap-(--espacio-md) sm:grid-cols-2">
-							<Campo name="name" etiqueta="Nombre" autoComplete="given-name" value={formData.name} onChange={cambiar} readOnly={!editandoPersonal} classNameControl={comoTexto(editandoPersonal)} error={errores.name} />
-							<Campo name="lastname" etiqueta="Apellidos" autoComplete="family-name" value={formData.lastname} onChange={cambiar} readOnly={!editandoPersonal} classNameControl={comoTexto(editandoPersonal)} error={errores.lastname} />
-							<Campo name="email" etiqueta="Correo" type="email" value={formData.email} readOnly classNameControl={comoTexto(false)} ayuda="Es tu identidad en la cuenta; no se puede cambiar aquí." className="sm:col-span-2" />
-							<Campo name="phone" etiqueta="Teléfono" type="tel" inputMode="tel" autoComplete="tel" value={formData.phone} onChange={cambiar} readOnly={!editandoPersonal} classNameControl={comoTexto(editandoPersonal)} error={errores.phone} />
+							<Campo maxLength={LIMITES_CAMPO.nombre} name="name" etiqueta="Nombre" autoComplete="given-name" value={formData.name} onChange={cambiar} readOnly={!editandoPersonal} classNameControl={comoTexto(editandoPersonal)} error={errores.name} />
+							<Campo maxLength={LIMITES_CAMPO.nombre} name="lastname" etiqueta="Apellidos" autoComplete="family-name" value={formData.lastname} onChange={cambiar} readOnly={!editandoPersonal} classNameControl={comoTexto(editandoPersonal)} error={errores.lastname} />
+							<Campo maxLength={LIMITES_CAMPO.correo} name="email" etiqueta="Correo" type="email" value={formData.email} readOnly classNameControl={comoTexto(false)} ayuda="Es tu identidad en la cuenta; no se puede cambiar aquí." className="sm:col-span-2" />
+							<Campo maxLength={LIMITES_CAMPO.telefono} name="phone" etiqueta="Teléfono" type="tel" inputMode="tel" autoComplete="tel" value={formData.phone} onChange={cambiar} readOnly={!editandoPersonal} classNameControl={comoTexto(editandoPersonal)} error={errores.phone} />
 						</div>
 					</Bloque>
 					<Bloque
@@ -227,9 +228,9 @@ export default function PaginaCuenta() {
 						}}
 					>
 						<div className="grid gap-(--espacio-md) sm:grid-cols-2">
-							<Campo name="calle" etiqueta="Calle y número" opcional autoComplete="address-line1" value={formData.calle} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.calle} />
-							<Campo name="numero" etiqueta="Interior" opcional autoComplete="address-line2" value={formData.numero} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.numero} />
-							<Campo name="colonia" etiqueta="Colonia" opcional autoComplete="address-level3" value={formData.colonia} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.colonia} />
+							<Campo maxLength={LIMITES_CAMPO.lineaCorta} name="calle" etiqueta="Calle y número" opcional autoComplete="address-line1" value={formData.calle} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.calle} />
+							<Campo maxLength={LIMITES_CAMPO.lineaMedia} name="numero" etiqueta="Interior" opcional autoComplete="address-line2" value={formData.numero} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.numero} />
+							<Campo maxLength={LIMITES_CAMPO.lineaMedia} name="colonia" etiqueta="Colonia" opcional autoComplete="address-level3" value={formData.colonia} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.colonia} />
 							<Campo
 								name="codigoPostal"
 								etiqueta="Código postal"
@@ -243,9 +244,9 @@ export default function PaginaCuenta() {
 								readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)}
 								error={errores.codigoPostal}
 							/>
-							<Campo name="ciudad" etiqueta="Ciudad" opcional autoComplete="address-level2" value={formData.ciudad} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.ciudad} />
-							<Campo name="estado" etiqueta="Estado" opcional autoComplete="address-level1" value={formData.estado} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.estado} />
-							<AreaTexto
+							<Campo maxLength={LIMITES_CAMPO.lineaMedia} name="ciudad" etiqueta="Ciudad" opcional autoComplete="address-level2" value={formData.ciudad} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.ciudad} />
+							<Campo maxLength={LIMITES_CAMPO.lineaMedia} name="estado" etiqueta="Estado" opcional autoComplete="address-level1" value={formData.estado} onChange={cambiar} readOnly={!editandoDireccion} classNameControl={comoTexto(editandoDireccion)} error={errores.estado} />
+							<AreaTexto maxLength={LIMITES_CAMPO.referencias}
 								name="indicaciones"
 								etiqueta="Indicaciones de entrega"
 								opcional

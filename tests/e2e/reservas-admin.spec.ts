@@ -22,7 +22,7 @@ const reserva = (id: string, nombre: string, estatus: string, extra: Record<stri
 	estatus,
 	...extra,
 });
-const RESERVAS = [reserva("a1", "Ana López", "confirmada"), reserva("b2", "Luis Pérez", "pendiente", { numComensales: 2, mesaNumero: null, clienteTelefono: "" }), reserva("c3", "Eva Ruiz", "cancelada", { motivoCancelacion: "NO LLEGÓ EL GRUPO" })];
+const RESERVAS = [reserva("a1", "Ana López", "confirmada"), reserva("b2", "Luis Pérez", "pendiente", { numComensales: 2, mesaNumero: null, clienteTelefono: "", clienteEmail: "" }), reserva("c3", "Eva Ruiz", "cancelada", { motivoCancelacion: "NO LLEGÓ EL GRUPO" })];
 
 async function abrir(browser: Browser, opciones: { ancho?: number; falla?: boolean; prediccion?: boolean; preferencias?: Record<string, string> } = {}) {
 	const contexto = await browser.newContext({ storageState: archivoSesion("admin"), viewport: { width: opciones.ancho ?? 1440, height: 900 } });
@@ -119,6 +119,15 @@ test("WhatsApp con la lada de país; sin teléfono, desactivado y con el motivo 
 	await expect(enlace).toHaveAttribute("target", "_blank");
 	await expect(enlace).toHaveAttribute("rel", "noopener noreferrer");
 	await expect(main.getByRole("button", { name: "Sin WhatsApp: no hay un teléfono válido de Luis Pérez" }).filter({ visible: true }).first()).toBeDisabled();
+	await contexto.close();
+});
+
+test("correo además de WhatsApp: asunto y mensaje listos; sin correo, desactivado (Fase 4.6)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const main = page.locator("main");
+	const enlace = main.getByRole("link", { name: "Escribir a Ana López por correo" }).filter({ visible: true }).first();
+	await expect(enlace).toHaveAttribute("href", /^mailto:a1@correo\.mx\?subject=Tu%20reserva%20en%20El%20Quijote%20del%20.+&body=Hola%2C%20Ana%20L%C3%B3pez/);
+	await expect(main.getByRole("button", { name: "Sin correo: no hay un correo válido de Luis Pérez" }).filter({ visible: true }).first()).toBeDisabled();
 	await contexto.close();
 });
 

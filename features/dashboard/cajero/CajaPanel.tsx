@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Banknote, CreditCard, Lock, LockOpen, Receipt } from "lucide-react";
 import { BloquePanel } from "@/components/paneles/BloquePanel";
 import { AppOperaciones } from "@/components/paneles/AppOperaciones";
@@ -9,13 +9,15 @@ import { INDICADOR_PROTAGONISTA, REJILLA_INDICADORES } from "@/components/panele
 import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Buscador } from "@/components/ui/Buscador";
-import { Campo } from "@/components/ui/Campo";
+import { Campo, Selector } from "@/components/ui/Campo";
 import { Dialogo } from "@/components/ui/Dialogo";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Indicador } from "@/components/ui/Indicador";
+import { Insignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { useCarga } from "@/hooks/useCarga";
+import { useEventosPedidos } from "@/hooks/useEventosPedidos";
 import { api } from "@/lib/api";
 import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
@@ -23,6 +25,7 @@ import { pedirPanel } from "@/lib/paneles/api-panel";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { cn } from "@/lib/utils";
 import { presentarCarta } from "@/lib/formato/caja";
+import { DialogoFactura } from "./DialogoFactura";
 import { suma } from "@/lib/paneles/calculo";
 import type { Calculo } from "@/components/ui/VerCalculo";
 
@@ -70,36 +73,68 @@ const entero = new Intl.NumberFormat("es-MX");
 const hora = new Intl.DateTimeFormat("es-MX", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 const folio = (id: string) => id.slice(0, 6).toUpperCase();
 const numeroCampo = (t: string) => (t.trim() === "" ? Number.NaN : Number(t));
+/** Igual que la móvil (`TIP_PERCENTAGES`, `tipFromPercent`): porcentajes sobre el total, en centavos. */
+const PORCENTAJES_PROPINA = [0, 10, 15, 20] as const;
+const propinaDe = (total: number, pct: number) => Math.round((Math.round(total * 100) * pct) / 100) / 100;
+/** Igual que la móvil (`equalShare`): lo que falta entre las personas que faltan, en centavos. */
+const parteIgual = (restante: number, personas: number) => (personas <= 1 ? restante : Math.round(Math.round(restante * 100) / personas) / 100);
+/** Igual que la móvil (`itemsLabel`, 60 caracteres como el API): «2× Enchiladas, 1× Agua». */
+const etiquetaPlatillos = (l: { nombre: string; cantidad: number }[]) => {
+	const t = l.map((p) => `${p.cantidad}× ${p.nombre}`).join(", ");
+	return t.length > 60 ? `${t.slice(0, 59)}…` : t;
+};
+interface LineaCuenta {
+	id: number;
+	nombre: string;
+	cantidad: number;
+	precio: number;
+}
 
-function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: () => void }) {
+function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: (cerrada: boolean) => void }) {
 	const [abierto, setAbierto] = useState(false);
 	const [metodoId, setMetodoId] = useState<number | null>(null);
 	const [recibido, setRecibido] = useState("");
 	const [propina, setPropina] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [enviando, setEnviando] = useState(false);
+	const [restante, setRestante] = useState(cuenta.total);
+	const [personas, setPersonas] = useState("1");
+	const [referencia, setReferencia] = useState("");
+	const [lineas, setLineas] = useState<LineaCuenta[]>([]);
+	const [elegidos, setElegidos] = useState<Record<number, number>>({});
 	const { notificar } = useNotificaciones();
 	const metodo = metodos.find((m) => m.id === metodoId) ?? null;
 	const montoPropina = propina.trim() === "" ? 0 : numeroCampo(propina);
-	const aCobrar = cuenta.total + (Number.isFinite(montoPropina) ? montoPropina : 0);
+	// Cuenta dividida (paridad con la móvil): en partes iguales, lo que falta entre las personas que
+	// faltan; por platillo, lo elegido sin pasar de lo que falta.
+	const porPlatillo = personas === "platillos";
+	const elegidas = lineas.filter((l) => (elegidos[l.id] ?? 0) > 0).map((l) => ({ ...l, cantidad: elegidos[l.id] }));
+	const sumaElegida = Math.round(elegidas.reduce((t, l) => t + Math.round(l.precio * 100) * l.cantidad, 0)) / 100;
+	const parte = porPlatillo ? Math.min(restante, sumaElegida) : parteIgual(restante, Number(personas));
+	const dividida = porPlatillo || parte < restante;
+	const aCobrar = parte + (Number.isFinite(montoPropina) ? montoPropina : 0);
 	const cantidad = numeroCampo(recibido);
 	const diferencia = Number.isFinite(cantidad) ? cantidad - aCobrar : null;
 
 	async function cobrar() {
 		if (!metodo) return setError("Elige la forma de pago.");
+		if (porPlatillo && elegidas.length === 0) return setError("Elige los platillos que paga esta persona.");
 		if (!Number.isFinite(montoPropina) || montoPropina < 0) return setError("La propina tiene que ser una cantidad en pesos.");
 		if (metodo.esEfectivo && !(cantidad >= aCobrar)) return setError(Number.isFinite(cantidad) ? `Faltan ${importe(aCobrar - cantidad)}.` : "Escribe cuánto te dan.");
 		setEnviando(true);
 		try {
-			const respuesta = await api.post<{ cambio?: string }>(`/pedidos/${encodeURIComponent(cuenta.id)}/cobrar`, {
+			const respuesta = await api.post<{ cambio?: string; cerrada?: boolean }>(`/pedidos/${encodeURIComponent(cuenta.id)}/cobrar`, {
 				metodoPagoId: metodo.id,
 				...(metodo.aplicaPropina && montoPropina > 0 ? { propina: montoPropina } : {}),
 				...(metodo.esEfectivo ? { montoRecibido: cantidad } : {}),
+				...(dividida ? { monto: parte } : {}),
+				...(porPlatillo ? { etiqueta: etiquetaPlatillos(elegidas) } : {}),
+				...(!metodo.esEfectivo && referencia.trim() ? { referencia: referencia.trim() } : {}),
 			});
 			const cambio = Number(respuesta?.cambio ?? 0);
-			notificar({ tono: "exito", titulo: `${cuenta.table} cobrada`, descripcion: cambio > 0 ? `Cambio: ${importe(cambio)}.` : `${importe(aCobrar)} en ${metodo.nombre.toLowerCase()}.` });
+			notificar({ tono: "exito", titulo: dividida ? `${cuenta.table}: parte cobrada` : `${cuenta.table} cobrada`, descripcion: cambio > 0 ? `Cambio: ${importe(cambio)}.` : `${importe(aCobrar)} en ${metodo.nombre.toLowerCase()}.` });
 			setAbierto(false);
-			alCobrado();
+			alCobrado(respuesta?.cerrada ?? !dividida);
 		} catch (err) {
 			registrarError(err, "caja: cobrar");
 			setError("No se pudo registrar el cobro. Revisa los datos y vuelve a intentarlo.");
@@ -117,7 +152,29 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 					setMetodoId(metodos[0]?.id ?? null);
 					setRecibido("");
 					setPropina("");
+					setPersonas("1");
+					setReferencia("");
 					setError(null);
+					setRestante(cuenta.total);
+					setLineas([]);
+					setElegidos({});
+					// Lo que falta, por si ya se cobró una parte, y los platillos con su precio para cobrar por
+					// platillo (`GET /pedidos/:id`); sin respuesta, el total y sin la opción por platillo.
+					void api
+						.get<{
+							restante?: string | number;
+							items?: { id: number; cantidad: number; precioUnitario: string | number; platillo?: { nombre?: string } }[];
+						}>(`/pedidos/${encodeURIComponent(cuenta.id)}`)
+						.then((d) => {
+							const r = Number(d?.restante);
+							if (Number.isFinite(r) && r > 0) setRestante(r);
+							setLineas(
+								(d?.items ?? [])
+									.map((i) => ({ id: i.id, nombre: i.platillo?.nombre ?? "Platillo", cantidad: i.cantidad, precio: Number(i.precioUnitario) }))
+									.filter((l) => l.cantidad > 0 && Number.isFinite(l.precio)),
+							);
+						})
+						.catch(() => undefined);
 				}
 			}}
 			disparador={
@@ -140,9 +197,51 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 		>
 			<div className="flex flex-col gap-(--espacio-lg)">
 				<p className="m-0 flex items-baseline justify-between gap-3">
-					<span className="text-texto-secundario">Consumo</span>
-					<span className="texto-cifra-destacada">{importe(cuenta.total)}</span>
+					<span className="text-texto-secundario">{restante < cuenta.total ? "Falta por cobrar" : "Consumo"}</span>
+					<span className="texto-cifra-destacada">{importe(restante)}</span>
 				</p>
+				<Selector
+					etiqueta="Dividir la cuenta"
+					opciones={[
+						{ valor: "1", texto: "No, toda la cuenta" },
+						...[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ valor: String(n), texto: `En partes iguales entre ${n}` })),
+						...(lineas.length > 0 ? [{ valor: "platillos", texto: "Por platillo" }] : []),
+					]}
+					value={personas}
+					onChange={(e) => {
+						setPersonas(e.target.value);
+						setPropina("");
+					}}
+					ayuda={
+						porPlatillo
+							? `Esta parte: ${importe(parte)}. Elige cuántos de cada platillo paga esta persona.`
+							: dividida
+								? `Esta parte: ${importe(parte)}. Elige cuántas personas faltan por pagar; la última paga el resto exacto.`
+								: undefined
+					}
+				/>
+				{porPlatillo && (
+					<fieldset className="m-0 flex min-w-0 flex-col gap-(--espacio-sm) border-0 p-0">
+						<legend className="mb-(--espacio-xs) p-0 font-semibold text-texto-principal">Platillos de esta persona</legend>
+						{lineas.map((l) => (
+							<Campo
+								key={l.id}
+								etiqueta={`${l.nombre} (${importe(l.precio)} c/u, pidieron ${l.cantidad})`}
+								type="number"
+								inputMode="numeric"
+								min={0}
+								max={l.cantidad}
+								step={1}
+								value={String(elegidos[l.id] ?? 0)}
+								onChange={(e) => {
+									const n = Math.max(0, Math.min(l.cantidad, Math.trunc(Number(e.target.value) || 0)));
+									setElegidos((prev) => ({ ...prev, [l.id]: n }));
+									setPropina("");
+								}}
+							/>
+						))}
+					</fieldset>
+				)}
 				{metodos.length === 0 ? (
 					<Aviso tono="error" rol={null} titulo="No hay formas de pago disponibles.">
 						Pide a administración que las active en el sistema.
@@ -171,7 +270,22 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 					</fieldset>
 				)}
 				{metodo?.aplicaPropina && (
-					<Campo etiqueta="Propina" opcional type="number" inputMode="decimal" min={0} step="0.01" value={propina} onChange={(e) => setPropina(e.target.value)} ayuda="En pesos." />
+					<div role="group" aria-label="Propina sugerida" className="flex flex-wrap gap-2">
+						{PORCENTAJES_PROPINA.map((pct) => {
+							const valor = pct === 0 ? "" : propinaDe(parte, pct).toFixed(2);
+							return (
+								<Boton key={pct} variante={propina === valor ? "primario" : "secundario"} tamano="compacto" aria-pressed={propina === valor} onClick={() => setPropina(valor)}>
+									{pct === 0 ? "Sin propina" : `${pct} %`}
+								</Boton>
+							);
+						})}
+					</div>
+				)}
+				{metodo?.aplicaPropina && (
+					<Campo etiqueta="Propina" opcional type="number" inputMode="decimal" min={0} step="0.01" value={propina} onChange={(e) => setPropina(e.target.value)} ayuda="En pesos. Elige un porcentaje o escribe otra cantidad." />
+				)}
+				{metodo && !metodo.esEfectivo && (
+					<Campo etiqueta="Referencia o folio" opcional value={referencia} onChange={(e) => setReferencia(e.target.value)} maxLength={100} ayuda="De la terminal o de la transferencia." />
 				)}
 				{metodo?.esEfectivo && (
 					<div className="flex flex-col gap-(--espacio-sm)">
@@ -189,6 +303,22 @@ function DialogoCobro({ cuenta, metodos, alCobrado }: { cuenta: Cuenta; metodos:
 				)}
 			</div>
 		</Dialogo>
+	);
+}
+
+/** Diferencia del corte en vivo, como la móvil: en centavos para no arrastrar errores de redondeo. */
+function diferenciaCorte(esperado: number, contado: number): number {
+	return (Math.round(contado * 100) - Math.round(esperado * 100)) / 100;
+}
+
+function DiferenciaCorte({ esperado, contado }: { esperado: number; contado: number }) {
+	if (!Number.isFinite(contado)) return null;
+	const d = diferenciaCorte(esperado, contado);
+	const texto = d === 0 ? "Cuadra" : d > 0 ? `Sobran ${importe(d)}` : `Faltan ${importe(-d)}`;
+	return (
+		<p role="status" className={cn("m-0 font-semibold", d === 0 ? "text-exito" : "text-aviso")}>
+			{texto}
+		</p>
 	);
 }
 
@@ -249,9 +379,33 @@ function DialogoCaja({ abierta, esperado, alHecho }: { abierta: boolean; esperad
 		>
 			<div className="flex flex-col gap-(--espacio-md)">
 				<Campo etiqueta={abierta ? "Efectivo contado" : "Fondo inicial"} type="number" inputMode="decimal" min={0} step="0.01" value={monto} onChange={(e) => setMonto(e.target.value)} error={error} ayuda="En pesos." />
+				{abierta && esperado !== undefined && <DiferenciaCorte esperado={esperado} contado={numeroCampo(monto)} />}
 				{abierta && <Campo etiqueta="Notas" opcional value={notas} onChange={(e) => setNotas(e.target.value)} maxLength={300} />}
 			</div>
 		</Dialogo>
+	);
+}
+
+const POR_COBRAR = ["entregada", "para_cobrar"];
+const EN_SERVICIO = ["abierta", "en_preparacion", "lista"];
+const ESTADO_CUENTA: Record<string, string> = { abierta: "Abierta", en_preparacion: "En preparación", lista: "Lista" };
+
+function TarjetaCuenta({ cuenta: c, metodos, alCobrado, conEstado = false }: { cuenta: Cuenta; metodos: Metodo[]; alCobrado: (cuenta: Cuenta, cerrada: boolean) => void; conEstado?: boolean }) {
+	return (
+		<li className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
+			<div className="flex items-start justify-between gap-3">
+				<div className="flex min-w-0 flex-col gap-1">
+					<h3 className="m-0 font-titulos text-(length:--texto-titulo-3) font-normal leading-[1.15] text-texto-principal">{c.table}</h3>
+					<p className="m-0 text-texto-secundario">{`${c.customer} · cuenta ${folio(c.id)}`}</p>
+				</div>
+				<p className="m-0 texto-cifra-destacada whitespace-nowrap">{importe(c.total)}</p>
+			</div>
+			<p className="m-0 flex flex-wrap items-center gap-2 text-(length:--texto-pequeno) text-texto-secundario">
+				{conEstado && c.status && <Insignia tono="info">{ESTADO_CUENTA[c.status] ?? c.status}</Insignia>}
+				{`${contar(c.items.length, "plato")} · abierta a las ${c.time}`}
+			</p>
+			<DialogoCobro cuenta={c} metodos={metodos} alCobrado={(cerrada) => alCobrado(c, cerrada)} />
+		</li>
 	);
 }
 
@@ -260,23 +414,35 @@ export function CajaPanel() {
 	const [cuentas, recargarCuentas] = useCarga(() => pedirPanel<Cuenta[]>("/pedidos/admin/recent").then(presentarCarta), "caja: cuentas por cobrar");
 	const [metodos] = useCarga(() => pedirPanel<Metodo[]>("/pedidos/metodos-pago"), "caja: formas de pago");
 	const [busqueda, setBusqueda] = useState("");
+	const [facturaDe, setFacturaDe] = useState<Cuenta | null>(null);
 
 	useEffect(() => {
 		const t = setInterval(() => void recargarCuentas({ silenciosa: true }), 20000);
 		return () => clearInterval(t);
 	}, [recargarCuentas]);
+	useEventosPedidos(() => void recargarCuentas({ silenciosa: true }));
 
-	const porCobrar = useMemo(() => (cuentas.estado === "listo" && Array.isArray(cuentas.datos) ? cuentas.datos.filter((c) => c.status === "entregada") : []), [cuentas]);
-	const filtradas = useMemo(() => {
-		const q = busqueda.trim().toLowerCase();
-		return q ? porCobrar.filter((c) => `${folio(c.id)} ${c.table} ${c.customer}`.toLowerCase().includes(q)) : porCobrar;
-	}, [porCobrar, busqueda]);
+	const lista = useMemo(() => (cuentas.estado === "listo" && Array.isArray(cuentas.datos) ? cuentas.datos : []), [cuentas]);
+	const porCobrar = useMemo(() => lista.filter((c) => POR_COBRAR.includes(c.status ?? "")), [lista]);
+	// Paridad con la móvil: el API deja cobrar desde que la cuenta está abierta (pago por adelantado).
+	const enServicio = useMemo(() => lista.filter((c) => EN_SERVICIO.includes(c.status ?? "")), [lista]);
+	const coincide = useCallback(
+		(c: Cuenta) => {
+			const q = busqueda.trim().toLowerCase();
+			return !q || `${folio(c.id)} ${c.table} ${c.customer}`.toLowerCase().includes(q);
+		},
+		[busqueda],
+	);
+	const filtradas = useMemo(() => porCobrar.filter(coincide), [porCobrar, coincide]);
+	const enServicioFiltradas = useMemo(() => enServicio.filter(coincide), [enServicio, coincide]);
 	const actual = caja.estado === "listo" ? caja.datos : null;
 	const abierta = actual?.abierta === true ? actual : null;
 	const listaMetodos = metodos.estado === "listo" && Array.isArray(metodos.datos) ? metodos.datos : [];
-	const alCobrado = () => {
+	const alCobrado = (cuenta: Cuenta, cerrada: boolean) => {
 		void recargarCuentas({ silenciosa: true });
 		void recargarCaja({ silenciosa: true });
+		// Al cerrar la cuenta se ofrece la factura (la tarjeta de la cuenta ya desaparece de la lista).
+		if (cerrada) setFacturaDe(cuenta);
 	};
 
 	return (
@@ -286,7 +452,7 @@ export function CajaPanel() {
 			acciones={
 				<>
 					<Buscador etiqueta="Buscar por cuenta, mesa o cliente" valor={busqueda} alCambiar={setBusqueda} marcador="Cuenta, mesa o cliente" />
-					{actual && <DialogoCaja abierta={!!abierta} esperado={abierta?.efectivoEsperado} alHecho={() => void recargarCaja()} />}
+					{actual && <DialogoCaja abierta={!!abierta} esperado={abierta ? Number(abierta.efectivoEsperado) : undefined} alHecho={() => void recargarCaja()} />}
 				</>
 			}
 		>
@@ -328,21 +494,22 @@ export function CajaPanel() {
 				) : (
 					<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-md) p-0 md:grid-cols-2 2xl:grid-cols-3" aria-label="Cuentas por cobrar">
 						{filtradas.map((c) => (
-							<li key={c.id} className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
-								<div className="flex items-start justify-between gap-3">
-									<div className="flex min-w-0 flex-col gap-1">
-										<h3 className="m-0 font-titulos text-(length:--texto-titulo-3) font-normal leading-[1.15] text-texto-principal">{c.table}</h3>
-										<p className="m-0 text-texto-secundario">{`${c.customer} · cuenta ${folio(c.id)}`}</p>
-									</div>
-									<p className="m-0 texto-cifra-destacada whitespace-nowrap">{importe(c.total)}</p>
-								</div>
-								<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">{`${contar(c.items.length, "plato")} · abierta a las ${c.time}`}</p>
-								<DialogoCobro cuenta={c} metodos={listaMetodos} alCobrado={alCobrado} />
-							</li>
+							<TarjetaCuenta key={c.id} cuenta={c} metodos={listaMetodos} alCobrado={alCobrado} />
 						))}
 					</ul>
 				)}
 			</BloquePanel>
+
+			{enServicioFiltradas.length > 0 && (
+				<BloquePanel titulo="En servicio" descripcion="Cuentas que aún se preparan o están en la mesa. Se pueden cobrar por adelantado.">
+					<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-md) p-0 md:grid-cols-2 2xl:grid-cols-3" aria-label="Cuentas en servicio">
+						{enServicioFiltradas.map((c) => (
+							<TarjetaCuenta key={c.id} cuenta={c} metodos={listaMetodos} alCobrado={alCobrado} conEstado />
+						))}
+					</ul>
+				</BloquePanel>
+			)}
+			<DialogoFactura cuenta={facturaDe} alCerrar={() => setFacturaDe(null)} />
 			<AppOperaciones />
 		</PlantillaPanel>
 	);

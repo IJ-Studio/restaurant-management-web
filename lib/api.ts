@@ -8,12 +8,15 @@ interface RequestOptions extends RequestInit {
 export class APIError extends Error {
   statusCode: number;
   error: string;
+  /** Mensajes por campo de la validación del API (`details`), si los hay. */
+  details: string[];
 
-  constructor(message: string, statusCode: number, error: string) {
+  constructor(message: string, statusCode: number, error: string, details: string[] = []) {
     super(message);
     this.name = "APIError";
     this.statusCode = statusCode;
     this.error = error;
+    this.details = details;
   }
 }
 
@@ -57,7 +60,7 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
   });
 
   if (!response.ok) {
-    let errorData: { message?: string; statusCode?: number; error?: string } = {};
+    let errorData: { message?: string; statusCode?: number; error?: string; details?: unknown } = {};
     try {
       errorData = await response.json();
     } catch {
@@ -68,7 +71,9 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
     const statusCode = errorData.statusCode || response.status;
     const error = errorData.error || response.statusText;
 
-    throw new APIError(message, statusCode, error);
+    const details = Array.isArray(errorData.details) ? errorData.details.filter((d): d is string => typeof d === "string") : [];
+
+    throw new APIError(message, statusCode, error, details);
   }
 
   if (response.status === 204) {
@@ -102,3 +107,32 @@ export const api = {
   delete: <T>(endpoint: string, options?: RequestOptions) =>
     apiFetch<T>(endpoint, { ...options, method: "DELETE" }),
 };
+
+/** Textos por tipo de fallo, iguales en toda la web. */
+export const MENSAJES_ERROR = {
+	sesion: "Tu sesión caducó. Inicia sesión de nuevo y vuelve a intentarlo.",
+	permiso: "Tu cuenta no tiene permiso para hacer esto.",
+	limite: "Demasiados intentos seguidos. Espera un minuto y vuelve a intentarlo.",
+	red: "No hay conexión con el restaurante. Revisa tu internet e inténtalo de nuevo.",
+} as const;
+
+/**
+ * Mensaje para la persona según el tipo de error: validación, conflicto o regla de negocio (4xx) con
+ * el texto del API, que ya dice qué corregir; sesión, permiso, límite y red con su texto; un fallo
+ * del servidor o desconocido, con `generico`.
+ */
+export function mensajeDeError(error: unknown, generico: string): string {
+	if (error instanceof APIError) {
+		if (error.statusCode === 401) return MENSAJES_ERROR.sesion;
+		if (error.statusCode === 403) return MENSAJES_ERROR.permiso;
+		if (error.statusCode === 429) return MENSAJES_ERROR.limite;
+		if (error.statusCode >= 400 && error.statusCode < 500) {
+			// «Datos inválidos.» sola no dice qué corregir: se muestra el primer motivo.
+			return error.details[0] && error.message === "Datos inválidos." ? error.details[0] : error.message || generico;
+		}
+		return generico;
+	}
+	// fetch rechaza con TypeError cuando no hay red o el servidor no responde.
+	if (error instanceof TypeError) return MENSAJES_ERROR.red;
+	return generico;
+}

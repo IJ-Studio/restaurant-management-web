@@ -46,12 +46,14 @@ test.describe("preferencias de accesibilidad", () => {
 		expect(raiz).toBe("20px"); // 125 %
 	});
 
-	test("sin preferencias: oscuro por defecto y nada guardado salvo la clave propia", async ({ page }) => {
+	test("sin preferencias: claro por defecto aunque el sistema esté en oscuro, y nada guardado salvo la clave propia", async ({ page }) => {
+		await page.emulateMedia({ colorScheme: "dark" });
 		await simularApi(page);
 		await capturarAtributosIniciales(page, null);
 		await page.goto("/", { waitUntil: "load" });
 		const inicio = await page.evaluate(() => (window as unknown as { __inicio: unknown }).__inicio);
-		expect(inicio).toEqual({ tema: "oscuro", tamano: undefined, movimiento: undefined });
+		expect(inicio).toEqual({ tema: "claro", tamano: undefined, movimiento: undefined });
+		expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(244, 238, 227)");
 		await page.waitForTimeout(500);
 		const claves = await page.evaluate(() => Object.keys(localStorage).filter((k) => !["authToken", "user", "num_mesa"].includes(k)));
 		expect(claves.filter((k) => k !== CLAVE)).toEqual([]);
@@ -94,17 +96,18 @@ test.describe("preferencias de accesibilidad", () => {
 
 		await page.goto("/", { waitUntil: "load" });
 		await page.waitForTimeout(500);
-		expect(await barra()).toEqual({ antes: "#14100C", despues: ["#14100C"] });
+		expect(await barra()).toEqual({ antes: "#F4EEE3", despues: ["#F4EEE3"] });
 		expect(await page.locator('meta[name="theme-color"]').count()).toBe(1);
 
-		await page.evaluate((c) => localStorage.setItem(c, JSON.stringify({ v: 1, tema: "claro" })), CLAVE);
+		// La elección guardada manda sobre el claro por defecto.
+		await page.evaluate((c) => localStorage.setItem(c, JSON.stringify({ v: 1, tema: "oscuro" })), CLAVE);
 		await page.reload({ waitUntil: "load" });
 		await page.waitForTimeout(500);
-		expect(await barra()).toEqual({ antes: "#F4EEE3", despues: ["#F4EEE3"] });
+		expect(await barra()).toEqual({ antes: "#14100C", despues: ["#14100C"] });
 
 		await page.getByRole("button", { name: "Opciones de accesibilidad" }).first().click();
-		await page.getByRole("radio", { name: "Oscuro" }).check();
-		expect((await barra()).despues).toEqual(["#14100C"]);
+		await page.getByRole("radio", { name: "Claro" }).check();
+		expect((await barra()).despues).toEqual(["#F4EEE3"]);
 		expect(await page.locator('meta[name="viewport"]').getAttribute("content")).toBe(
 			"width=device-width, initial-scale=1, viewport-fit=cover",
 		);
@@ -116,10 +119,10 @@ test.describe("preferencias de accesibilidad", () => {
 		await capturarAtributosIniciales(page, null);
 		await page.goto("/", { waitUntil: "load" });
 		await page.getByRole("button", { name: "Opciones de accesibilidad" }).first().click();
-		await page.getByRole("radio", { name: "Claro" }).check();
-		await expect(page.locator("html")).toHaveAttribute("data-tema", "claro");
+		await page.getByRole("radio", { name: "Oscuro" }).check();
+		await expect(page.locator("html")).toHaveAttribute("data-tema", "oscuro");
 		await page.reload({ waitUntil: "load" });
 		const inicio = await page.evaluate(() => (window as unknown as { __inicio: { tema: string } }).__inicio);
-		expect(inicio.tema).toBe("claro");
+		expect(inicio.tema).toBe("oscuro");
 	});
 });

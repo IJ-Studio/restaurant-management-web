@@ -7,14 +7,17 @@ import { AppOperaciones } from "@/components/paneles/AppOperaciones";
 import { PlantillaPanel } from "@/components/paneles/PlantillaPanel";
 import { PROTAGONISTA_DE_TRES, REJILLA_TRES_INDICADORES } from "@/components/paneles/rejilla";
 import { Boton } from "@/components/ui/Boton";
-import { Campo, Selector } from "@/components/ui/Campo";
+import { AreaTexto, Campo, Selector } from "@/components/ui/Campo";
 import { PanelLateral } from "@/components/ui/Dialogo";
+import { DialogoMotivo } from "@/components/ui/DialogoMotivo";
+import { ReservasSala } from "./ReservasSala";
 import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Indicador } from "@/components/ui/Indicador";
 import { Insignia, type TonoInsignia } from "@/components/ui/Insignia";
 import { useNotificaciones } from "@/components/ui/Notificacion";
 import { useCarga } from "@/hooks/useCarga";
+import { useEventosPedidos } from "@/hooks/useEventosPedidos";
 import { api } from "@/lib/api";
 import { contar } from "@/lib/formato/plural";
 import { formatearImporte } from "@/lib/formato/precio";
@@ -46,6 +49,7 @@ interface PedidoActivo {
 	table: string;
 	status: string | null;
 	total: number;
+	openedAt?: string | null;
 }
 type EstadoMesa = "libre" | "ocupada" | "lista";
 
@@ -58,10 +62,17 @@ const importe = (n: unknown) => formatearImporte(Number(n) || 0) ?? "—";
 const entero = new Intl.NumberFormat("es-MX");
 const nombreMesa = (m: Mesa) => m.nombre?.trim() || `Mesa ${m.numero}`;
 const ACTIVOS = new Set(["abierta", "en_preparacion", "lista", "entregada"]);
+/** Igual que el API y la móvil: un pedido recién enviado se puede cancelar 2 minutos. */
+const VENTANA_CANCELAR_MS = 2 * 60 * 1000;
+const cancelable = (p: PedidoActivo, ahora: number) => {
+	const abierto = p.openedAt ? Date.parse(p.openedAt) : Number.NaN;
+	return p.status === "abierta" && ahora - abierto >= 0 && ahora - abierto <= VENTANA_CANCELAR_MS;
+};
 
 function PanelPedido({ mesa, carta, abierto, alCerrar, alEnviado }: { mesa: Mesa; carta: CategoriaCarta[]; abierto: boolean; alCerrar: () => void; alEnviado: () => void }) {
 	const [categoria, setCategoria] = useState(String(carta[0]?.id ?? ""));
-	const [carrito, setCarrito] = useState<{ plato: PlatoCarta; cantidad: number }[]>([]);
+	const [carrito, setCarrito] = useState<{ plato: PlatoCarta; cantidad: number; notas?: string }[]>([]);
+	const [notaCocina, setNotaCocina] = useState("");
 	const [comensales, setComensales] = useState(String(Math.min(mesa.capacidad || 2, 2)));
 	const [enviando, setEnviando] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -86,8 +97,10 @@ function PanelPedido({ mesa, carta, abierto, alCerrar, alEnviado }: { mesa: Mesa
 		try {
 			const creado = await api.post<{ ordenId: string }>("/pedidos/mesa", {
 				mesa: mesa.numero,
-				items: carrito.map((c) => ({ platilloId: c.plato.id, cantidad: c.cantidad })),
+				// Mismas notas que la móvil: por platillo (200) y general para cocina (500); vacías no se envían.
+				items: carrito.map((c) => ({ platilloId: c.plato.id, cantidad: c.cantidad, ...(c.notas?.trim() ? { notas: c.notas.trim() } : {}) })),
 				numComensales: personas,
+				...(notaCocina.trim() ? { notasCocina: notaCocina.trim() } : {}),
 			});
 			await api.post(`/pedidos/confirmar/${encodeURIComponent(creado.ordenId)}`, {});
 			notificar({ tono: "exito", titulo: `Pedido de ${nombreMesa(mesa)} enviado a cocina`, descripcion: contar(carrito.reduce((a, c) => a + c.cantidad, 0), "plato") });
@@ -164,12 +177,34 @@ function PanelPedido({ mesa, carta, abierto, alCerrar, alEnviado }: { mesa: Mesa
 						</h3>
 						<ul className="m-0 flex list-none flex-col gap-1 p-0 text-(length:--texto-pequeno)">
 							{carrito.map((c) => (
-								<li key={c.plato.id} className="flex justify-between gap-3">
-									<span>{`${c.cantidad} × ${c.plato.nombre}`}</span>
-									<span className="cifras-consola">{importe((c.plato.precio ?? 0) * c.cantidad)}</span>
+								<li key={c.plato.id} className="flex flex-col gap-1">
+									<span className="flex justify-between gap-3">
+										<span>{`${c.cantidad} × ${c.plato.nombre}`}</span>
+										<span className="cifras-consola">{importe((c.plato.precio ?? 0) * c.cantidad)}</span>
+									</span>
+									<Campo
+										etiqueta="Nota para cocina"
+										aria-label={`Nota de ${c.plato.nombre}`}
+										opcional
+										value={c.notas ?? ""}
+										onChange={(e) => {
+											const notas = e.target.value;
+											setCarrito((cs) => cs.map((x) => (x.plato.id === c.plato.id ? { ...x, notas } : x)));
+										}}
+										placeholder="Sin cebolla, término medio…"
+										maxLength={200}
+									/>
 								</li>
 							))}
 						</ul>
+						<AreaTexto
+							etiqueta="Nota general para cocina"
+							opcional
+							value={notaCocina}
+							onChange={(e) => setNotaCocina(e.target.value)}
+							maxLength={500}
+							rows={2}
+						/>
 						<p className="m-0 flex items-baseline justify-between gap-3 border-t border-borde-sutil pt-(--espacio-sm)" aria-live="polite">
 							<span className="text-texto-secundario">Total</span>
 							<span className="font-titulos text-(length:--texto-titulo-3) numeros-tabulares">{importe(total)}</span>
@@ -193,12 +228,20 @@ export function MeseroPanel() {
 	const [filtro, setFiltro] = useState("todas");
 	const [abierta, setAbierta] = useState<Mesa | null>(null);
 	const [sirviendo, setSirviendo] = useState<string | null>(null);
+	const [cancelando, setCancelando] = useState<{ pedido: PedidoActivo; mesa: Mesa } | null>(null);
+	// Reloj de 10 s: el botón «Cancelar pedido» se va al vencer la ventana aunque no llegue un refresco.
+	const [ahora, setAhora] = useState(() => Date.now());
+	useEffect(() => {
+		const t = setInterval(() => setAhora(Date.now()), 10_000);
+		return () => clearInterval(t);
+	}, []);
 	const { notificar } = useNotificaciones();
 
 	useEffect(() => {
 		const t = setInterval(() => void recargarPedidos({ silenciosa: true }), 20000);
 		return () => clearInterval(t);
 	}, [recargarPedidos]);
+	useEventosPedidos(() => void recargarPedidos({ silenciosa: true }));
 
 	const listaMesas = useMemo(() => (mesas.estado === "listo" && Array.isArray(mesas.datos) ? mesas.datos.filter((m) => m.activa !== false) : []), [mesas]);
 	const activos = useMemo(() => (pedidos.estado === "listo" && Array.isArray(pedidos.datos) ? pedidos.datos.filter((p) => p.status && ACTIVOS.has(p.status)) : []), [pedidos]);
@@ -231,8 +274,24 @@ export function MeseroPanel() {
 		}
 	}
 
+	async function cancelar(motivo: string): Promise<boolean> {
+		if (!cancelando) return false;
+		const { pedido, mesa } = cancelando;
+		try {
+			await api.patch(`/pedidos/cancelar/${encodeURIComponent(pedido.id)}`, { motivo: motivo.trim() });
+			notificar({ tono: "exito", titulo: `Pedido de ${nombreMesa(mesa)} cancelado`, descripcion: "Cocina dejará de prepararlo." });
+			await recargarPedidos({ silenciosa: true });
+			return true;
+		} catch (err) {
+			registrarError(err, "sala: cancelar pedido");
+			// El API explica el motivo (p. ej., ya pasaron los 2 minutos).
+			notificar({ tono: "error", titulo: "No se pudo cancelar", descripcion: err instanceof Error ? err.message : "Vuelve a intentarlo en un momento." });
+			return false;
+		}
+	}
+
 	return (
-		<PlantillaPanel titulo="Mesas" descripcion="Toma pedidos y marca lo servido.">
+		<PlantillaPanel titulo="Mesas" descripcion="Toma pedidos y entrega lo que está listo.">
 			<div className={REJILLA_TRES_INDICADORES}>
 				<Indicador estado={estadoIndicadores} alReintentar={() => Promise.all([recargarMesas(), recargarPedidos()])} rotulo="Libres" {...desglose("libres = mesas activas sin pedidos abiertos", ["libre"])} valor={entero.format(cuantas("libre"))} detalle={`De ${entero.format(listaMesas.length)} mesas`} className={PROTAGONISTA_DE_TRES} />
 				<Indicador estado={estadoIndicadores} rotulo="Ocupadas" {...desglose("ocupadas = mesas activas con algún pedido abierto", ["ocupada", "lista"])} valor={entero.format(cuantas("ocupada") + cuantas("lista"))} />
@@ -264,6 +323,7 @@ export function MeseroPanel() {
 						{visibles.map((m) => {
 							const estado = estadoDe(m);
 							const listo = pedidosDe(m).find((p) => p.status === "lista");
+							const revocable = pedidosDe(m).find((p) => cancelable(p, ahora));
 							return (
 								<li key={m.id} className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-md)">
 									<div className="flex items-start justify-between gap-3">
@@ -277,8 +337,13 @@ export function MeseroPanel() {
 									</div>
 									<div className="flex flex-col gap-2">
 										{listo && (
-											<Boton className="min-h-12 w-full" icono={<HandPlatter />} cargando={sirviendo === listo.id} aria-label={`Marcar servido el pedido de ${nombreMesa(m)}`} onClick={() => void servir(listo, m)}>
-												Marcar servido
+											<Boton className="min-h-12 w-full" icono={<HandPlatter />} cargando={sirviendo === listo.id} aria-label={`Entregar en la mesa el pedido de ${nombreMesa(m)}`} onClick={() => void servir(listo, m)}>
+												Entregar en la mesa
+											</Boton>
+										)}
+										{revocable && (
+											<Boton variante="fantasma" className="min-h-12 w-full" aria-label={`Cancelar el pedido de ${nombreMesa(m)}`} onClick={() => setCancelando({ pedido: revocable, mesa: m })}>
+												Cancelar pedido
 											</Boton>
 										)}
 										<Boton
@@ -311,7 +376,18 @@ export function MeseroPanel() {
 					}}
 				/>
 			)}
+			<ReservasSala />
 			<AppOperaciones />
+			<DialogoMotivo
+				abierto={cancelando !== null}
+				alCambiarAbierto={(a) => !a && setCancelando(null)}
+				titulo={cancelando ? `¿Cancelar el pedido de ${nombreMesa(cancelando.mesa)}?` : "Cancelar pedido"}
+				descripcion="Cocina dejará de prepararlo. Solo se puede en los 2 minutos después de enviarlo."
+				etiqueta="Motivo de la cancelación"
+				textoConfirmar="Sí, cancelar"
+				textoCancelar="No"
+				alConfirmar={cancelar}
+			/>
 		</PlantillaPanel>
 	);
 }

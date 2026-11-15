@@ -10,18 +10,18 @@ import { Aviso } from "@/components/ui/Aviso";
 import { Boton } from "@/components/ui/Boton";
 import { Campo } from "@/components/ui/Campo";
 import { CampoTrampa } from "@/components/ui/CampoTrampa";
-import { Imagen } from "@/components/ui/Imagen";
+import { FotoAcceso } from "@/components/auth/FotoAcceso";
 import { CargadorMarca } from "@/components/marca/CargadorMarca";
 import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import { useLockout } from "@/hooks/useLockout";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useEnvioFormulario } from "@/hooks/useEnvioFormulario";
-import { restaurantConfig } from "@/config/restaurant.config";
 import { setUser } from "@/store/slices/authSlice";
 import { destinoTrasLogin, esRutaInternaSegura, rutaConParametros } from "@/lib/seguridad/urls";
 import { olvidarSesion } from "@/lib/sesion/sesion-cliente";
 import { esquemaAcceso } from "@/lib/validacion/formularios";
 import { nombrePropio } from "@/lib/formato/caja";
+import { LIMITES_CAMPO } from "@/lib/validacion/reglas";
 
 /**
  * Iniciar sesión (`/login`, PLAN 4.17). La lógica no cambia: `POST /api/auth/login`, el token en
@@ -149,7 +149,7 @@ export default function PaginaAcceso() {
 							</Aviso>
 						)}
 						{mensajeError && <Aviso tono="error">{mensajeError}</Aviso>}
-						<Campo
+						<Campo maxLength={LIMITES_CAMPO.correo}
 							id="email"
 							name="email"
 							etiqueta="Correo"
@@ -160,7 +160,7 @@ export default function PaginaAcceso() {
 							onChange={(e) => setEmail(e.target.value)}
 							error={errores.email}
 						/>
-						<Campo
+						<Campo maxLength={LIMITES_CAMPO.contrasenaAcceso}
 							id="password"
 							name="password"
 							etiqueta="Contraseña"
@@ -189,13 +189,7 @@ export default function PaginaAcceso() {
 				)}
 			</div>
 			<div className="relative hidden aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie-cafe lg:mt-(--espacio-xl) lg:block">
-				<Imagen
-					src={restaurantConfig.images.fondoAcceso}
-					fill
-					decorativa
-					className="object-cover"
-					sizes="(min-width: 1024px) 50vw, 100vw"
-				/>
+				<FotoAcceso tipo="login" />
 			</div>
 		</div>
 	);

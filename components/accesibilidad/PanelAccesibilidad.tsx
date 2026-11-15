@@ -71,12 +71,13 @@ export function PanelAccesibilidad({ className, conTexto = false }: { className?
         {conTexto && <span>Opciones de accesibilidad</span>}
       </Popover.Trigger>
       <Popover.Portal>
+        {/* z 210: por encima del panel lateral del menú móvil (201) y su velo (200), donde también se abre. */}
         <Popover.Content
           align="end"
           sideOffset={8}
           collisionPadding={16}
           aria-labelledby={`${id}-titulo`}
-          className="menu-flotante z-[110] w-[min(20rem,calc(100vw-2rem))] rounded-dialogo border border-borde-sutil bg-superficie-elevada p-(--espacio-lg) text-texto-principal shadow-flotante"
+          className="menu-flotante z-[210] max-h-(--radix-popover-content-available-height) w-[min(20rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-dialogo border border-borde-sutil bg-superficie-elevada p-(--espacio-lg) text-texto-principal shadow-flotante"
         >
           <p id={`${id}-titulo`} className="m-0 font-texto text-(length:--texto-titulo-interfaz) font-semibold leading-[1.35]">
             Opciones de accesibilidad

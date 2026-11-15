@@ -24,7 +24,7 @@ async function abrir(browser: Browser, ancho = 390, preferencias: Record<string,
 	const page = await contexto.newPage();
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);
 	const peticiones: { metodo: string; ruta: string; cuerpo: unknown }[] = [];
-	let pedidos = [PEDIDO_LISTO];
+	let pedidos: { id: string; table: string; status: string; total: number; openedAt?: string }[] = [PEDIDO_LISTO];
 	await page.route(
 		(url) => url.origin === "http://localhost:3100" && !url.pathname.startsWith("/_next"),
 		async (r) => {
@@ -38,8 +38,20 @@ async function abrir(browser: Browser, ancho = 390, preferencias: Record<string,
 			if (camino.endsWith("/pedidos/admin/recent")) return json(pedidos);
 			if (camino.endsWith("/pedidos/mesa")) return json({ success: true, ordenId: "nuevo-1", total: "300.00" });
 			if (camino.includes("/pedidos/confirmar/")) {
-				pedidos = [...pedidos, { id: "nuevo-1", table: "Mesa 1", status: "abierta", total: 300 }];
+				pedidos = [...pedidos, { id: "nuevo-1", table: "Mesa 1", status: "abierta", total: 300, openedAt: new Date().toISOString() }];
 				return json({ success: true, ordenId: "nuevo-1" });
+			}
+			if (camino.endsWith("/reservations")) {
+				const en = (min: number) => new Date(Date.now() + min * 60_000).toISOString();
+				return json([
+					{ id: "r2", clienteNombre: "Luis Gil", fechaHora: en(90), numComensales: 2, estatus: "pendiente", mesaNumero: null },
+					{ id: "r1", clienteNombre: "Ana Ruiz", fechaHora: en(30), numComensales: 4, estatus: "confirmada", mesaNumero: "A02" },
+					{ id: "r3", clienteNombre: "Eva Mora", fechaHora: en(45), numComensales: 3, estatus: "cancelada", mesaNumero: "B01" },
+				]);
+			}
+			if (camino.includes("/pedidos/cancelar/")) {
+				pedidos = pedidos.filter((x) => !camino.includes(x.id));
+				return json({ success: true });
 			}
 			if (camino.endsWith("/estatus")) {
 				pedidos = pedidos.map((x) => (camino.includes(x.id) ? { ...x, status: "entregada" } : x));
@@ -51,6 +63,57 @@ async function abrir(browser: Browser, ancho = 390, preferencias: Record<string,
 	await page.goto("/dashboard/mesero", { waitUntil: "load" });
 	return { contexto, page, peticiones };
 }
+
+test("cancelar un pedido recién enviado con motivo, dentro de los 2 minutos (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, page, peticiones } = await abrir(browser);
+	const main = page.locator("main");
+	await expect(main.getByRole("button", { name: "Cancelar el pedido de Mesa 1" })).toHaveCount(0);
+	await main.getByRole("button", { name: "Tomar pedido de Mesa 1" }).click();
+	const panel = page.getByRole("dialog", { name: "Pedido de Mesa 1" });
+	await panel.getByRole("button", { name: "Añadir un Enchiladas suizas" }).click();
+	await panel.getByRole("button", { name: /^Enviar a cocina/ }).click();
+	await expect(panel).toBeHidden();
+	await main.getByRole("button", { name: "Cancelar el pedido de Mesa 1" }).click();
+	const dialogo = page.getByRole("dialog", { name: "¿Cancelar el pedido de Mesa 1?" });
+	await dialogo.getByLabel("Motivo de la cancelación").fill("El cliente se equivocó de platillo");
+	await dialogo.getByRole("button", { name: "Sí, cancelar" }).click();
+	await expect(dialogo).toBeHidden();
+	expect(peticiones.at(-1)).toEqual({ metodo: "PATCH", ruta: "/pedidos/cancelar/nuevo-1", cuerpo: { motivo: "El cliente se equivocó de platillo" } });
+	await expect(page.locator('section[aria-label="Notificaciones"]')).toContainText("Pedido de Mesa 1 cancelado");
+	await expect(main.getByRole("button", { name: "Cancelar el pedido de Mesa 1" })).toHaveCount(0);
+	await contexto.close();
+});
+
+test("reservaciones de hoy para sala: por hora y sin canceladas (paridad con la móvil)", async ({ browser }) => {
+	const { contexto, page } = await abrir(browser);
+	const filas = page.locator("main").getByRole("list", { name: "Reservaciones de hoy" }).getByRole("listitem");
+	await expect(filas).toHaveCount(2);
+	await expect(filas.nth(0)).toContainText("Ana Ruiz");
+	await expect(filas.nth(0)).toContainText("4 personas · Mesa A02");
+	await expect(filas.nth(0)).toContainText("Confirmada");
+	await expect(filas.nth(1)).toContainText("Luis Gil");
+	await expect(filas.nth(1)).toContainText("sin mesa");
+	await contexto.close();
+});
+
+test("notas por platillo y nota general para cocina, como en la móvil", async ({ browser }) => {
+	const { contexto, page, peticiones } = await abrir(browser);
+	const main = page.locator("main");
+	await main.getByRole("button", { name: "Tomar pedido de Mesa 1" }).click();
+	const panel = page.getByRole("dialog", { name: "Pedido de Mesa 1" });
+	await panel.getByRole("button", { name: "Añadir un Enchiladas suizas" }).click();
+	await panel.getByLabel("Nota de Enchiladas suizas").fill("  Sin crema ");
+	await panel.getByLabel("Nota general para cocina").fill("Alérgico a la nuez");
+	await panel.getByLabel("Comensales").fill("2");
+	await panel.getByRole("button", { name: /^Enviar a cocina/ }).click();
+	await expect(panel).toBeHidden();
+	expect(peticiones[0]).toEqual({
+		metodo: "POST",
+		ruta: "/pedidos/mesa",
+		cuerpo: { mesa: "1", items: [{ platilloId: 101, cantidad: 1, notas: "Sin crema" }], numComensales: 2, notasCocina: "Alérgico a la nuez" },
+	});
+	await contexto.close();
+});
 
 test("tomar un pedido: el mismo alta y confirmación de la móvil, y la mesa pasa a ocupada", async ({ browser }) => {
 	const { contexto, page, peticiones } = await abrir(browser);
@@ -75,7 +138,7 @@ test("tomar un pedido: el mismo alta y confirmación de la móvil, y la mesa pas
 
 test("un plato listo se marca servido con el PATCH de estatus", async ({ browser }) => {
 	const { contexto, page, peticiones } = await abrir(browser);
-	const boton = page.locator("main").getByRole("button", { name: "Marcar servido el pedido de Mesa 2" });
+	const boton = page.locator("main").getByRole("button", { name: "Entregar en la mesa el pedido de Mesa 2" });
 	expect((await boton.boundingBox())!.height).toBeGreaterThanOrEqual(48);
 	await boton.click();
 	await expect(boton).toBeHidden();

@@ -21,9 +21,9 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "any",
-    // Colores del tema oscuro (por defecto), tomados de los tokens.
-    background_color: COLOR_FONDO_POR_TEMA.oscuro,
-    theme_color: COLOR_FONDO_POR_TEMA.oscuro,
+    // Colores del tema claro (por defecto), tomados de los tokens.
+    background_color: COLOR_FONDO_POR_TEMA.claro,
+    theme_color: COLOR_FONDO_POR_TEMA.claro,
     categories: ["food", "business", "productivity"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

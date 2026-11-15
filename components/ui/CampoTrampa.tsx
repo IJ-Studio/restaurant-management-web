@@ -13,7 +13,7 @@ export function CampoTrampa({ nombre = NOMBRE_CAMPO_TRAMPA }: { nombre?: string 
 	return (
 		<div aria-hidden="true" className="pointer-events-none absolute -left-[100vw] h-px w-px overflow-hidden opacity-0">
 			<label htmlFor={`trampa-${nombre}`}>Deja este campo vacío</label>
-			<input id={`trampa-${nombre}`} type="text" name={nombre} tabIndex={-1} autoComplete="off" defaultValue="" />
+			<input id={`trampa-${nombre}`} type="text" name={nombre} tabIndex={-1} autoComplete="off" defaultValue="" maxLength={200} />
 		</div>
 	);
 }

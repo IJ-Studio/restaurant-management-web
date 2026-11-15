@@ -28,8 +28,7 @@ export default function EliminarCuentaPage() {
 			<SeccionLegal titulo="A quién aplica">
 				<ul>
 					<li>
-						{`App «${d.nombreApp}» para Android, publicada en Google Play por `}
-						<DatoLegal valor={d.desarrolladorApp} />. La usa el personal del restaurante.
+						{`App «${d.nombreApp}» para Android, publicada en Google Play. La usa el personal del restaurante.`}
 					</li>
 					<li>Cuentas de clientes de la web de El Quijote.</li>
 				</ul>

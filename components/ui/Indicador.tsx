@@ -68,7 +68,8 @@ export function Indicador({
 			className={cn("indicador flex min-w-0 flex-col gap-3 rounded-tarjeta border border-borde-sutil bg-superficie p-6 text-texto-principal", className)}
 			{...resto}
 		>
-			<div className="flex flex-wrap items-start justify-between gap-2">
+			{/* Alto del botón «Ver cálculo» reservado siempre: si no, la tarjeta crece al llegar el dato (CLS). */}
+			<div className="flex min-h-11 flex-wrap items-center justify-between gap-2">
 				<h3
 					id={`${id}-rotulo`}
 					className="m-0 font-texto text-(length:--texto-etiqueta) font-semibold uppercase leading-[1.2] tracking-[0.16em] text-texto-secundario"
@@ -87,7 +88,8 @@ export function Indicador({
 					</span>
 					{/* Mismo alto que la cifra y la comparación, para que nada salte al llegar el dato. */}
 					<Esqueleto sobre="superficie" className="h-(--texto-cifra-destacada) w-2/3" />
-					<Esqueleto sobre="superficie" className="w-1/2" />
+					{/* Ocupa lo mismo que una línea de detalle (texto pequeño, interlineado 1,5). */}
+					<Esqueleto sobre="superficie" className="my-[calc(var(--texto-pequeno)*0.25)] h-(--texto-pequeno) w-1/2" />
 				</>
 			) : estado === "error" ? (
 				<div className="flex flex-col items-start gap-3">

@@ -22,6 +22,7 @@ import { PaginaEstado } from "@/components/marca/PaginaEstado";
 import { TEXTOS_ESTADO } from "@/components/marca/textos-estado";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { restaurantConfig } from "@/config/restaurant.config";
+import { api, mensajeDeError } from "@/lib/api";
 import { formatearPrecio } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { cantidadSegura } from "@/lib/seguridad/urls";
@@ -176,14 +177,8 @@ function DetallePlato() {
 						usuarioId: Number(currentUser.id),
 						mesa: mesaFinal,
 					};
-			const res = await fetch(`${API}/pedidos/mesa`, {
-				cache: "no-store",
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(body),
-			});
-			if (!res.ok) throw new Error(`pedido en mesa ${res.status}`);
-			const data = await res.json();
+			// Con el token de la sesión: el API exige JWT para pedir (DT-04).
+			const data = await api.post<{ mesaId?: string }>("/pedidos/mesa", body);
 			// El plato se añade al pedido de la mesa; el envío a cocina se confirma en /menu/pedido.
 			notificar({
 				tono: "exito",
@@ -196,7 +191,7 @@ function DetallePlato() {
 			router.push(`/menu/pedido?mesaQuery=${data.mesaId || mesaFinal}&tab=mesa`);
 		} catch (err) {
 			registrarError(err, "detalle de plato: pedido en mesa");
-			setFallo(MENSAJE_FALLO);
+			setFallo(mensajeDeError(err, MENSAJE_FALLO));
 		} finally {
 			setIsSubmitting(false);
 			pendingComboRef.current = null;
@@ -244,19 +239,13 @@ function DetallePlato() {
 		}
 		setIsSubmitting(true);
 		try {
-			const res = await fetch(`${API}/pedidos/mesa`, {
-				cache: "no-store",
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				// Sin «mesa»: así sabe el backend que es a domicilio.
-				body: JSON.stringify({ platilloId: Number(platillo?.id), cantidad: Number(cantidad), usuarioId: Number(currentUser.id) }),
-			});
-			if (!res.ok) throw new Error(`pedido a domicilio ${res.status}`);
+			// Sin «mesa»: así sabe el backend que es a domicilio.
+			await api.post("/pedidos/mesa", { platilloId: Number(platillo?.id), cantidad: Number(cantidad), usuarioId: Number(currentUser.id) });
 			notificar({ tono: "exito", titulo: "Añadido a tu pedido a domicilio", descripcion: `${cantidad} × ${platillo?.nombre}.` });
 			router.push("/menu/pedido?tab=domicilio");
 		} catch (err) {
 			registrarError(err, "detalle de plato: pedido a domicilio");
-			setFallo(MENSAJE_FALLO);
+			setFallo(mensajeDeError(err, MENSAJE_FALLO));
 		} finally {
 			setIsSubmitting(false);
 		}

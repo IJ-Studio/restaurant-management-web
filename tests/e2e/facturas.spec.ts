@@ -65,3 +65,103 @@ test("lista, busca y pagina en el servidor; el texto del API se presenta con pri
 	expect(consultas.at(-1)).toBe("?pagina=1&q=A-9");
 	await contexto.close();
 });
+
+// Fase 4.1: solicitudes de factura en cola (`/solicitudes-factura`, simulado).
+const solicitud = (n: number, extra: Record<string, unknown> = {}) => ({
+	id: n,
+	ordenId: `o-${n}`,
+	rfc: "XAXX010101000",
+	razonSocial: "PÚBLICO EN GENERAL",
+	email: "cliente@correo.mx",
+	cliente: "ANA LÓPEZ",
+	totalOrden: "215.00",
+	estatusOrden: "pagada",
+	creadoEn: "2026-11-14T18:00:00Z",
+	...extra,
+});
+
+async function abrirBandeja(browser: Browser, pendientes: unknown[]) {
+	const contexto = await browser.newContext({ storageState: archivoSesion("admin"), viewport: { width: 1440, height: 900 } });
+	const page = await contexto.newPage();
+	const acciones: { ruta: string; cuerpo: unknown }[] = [];
+	let lista = pendientes;
+	await page.route(
+		(u) => u.origin === "http://localhost:3100" && u.pathname === "/facturas",
+		(r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ facturas: [], pagina: 1, haySiguiente: false }) }),
+	);
+	await page.route(
+		(u) => u.origin === "http://localhost:3100" && u.pathname.startsWith("/solicitudes-factura"),
+		async (r) => {
+			const url = new URL(r.request().url());
+			if (r.request().method() === "GET") {
+				await r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(lista) });
+				return;
+			}
+			acciones.push({ ruta: url.pathname, cuerpo: r.request().postDataJSON() });
+			lista = [];
+			const body = url.pathname.endsWith("/emitir")
+				? { facturaId: "f-1", folio: "A-12", correo: { enviado: false, motivo: "El envío por correo está desactivado." } }
+				: { id: 1, estatus: "rechazada" };
+			await r.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(body) });
+		},
+	);
+	await page.goto("/dashboard/admin/finance/invoices", { waitUntil: "load" });
+	return { contexto, page, acciones };
+}
+
+test("bandeja: emite una solicitud pagada y avisa que el correo está desactivado", async ({ browser }) => {
+	const { contexto, page, acciones } = await abrirBandeja(browser, [solicitud(1), solicitud(2, { estatusOrden: "entregada", cliente: "LUIS PÉREZ" })]);
+	const main = page.locator("main");
+	await expect(main.getByRole("heading", { name: "Solicitudes pendientes" })).toBeVisible();
+	await expect(main.getByRole("button", { name: "Emitir la factura de LUIS PÉREZ" })).toBeDisabled();
+	await main.getByRole("button", { name: "Emitir la factura de ANA LÓPEZ" }).click();
+	await expect(page.getByText("Factura A-12 emitida")).toBeVisible();
+	await expect(page.getByText("El envío por correo está desactivado.")).toBeVisible();
+	expect(acciones.map((a) => a.ruta)).toEqual(["/solicitudes-factura/1/emitir"]);
+	await expect(main.getByText("Sin solicitudes pendientes")).toBeVisible();
+	await contexto.close();
+});
+
+test("bandeja: rechazar exige motivo y lo manda al API", async ({ browser }) => {
+	const { contexto, page, acciones } = await abrirBandeja(browser, [solicitud(1)]);
+	const main = page.locator("main");
+	await main.getByRole("button", { name: "Rechazar la factura de ANA LÓPEZ" }).click();
+	const dialogo = page.getByRole("dialog");
+	await dialogo.getByRole("button", { name: "Rechazar solicitud" }).click();
+	await expect(dialogo.getByText("Escribe el motivo del rechazo (al menos 5 caracteres).")).toBeVisible();
+	await dialogo.getByLabel("Motivo del rechazo").fill("El RFC no coincide con la razón social");
+	await dialogo.getByRole("button", { name: "Rechazar solicitud" }).click();
+	await expect(page.getByText("Solicitud rechazada")).toBeVisible();
+	expect(acciones).toEqual([{ ruta: "/solicitudes-factura/1/rechazar", cuerpo: { motivo: "El RFC no coincide con la razón social" } }]);
+	await contexto.close();
+});
+
+test("cancelar una factura vigente: elige el motivo del SAT y la lista se actualiza", async ({ browser }) => {
+	const contexto = await browser.newContext({ storageState: archivoSesion("admin"), viewport: { width: 1440, height: 900 } });
+	const page = await contexto.newPage();
+	const cancelaciones: { ruta: string; cuerpo: unknown }[] = [];
+	await page.route(
+		(u) => u.origin === "http://localhost:3100" && (u.pathname.startsWith("/facturas") || u.pathname.startsWith("/solicitudes-factura")),
+		async (r) => {
+			const url = new URL(r.request().url());
+			const json = (cuerpo: unknown, status = 200) => r.fulfill({ status, contentType: "application/json", body: JSON.stringify(cuerpo) });
+			if (url.pathname.startsWith("/solicitudes-factura")) return json([]);
+			if (r.request().method() === "POST") {
+				cancelaciones.push({ ruta: url.pathname, cuerpo: r.request().postDataJSON() });
+				return json({ id: "f-1", estatus: "cancelada", cancelacion: "accepted" }, 201);
+			}
+			return json({ facturas: [factura(1, cancelaciones.length ? { estatus: "cancelada" } : {})], pagina: 1, haySiguiente: false });
+		},
+	);
+	await page.goto("/dashboard/admin/finance/invoices", { waitUntil: "load" });
+	const main = page.locator("main");
+	await main.getByRole("button", { name: "Cancelar la factura A-1" }).click();
+	const dialogo = page.getByRole("dialog", { name: "Cancelar la factura A-1" });
+	await dialogo.getByLabel("Motivo").selectOption("03");
+	await dialogo.getByRole("button", { name: "Cancelar factura" }).click();
+	await expect(dialogo).toBeHidden();
+	expect(cancelaciones).toEqual([{ ruta: "/facturas/f-1/cancelar", cuerpo: { motivo: "03" } }]);
+	await expect(page.getByText("Factura A-1 cancelada")).toBeVisible();
+	await expect(main.getByRole("button", { name: "Cancelar la factura A-1" })).toHaveCount(0);
+	await contexto.close();
+});
