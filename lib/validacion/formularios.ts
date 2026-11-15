@@ -13,7 +13,9 @@ import { z } from "zod";
 import { CREATABLE_ROLES, ROLES } from "@/config/roles.config";
 import {
 	MENSAJES,
+	NOMBRE_COMPLETO_MAX_LENGTH,
 	RFC_REGEX,
+	aE164,
 	codigoPostal,
 	contieneDatosPersonales,
 	contrasenaAcceso,
@@ -23,6 +25,7 @@ import {
 	correoBasico,
 	correoBasicoOpcional,
 	correoOpcionalValidado,
+	errorTelefono,
 	lada,
 	lineaOpcional,
 	lineaRequerida,
@@ -34,10 +37,20 @@ import {
 	telefonoConLada,
 	textoLibre,
 } from "./campos";
+import { soloDigitos } from "./saneamiento";
 
 // ─── Autenticación (HU-01) ─────────────────────────────────────────────────────────────────
 
 /** Inicio de sesión: payload `{ email, password }`. */
+/**
+ * Número sin lada: de 6 a 12 dígitos en el propio campo (así se marca aunque falten otros campos,
+ * cuando zod aún no corre el `superRefine` del objeto, que comprueba los 10 de México).
+ */
+const telefonoNacional = z
+	.string({ error: MENSAJES.telefono })
+	.max(30, { error: MENSAJES.telefono })
+	.refine((v) => soloDigitos(v).length >= 6 && soloDigitos(v).length <= 12, { error: MENSAJES.telefono });
+
 export const esquemaAcceso = z.object({
 	email: correoAcceso,
 	password: contrasenaAcceso,
@@ -51,13 +64,15 @@ export const esquemaRegistro = z
 		apellido: nombrePersona("Escribe tu apellido."),
 		correo,
 		lada,
-		telefono,
+		telefono: telefonoNacional,
 		password: contrasenaNueva,
 		agreed: z.literal(true, { error: "Para crear tu cuenta, acepta los términos y el aviso de privacidad." }),
 		/** Finalidades secundarias (D-36): opcional; no viaja en el alta hasta que el API registre consentimientos. */
 		promociones: z.boolean().optional(),
 	})
 	.superRefine((datos, ctx) => {
+		const errorTel = errorTelefono(datos.lada, datos.telefono);
+		if (errorTel) ctx.addIssue({ code: "custom", path: ["telefono"], message: errorTel });
 		if (contieneDatosPersonales(datos.password, datos)) {
 			ctx.addIssue({ code: "custom", path: ["password"], message: MENSAJES.contrasenaPersonal });
 		}
@@ -70,7 +85,7 @@ export function aPayloadRegistro(datos: DatosRegistro) {
 		name: datos.nombre,
 		lastname: datos.apellido,
 		email: datos.correo,
-		phone: telefonoConLada(datos.telefono),
+		phone: aE164(datos.lada, datos.telefono),
 		password: datos.password,
 		passwordConfirm: datos.password,
 	};
@@ -105,15 +120,18 @@ export type DatosPerfil = z.output<typeof esquemaPerfil>;
 // ─── Reserva ───────────────────────────────────────────────────────────────────────────────
 
 /** Paso 1 de `ReservationSidebar`: datos de contacto. */
-export const esquemaReservaContacto = z.object({
-	clienteNombre: lineaRequerida("El nombre es requerido"),
-	clienteTelefono: lineaRequerida("El teléfono es requerido"),
-	clienteEmail: lineaRequerida("El correo es requerido").pipe(
-		z.string().regex(/\S+@\S+\.\S+/, { error: "Email inválido" }),
-	),
-	/** D-36: consentimiento del aviso de privacidad simplificado (no viaja en el cuerpo de la reserva). */
-	privacidad: z.literal(true, { error: "Para reservar, acepta el uso de tus datos para gestionar la reserva." }),
-});
+export const esquemaReservaContacto = z
+	.object({
+		clienteNombre: nombrePersona("Escribe el nombre de quien reserva.", NOMBRE_COMPLETO_MAX_LENGTH, MENSAJES.nombreReserva),
+		lada,
+		clienteTelefono: telefonoNacional,
+		clienteEmail: correo,
+		privacidad: z.literal(true, { error: "Para reservar, acepta el uso de tus datos para gestionar la reserva." }),
+	})
+	.superRefine((d, ctx) => {
+		const error = errorTelefono(d.lada, d.clienteTelefono);
+		if (error) ctx.addIssue({ code: "custom", path: ["clienteTelefono"], message: error });
+	});
 
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 const HORA = /^\d{2}:\d{2}$/;
@@ -122,26 +140,25 @@ const HORA = /^\d{2}:\d{2}$/;
  * Paso 2: fecha, hora y comensales. La fecha y la hora juntas deben ser futuras respecto a
  * `ahora` (inyectable para las pruebas), en la hora local, como hoy.
  */
-export const crearEsquemaReservaHorario = (ahora: () => Date = () => new Date()) =>
-	z
-		.object({
-			fecha: z.string({ error: "Elige una fecha" }).regex(FECHA, { error: "Elige una fecha" }),
-			hora: z.string({ error: "Elige un horario" }).regex(HORA, { error: "Elige un horario" }),
-			numComensales: z
-				.number({ error: "Mínimo 1 persona" })
-				.int({ error: "Mínimo 1 persona" })
-				.min(1, { error: "Mínimo 1 persona" }),
-			peticionesEspeciales: textoLibre(),
-			ocasion: lineaOpcional(),
-		})
-		.superRefine((datos, ctx) => {
-			const elegida = new Date(`${datos.fecha}T${datos.hora}`);
-			if (Number.isNaN(elegida.getTime()) || elegida < ahora()) {
-				ctx.addIssue({ code: "custom", path: ["fecha"], message: "Debe ser una fecha futura" });
-			}
-		});
+/**
+ * Paso «Cuándo» de la reserva. El día y la hora se eligen entre los que ofrece el API (`/reglas` y
+ * `GET /reservations/horas`), que ya bloquea lo cerrado, lo pasado y lo lleno; aquí solo se exige
+ * haberlos elegido. `comensalesMax` sale de `/reglas`; el mensaje es el mismo del servidor.
+ */
+export const crearEsquemaReservaHorario = (comensalesMax = 50) => {
+	const personas = `El número de personas debe ser de 1 a ${comensalesMax}.`;
+	return z.object({
+		fecha: z.string({ error: "Elige un día." }).regex(FECHA, { error: "Elige un día." }),
+		hora: z.string({ error: "Elige una hora." }).regex(HORA, { error: "Elige una hora." }),
+		numComensales: z.number({ error: personas }).int({ error: personas }).min(1, { error: personas }).max(comensalesMax, { error: personas }),
+		peticionesEspeciales: textoLibre(LIMITES_RESERVA.peticiones),
+		ocasion: lineaOpcional(LIMITES_RESERVA.ocasion),
+	});
+};
 
-/** Paso 3: la mesa elegida en el mapa. */
+/** Máximos de los textos de la reserva (DV-11); el servidor aplica los mismos. */
+export const LIMITES_RESERVA = { peticiones: 500, ocasion: 60 } as const;
+
 export const esquemaReservaMesa = z.object({
 	mesaId: z
 		.number({ error: "Por favor, selecciona una mesa del mapa para continuar." })

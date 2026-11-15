@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { REGIMENES_FISCALES, USOS_CFDI } from "@/lib/facturacion/catalogos";
 import { registrarError } from "@/lib/registro/registrar-error";
 import { esquemaDatosFiscales } from "@/lib/validacion/formularios";
+import { LIMITES_CAMPO } from "@/lib/validacion/reglas";
 
 const VACIO = { rfc: "", razonSocial: "", usoCfdi: "G03", regimenFiscal: "", codigoPostalFiscal: "", email: "" };
 
@@ -72,7 +73,7 @@ export function DialogoFactura({ cuenta, alCerrar }: { cuenta: { id: string; tab
 		>
 			<div className="grid gap-(--espacio-md) sm:grid-cols-2">
 				<Campo etiqueta="RFC" codigo autoComplete="off" value={datos.rfc} onChange={cambiar("rfc", (v) => v.toUpperCase())} maxLength={13} error={errores.rfc} />
-				<Campo etiqueta="Razón social" autoComplete="off" value={datos.razonSocial} onChange={cambiar("razonSocial")} error={errores.razonSocial} />
+				<Campo maxLength={LIMITES_CAMPO.razonSocial} etiqueta="Razón social" autoComplete="off" value={datos.razonSocial} onChange={cambiar("razonSocial")} error={errores.razonSocial} />
 				<Selector etiqueta="Uso del CFDI" opciones={USOS_CFDI} value={datos.usoCfdi} onChange={cambiar("usoCfdi")} error={errores.usoCfdi} />
 				<Selector etiqueta="Régimen fiscal" marcador="Elige el régimen fiscal" opciones={REGIMENES_FISCALES} value={datos.regimenFiscal} onChange={cambiar("regimenFiscal")} error={errores.regimenFiscal} />
 				<Campo
@@ -85,7 +86,7 @@ export function DialogoFactura({ cuenta, alCerrar }: { cuenta: { id: string; tab
 					onChange={cambiar("codigoPostalFiscal", (v) => v.replace(/\D/g, ""))}
 					error={errores.codigoPostalFiscal}
 				/>
-				<Campo etiqueta="Correo" opcional type="email" autoComplete="off" value={datos.email} onChange={cambiar("email")} error={errores.email} ayuda="Para enviarle la factura." />
+				<Campo maxLength={LIMITES_CAMPO.correo} etiqueta="Correo" opcional type="email" autoComplete="off" value={datos.email} onChange={cambiar("email")} error={errores.email} ayuda="Para enviarle la factura." />
 			</div>
 			{errores.general && (
 				<p role="alert" className="m-0 mt-(--espacio-md) text-error">

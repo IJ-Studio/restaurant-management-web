@@ -13,6 +13,9 @@ import {
 	correo,
 	correoAcceso,
 	nombrePersona,
+	errorTelefono,
+	aE164,
+	separarTelefono,
 	requisitosContrasena,
 	rfc,
 	telefono,
@@ -95,21 +98,37 @@ test.describe("campos", () => {
 		expect(errorDe(correo, "")).toBe(MENSAJES.correoVacio);
 		expect(errorDe(correo, `${"a".repeat(65)}@x.mx`)).toBe(MENSAJES.correo);
 		expect(errorDe(correo, `a@${"b".repeat(64)}.mx`)).toBe(MENSAJES.correo);
-		expect(errorDe(correo, `${"a".repeat(60)}@${"b".repeat(40)}.mx`)).toBe(MENSAJES.correo);
+		// DV-04: hasta 254 caracteres; 255 ya no.
+		const largo = (n: number) => `${"a".repeat(60)}@${"b".repeat(63)}.${"c".repeat(63)}.${"d".repeat(n)}.mx`;
+		expect(largo(62)).toHaveLength(254);
+		expect(errorDe(correo, largo(62))).toBeNull();
+		expect(errorDe(correo, largo(63))).toBe(MENSAJES.correo);
 	});
 
-	test("nombre: una o dos palabras, solo letras, con vocal y sin triples", () => {
+	test("nombre (DV-03): letras de cualquier alfabeto, espacio, guion o apóstrofo entre letras, 2 a 60", () => {
 		const nombre = nombrePersona("Escribe tu nombre.");
-		for (const ok of ["Ana", "María José", "  Íñigo  ", "Müller"]) {
+		for (const ok of ["Ana", "María José", "  Íñigo  ", "Müller", "María de los Ángeles", "Jean-Luc", "O'Higgins", "D’Artagnan", "Lynn", "Zoë", "a".repeat(60)]) {
 			expect(errorDe(nombre, ok), ok).toBeNull();
 		}
 		expect(valorDe(nombre, "  María   José ")).toBe("María José");
 		expect(errorDe(nombre, "")).toBe("Escribe tu nombre.");
-		for (const malo of ["Ana María José", "Ana3", "Brr", "Anna-Luisa", "Saaara", "Joooe", "a".repeat(31)]) {
+		for (const malo of ["A", "Ana3", "Ana-", "-Ana", "Ana - Luis", "Ana_Luis", "<b>Ana</b>", "Ana😀", "' OR 1=1", "a".repeat(61)]) {
 			expect(errorDe(nombre, malo), malo).toBe(MENSAJES.nombre);
 		}
-		// Dos palabras de 30 suman 61: superan el límite de 50 de la columna.
-		expect(errorDe(nombre, `${"Ana".repeat(10)} ${"Eva".repeat(10)}`)).toBe(MENSAJES.nombre);
+	});
+
+	test("teléfono con lada (DV-05): México 10 dígitos, otras ladas 6 a 12, y E.164 de ida y vuelta", () => {
+		expect(errorTelefono("+52", "771 123 4567")).toBeNull();
+		expect(errorTelefono("+52", "771123456")).toBe(MENSAJES.telefono);
+		expect(errorTelefono("+52", "77112345678")).toBe(MENSAJES.telefono);
+		expect(errorTelefono("+1", "555 123 4567")).toBeNull();
+		expect(errorTelefono("+34", "12345")).toBe(MENSAJES.telefono);
+		expect(errorTelefono("+999", "7711234567")).toBe(MENSAJES.telefono);
+		expect(aE164("+52", "771-123-4567")).toBe("+527711234567");
+		expect(separarTelefono("+527711234567")).toEqual({ lada: "+52", telefono: "7711234567" });
+		expect(separarTelefono("+5025551234")).toEqual({ lada: "+502", telefono: "5551234" });
+		expect(separarTelefono("7711234567")).toEqual({ lada: "+52", telefono: "7711234567" });
+		expect(separarTelefono(null)).toEqual({ lada: "+52", telefono: "" });
 	});
 
 	test("teléfono: 10 dígitos, admite la lada +52 y separadores", () => {
@@ -206,7 +225,11 @@ test.describe("formularios", () => {
 		expect(errorDe(esquemaRegistro, { ...registroValido, agreed: false })).toBe(
 			"Para crear tu cuenta, acepta los términos y el aviso de privacidad.",
 		);
-		expect(errorDe(esquemaRegistro, { ...registroValido, lada: "+1" })).toBe("Elige una lada válida.");
+		// DV-05: otras ladas valen, con su número de dígitos; una lada desconocida, no.
+		expect(errorDe(esquemaRegistro, { ...registroValido, lada: "+1" })).toBeNull();
+		expect(aPayloadRegistro(valorDe(esquemaRegistro, { ...registroValido, lada: "+1" })).phone).toBe("+15512345678");
+		expect(errorDe(esquemaRegistro, { ...registroValido, lada: "+999" })).toBe("Elige una lada válida.");
+		expect(errorDe(esquemaRegistro, { ...registroValido, telefono: "551234567" })).toBe(MENSAJES.telefono);
 		// Claves desconocidas no pasan al payload.
 		expect(valorDe(esquemaRegistro, { ...registroValido, rol: 1 })).not.toHaveProperty("rol");
 	});
@@ -234,23 +257,26 @@ test.describe("formularios", () => {
 		expect(errorDe(esquemaPerfil, { ...perfil, estado: "" })).toBe("Escribe el estado.");
 	});
 
-	test("reserva: contacto, horario futuro y mesa", () => {
-		expect(errorDe(esquemaReservaContacto, { clienteNombre: "Ana", clienteTelefono: "55", clienteEmail: "a@b.c", privacidad: true })).toBeNull();
-		expect(errorDe(esquemaReservaContacto, { clienteNombre: " ", clienteTelefono: "55", clienteEmail: "a@b.c", privacidad: true })).toBe(
-			"El nombre es requerido",
-		);
-		expect(errorDe(esquemaReservaContacto, { clienteNombre: "Ana", clienteTelefono: "55", clienteEmail: "ana" })).toBe(
-			"Email inválido",
-		);
+	test("reserva: contacto, horario y mesa", () => {
+		const contacto = { clienteNombre: "Ana López", lada: "+52", clienteTelefono: "771 123 4567", clienteEmail: "ana@correo.mx", privacidad: true };
+		expect(errorDe(esquemaReservaContacto, contacto)).toBeNull();
+		expect(errorDe(esquemaReservaContacto, { ...contacto, clienteNombre: " " })).toBe("Escribe el nombre de quien reserva.");
+		expect(errorDe(esquemaReservaContacto, { ...contacto, clienteNombre: "Ana 2" })).toBe(MENSAJES.nombreReserva);
+		expect(errorDe(esquemaReservaContacto, { ...contacto, clienteTelefono: "55" })).toBe(MENSAJES.telefono);
+		expect(errorDe(esquemaReservaContacto, { ...contacto, clienteEmail: "ana" })).toBe(MENSAJES.correo);
 
-		const ahora = () => new Date(2026, 10, 1, 12, 0);
-		const horario = crearEsquemaReservaHorario(ahora);
+		const horario = crearEsquemaReservaHorario(50);
 		const base = { fecha: "2026-11-01", hora: "13:00", numComensales: 2, peticionesEspeciales: "", ocasion: "" };
+		const personas = "El número de personas debe ser de 1 a 50.";
 		expect(errorDe(horario, base)).toBeNull();
-		expect(errorDe(horario, { ...base, hora: "11:59" })).toBe("Debe ser una fecha futura");
-		expect(errorDe(horario, { ...base, numComensales: 0 })).toBe("Mínimo 1 persona");
-		expect(errorDe(horario, { ...base, numComensales: 1.5 })).toBe("Mínimo 1 persona");
-		expect(errorDe(horario, { ...base, fecha: "" })).toBe("Elige una fecha");
+		expect(errorDe(horario, { ...base, numComensales: 0 })).toBe(personas);
+		expect(errorDe(horario, { ...base, numComensales: 1.5 })).toBe(personas);
+		expect(errorDe(horario, { ...base, numComensales: 51 })).toBe(personas);
+		expect(errorDe(horario, { ...base, numComensales: 50 })).toBeNull();
+		expect(errorDe(horario, { ...base, fecha: "" })).toBe("Elige un día.");
+		expect(errorDe(horario, { ...base, hora: "" })).toBe("Elige una hora.");
+		expect(errorDe(horario, { ...base, ocasion: "a".repeat(61) })).toBe("Máximo 60 caracteres.");
+		expect(errorDe(horario, { ...base, peticionesEspeciales: "a".repeat(501) })).toBe("Máximo 500 caracteres.");
 
 		expect(errorDe(esquemaReservaMesa, { mesaId: 4 })).toBeNull();
 		expect(errorDe(esquemaReservaMesa, { mesaId: undefined })).toBe(

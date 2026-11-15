@@ -4,6 +4,7 @@ import { useId, useRef, type ReactNode } from "react";
 import { LoaderCircle, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CLASE_CONTROL } from "./Campo";
+import { LIMITES_CAMPO } from "@/lib/validacion/reglas";
 
 /**
  * Buscador (PLAN 3.14). Un formulario `role="search"` con etiqueta (visible o solo para lectores), campo
@@ -59,7 +60,7 @@ export function Buscador({
 					>
 						{ocupado ? <LoaderCircle className="animate-spin motion-reduce:animate-none in-data-[movimiento=reducido]:animate-none" /> : <Search />}
 					</span>
-					<input
+					<input maxLength={LIMITES_CAMPO.buscador}
 						ref={campo}
 						id={`${id}-campo`}
 						type="search"

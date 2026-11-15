@@ -130,3 +130,29 @@ export async function updateReservation(id: string, data: Record<string, unknown
   }
   return res.json();
 }
+
+/** Reglas de operación del API (`GET /reglas`): la web no duplica horarios, anticipación ni límites. */
+export interface ReglasRestaurante {
+  zonaHoraria: string;
+  utcOffsetMin: number;
+  aceptaReservas: boolean;
+  reservas: { anticipacionMin: number; comensalesMax: number; duracionMin: number; intervaloMin: number; diasMaxAdelanto: number };
+  horario: { dia: number; cerrado: boolean }[];
+  diasEspeciales: { fecha: string; cerrado: boolean }[];
+}
+
+export function getReglas() {
+  return api.get<ReglasRestaurante>("/reglas");
+}
+
+export interface HorasDelDia {
+  fecha: string;
+  /** El día entero no se puede elegir: «Cerrado», «Ya pasó» o «Fuera de plazo». */
+  motivo: string | null;
+  horas: { hora: string; disponible: boolean; motivo: string | null }[];
+}
+
+/** Horas del día para N personas, todas visibles; las bloqueadas traen su motivo. */
+export function getHoras(fecha: string, numComensales: number) {
+  return api.get<HorasDelDia>("/reservations/horas", { params: { fecha, numComensales } });
+}

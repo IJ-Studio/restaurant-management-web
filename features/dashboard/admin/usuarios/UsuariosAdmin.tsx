@@ -22,6 +22,7 @@ import { registrarError } from "@/lib/registro/registrar-error";
 import { esquemaUsuarioEdicion, esquemaUsuarioNuevo } from "@/lib/validacion/formularios";
 import { nombrePropio } from "@/lib/formato/caja";
 import { conteo } from "@/lib/paneles/calculo";
+import { LIMITES_CAMPO } from "@/lib/validacion/reglas";
 
 /**
  * Usuarios y personal (PLAN 5.13). Mismas llamadas (`GET /users`, `POST /users`,
@@ -110,7 +111,7 @@ function DialogoUsuario({ usuario, disparador, alGuardar }: { usuario?: Usuario;
 					<Campo etiqueta="Nombre" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} error={errores.name} autoComplete="off" maxLength={80} />
 					<Campo etiqueta="Apellidos" value={f.lastname} onChange={(e) => setF({ ...f, lastname: e.target.value })} error={errores.lastname} autoComplete="off" maxLength={80} />
 				</div>
-				<Campo
+				<Campo maxLength={LIMITES_CAMPO.correo}
 					etiqueta="Correo"
 					type="email"
 					value={f.email}
@@ -127,7 +128,7 @@ function DialogoUsuario({ usuario, disparador, alGuardar }: { usuario?: Usuario;
 				{usuario ? (
 					<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario">La contraseña no se cambia desde aquí: cada persona la cambia desde su perfil.</p>
 				) : (
-					<Campo etiqueta="Contraseña" type="password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} error={errores.password} autoComplete="new-password" ayuda="Mínimo 8 caracteres." />
+					<Campo maxLength={LIMITES_CAMPO.contrasena} etiqueta="Contraseña" type="password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} error={errores.password} autoComplete="new-password" ayuda="Mínimo 8 caracteres." />
 				)}
 			</form>
 		</Dialogo>
