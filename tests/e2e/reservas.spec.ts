@@ -86,7 +86,8 @@ test("los cuatro pasos, la mesa en el plano, el mismo payload y la confirmación
 	const reservas = await abrir(page);
 	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Reservar mesa");
 	await expect(page.getByLabel("Nombre completo", { exact: true })).toHaveAttribute("autocomplete", "name");
-	await expect(page.getByLabel("Teléfono", { exact: true })).toHaveAttribute("autocomplete", "tel");
+	// La lada va en su selector: el campo es el número nacional.
+	await expect(page.getByLabel("Teléfono", { exact: true })).toHaveAttribute("autocomplete", "tel-national");
 	await rellenarHastaMesa(page);
 	await expect(page.getByRole("button", { name: /Mesa 5/ })).toBeDisabled();
 	await expect(page.getByRole("button", { name: /Mesa 5/ })).toContainText("Ocupada");

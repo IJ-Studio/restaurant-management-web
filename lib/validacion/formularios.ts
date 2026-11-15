@@ -37,10 +37,20 @@ import {
 	telefonoConLada,
 	textoLibre,
 } from "./campos";
+import { soloDigitos } from "./saneamiento";
 
 // ─── Autenticación (HU-01) ─────────────────────────────────────────────────────────────────
 
 /** Inicio de sesión: payload `{ email, password }`. */
+/**
+ * Número sin lada: de 6 a 12 dígitos en el propio campo (así se marca aunque falten otros campos,
+ * cuando zod aún no corre el `superRefine` del objeto, que comprueba los 10 de México).
+ */
+const telefonoNacional = z
+	.string({ error: MENSAJES.telefono })
+	.max(30, { error: MENSAJES.telefono })
+	.refine((v) => soloDigitos(v).length >= 6 && soloDigitos(v).length <= 12, { error: MENSAJES.telefono });
+
 export const esquemaAcceso = z.object({
 	email: correoAcceso,
 	password: contrasenaAcceso,
@@ -54,7 +64,7 @@ export const esquemaRegistro = z
 		apellido: nombrePersona("Escribe tu apellido."),
 		correo,
 		lada,
-		telefono: z.string({ error: MENSAJES.telefono }).max(30, { error: MENSAJES.telefono }),
+		telefono: telefonoNacional,
 		password: contrasenaNueva,
 		agreed: z.literal(true, { error: "Para crear tu cuenta, acepta los términos y el aviso de privacidad." }),
 		/** Finalidades secundarias (D-36): opcional; no viaja en el alta hasta que el API registre consentimientos. */
@@ -114,7 +124,7 @@ export const esquemaReservaContacto = z
 	.object({
 		clienteNombre: nombrePersona("Escribe el nombre de quien reserva.", NOMBRE_COMPLETO_MAX_LENGTH, MENSAJES.nombreReserva),
 		lada,
-		clienteTelefono: z.string({ error: MENSAJES.telefono }).max(30, { error: MENSAJES.telefono }),
+		clienteTelefono: telefonoNacional,
 		clienteEmail: correo,
 		privacidad: z.literal(true, { error: "Para reservar, acepta el uso de tus datos para gestionar la reserva." }),
 	})
