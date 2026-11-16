@@ -527,6 +527,15 @@
 @keyframes notificacion-entra { from { opacity: 0; transform: translateY(0.5rem); } }
 @keyframes notificacion-sale { to { opacity: 0; } }
 @keyframes esqueleto-pulso { 50% { opacity: 0.5; } }
+@keyframes pagina-entra { from { opacity: 0.85; transform: translateY(0.5rem); } }
+
+/* Transición de página: el contenido entra con un desplazamiento corto. La opacidad no baja de
+   0,85 para no retrasar el LCP; solo con movimiento permitido. */
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-movimiento="reducido"]) .pagina-entra {
+    animation: pagina-entra var(--duracion-media) var(--ease-salida) both;
+  }
+}
 
 /* Landing (D-35): ajuste suave entre secciones por proximidad, solo con movimiento permitido. Con
    «proximity» el navegador solo ajusta cerca de un borde de sección: el teclado, la rueda y el
