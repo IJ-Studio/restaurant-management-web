@@ -3277,3 +3277,10 @@ Playwright (5 proyectos en verde; build ≈30 min en este equipo de 5,8 GB de RA
 - **Hecho:** tarjeta de platillo con zoom de foto (240 ms) y pulsado; foto de login/registro con carga inmediata (aviso de LCP de Next); carta: índice con sección activa (`aria-current`) que se centra en la franja móvil, foto de sección compacta en móvil (16:7), botón «Volver arriba» (`components/carta/VolverArriba.tsx`).
 - **Propuesta (cambia funcionalidad, no hecha):** categorías plegables en la carta móvil; pestañas de categoría con filtro como en la referencia.
 - **Retomar:** `cd /home/apex7/source-code/org/IJ-Studio && claude`, «Lee la sección Pulido de la UI pública de docs/rediseno/BITACORA.md de la web y continúa en chore/pulido-ui-publica».
+
+### Pulido UI pública · bloque 2 (animación y verificación parcial)
+- **Hecho:** transición de página (`.pagina-entra`, 240 ms, opacidad ≥0,85 para no afectar el LCP, solo con movimiento permitido) vía `template.tsx` en `app/menu`, `app/(auth)` y `app/(public)/(legales)`; la landing y el dashboard no la llevan.
+- **Revisado sin cambios:** login, reservas, ficha de platillo y 404 en 375 px (tema claro) ya siguen el sistema.
+- **Verificación parcial:** `tsc` y eslint limpios en lo tocado; unitarias 75/75; e2e (carta, categoría, legales, estados, acceso, Chromium): 10 pasaron, 47 se omitieron por configuración de la propia suite, 0 fallos.
+- **Pendiente:** suite e2e completa e integración con el API real; matriz final de capturas (375/768/1280, claro y oscuro) «antes» (worktree de `developer`) y «después»; Lighthouse; coherencia en tema oscuro; carrito, checkout, perfil y recuperación sin revisar en pantalla.
+- **Retomar:** `cd /home/apex7/source-code/org/IJ-Studio && claude`, «Lee la sección Pulido de la UI pública de docs/rediseno/BITACORA.md de la web y continúa en chore/pulido-ui-publica».
