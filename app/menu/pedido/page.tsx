@@ -431,7 +431,7 @@ function TarjetaPedido({
 								</div>
 							)}
 							<div className="min-w-0 flex-1">
-								<p className="m-0 truncate font-medium">{nombrePlato}</p>
+								<p className="m-0 font-medium break-words [text-wrap:pretty]">{nombrePlato}</p>
 								<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario numeros-tabulares">
 									{item.cantidad ?? 1} × {unitario ?? "precio por confirmar"}
 								</p>

@@ -37,7 +37,11 @@ export function MenuLanding({ platos, error, cargando = false }: { platos: Plato
 							const precio = formatearPrecio(p.precio);
 							return (
 								<li key={p.id}>
-									<article className="zocalo-interactivo flex h-full flex-col gap-(--espacio-md) p-(--espacio-md)" aria-labelledby={`plato-${p.id}`}>
+									{/* Sin enlace (la salida es «Ver la carta completa»): mismo aspecto que el zócalo, sin respuesta al pasar. */}
+									<article
+										className="flex h-full flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-md)"
+										aria-labelledby={`plato-${p.id}`}
+									>
 										<div className="flex items-baseline justify-between gap-(--espacio-sm) border-b border-borde-sutil pb-(--espacio-xs)">
 											<span aria-hidden="true" className="numero-lote shrink-0">
 												Partida {String(i + 1).padStart(2, "0")}

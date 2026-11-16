@@ -287,7 +287,8 @@ function Bloque({
 			className={
 				editando
 					? "marco-etiqueta flex flex-col gap-(--espacio-lg) p-(--espacio-lg) outline outline-1 -outline-offset-[0.425rem] outline-borde-acento sm:p-(--espacio-xl)"
-					: "zocalo-interactivo flex flex-col gap-(--espacio-lg) p-(--espacio-lg) sm:p-(--espacio-xl)"
+					: // En reposo, tarjeta quieta: el bloque no es un enlace y no debe responder al pasar.
+						"flex flex-col gap-(--espacio-lg) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg) sm:p-(--espacio-xl)"
 			}
 		>
 			<header className="flex flex-wrap items-center justify-between gap-3 border-b border-borde-sutil pb-(--espacio-sm)">

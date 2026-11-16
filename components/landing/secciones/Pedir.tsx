@@ -46,7 +46,7 @@ export function Pedir() {
 						)}
 						<article
 							aria-labelledby={`pedir-${m.id}`}
-							className="zocalo-interactivo flex h-full flex-col gap-(--espacio-md) p-(--espacio-lg)"
+							className="flex h-full flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)"
 						>
 							<div className="flex items-center justify-between gap-(--espacio-sm)">
 								<span aria-hidden="true" className="cartela-metadato">
