@@ -53,11 +53,12 @@ export function Nosotros({ galeria }: { galeria: PlatoDestacado[] }) {
 								<div className="lamina-fotografia aspect-[4/3]">
 									<Imagen src={p.imagenUrl} alt={p.nombre} fill sizes="(min-width: 40rem) 30vw, 100vw" className="object-cover" />
 								</div>
-								<figcaption className="mt-auto flex items-center justify-between gap-(--espacio-sm) border-t border-borde-sutil pt-(--espacio-sm)">
+								{/* En tres columnas estrechas (de sm a lg), la cartela va sobre el nombre para no apelmazarlo. */}
+								<figcaption className="mt-auto flex items-center justify-between gap-(--espacio-sm) border-t border-borde-sutil pt-(--espacio-sm) sm:max-lg:flex-col sm:max-lg:items-start">
 									<span aria-hidden="true" className="cartela-metadato shrink-0">
 										Lámina {ROMANOS[i] ?? i + 1}
 									</span>
-									<span className="numero-lote text-end text-texto-secundario">{p.nombre}</span>
+									<span className="numero-lote text-end text-texto-secundario [text-wrap:balance] sm:max-lg:text-start">{p.nombre}</span>
 								</figcaption>
 							</figure>
 						</li>

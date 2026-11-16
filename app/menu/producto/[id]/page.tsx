@@ -419,7 +419,8 @@ function Ficha({
 			{/* Lámina enmarcada con su cartela de registro (decorativa). */}
 			<figure className="marco-etiqueta m-0 lg:sticky lg:top-[calc(var(--alto-cabecera)+var(--espacio-lg))]">
 				<div className="marco-etiqueta__interior flex flex-col gap-(--espacio-sm) p-(--espacio-sm)">
-					<div className="lamina-fotografia aspect-[4/5]">
+					{/* Sin foto (respaldo del molino), en móvil y tableta la lámina baja a 3:2 para no ocupar la primera pantalla. */}
+					<div className="lamina-fotografia aspect-[4/5] max-lg:has-[>[data-respaldo-imagen]]:aspect-[3/2]">
 						<Imagen src={platillo.imagenUrl} alt={nombre} fill preload sizes="(min-width: 64rem) 36rem, 100vw" className="object-cover" />
 					</div>
 					<figcaption aria-hidden="true" className="flex items-center justify-between gap-(--espacio-sm)">
@@ -433,7 +434,7 @@ function Ficha({
 				<div className="flex flex-col gap-(--espacio-sm)">
 					{seccion && <p className="m-0 font-titulos text-(length:--texto-titulo-interfaz) italic text-acento">{seccion}</p>}
 					<span aria-hidden="true" className="filete-doble" />
-					<h1 className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] [text-wrap:balance]">{nombre}</h1>
+					<h1 className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] tracking-[-0.02em] [text-wrap:balance]">{nombre}</h1>
 					{(platillo.esNuevo || platillo.esPopular || !disponible) && (
 						<div className="flex flex-wrap gap-2">
 							{!disponible && <Insignia tono="aviso">Agotado</Insignia>}

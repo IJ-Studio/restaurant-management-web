@@ -133,12 +133,15 @@
     align-items: center;
     justify-content: center;
     gap: 0.85rem;
+    /* El texto del ornamento («El Quijote») nunca se parte entre los dos filetes. */
+    white-space: nowrap;
   }
   .ornamento-axial::before,
   .ornamento-axial::after {
     content: "";
-    flex: none;
-    inline-size: 3.5rem;
+    /* 3,5rem de filete; en un hueco estrecho (texto al 125 %) encoge antes que desbordar. */
+    flex: 0 1 3.5rem;
+    min-inline-size: 1rem;
     block-size: 1px;
     background-color: var(--color-borde-acento-fuerte);
   }
@@ -225,9 +228,6 @@
       transform: scale(1.025);
     }
   }
-  /* Rótulo del respaldo: solo en láminas grandes de la parte pública (no en miniaturas ni en el
-     panel, que comparte `Imagen` sin `.lamina-fotografia`). */
-  .lamina-respaldo__rotulo {
   /* Con movimiento reducido, la foto no crece al pasar (ni siquiera de golpe). */
   @media (prefers-reduced-motion: reduce) {
     :root:not([data-movimiento="completo"]) .zocalo-interactivo:hover .lamina-fotografia img {
@@ -237,6 +237,9 @@
   :root[data-movimiento="reducido"] .zocalo-interactivo:hover .lamina-fotografia img {
     transform: none;
   }
+  /* Rótulo del respaldo: solo en láminas grandes de la parte pública (no en miniaturas ni en el
+     panel, que comparte `Imagen` sin `.lamina-fotografia`). */
+  .lamina-respaldo__rotulo {
     display: none;
   }
   @container (min-width: 9rem) {
@@ -260,6 +263,9 @@
     font-size: var(--texto-numero-lote);
     font-style: italic;
     font-weight: 400;
+    color: var(--color-acento);
+  }
+  .secciones-legales li::marker {
     color: var(--color-acento);
   }
 
@@ -384,6 +390,12 @@
   }
   .contraetiqueta[data-sin-filete-final] > :nth-last-child(-n + 2) {
     border-block-end: 0;
+  }
+  /* Parte pública: un valor de texto que no cabe (el horario) se parte en dos líneas parejas, sin
+     dejar «PM» suelto. El panel no usa `.contenedor-pagina`. */
+  .contenedor-pagina .contraetiqueta > dd[data-tipo="texto"],
+  .pie-portada-tabular dd {
+    text-wrap: balance;
   }
   /* En una tarjeta estrecha (menos de 16rem: móvil con el texto al 125 %), cada rótulo va encima de
      su valor; si no, un valor ancho (una insignia, un rango de fechas) no cabría al lado (PLAN 5.10).
@@ -849,6 +861,10 @@
     animation: pagina-entra var(--duracion-media) var(--ease-salida) both;
   }
 }
+/* Quien pide movimiento completo en el panel de accesibilidad lo tiene aunque el sistema lo reduzca. */
+:root[data-movimiento="completo"] .pagina-entra {
+  animation: pagina-entra var(--duracion-media) var(--ease-salida) both;
+}
 
 /* Landing (D-35): ajuste suave entre secciones por proximidad, solo con movimiento permitido. Con
    «proximity» el navegador solo ajusta cerca de un borde de sección: el teclado, la rueda y el
@@ -860,10 +876,6 @@
 }
 :root[data-movimiento="completo"]:has(.portada[data-portada]) {
   scroll-snap-type: y proximity;
-}
-/* Quien pide movimiento completo en el panel de accesibilidad lo tiene aunque el sistema lo reduzca. */
-:root[data-movimiento="completo"] .pagina-entra {
-  animation: pagina-entra var(--duracion-media) var(--ease-salida) both;
 }
 .portada[data-portada],
 .seccion-landing {
