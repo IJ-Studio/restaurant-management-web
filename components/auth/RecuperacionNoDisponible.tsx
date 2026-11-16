@@ -20,7 +20,7 @@ export function RecuperacionNoDisponible({ ruta, titulo }: { ruta: string; titul
 				<Aviso tono="info" titulo="Todavía no puedes hacerlo desde aquí" rol={null}>
 					La recuperación de contraseña en línea no está disponible por ahora. Llámanos y te ayudamos a recuperar el acceso a tu cuenta.
 				</Aviso>
-				<div className="flex flex-col gap-3 sm:flex-row">
+				<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap [&>*]:sm:shrink-0">
 					<BotonEnlace href={contact.phoneHref} variante="primario" icono={<Phone />}>
 						{`Llamar al ${contact.phone}`}
 					</BotonEnlace>
