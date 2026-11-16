@@ -28,13 +28,21 @@ export function TarjetaPlato({ id, nombre, descripcion, precio, imagen, disponib
 	return (
 		<article
 			className={cn(
-				"relative flex h-full flex-col overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie text-texto-principal",
-				"transition-[background-color,border-color] duration-(--duracion-breve) ease-estandar al-pasar:border-borde-control al-pasar:bg-superficie-elevada",
+				"group relative flex h-full flex-col overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie text-texto-principal",
+				"transition-[background-color,border-color,transform] duration-(--duracion-breve) ease-estandar al-pasar:border-borde-control al-pasar:bg-superficie-elevada",
+				// Pulsado: la tarjeta cede un poco (transform, 100 ms); sin movimiento si se reduce.
+				"active:scale-[0.985] motion-reduce:active:scale-100",
 				"has-[.enlace-tarjeta:focus-visible]:outline-2 has-[.enlace-tarjeta:focus-visible]:outline-offset-3 has-[.enlace-tarjeta:focus-visible]:outline-solid has-[.enlace-tarjeta:focus-visible]:outline-foco",
 			)}
 		>
-			<div className="relative aspect-[4/5] border-b border-borde-sutil bg-superficie">
-				<Imagen src={imagen} alt={nombre} fill sizes={sizes} className="object-cover" />
+			<div className="relative aspect-[4/5] overflow-hidden border-b border-borde-sutil bg-superficie">
+				<Imagen
+					src={imagen}
+					alt={nombre}
+					fill
+					sizes={sizes}
+					className="object-cover transition-transform duration-(--duracion-media) ease-salida motion-reduce:transition-none al-pasar:group-hover:scale-[1.03]"
+				/>
 			</div>
 			<div className="flex flex-1 flex-col gap-(--espacio-sm) p-(--espacio-lg)">
 				<div className="flex items-start justify-between gap-3">
