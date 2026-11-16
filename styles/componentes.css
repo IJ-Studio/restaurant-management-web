@@ -224,12 +224,13 @@
       transform: scale(1.025);
     }
   }
-  /* Rótulo del respaldo: solo en láminas grandes, para no ensuciar miniaturas. */
+  /* Rótulo del respaldo: solo en láminas grandes de la parte pública (no en miniaturas ni en el
+     panel, que comparte `Imagen` sin `.lamina-fotografia`). */
   .lamina-respaldo__rotulo {
     display: none;
   }
   @container (min-width: 9rem) {
-    .lamina-respaldo__rotulo {
+    .lamina-fotografia .lamina-respaldo__rotulo {
       display: block;
     }
   }
@@ -853,4 +854,26 @@
 .portada[data-portada],
 .seccion-landing {
   scroll-snap-align: start;
+}
+
+/* El panel comparte `PaginaEstado`: allí la ilustración sigue sin marco y a su tamaño de siempre
+   (el pulido es solo de la parte pública). Fuera de capas para ganar a las utilidades. */
+.marco-panel [data-pagina-estado] .marco-etiqueta,
+.marco-panel [data-pagina-estado] .marco-etiqueta__interior {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.marco-panel [data-pagina-estado] .esquinas-imprenta::before,
+.marco-panel [data-pagina-estado] .esquinas-imprenta::after,
+.marco-panel [data-pagina-estado] .esquinas-imprenta__cruz {
+  display: none;
+}
+.marco-panel [data-pagina-estado] .marco-etiqueta svg {
+  inline-size: min(16rem, 70vw);
+}
+@media (min-width: 48rem) {
+  .marco-panel [data-pagina-estado] .marco-etiqueta svg {
+    inline-size: 18rem;
+  }
 }
