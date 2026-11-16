@@ -43,6 +43,276 @@
     border-block: var(--grosor-filete) solid var(--color-acento);
   }
 
+  /* ===== Gramática de la etiqueta clásica (pulido UI pública, ESPECIFICACION-WEB § 3B) ===== */
+
+  /* Número de lote o identificador editorial («Nº 01 · Anverso», «Partida 03»). */
+  .numero-lote {
+    font-family: var(--font-titulos);
+    font-style: italic;
+    font-size: var(--texto-numero-lote);
+    line-height: 1.2;
+    letter-spacing: 0.03em;
+    color: var(--color-acento);
+  }
+
+  /* Rótulo en versalitas espaciadas (DM Sans; nunca sobre Fraunces). */
+  .texto-rotulo {
+    font-family: var(--font-texto);
+    font-size: var(--texto-etiqueta);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* Marco de etiqueta: doble perímetro de acento sobre la superficie de cartela. */
+  .marco-etiqueta {
+    position: relative;
+    padding: 0.425rem;
+    background-color: var(--color-superficie-cartela);
+    border: var(--grosor-filete) solid var(--color-borde-acento-fuerte);
+    border-radius: var(--radius-control);
+  }
+  .marco-etiqueta__interior {
+    position: relative;
+    border: var(--grosor-filete) solid var(--color-borde-acento);
+    border-radius: calc(var(--radius-control) / 2);
+  }
+
+  /* Esquinas ingletadas de imprenta: arriba-izquierda y abajo-derecha con ::before/::after; las
+     otras dos, con un `<span class="esquinas-imprenta__cruz">` dentro. Decorativas. */
+  .esquinas-imprenta {
+    position: relative;
+  }
+  .esquinas-imprenta::before,
+  .esquinas-imprenta::after,
+  .esquinas-imprenta__cruz::before,
+  .esquinas-imprenta__cruz::after {
+    content: "";
+    position: absolute;
+    inline-size: 14px;
+    block-size: 14px;
+    pointer-events: none;
+    border-color: var(--color-acento);
+    border-style: solid;
+    border-width: 0;
+  }
+  .esquinas-imprenta::before {
+    inset-block-start: 6px;
+    inset-inline-start: 6px;
+    border-block-start-width: 1px;
+    border-inline-start-width: 1px;
+  }
+  .esquinas-imprenta::after {
+    inset-block-end: 6px;
+    inset-inline-end: 6px;
+    border-block-end-width: 1px;
+    border-inline-end-width: 1px;
+  }
+  .esquinas-imprenta__cruz {
+    position: absolute;
+    inset: 6px;
+    pointer-events: none;
+  }
+  .esquinas-imprenta__cruz::before {
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    border-block-start-width: 1px;
+    border-inline-end-width: 1px;
+  }
+  .esquinas-imprenta__cruz::after {
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    border-block-end-width: 1px;
+    border-inline-start-width: 1px;
+  }
+
+  /* Ornamento axial: dos filetes horizontales flanqueando un texto o un rombo. */
+  .ornamento-axial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+  }
+  .ornamento-axial::before,
+  .ornamento-axial::after {
+    content: "";
+    flex: none;
+    inline-size: 3.5rem;
+    block-size: 1px;
+    background-color: var(--color-borde-acento-fuerte);
+  }
+  .rombo-acento {
+    display: inline-block;
+    flex: none;
+    inline-size: 6px;
+    block-size: 6px;
+    border: 1px solid var(--color-acento);
+    transform: rotate(45deg);
+  }
+
+  /* Cartela de metadato (cuello de botella): versalitas en acento sobre cartela. */
+  .cartela-metadato {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.34rem 0.85rem;
+    background-color: var(--color-superficie-cartela);
+    border: var(--grosor-filete) solid var(--color-borde-acento);
+    border-radius: var(--radius-control);
+    font-family: var(--font-texto);
+    font-size: var(--texto-etiqueta);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-acento);
+  }
+
+  /* Capitular sobre el primer párrafo del relato (el texto editable llega tal cual). */
+  .capitular-etiqueta::first-letter {
+    float: inline-start;
+    font-family: var(--font-titulos);
+    font-size: 3.35rem;
+    font-weight: 400;
+    line-height: 0.86;
+    padding-block-start: 0.1rem;
+    padding-inline-end: 0.65rem;
+    color: var(--color-acento);
+  }
+
+  /* Línea de puntos de la carta impresa, entre el nombre y el precio. */
+  .lider-puntos {
+    flex: 1 1 auto;
+    min-inline-size: 1.5rem;
+    border-block-end: 1px dotted var(--color-borde-control);
+    margin-inline: 0.5rem;
+    transform: translateY(-0.28rem);
+    opacity: 0.75;
+  }
+
+  /* Zócalo: tarjeta que, al pasar, cambia de relleno y de filete (nunca solo el texto). */
+  .zocalo-interactivo {
+    background-color: var(--color-superficie);
+    border: var(--grosor-filete) solid var(--color-borde-sutil);
+    border-radius: var(--radius-tarjeta);
+    transition:
+      background-color var(--duracion-breve) var(--ease-estandar),
+      border-color var(--duracion-breve) var(--ease-estandar),
+      transform var(--duracion-instantanea) var(--ease-estandar);
+  }
+  @media (hover: hover) {
+    .zocalo-interactivo:hover {
+      background-color: var(--color-superficie-cafe);
+      border-color: var(--color-borde-control);
+    }
+  }
+
+  /* Lámina fotográfica: marco fino de acento sobre café; el respaldo del molino va en la misma caja. */
+  .lamina-fotografia {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-superficie-cafe);
+    border: var(--grosor-filete) solid var(--color-borde-acento);
+    border-radius: var(--radius-tarjeta);
+  }
+  .lamina-fotografia img {
+    transition: transform var(--duracion-media) var(--ease-salida);
+  }
+  @media (hover: hover) {
+    .zocalo-interactivo:hover .lamina-fotografia img {
+      transform: scale(1.025);
+    }
+  }
+  /* Rótulo del respaldo: solo en láminas grandes, para no ensuciar miniaturas. */
+  .lamina-respaldo__rotulo {
+    display: none;
+  }
+  @container (min-width: 9rem) {
+    .lamina-respaldo__rotulo {
+      display: block;
+    }
+  }
+
+  /* Renglón tabular: rótulo a la izquierda y cifra a la derecha. */
+  .fila-tabular {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding-block: 0.78rem;
+    padding-inline: 0.5rem;
+    border-block-end: var(--grosor-filete) solid var(--color-borde-sutil);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Pie de la portada: filetes de acento arriba y abajo; columnas según los datos reales. */
+  .pie-portada-tabular {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    border-block: var(--grosor-filete) solid var(--color-borde-acento-fuerte);
+    border-block-end-color: var(--color-borde-acento);
+    background-color: color-mix(in oklab, var(--color-superficie-cartela) 72%, transparent);
+    font-variant-numeric: tabular-nums;
+  }
+  .pie-portada-tabular > * {
+    padding: var(--espacio-sm) var(--espacio-md);
+  }
+  .pie-portada-tabular > * + * {
+    border-block-start: var(--grosor-filete) solid var(--color-borde-acento);
+  }
+  @media (min-width: 48rem) {
+    .pie-portada-tabular > * + * {
+      border-block-start: 0;
+      border-inline-start: var(--grosor-filete) solid var(--color-borde-acento);
+    }
+  }
+
+  /* Control de cantidad: caja de filete de control, botones de 44 px y cifra tabular. */
+  .control-cantidad {
+    display: inline-flex;
+    align-items: stretch;
+    border: var(--grosor-filete) solid var(--color-borde-control);
+    border-radius: var(--radius-control);
+    background-color: var(--color-superficie);
+  }
+  .control-cantidad > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    color: var(--color-texto-principal);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    transition:
+      background-color var(--duracion-breve) var(--ease-estandar),
+      transform var(--duracion-instantanea) var(--ease-estandar);
+  }
+  @media (hover: hover) {
+    .control-cantidad > button:hover:not(:disabled) {
+      background-color: var(--color-superficie-cafe);
+    }
+  }
+  .control-cantidad > button:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+  .control-cantidad > button:disabled {
+    color: var(--color-texto-tenue);
+    cursor: not-allowed;
+  }
+  .control-cantidad > :not(button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 2.75rem;
+    padding-inline: var(--espacio-xs);
+    border-inline: var(--grosor-filete) solid var(--color-borde-sutil);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
   /* Rótulo a su ancho y valor en el resto, alineado al final: un valor largo pasa de línea sin
      estrechar el rótulo. Rótulo y valor ocupan la fila entera y centran su contenido, así que
      sus filetes quedan siempre a la misma altura. */
@@ -370,8 +640,27 @@
     align-items: flex-end;
     min-block-size: min(100svh, 60rem);
     margin-block-start: calc(-1 * (var(--alto-cabecera) + env(safe-area-inset-top, 0px)));
-    padding-block: calc(var(--alto-cabecera) + var(--espacio-3xl)) var(--espacio-3xl);
+    padding-block: calc(var(--alto-cabecera) + env(safe-area-inset-top, 0px) + var(--espacio-xl)) var(--espacio-xl);
     scroll-margin-block-start: 0;
+  }
+  @media (min-width: 40rem) {
+    .portada {
+      padding-block-end: var(--espacio-2xl);
+    }
+  }
+  /* Filete perimetral interior de la portada (etiqueta de gran formato). Bajo la cabecera, para
+     que no compita con la navegación. */
+  .portada__marco {
+    position: absolute;
+    inset: calc(var(--alto-cabecera) + env(safe-area-inset-top, 0px)) 0.75rem 0.75rem;
+    z-index: 0;
+    pointer-events: none;
+    border: var(--grosor-filete) solid var(--color-borde-acento);
+  }
+  @media (min-width: 40rem) {
+    .portada__marco {
+      inset: calc(var(--alto-cabecera) + env(safe-area-inset-top, 0px)) 1.5rem 1.5rem;
+    }
   }
   .portada__foto {
     position: absolute;
@@ -382,12 +671,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-image: var(--velo-portada);
-  }
-  @media (min-width: 48rem) {
-    .portada__velo {
-      background-image: var(--velo-portada), var(--velo-portada-lateral);
-    }
+    background-image: var(--velo-portada), var(--velo-portada-radial);
   }
 
   /* Secciones de la landing (PLAN 4.2): ritmo vertical amplio y ancla que la cabecera fija no tapa. */
