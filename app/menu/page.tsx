@@ -166,22 +166,19 @@ function EsqueletoCarta() {
 	);
 }
 
-function FilaPlato({ plato, enlace }: { plato: Plato; enlace?: boolean }) {
+/** Renglón de la carta impresa: nombre que lleva al plato, línea de puntos y precio tabular. */
+function FilaPlato({ plato }: { plato: Plato }) {
 	const cifra = precio(plato);
-	const nombre = <span className="font-titulos text-(length:--texto-titulo-3) font-medium leading-[1.25]">{plato.nombre}</span>;
 	return (
-		<div className="flex flex-col gap-1 border-b border-borde-sutil py-(--espacio-md)">
-			<div className="flex items-baseline justify-between gap-(--espacio-md)">
-				{enlace ? (
-					<Link
-						href={`/menu/producto/${plato.id}`}
-						className="rounded-control text-texto-principal no-underline decoration-acento decoration-1 underline-offset-4 al-pasar:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco"
-					>
-						{nombre}
-					</Link>
-				) : (
-					nombre
-				)}
+		<div className="relative flex min-h-11 flex-col gap-1 py-(--espacio-sm) has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-solid has-[a:focus-visible]:outline-foco">
+			<div className="flex items-baseline">
+				<Link
+					href={`/menu/producto/${plato.id}`}
+					className="min-w-0 font-titulos text-(length:--texto-titulo-interfaz) leading-[1.3] text-texto-principal no-underline decoration-acento decoration-1 underline-offset-4 after:absolute after:inset-0 after:content-[''] focus-visible:outline-none al-pasar:underline"
+				>
+					{plato.nombre}
+				</Link>
+				<span aria-hidden="true" className="lider-puntos" />
 				{cifra && <span className="shrink-0 text-(length:--texto-cifra-tabla) font-medium numeros-tabulares">{cifra}</span>}
 			</div>
 			{plato.descripcion && <p className="m-0 max-w-[60ch] text-(length:--texto-pequeno) leading-[1.5] text-texto-secundario [text-wrap:pretty]">{plato.descripcion}</p>}
@@ -257,18 +254,22 @@ function Secciones({ categorias }: { categorias: Categoria[] }) {
 						)}
 					>
 						<div className={i % 2 === 1 ? "md:order-2" : undefined}>
-							<div className="relative aspect-[16/7] overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie md:aspect-[4/3]">
+							<div className="lamina-fotografia aspect-[16/7] md:aspect-[4/3]">
 								<Imagen src={foto} alt={c.nombre} fill sizes="(min-width: 48rem) 40vw, 100vw" className="object-cover" />
 							</div>
 						</div>
 						<div className="flex flex-col gap-(--espacio-sm)">
-							<h2 id={`seccion-${c.id}-titulo`} className="m-0 font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.15]">
+							<span aria-hidden="true" className="numero-lote">
+									Nº {String(i + 1).padStart(2, "0")}
+								</span>
+								<h2 id={`seccion-${c.id}-titulo`} className="m-0 font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.15]">
 								{c.nombre}
 							</h2>
-							{platos.length > 0 ? (
-								<div>
+							<span aria-hidden="true" className="filete-doble mb-(--espacio-xs)" />
+								{platos.length > 0 ? (
+								<div className="flex flex-col border-s-2 border-acento ps-(--espacio-md)">
 									{platos.map((p) => (
-										<FilaPlato key={p.id} plato={p} enlace />
+										<FilaPlato key={p.id} plato={p} />
 									))}
 								</div>
 							) : (
@@ -321,8 +322,10 @@ function Resultados({
 		<ul className="m-0 flex max-w-3xl list-none flex-col p-0" aria-label={`Resultados para «${consulta}»`}>
 			{resultados.map(({ plato, categoria }) => (
 				<li key={`${categoria.id}-${plato.id}`}>
-					<p className="m-0 mt-(--espacio-sm) text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] text-texto-tenue">{categoria.nombre}</p>
-					<FilaPlato plato={plato} enlace />
+					<p className="texto-rotulo m-0 mt-(--espacio-md) text-texto-tenue">{categoria.nombre}</p>
+					<div className="border-s-2 border-acento ps-(--espacio-md)">
+							<FilaPlato plato={plato} />
+						</div>
 				</li>
 			))}
 		</ul>
