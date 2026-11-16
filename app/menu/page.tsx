@@ -53,6 +53,8 @@ export default function PaginaCarta() {
 		<div className="contenedor-pagina pb-(--espacio-entre-secciones)">
 			<EncabezadoPublico
 				ruta="/menu"
+				// El índice de secciones ya va fijo bajo la cabecera: las migas no se fijan aquí para no taparlo.
+				className="static"
 				titulo="La carta"
 				entradilla="Recorre la carta por secciones o busca un plato por su nombre."
 			/>
@@ -249,15 +251,18 @@ function Secciones({ categorias }: { categorias: Categoria[] }) {
 						aria-labelledby={`seccion-${c.id}-titulo`}
 						className={cn(
 							"grid scroll-mt-[calc(var(--alto-cabecera)+3.5rem)] items-start lg:scroll-mt-[calc(var(--alto-cabecera)+var(--espacio-md))] gap-(--espacio-xl) border-t border-borde-sutil pt-(--espacio-2xl)",
-							// La foto va siempre en la columna estrecha, a la izquierda o a la derecha.
-							i % 2 === 1 ? "md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]" : "md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]",
+							// La foto va siempre en la columna estrecha, a la izquierda o a la derecha. Sin ninguna foto
+							// en la sección, solo la carta impresa a todo el ancho (cero cajas vacías).
+							foto && (i % 2 === 1 ? "md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]" : "md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]"),
 						)}
 					>
-						<div className={i % 2 === 1 ? "md:order-2" : undefined}>
-							<div className="lamina-fotografia aspect-[16/7] md:aspect-[4/3]">
-								<Imagen src={foto} alt={c.nombre} fill sizes="(min-width: 48rem) 40vw, 100vw" className="object-cover" />
+						{foto && (
+							<div className={i % 2 === 1 ? "md:order-2" : undefined}>
+								<div className="lamina-fotografia aspect-[16/7] md:aspect-[4/3]">
+									<Imagen src={foto} alt={c.nombre} fill sizes="(min-width: 48rem) 40vw, 100vw" className="object-cover" />
+								</div>
 							</div>
-						</div>
+						)}
 						<div className="flex flex-col gap-(--espacio-sm)">
 							<span aria-hidden="true" className="numero-lote">
 									Nº {String(i + 1).padStart(2, "0")}
@@ -267,7 +272,7 @@ function Secciones({ categorias }: { categorias: Categoria[] }) {
 							</h2>
 							<span aria-hidden="true" className="filete-doble mb-(--espacio-xs)" />
 								{platos.length > 0 ? (
-								<div className="flex flex-col border-s-2 border-acento ps-(--espacio-md)">
+								<div className={cn("flex flex-col border-s-2 border-acento ps-(--espacio-md)", !foto && "max-w-3xl")}>
 									{platos.map((p) => (
 										<FilaPlato key={p.id} plato={p} />
 									))}

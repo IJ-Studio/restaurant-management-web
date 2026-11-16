@@ -66,7 +66,7 @@ export function Portada() {
 						<BotonEnlace href="#reservas" variante="primario" icono={<CalendarDays />}>
 							Reservar mesa
 						</BotonEnlace>
-						<BotonEnlace href="#menu" variante="secundario" icono={<UtensilsCrossed />} className="bg-[color-mix(in_oklab,var(--color-fondo)_55%,transparent)]">
+						<BotonEnlace href="#menu" variante="secundario" icono={<UtensilsCrossed />} className="bg-[color-mix(in_oklab,var(--color-superficie-cartela)_60%,transparent)]">
 							Ver la carta
 						</BotonEnlace>
 					</div>
