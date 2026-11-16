@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Phone, SearchX } from "lucide-react";
 import { BotonEnlace } from "@/components/ui/BotonEnlace";
@@ -10,6 +10,7 @@ import { EstadoError } from "@/components/ui/EstadoError";
 import { EstadoVacio } from "@/components/ui/EstadoVacio";
 import { Imagen } from "@/components/ui/Imagen";
 import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
+import { VolverArriba } from "@/components/carta/VolverArriba";
 import { BotonDictado } from "@/components/pwa/BotonDictado";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { restaurantConfig } from "@/config/restaurant.config";
@@ -188,7 +189,35 @@ function FilaPlato({ plato, enlace }: { plato: Plato; enlace?: boolean }) {
 	);
 }
 
+/** Sección de la carta que ocupa la parte alta de la pantalla; solo presentación del índice. */
+function useSeccionActiva(ids: string[], lista: React.RefObject<HTMLUListElement | null>) {
+	const [activa, setActiva] = useState<string | null>(null);
+	const clave = ids.join("|");
+	useEffect(() => {
+		const secciones = clave.split("|").map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e);
+		if (secciones.length === 0 || !("IntersectionObserver" in window)) return;
+		const io = new IntersectionObserver(
+			(entradas) => {
+				const dentro = entradas.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+				if (dentro) setActiva(dentro.target.id);
+			},
+			{ rootMargin: "-25% 0px -65% 0px" },
+		);
+		secciones.forEach((e) => io.observe(e));
+		return () => io.disconnect();
+	}, [clave]);
+	useEffect(() => {
+		// Centra el enlace activo en la franja horizontal sin mover la página.
+		const ul = lista.current;
+		const enlace = ul?.querySelector<HTMLElement>('[aria-current="true"]');
+		if (ul && enlace && ul.scrollWidth > ul.clientWidth) ul.scrollTo({ left: enlace.offsetLeft - ul.clientWidth / 2 + enlace.clientWidth / 2, behavior: "smooth" });
+	}, [activa, lista]);
+	return activa;
+}
+
 function Secciones({ categorias }: { categorias: Categoria[] }) {
+	const lista = useRef<HTMLUListElement>(null);
+	const activa = useSeccionActiva(categorias.map((c) => `seccion-${c.id}`), lista);
 	return (
 		<div className="flex flex-col gap-(--espacio-lg) lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:items-start lg:gap-(--espacio-2xl)">
 			{/* Fase 4.7: el índice sigue a la vista. En móvil, franja fija bajo la cabecera con desplazamiento
@@ -197,10 +226,14 @@ function Secciones({ categorias }: { categorias: Categoria[] }) {
 				aria-label="Secciones de la carta"
 				className="sticky top-(--alto-cabecera) z-20 -mx-(--margen-pagina) border-b border-borde-sutil bg-fondo px-(--margen-pagina) lg:top-[calc(var(--alto-cabecera)+var(--espacio-lg))] lg:mx-0 lg:max-h-[calc(100dvh-var(--alto-cabecera)-2*var(--espacio-lg))] lg:overflow-y-auto lg:border-b-0 lg:px-0"
 			>
-				<ul className="m-0 flex list-none gap-x-(--espacio-lg) overflow-x-auto p-0 [scrollbar-width:thin] lg:flex-col lg:gap-y-1 lg:overflow-x-visible">
+				<ul ref={lista} className="m-0 flex list-none gap-x-(--espacio-lg) overflow-x-auto p-0 [scrollbar-width:thin] lg:flex-col lg:gap-y-1 lg:overflow-x-visible">
 					{categorias.map((c) => (
 						<li key={c.id} className="shrink-0">
-							<a href={`#seccion-${c.id}`} className="enlace-subrayado inline-flex min-h-11 items-center whitespace-nowrap text-texto-secundario al-pasar:text-texto-principal lg:whitespace-normal">
+							<a
+								href={`#seccion-${c.id}`}
+								aria-current={activa === `seccion-${c.id}` ? "true" : undefined}
+								className="enlace-subrayado inline-flex min-h-11 items-center whitespace-nowrap text-texto-secundario transition-colors duration-(--duracion-breve) al-pasar:text-texto-principal aria-[current=true]:font-semibold aria-[current=true]:text-texto-principal aria-[current=true]:decoration-acento aria-[current=true]:decoration-2 lg:whitespace-normal"
+							>
 								{c.nombre}
 							</a>
 						</li>
@@ -224,7 +257,7 @@ function Secciones({ categorias }: { categorias: Categoria[] }) {
 						)}
 					>
 						<div className={i % 2 === 1 ? "md:order-2" : undefined}>
-							<div className="relative aspect-[4/3] overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie">
+							<div className="relative aspect-[16/7] overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie md:aspect-[4/3]">
 								<Imagen src={foto} alt={c.nombre} fill sizes="(min-width: 48rem) 40vw, 100vw" className="object-cover" />
 							</div>
 						</div>
@@ -257,6 +290,7 @@ function Secciones({ categorias }: { categorias: Categoria[] }) {
 				);
 			})}
 			</div>
+			<VolverArriba />
 		</div>
 	);
 }
