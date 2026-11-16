@@ -18,6 +18,7 @@ import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { formatearPrecio } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { cn } from "@/lib/utils";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 
 /**
@@ -403,15 +404,19 @@ function TarjetaPedido({
 			{activo && <span aria-hidden="true" className="esquinas-imprenta__cruz" />}
 			<header className="flex flex-wrap items-center justify-between gap-2 border-b border-borde-sutil pb-(--espacio-sm)">
 				<div className="flex flex-col gap-1">
-					<h2 className={activo ? "m-0 font-titulos text-(length:--texto-titulo-3) font-normal" : "m-0 font-texto text-(length:--texto-titulo-interfaz) font-semibold numeros-tabulares"}>
+					{/* Activo: el identificador real va en la cartela (sin repetirlo en otra); «Lo que llevas», en Fraunces. */}
+					<h2
+						className={cn(
+							"m-0",
+							!activo && "font-texto text-(length:--texto-titulo-interfaz) font-semibold numeros-tabulares",
+							activo && (titulo ? "font-titulos text-(length:--texto-titulo-3) font-normal" : "cartela-metadato self-start numeros-tabulares"),
+						)}
+					>
 						{nombre}
 					</h2>
 					{fecha && <span className="text-(length:--texto-pequeno) text-texto-tenue">{new Date(fecha).toLocaleDateString("es-MX", { day: "numeric", month: "long" })}</span>}
 				</div>
-				<div className="flex flex-wrap items-center gap-2">
-					{activo && referencia && <span aria-hidden="true" className="cartela-metadato numeros-tabulares">Nº {referencia.slice(0, 8).toUpperCase()}</span>}
-					<EstadoPedido estatus={estatus} />
-				</div>
+				<EstadoPedido estatus={estatus} />
 			</header>
 			<ul className="m-0 flex list-none flex-col p-0">
 				{items.map((item: any) => {
