@@ -18,5 +18,5 @@ export function FotoAcceso({ tipo }: { tipo: "login" | "registro" }) {
 			vivo = false;
 		};
 	}, [tipo]);
-	return <Imagen src={src} fill decorativa loading="eager" className="object-cover" sizes="(min-width: 1024px) 50vw, 100vw" />;
+	return <Imagen src={src} fill decorativa className="object-cover" sizes="(min-width: 1024px) 50vw, 100vw" />;
 }
