@@ -29,17 +29,33 @@ const MODOS = [
 export function Pedir() {
 	const { hours, contact } = restaurantConfig;
 	return (
-		<SeccionLanding id="pedir" lote={5} rotulo="Pedir" titulo="Pide en tu mesa o en tu casa" entradilla="La misma carta, en la sala o en tu puerta.">
-			<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-xl) p-0 md:grid-cols-2" data-prueba="modos-pedido">
-				{MODOS.map((m) => (
-					<li key={m.id}>
+		<SeccionLanding id="pedir" lote={5} edicion="Servicio" rotulo="Pedir" titulo="Pide en tu mesa o en tu casa" entradilla="La misma carta, en la sala o en tu puerta.">
+			<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-lg) p-0 md:grid-cols-2 md:gap-(--espacio-3xl)" data-prueba="modos-pedido">
+				{MODOS.map((m, i) => (
+					<li key={m.id} className="relative">
+						{/* Filete vertical con rombo entre las dos etiquetas gemelas (solo escritorio), en el hueco. */}
+						{i > 0 && (
+							<span
+								aria-hidden="true"
+								className="absolute inset-y-0 -start-[calc(var(--espacio-3xl)/2)] hidden -translate-x-1/2 flex-col items-center gap-(--espacio-sm) md:flex rtl:translate-x-1/2"
+							>
+								<span className="w-px flex-1 bg-borde-acento" />
+								<span className="rombo-acento" />
+								<span className="w-px flex-1 bg-borde-acento" />
+							</span>
+						)}
 						<article
 							aria-labelledby={`pedir-${m.id}`}
-							className="flex h-full flex-col gap-(--espacio-md) border-t border-borde-control pt-(--espacio-lg)"
+							className="zocalo-interactivo flex h-full flex-col gap-(--espacio-md) p-(--espacio-lg)"
 						>
-							<span aria-hidden="true" className="text-acento [&_svg]:size-6 [&_svg]:stroke-[1.5]">
-								{m.icono}
-							</span>
+							<div className="flex items-center justify-between gap-(--espacio-sm)">
+								<span aria-hidden="true" className="cartela-metadato">
+									Modalidad {i === 0 ? "I" : "II"}
+								</span>
+								<span aria-hidden="true" className="text-acento [&_svg]:size-6 [&_svg]:stroke-[1.5]">
+									{m.icono}
+								</span>
+							</div>
 							<h3 id={`pedir-${m.id}`} className="m-0 font-titulos text-(length:--texto-titulo-3) font-medium leading-[1.2]">
 								{m.titulo}
 							</h3>

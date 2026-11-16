@@ -18,9 +18,23 @@ export function Visitanos() {
 		{ nombre: "Instagram", href: contact.instagram, icono: <Instagram aria-hidden="true" /> },
 	];
 	return (
-		<SeccionLanding id="visitanos" lote={6} rotulo="Visítanos" fondo="cafe" titulo="Te esperamos en el centro" entradilla="En la plazuela Hidalgo, en el corazón de Huejutla de Reyes.">
+		<SeccionLanding
+			id="visitanos"
+			lote={6}
+			edicion="Dirección"
+			rotulo="Visítanos"
+			fondo="cafe"
+			titulo="Te esperamos en el centro"
+			entradilla="En la plazuela Hidalgo, en el corazón de Huejutla de Reyes."
+		>
 			<div className="grid gap-(--espacio-2xl) md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-				<div className="flex flex-col gap-(--espacio-lg)">
+				<div className="marco-etiqueta flex flex-col">
+					<div className="marco-etiqueta__interior esquinas-imprenta flex flex-col gap-(--espacio-lg) p-(--espacio-lg) sm:p-(--espacio-xl)">
+					<span aria-hidden="true" className="esquinas-imprenta__cruz" />
+					<p className="m-0 flex items-center gap-(--espacio-sm)">
+						<span aria-hidden="true" className="rombo-acento" />
+						<span className="texto-rotulo text-acento">Ficha de dirección</span>
+					</p>
 					<Contraetiqueta
 						pares={[
 							{ rotulo: "Dirección", valor: contact.address, tipo: "texto" },
@@ -39,6 +53,7 @@ export function Visitanos() {
 							<span className="solo-lectores"> (abre el mapa en otra pestaña)</span>
 						</BotonEnlace>
 					</div>
+					</div>
 				</div>
 				<div className="flex flex-col gap-(--espacio-md)">
 					<h3 className="m-0 font-texto text-(length:--texto-etiqueta) font-semibold uppercase leading-[1.2] tracking-[0.16em] text-texto-secundario">
@@ -51,7 +66,7 @@ export function Visitanos() {
 									href={r.href}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="flex min-h-12 items-center gap-3 text-texto-principal no-underline al-pasar:text-acento focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco [&_svg]:size-5 [&_svg]:stroke-[1.5]"
+									className="-mx-(--espacio-xs) flex min-h-12 items-center gap-3 px-(--espacio-xs) text-texto-principal no-underline transition-[background-color,color] duration-(--duracion-breve) ease-estandar al-pasar:bg-superficie-cartela al-pasar:text-acento focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco [&_svg]:size-5 [&_svg]:stroke-[1.5]"
 								>
 									{r.icono}
 									<span>{r.nombre}</span>
