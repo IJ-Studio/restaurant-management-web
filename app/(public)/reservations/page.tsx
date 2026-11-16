@@ -24,7 +24,8 @@ export default function PaginaReservar() {
 				titulo="Reservar mesa"
 				entradilla="Elige el día, la hora y tu mesa en el plano de la sala. Si lo prefieres, también puedes llamarnos."
 			/>
-			<div className="rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg) sm:p-(--espacio-xl)">
+			<div className="marco-etiqueta">
+			<div className="marco-etiqueta__interior p-(--espacio-lg) sm:p-(--espacio-xl)">
 				<OnlineOnly
 					what="el formulario de reservas"
 					className="py-0"
@@ -36,6 +37,7 @@ export default function PaginaReservar() {
 				>
 					<ReservationSidebar />
 				</OnlineOnly>
+			</div>
 			</div>
 		</div>
 	);
