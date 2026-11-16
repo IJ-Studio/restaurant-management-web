@@ -62,7 +62,7 @@ function Confirmacion() {
 			)}
 			<SelloCasa className="text-texto-principal" />
 			<span aria-hidden="true" className="filete-doble" />
-			<h1 id="exito-titulo" className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] [text-wrap:balance]">
+			<h1 id="exito-titulo" className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] tracking-[-0.02em] [text-wrap:balance]">
 				Gracias, tu pedido está pagado
 			</h1>
 			<p className="m-0 max-w-[44ch] text-(length:--texto-entradilla) leading-[1.6] text-texto-secundario [text-wrap:pretty]">

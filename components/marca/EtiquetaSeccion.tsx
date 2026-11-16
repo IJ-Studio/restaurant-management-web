@@ -51,7 +51,7 @@ export function EtiquetaSeccion({
 			<span aria-hidden="true" className="filete-doble" />
 			<Titulo
 				id={idTitulo}
-				className="m-0 max-w-[24ch] font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.15] text-texto-principal [text-wrap:balance]"
+				className="m-0 max-w-[24ch] font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.15] tracking-[-0.015em] text-texto-principal [text-wrap:balance]"
 			>
 				{titulo}
 			</Titulo>

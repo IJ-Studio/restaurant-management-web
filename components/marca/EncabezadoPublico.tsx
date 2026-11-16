@@ -37,7 +37,7 @@ export function EncabezadoPublico({ ruta, titulo, entradilla, actual, migas, acc
 				<div className="flex flex-col gap-(--espacio-md) md:flex-row md:items-end md:justify-between">
 					<div className="flex flex-col gap-(--espacio-sm)">
 						<span aria-hidden="true" className="filete-doble" />
-						<h1 className="m-0 max-w-[20ch] font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] [text-wrap:balance]">{titulo}</h1>
+						<h1 className="m-0 max-w-[20ch] font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] tracking-[-0.02em] [text-wrap:balance]">{titulo}</h1>
 						{entradilla && (
 							<p className="m-0 max-w-[60ch] text-(length:--texto-entradilla) leading-[1.6] text-texto-secundario [text-wrap:pretty]">{entradilla}</p>
 						)}
