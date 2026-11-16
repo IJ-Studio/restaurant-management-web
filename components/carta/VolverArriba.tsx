@@ -28,7 +28,8 @@ export function VolverArriba({ umbral = 900 }: { umbral?: number }) {
 			onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}
 			className={cn(
 				"fixed right-4 bottom-4 z-50 inline-flex size-11 items-center justify-center rounded-control border border-borde-control bg-superficie-elevada text-texto-principal",
-				"transition-[opacity,transform,background-color] duration-(--duracion-media) ease-salida motion-reduce:transition-none",
+				// translate-* y scale-* de Tailwind v4 son las propiedades `translate` y `scale`, no `transform`.
+				"transition-[opacity,translate,scale,background-color] duration-(--duracion-media) ease-salida motion-reduce:transition-none",
 				"al-pasar:bg-superficie-cafe active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco",
 				visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0",
 			)}

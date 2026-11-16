@@ -47,7 +47,7 @@ export function TarjetaPlato({
 			className={cn(
 				"zocalo-interactivo group relative flex h-full flex-col gap-(--espacio-md) p-(--espacio-md) text-texto-principal",
 				// Pulsado: la tarjeta cede un poco (transform, 100 ms); sin movimiento si se reduce.
-				"active:scale-[0.985] motion-reduce:active:scale-100",
+				"active:scale-[0.985] motion-reduce:active:scale-100 in-data-[movimiento=reducido]:active:scale-100",
 				"has-[.enlace-tarjeta:focus-visible]:outline-2 has-[.enlace-tarjeta:focus-visible]:outline-offset-3 has-[.enlace-tarjeta:focus-visible]:outline-solid has-[.enlace-tarjeta:focus-visible]:outline-foco",
 			)}
 		>

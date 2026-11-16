@@ -199,7 +199,8 @@
     transition:
       background-color var(--duracion-breve) var(--ease-estandar),
       border-color var(--duracion-breve) var(--ease-estandar),
-      transform var(--duracion-instantanea) var(--ease-estandar);
+      /* El pulsado de Tailwind v4 (`active:scale-*`) usa la propiedad `scale`, no `transform`. */
+      scale var(--duracion-instantanea) var(--ease-salida);
   }
   @media (hover: hover) {
     .zocalo-interactivo:hover {
@@ -227,6 +228,15 @@
   /* Rótulo del respaldo: solo en láminas grandes de la parte pública (no en miniaturas ni en el
      panel, que comparte `Imagen` sin `.lamina-fotografia`). */
   .lamina-respaldo__rotulo {
+  /* Con movimiento reducido, la foto no crece al pasar (ni siquiera de golpe). */
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-movimiento="completo"]) .zocalo-interactivo:hover .lamina-fotografia img {
+      transform: none;
+    }
+  }
+  :root[data-movimiento="reducido"] .zocalo-interactivo:hover .lamina-fotografia img {
+    transform: none;
+  }
     display: none;
   }
   @container (min-width: 9rem) {
@@ -315,7 +325,7 @@
     }
   }
   .control-cantidad > button:active:not(:disabled) {
-    transform: scale(0.94);
+    transform: scale(0.96);
   }
   .control-cantidad > button:disabled {
     color: var(--color-texto-tenue);
@@ -850,6 +860,10 @@
 }
 :root[data-movimiento="completo"]:has(.portada[data-portada]) {
   scroll-snap-type: y proximity;
+}
+/* Quien pide movimiento completo en el panel de accesibilidad lo tiene aunque el sistema lo reduzca. */
+:root[data-movimiento="completo"] .pagina-entra {
+  animation: pagina-entra var(--duracion-media) var(--ease-salida) both;
 }
 .portada[data-portada],
 .seccion-landing {
