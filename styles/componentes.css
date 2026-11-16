@@ -234,6 +234,24 @@
     }
   }
 
+  /* Páginas legales: cada apartado lleva su número de párrafo decorativo («§ 01»), sin texto para lectores. */
+  .secciones-legales {
+    counter-reset: apartado-legal;
+  }
+  .secciones-legales > section {
+    counter-increment: apartado-legal;
+  }
+  .secciones-legales > section > h2::before {
+    content: "§ " counter(apartado-legal, decimal-leading-zero) / "";
+    display: block;
+    margin-block-end: var(--espacio-2xs);
+    font-family: var(--font-titulos);
+    font-size: var(--texto-numero-lote);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--color-acento);
+  }
+
   /* Renglón tabular: rótulo a la izquierda y cifra a la derecha. */
   .fila-tabular {
     display: flex;
