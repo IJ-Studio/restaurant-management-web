@@ -396,14 +396,22 @@ function TarjetaPedido({
 }) {
 	const nombre = titulo ?? (referencia ? `Pedido ${referencia.slice(0, 8).toUpperCase()}` : "Pedido");
 	const totalTexto = total !== undefined ? precio(total) : null;
-	return (
-		<article aria-label={nombre} className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
+	// El pedido que aún se arma va en un marco de etiqueta; los ya enviados, en tarjetas atenuadas.
+	const activo = estatus === "pendiente";
+	const cuerpo = (
+		<>
+			{activo && <span aria-hidden="true" className="esquinas-imprenta__cruz" />}
 			<header className="flex flex-wrap items-center justify-between gap-2 border-b border-borde-sutil pb-(--espacio-sm)">
-				<div className="flex flex-col">
-					<h2 className="m-0 font-texto text-(length:--texto-titulo-interfaz) font-semibold numeros-tabulares">{nombre}</h2>
+				<div className="flex flex-col gap-1">
+					<h2 className={activo ? "m-0 font-titulos text-(length:--texto-titulo-3) font-normal" : "m-0 font-texto text-(length:--texto-titulo-interfaz) font-semibold numeros-tabulares"}>
+						{nombre}
+					</h2>
 					{fecha && <span className="text-(length:--texto-pequeno) text-texto-tenue">{new Date(fecha).toLocaleDateString("es-MX", { day: "numeric", month: "long" })}</span>}
 				</div>
-				<EstadoPedido estatus={estatus} />
+				<div className="flex flex-wrap items-center gap-2">
+					{activo && referencia && <span aria-hidden="true" className="cartela-metadato numeros-tabulares">Nº {referencia.slice(0, 8).toUpperCase()}</span>}
+					<EstadoPedido estatus={estatus} />
+				</div>
 			</header>
 			<ul className="m-0 flex list-none flex-col p-0">
 				{items.map((item: any) => {
@@ -411,9 +419,9 @@ function TarjetaPedido({
 					const subtotal = precio((item.cantidad ?? 1) * Number(item.precioUnitario));
 					const nombrePlato: string = item.platillo?.nombre ?? "Plato";
 					return (
-						<li key={item.id} className="flex items-center gap-3 border-b border-borde-sutil py-2 last:border-b-0">
+						<li key={item.id} className="fila-tabular items-center gap-3 px-0 last:border-b-0">
 							{item.platillo?.imagenUrl !== undefined && (
-								<div className="relative size-12 shrink-0 overflow-hidden rounded-control bg-superficie-cafe">
+								<div className="lamina-fotografia size-11 shrink-0 rounded-control">
 									<Imagen src={item.platillo.imagenUrl} decorativa fill sizes="3rem" className="object-cover" />
 								</div>
 							)}
@@ -435,11 +443,20 @@ function TarjetaPedido({
 			</ul>
 			{totalTexto && (
 				<p className="m-0 flex items-baseline justify-between border-t border-borde-sutil pt-(--espacio-sm)">
-					<span className="text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] text-texto-secundario">Total</span>
+					<span className="texto-rotulo text-texto-secundario">Total</span>
 					<span className="font-titulos text-(length:--texto-titulo-3) numeros-tabulares">{totalTexto}</span>
 				</p>
 			)}
 			{children && <div className="flex flex-wrap items-center gap-3">{children}</div>}
+		</>
+	);
+	return activo ? (
+		<article aria-label={nombre} className="marco-etiqueta">
+			<div className="marco-etiqueta__interior esquinas-imprenta flex flex-col gap-(--espacio-md) p-(--espacio-lg)">{cuerpo}</div>
+		</article>
+	) : (
+		<article aria-label={nombre} className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
+			{cuerpo}
 		</article>
 	);
 }
