@@ -52,10 +52,17 @@ function Confirmacion() {
 		).catch((e) => registrarError(e, "confirmación: descargar factura"));
 
 	return (
-		<section aria-labelledby="exito-titulo" className="mx-auto flex max-w-[40rem] flex-col items-center gap-(--espacio-lg) py-(--espacio-3xl) text-center">
+		<section aria-labelledby="exito-titulo" className="marco-etiqueta mx-auto my-(--espacio-2xl) max-w-[40rem]">
+			<div className="marco-etiqueta__interior esquinas-imprenta flex flex-col items-center gap-(--espacio-lg) px-(--espacio-lg) py-(--espacio-2xl) text-center sm:px-(--espacio-2xl)">
+			<span aria-hidden="true" className="esquinas-imprenta__cruz" />
+			{ordenId && (
+				<span aria-hidden="true" className="cartela-metadato numeros-tabulares">
+					Pedido Nº {ordenId.slice(0, 8).toUpperCase()}
+				</span>
+			)}
 			<SelloCasa className="text-texto-principal" />
 			<span aria-hidden="true" className="filete-doble" />
-			<h1 id="exito-titulo" className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] [text-wrap:balance]">
+			<h1 id="exito-titulo" className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] tracking-[-0.02em] [text-wrap:balance]">
 				Gracias, tu pedido está pagado
 			</h1>
 			<p className="m-0 max-w-[44ch] text-(length:--texto-entradilla) leading-[1.6] text-texto-secundario [text-wrap:pretty]">
@@ -81,6 +88,7 @@ function Confirmacion() {
 			<BotonEnlace href="/menu/pedido?tab=domicilio" variante="primario">
 				Ver tu pedido
 			</BotonEnlace>
+			</div>
 		</section>
 	);
 }

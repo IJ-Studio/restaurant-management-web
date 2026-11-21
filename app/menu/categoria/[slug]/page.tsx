@@ -12,6 +12,7 @@ import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import { PaginaEstado } from "@/components/marca/PaginaEstado";
 import { TEXTOS_ESTADO } from "@/components/marca/textos-estado";
 import { TarjetaPlato } from "@/components/carta/TarjetaPlato";
+import { FilaCartaImpresa } from "@/components/carta/FilaCartaImpresa";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { restaurantConfig } from "@/config/restaurant.config";
 import { registrarError } from "@/lib/registro/registrar-error";
@@ -151,7 +152,7 @@ function Contenido() {
 		<div className="contenedor-pagina pb-(--espacio-entre-secciones)">
 			<EncabezadoPublico ruta={ruta} actual={nombre} titulo={nombre} entradilla={descripcion} />
 			{categoria.imageUrl && (
-				<div className="relative mb-(--espacio-2xl) aspect-[21/9] overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie">
+				<div className="lamina-fotografia mb-(--espacio-2xl) aspect-[21/9]">
 					<Imagen src={categoria.imageUrl} decorativa fill preload sizes="(min-width: 72rem) 72rem, 100vw" className="object-cover" />
 				</div>
 			)}
@@ -166,26 +167,67 @@ function Contenido() {
 					}
 				/>
 			) : (
-				<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-xl) p-0 sm:grid-cols-2 lg:grid-cols-3" aria-label={`Platos de ${nombre}`}>
-					{productos.map((p) => (
-						<li key={p.id}>
-							<TarjetaPlato
-								id={p.id}
-								nombre={p.nombre || p.name || "Plato de la casa"}
-								descripcion={p.descripcion || p.description}
-								precio={cifra(p.precio ?? p.price)}
-								imagen={p.imagenUrl || p.imageUrl}
-								disponible={p.disponible ?? p.available ?? true}
-							/>
-						</li>
-					))}
-				</ul>
+				<PlatosSeccion nombre={nombre} productos={productos} />
 			)}
 			<div className="mt-(--espacio-2xl)">
 				<BotonEnlace href="/menu" variante="secundario" icono={<ArrowLeft />}>
 					Ver todas las secciones
 				</BotonEnlace>
 			</div>
+		</div>
+	);
+}
+
+/**
+ * Platos de la sección (pulido UI pública): los que tienen foto, como contraetiquetas; los que no
+ * (y la barra), como carta impresa a dos columnas, que compacta la lista en móvil. Los mismos
+ * platos, datos y enlaces; solo cambia cómo se presentan.
+ */
+function PlatosSeccion({ nombre, productos }: { nombre: string; productos: Producto[] }) {
+	const foto = (p: Producto) => p.imagenUrl || p.imageUrl;
+	const conFoto = productos.filter(foto);
+	const sinFoto = productos.filter((p) => !foto(p));
+	const datos = (p: Producto) => ({
+		id: p.id,
+		nombre: p.nombre || p.name || "Plato de la casa",
+		descripcion: p.descripcion || p.description,
+		precio: cifra(p.precio ?? p.price),
+		disponible: p.disponible ?? p.available ?? true,
+	});
+	return (
+		<div className="flex flex-col gap-(--espacio-2xl)">
+			{conFoto.length > 0 && (
+				<ul className="m-0 grid list-none grid-cols-1 gap-(--espacio-lg) p-0 sm:grid-cols-2 lg:grid-cols-3" aria-label={`Platos de ${nombre}`}>
+					{conFoto.map((p, i) => (
+						<li key={p.id}>
+							<TarjetaPlato {...datos(p)} imagen={foto(p)} partida={i + 1} seccion={nombre} />
+						</li>
+					))}
+				</ul>
+			)}
+			{sinFoto.length > 0 && (
+				<section aria-labelledby="carta-impresa-titulo" className="flex flex-col gap-(--espacio-lg)">
+					{conFoto.length > 0 && (
+						<div className="flex items-center gap-(--espacio-md)">
+							<h2 id="carta-impresa-titulo" className="m-0 font-titulos text-(length:--texto-titulo-3) font-normal italic text-texto-secundario">
+								También en {nombre}
+							</h2>
+							<span aria-hidden="true" className="h-px flex-1 bg-borde-acento" />
+						</div>
+					)}
+					<ul
+						className="m-0 grid list-none grid-cols-1 gap-x-10 gap-y-4 p-0 md:grid-cols-2"
+						aria-label={conFoto.length > 0 ? undefined : `Platos de ${nombre}`}
+						aria-labelledby={conFoto.length > 0 ? "carta-impresa-titulo" : undefined}
+					>
+						{sinFoto.map((p) => (
+							<li key={p.id}>
+								<FilaCartaImpresa {...datos(p)} nivelTitulo={conFoto.length > 0 ? 3 : 2} />
+							</li>
+						))}
+					</ul>
+				</section>
+			)}
 		</div>
 	);
 }

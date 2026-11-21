@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 /**
  * Etiqueta de sección (DESIGN.md § Signature components): el sello de identidad que abre cada
  * sección de la landing, como una etiqueta clásica de la casa. De arriba abajo: número de lote
- * («Nº 03», Fraunces itálica en acento), rótulo en versalitas espaciadas, filete doble de acento
+ * («Nº 03 · Selección», Fraunces itálica en acento) junto al rótulo en versalitas espaciadas, filete doble de acento
  * de 3rem, título y entradilla opcional.
  *
  * El número de lote es ornamental y va oculto a los lectores; el rótulo y el título sí se leen.
@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 export interface EtiquetaSeccionProps {
 	/** Número de lote: 3 se escribe «Nº 03». */
 	lote?: number;
+	/** Nombre editorial del lote, decorativo: «Anverso» se escribe «Nº 01 · Anverso». */
+	edicion?: string;
 	rotulo: string;
 	titulo: ReactNode;
 	entradilla?: ReactNode;
@@ -25,6 +27,7 @@ export interface EtiquetaSeccionProps {
 
 export function EtiquetaSeccion({
 	lote,
+	edicion,
 	rotulo,
 	titulo,
 	entradilla,
@@ -36,18 +39,19 @@ export function EtiquetaSeccion({
 	const Titulo = `h${nivel}` as const;
 	return (
 		<header className={cn("etiqueta-seccion", alinear === "centro" && "justify-items-center text-center", className)}>
-			{lote !== undefined && (
-				<span aria-hidden="true" className="font-titulos text-(length:--texto-numero-lote) leading-none text-acento italic">
-					Nº {String(lote).padStart(2, "0")}
-				</span>
-			)}
-			<p className="m-0 font-texto text-(length:--texto-etiqueta) font-semibold uppercase leading-[1.2] tracking-[0.16em] text-texto-secundario">
-				{rotulo}
-			</p>
+			<div className={cn("flex flex-wrap items-baseline gap-x-3 gap-y-1", alinear === "centro" && "justify-center")}>
+				{lote !== undefined && (
+					<span aria-hidden="true" className="numero-lote">
+						Nº {String(lote).padStart(2, "0")}
+						{edicion && ` · ${edicion}`}
+					</span>
+				)}
+				<p className="texto-rotulo m-0 text-texto-secundario">{rotulo}</p>
+			</div>
 			<span aria-hidden="true" className="filete-doble" />
 			<Titulo
 				id={idTitulo}
-				className="m-0 max-w-[24ch] font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.15] text-texto-principal [text-wrap:balance]"
+				className="m-0 max-w-[24ch] font-titulos text-(length:--texto-titulo-2) font-normal leading-[1.15] tracking-[-0.015em] text-texto-principal [text-wrap:balance]"
 			>
 				{titulo}
 			</Titulo>

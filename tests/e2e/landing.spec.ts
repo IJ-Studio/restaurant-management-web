@@ -14,6 +14,12 @@ async function abrir(page: Page, preferencias: Record<string, string> = {}) {
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);
 	await simularApi(page);
 	await page.goto("/", { waitUntil: "load" });
+	// Cada sección usa su propio esqueleto como fallback de Suspense, con el mismo id, hasta que llega la
+	// real (DT-12): se espera a que termine el streaming (sin plantillas B: ni segmentos S: pendientes) y
+	// a que quede un solo #nosotros visible, para no leer el esqueleto que React está sustituyendo.
+	await page.waitForFunction(() => document.querySelectorAll('template[id^="B:"], [hidden][id^="S:"]').length === 0, undefined, { timeout: 15_000 });
+	await expect(page.locator("#nosotros")).toHaveCount(1);
+	await expect(page.locator("#nosotros")).toBeVisible();
 }
 
 test("las siete secciones llegan en el HTML del servidor, en orden y con un solo h1", async ({ request }) => {
@@ -32,7 +38,8 @@ test("los textos que guarda el administrador (/sitio) sustituyen a los de siempr
 	);
 	await page.goto("/", { waitUntil: "load" });
 	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sabor de Huejutla");
-	await expect(page.locator("#inicio p").first()).toContainText("Comida mexicana en el centro de Huejutla");
+	// Sin subtítulo guardado queda el de siempre (la cartela de la portada también es un <p>).
+	await expect(page.locator("#inicio")).toContainText("Comida mexicana en el centro de Huejutla");
 	await expect(page.locator("#nosotros")).toContainText("Desde 1998.");
 });
 
@@ -134,6 +141,8 @@ for (const tema of ["oscuro", "claro"] as const) {
 				for (const e of document.querySelectorAll<HTMLElement>(".portada *, .cabecera-sitio *")) {
 					e.style.setProperty("color", "transparent", "important");
 					e.style.setProperty("text-shadow", "none", "important");
+					// El subrayado de los enlaces (p. ej. el teléfono del pie) no es el fondo del texto.
+					e.style.setProperty("text-decoration-color", "transparent", "important");
 					e.style.setProperty("transition", "none", "important");
 				}
 			});

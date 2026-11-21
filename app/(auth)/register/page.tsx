@@ -87,7 +87,9 @@ export default function PaginaRegistro() {
 						Revisa tu correo y confirma tu cuenta antes de iniciar sesión. Te llevamos al inicio de sesión en unos segundos.
 					</Aviso>
 				) : (
-					<form {...propsFormulario} aria-labelledby="titulo-registro" className="relative flex flex-col gap-(--espacio-md)">
+					<form {...propsFormulario} aria-labelledby="titulo-registro" className="marco-etiqueta">
+						<div className="marco-etiqueta__interior esquinas-imprenta flex flex-col gap-(--espacio-md) p-(--espacio-lg) sm:p-(--espacio-xl)">
+						<span aria-hidden="true" className="esquinas-imprenta__cruz" />
 						<h2 id="titulo-registro" className="solo-lectores">
 							Datos de la cuenta
 						</h2>
@@ -172,11 +174,14 @@ export default function PaginaRegistro() {
 								Inicia sesión
 							</Link>
 						</p>
+						</div>
 					</form>
 				)}
 			</div>
-			<div className="relative hidden aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie-cafe lg:mt-(--espacio-xl) lg:block">
-				<FotoAcceso tipo="registro" />
+			<div aria-hidden="true" className="marco-etiqueta hidden lg:mt-(--espacio-xl) lg:block">
+				<div className="lamina-fotografia aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full">
+					<FotoAcceso tipo="registro" />
+				</div>
 			</div>
 		</div>
 	);

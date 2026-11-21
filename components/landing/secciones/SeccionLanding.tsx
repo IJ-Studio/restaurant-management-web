@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 export interface SeccionLandingProps {
 	id: string;
 	lote: number;
+	/** Nombre editorial del lote («Anverso», «Selección»…), decorativo. */
+	edicion?: string;
 	rotulo: string;
 	titulo: ReactNode;
 	entradilla?: ReactNode;
@@ -19,11 +21,23 @@ export interface SeccionLandingProps {
 	className?: string;
 }
 
-export function SeccionLanding({ id, lote, rotulo, titulo, entradilla, fondo = "fondo", alinear = "inicio", children, className }: SeccionLandingProps) {
+export function SeccionLanding({ id, lote, edicion, rotulo, titulo, entradilla, fondo = "fondo", alinear = "inicio", children, className }: SeccionLandingProps) {
 	return (
-		<section id={id} aria-labelledby={`${id}-titulo`} className={cn("seccion-landing", fondo === "cafe" && "bg-superficie-cafe", className)}>
+		<section
+			id={id}
+			aria-labelledby={`${id}-titulo`}
+			className={cn("seccion-landing border-b border-borde-sutil", fondo === "cafe" && "bg-superficie-cafe", className)}
+		>
 			<div className="contenedor-pagina flex flex-col gap-(--espacio-2xl)">
-				<EtiquetaSeccion lote={lote} rotulo={rotulo} titulo={titulo} entradilla={entradilla} idTitulo={`${id}-titulo`} alinear={alinear} />
+				<EtiquetaSeccion
+					lote={lote}
+					edicion={edicion}
+					rotulo={rotulo}
+					titulo={titulo}
+					entradilla={entradilla}
+					idTitulo={`${id}-titulo`}
+					alinear={alinear}
+				/>
 				{children}
 			</div>
 		</section>

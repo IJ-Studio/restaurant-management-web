@@ -36,13 +36,16 @@ test("los platos de la sección, con migas, precio, agotado y enlace al detalle"
 	await expect(migas.getByRole("link")).toHaveText(["Inicio", "La carta"]);
 	await expect(migas.locator('[aria-current="page"]')).toHaveText("Arroces");
 	const platos = page.getByRole("list", { name: "Platos de Arroces" }).getByRole("listitem");
-	await expect(platos).toHaveCount(2);
+	// Con foto, como contraetiqueta; sin foto, en la carta impresa («También en …»), sin caja vacía.
+	await expect(platos).toHaveCount(1);
 	await expect(platos.first().getByRole("link", { name: "Paella de mariscos" })).toHaveAttribute("href", "/menu/producto/71");
 	await expect(platos.first()).toContainText("$\u00a0380");
+	const impresa = page.getByRole("list", { name: "También en Arroces" }).getByRole("listitem");
+	await expect(impresa).toHaveCount(1);
 	// Los nombres en inglés siguen valiendo; agotado se dice con texto.
-	await expect(platos.nth(1).getByRole("link", { name: "Arroz negro" })).toHaveAttribute("href", "/menu/producto/72");
-	await expect(platos.nth(1)).toContainText("Agotado");
-	await expect(platos.nth(1).locator("[data-respaldo-imagen]")).toHaveCount(1);
+	await expect(impresa.first().getByRole("link", { name: "Arroz negro" })).toHaveAttribute("href", "/menu/producto/72");
+	await expect(impresa.first()).toContainText("Agotado");
+	await expect(impresa.first().locator("[data-respaldo-imagen]")).toHaveCount(0);
 	// La tarjeta entera responde: el clic en la foto lleva al detalle.
 	const foto = await platos.first().locator("img").boundingBox();
 	await page.mouse.click(foto!.x + foto!.width / 2, foto!.y + foto!.height / 2);

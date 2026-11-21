@@ -416,14 +416,25 @@ function Ficha({
 
 	return (
 		<div className="grid items-start gap-(--espacio-2xl) lg:grid-cols-2">
-			<div className="relative aspect-[4/5] overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie lg:sticky lg:top-[calc(var(--alto-cabecera)+var(--espacio-lg))]">
-				<Imagen src={platillo.imagenUrl} alt={nombre} fill preload sizes="(min-width: 64rem) 36rem, 100vw" className="object-cover" />
-			</div>
+			{/* Lámina enmarcada con su cartela de registro (decorativa). */}
+			<figure className="marco-etiqueta m-0 lg:sticky lg:top-[calc(var(--alto-cabecera)+var(--espacio-lg))]">
+				<div className="marco-etiqueta__interior flex flex-col gap-(--espacio-sm) p-(--espacio-sm)">
+					{/* Sin foto (respaldo del molino), en móvil y tableta la lámina baja a 3:2 para no ocupar la primera pantalla. */}
+					<div className="lamina-fotografia aspect-[4/5] max-lg:has-[>[data-respaldo-imagen]]:aspect-[3/2]">
+						<Imagen src={platillo.imagenUrl} alt={nombre} fill preload sizes="(min-width: 64rem) 36rem, 100vw" className="object-cover" />
+					</div>
+					<figcaption aria-hidden="true" className="flex items-center justify-between gap-(--espacio-sm)">
+						<span className="cartela-metadato">Registro de carta</span>
+						{platillo.id != null && <span className="numero-lote numeros-tabulares">Lámina Nº {platillo.id}</span>}
+					</figcaption>
+				</div>
+			</figure>
 
 			<div className="flex flex-col gap-(--espacio-lg)">
 				<div className="flex flex-col gap-(--espacio-sm)">
+					{seccion && <p className="m-0 font-titulos text-(length:--texto-titulo-interfaz) italic text-acento">{seccion}</p>}
 					<span aria-hidden="true" className="filete-doble" />
-					<h1 className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] [text-wrap:balance]">{nombre}</h1>
+					<h1 className="m-0 font-titulos text-(length:--texto-titulo-1) font-normal leading-[1.08] tracking-[-0.02em] [text-wrap:balance]">{nombre}</h1>
 					{(platillo.esNuevo || platillo.esPopular || !disponible) && (
 						<div className="flex flex-wrap gap-2">
 							{!disponible && <Insignia tono="aviso">Agotado</Insignia>}
@@ -435,7 +446,9 @@ function Ficha({
 					{platillo.descripcion && <p className="m-0 max-w-(--ancho-lectura) text-texto-secundario [text-wrap:pretty]">{platillo.descripcion}</p>}
 				</div>
 
-				<Contraetiqueta pares={pares} />
+				<div className="rounded-control border border-borde-acento bg-superficie-cartela px-(--espacio-md)">
+					<Contraetiqueta pares={pares} sinFileteFinal />
+				</div>
 
 				<div className="flex flex-col gap-(--espacio-md)">
 					<SelectorCantidad cantidad={cantidad} alCambiar={alCambiarCantidad} />
@@ -486,18 +499,18 @@ function Ficha({
 /** Cantidad de 1 a 20 con botones de 44 px; el valor se anuncia al cambiar. */
 function SelectorCantidad({ cantidad, alCambiar }: { cantidad: number; alCambiar: (n: number) => void }) {
 	return (
-		<div role="group" aria-labelledby="cantidad-rotulo" className="flex items-center justify-between gap-4 border-y border-borde-sutil py-2">
-			<span id="cantidad-rotulo" className="text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] text-texto-secundario">
+		<div role="group" aria-labelledby="cantidad-rotulo" className="flex items-center justify-between gap-4">
+			<span id="cantidad-rotulo" className="texto-rotulo text-texto-secundario">
 				Cantidad
 			</span>
-			<div className="flex items-center gap-1">
-				<Boton variante="fantasma" soloIcono icono={<Minus />} onClick={() => alCambiar(Math.max(1, cantidad - 1))} deshabilitado={cantidad <= 1}>
+			<div className="control-cantidad">
+				<Boton variante="fantasma" soloIcono icono={<Minus />} onClick={() => alCambiar(Math.max(1, cantidad - 1))} deshabilitado={cantidad <= 1} className="rounded-none border-0 al-pasar:bg-superficie-cafe">
 					Quitar uno
 				</Boton>
-				<output aria-live="polite" className="w-8 text-center font-titulos text-(length:--texto-titulo-3) numeros-tabulares">
+				<output aria-live="polite" className="font-titulos text-(length:--texto-titulo-3) numeros-tabulares">
 					{cantidad}
 				</output>
-				<Boton variante="fantasma" soloIcono icono={<Plus />} onClick={() => alCambiar(Math.min(MAXIMO, cantidad + 1))} deshabilitado={cantidad >= MAXIMO}>
+				<Boton variante="fantasma" soloIcono icono={<Plus />} onClick={() => alCambiar(Math.min(MAXIMO, cantidad + 1))} deshabilitado={cantidad >= MAXIMO} className="rounded-none border-0 al-pasar:bg-superficie-cafe">
 					Añadir uno
 				</Boton>
 			</div>

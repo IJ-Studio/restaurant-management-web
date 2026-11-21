@@ -42,8 +42,9 @@ test.describe("logo y sello locales (D-07)", () => {
 		);
 		expect(iconos.some((h) => h.startsWith("/icon.svg"))).toBe(true);
 		expect(iconos.some((h) => h.startsWith("/apple-icon.png"))).toBe(true);
+		expect(iconos.some((h) => h.startsWith("/favicon.ico"))).toBe(true);
 		expect(iconos.filter((h) => !h.startsWith("/"))).toEqual([]);
-		for (const ruta of ["/icon.svg", "/apple-icon.png", "/icons/icon-192.png", "/icons/icon-512.png"]) {
+		for (const ruta of ["/favicon.ico", "/icon.svg", "/apple-icon.png", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png"]) {
 			expect((await request.get(ruta)).status(), ruta).toBe(200);
 		}
 	});

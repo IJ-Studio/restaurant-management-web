@@ -281,9 +281,18 @@ function Bloque({
 	children: React.ReactNode;
 }) {
 	return (
-		<section aria-label={titulo} className="flex flex-col gap-(--espacio-lg) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg) sm:p-(--espacio-xl)">
-			<header className="flex flex-wrap items-center justify-between gap-3">
-				<h2 className="m-0 flex items-center gap-2 font-texto text-(length:--texto-titulo-interfaz) font-semibold [&_svg]:size-5 [&_svg]:stroke-[1.5] [&_svg]:text-acento">
+		// En edición, el bloque pasa a marco de etiqueta: se ve a simple vista qué se está cambiando.
+		<section
+			aria-label={titulo}
+			className={
+				editando
+					? "marco-etiqueta flex flex-col gap-(--espacio-lg) p-(--espacio-lg) outline outline-1 -outline-offset-[0.425rem] outline-borde-acento sm:p-(--espacio-xl)"
+					: // En reposo, tarjeta quieta: el bloque no es un enlace y no debe responder al pasar.
+						"flex flex-col gap-(--espacio-lg) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg) sm:p-(--espacio-xl)"
+			}
+		>
+			<header className="flex flex-wrap items-center justify-between gap-3 border-b border-borde-sutil pb-(--espacio-sm)">
+				<h2 className="m-0 flex items-center gap-2 font-titulos text-(length:--texto-titulo-3) font-normal [&_svg]:size-5 [&_svg]:stroke-[1.5] [&_svg]:text-acento">
 					<span aria-hidden="true">{icono}</span>
 					{titulo}
 				</h2>

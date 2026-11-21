@@ -34,13 +34,18 @@ export default function PaginaNosotros() {
 			/>
 			<div className="grid items-center gap-(--espacio-2xl) md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
 				<div className="flex max-w-(--ancho-lectura) flex-col gap-(--espacio-md) text-(length:--texto-entradilla) leading-[1.6] text-texto-secundario [text-wrap:pretty]">
-					<p className="m-0">
+					<p className="capitular-etiqueta m-0">
 						En El Quijote cocinamos con calma y servimos con cuidado. La carta reúne cocina nacional e internacional, con la comida
 						mexicana al centro de la mesa.
 					</p>
 					<p className="m-0">Queremos que cada visita sea una sobremesa que apetezca alargar: la mesa bien puesta y cada plato a su tiempo.</p>
 				</div>
-				<MolinoAnimado className="mx-auto max-w-[20rem] text-acento md:max-w-[24rem]" />
+				<div className="marco-etiqueta mx-auto w-full max-w-[22rem]">
+					<div className="marco-etiqueta__interior esquinas-imprenta flex justify-center p-(--espacio-xl)">
+						<span aria-hidden="true" className="esquinas-imprenta__cruz" />
+						<MolinoAnimado className="molino-animado--cartela w-full max-w-[16rem] text-acento" />
+					</div>
+				</div>
 			</div>
 
 			<section aria-labelledby="visitanos-titulo" className="mt-(--espacio-entre-secciones) grid gap-(--espacio-2xl) border-t border-borde-sutil pt-(--espacio-2xl) md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
