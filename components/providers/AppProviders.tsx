@@ -2,10 +2,16 @@
 
 import { Provider as ReduxProvider, useDispatch } from "react-redux";
 import { PreferenciasProvider } from "@/components/providers/PreferenciasProvider";
-import { store, type AppDispatch } from "@/store/index";
+import { reductorRaiz, store, type AppDispatch } from "@/store/index";
 import { useEffect } from "react";
 import { hydrateSession } from "@/store/slices/authSlice";
 import { ProveedorNotificaciones } from "@/components/ui/Notificacion";
+
+// Lo que pinta el servidor: el estado inicial, sin sesión. `useSelector` lo usa al hidratar, así que
+// el HTML coincide aunque /api/auth/me ya haya respondido, y se actualiza justo después (React #418
+// en la cuenta de la cabecera). Constante de módulo: si cambiara de referencia, el Provider cambiaría
+// su valor de contexto y React volvería a pintar en el cliente los segmentos en streaming.
+const ESTADO_SERVIDOR = reductorRaiz(undefined, { type: "@@quijote/estado-servidor" });
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -30,7 +36,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
  */
 export function AppProviders({ children }: AppProvidersProps) {
   return (
-    <ReduxProvider store={store}>
+    <ReduxProvider store={store} serverState={ESTADO_SERVIDOR}>
       <PreferenciasProvider>
         {/* Sin DesignSystemProvider (PLAN 5.14, D-12): la apariencia es la de DESIGN.md. */}
         <AuthInitializer>
