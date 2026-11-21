@@ -32,7 +32,8 @@ test("los textos que guarda el administrador (/sitio) sustituyen a los de siempr
 	);
 	await page.goto("/", { waitUntil: "load" });
 	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sabor de Huejutla");
-	await expect(page.locator("#inicio p").first()).toContainText("Comida mexicana en el centro de Huejutla");
+	// Sin subtítulo guardado queda el de siempre (la cartela de la portada también es un <p>).
+	await expect(page.locator("#inicio")).toContainText("Comida mexicana en el centro de Huejutla");
 	await expect(page.locator("#nosotros")).toContainText("Desde 1998.");
 });
 
@@ -134,6 +135,8 @@ for (const tema of ["oscuro", "claro"] as const) {
 				for (const e of document.querySelectorAll<HTMLElement>(".portada *, .cabecera-sitio *")) {
 					e.style.setProperty("color", "transparent", "important");
 					e.style.setProperty("text-shadow", "none", "important");
+					// El subrayado de los enlaces (p. ej. el teléfono del pie) no es el fondo del texto.
+					e.style.setProperty("text-decoration-color", "transparent", "important");
 					e.style.setProperty("transition", "none", "important");
 				}
 			});
@@ -234,6 +237,11 @@ test("visítanos: dirección, horario y teléfono; mapa enlazado sin iframe y re
 // las secciones no llevan a otras rutas salvo «Ver la carta completa» y las acciones de «Pedir».
 test("ajuste por proximidad y molino en marcha solo con movimiento permitido", async ({ page }) => {
 	await abrir(page);
+	// Cada sección usa su propio esqueleto como fallback de Suspense, con el mismo id, hasta que llega
+	// la real (DT-12): se espera a que termine el streaming y quede un solo #nosotros.
+	await expect.poll(() => page.evaluate(() => document.querySelectorAll('template[id^="B:"], [hidden][id^="S:"]').length)).toBe(0);
+	await expect(page.locator("#nosotros")).toHaveCount(1);
+	await expect(page.locator("#nosotros")).toBeVisible();
 	const ajuste = () => page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType);
 	const giro = () => page.locator(".molino-animado__aspas").first().evaluate((e) => getComputedStyle(e).animationIterationCount);
 	// «proximity» es el valor por defecto: el navegador lo serializa como «y».

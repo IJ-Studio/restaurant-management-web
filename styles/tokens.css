@@ -5,8 +5,13 @@
   --color-superficie: #1C1712;
   --color-superficie-elevada: #262019;
   --color-superficie-cafe: #2B2119;
+  /* Fondo de cartelas, marcos de etiqueta y contraetiquetas (pulido UI pública). */
+  --color-superficie-cartela: #191410;
   --color-borde-sutil: #2E261F;
   --color-borde-control: #7D6E5A;
+  /* Filetes de acento de la etiqueta: el fino (marco interior, láminas) y el fuerte (marco exterior). */
+  --color-borde-acento: color-mix(in oklab, var(--color-acento) 36%, transparent);
+  --color-borde-acento-fuerte: color-mix(in oklab, var(--color-acento) 72%, transparent);
   --color-texto-principal: #EFE7DA;
   --color-texto-secundario: #BDB09C;
   --color-texto-tenue: #978A76;
@@ -78,6 +83,8 @@
   --velo-portada-lateral: linear-gradient(to right, rgb(20 16 12 / 0.7) 0%, rgb(20 16 12 / 0.35) 50%, rgb(20 16 12 / 0) 80%);
   --velo-cabecera: linear-gradient(to bottom, rgb(20 16 12 / 0.86) 0%, rgb(20 16 12 / 0.7) 70%, rgb(20 16 12 / 0) 100%);
   --velo-dialogo: rgb(10 8 6 / 0.72);
+  /* Viñeta de la portada: oscurece los bordes de la foto para que el marco de etiqueta se lea. */
+  --velo-portada-radial: radial-gradient(ellipse at 50% 45%, rgb(20 16 12 / 0.3) 0%, rgb(20 16 12 / 0.3) 30%, rgb(20 16 12 / 0.6) 100%);
 
   --duracion-instantanea: 100ms;
   --duracion-breve: 180ms;
@@ -96,6 +103,7 @@
   --color-superficie: #FBF8F2;
   --color-superficie-elevada: #FFFFFF;
   --color-superficie-cafe: #EBE1D0;
+  --color-superficie-cartela: #F9F5EE;
   --color-borde-sutil: #E2D8C8;
   --color-borde-control: #8C7C66;
   --color-texto-principal: #1E1813;
@@ -133,6 +141,9 @@
   --color-acento-intenso: #DBB97F;
   --color-texto-sobre-acento: #14100C;
   --color-foco: #E8C98F;
+  --color-superficie-cartela: #191410;
+  --color-borde-acento: color-mix(in oklab, var(--color-acento) 36%, transparent);
+  --color-borde-acento-fuerte: color-mix(in oklab, var(--color-acento) 72%, transparent);
   color: var(--color-texto-principal);
 }
 

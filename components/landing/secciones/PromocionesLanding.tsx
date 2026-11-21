@@ -21,12 +21,11 @@ export function TarjetaPromocion({ promocion: p, nivelTitulo = 3 }: { promocion:
 	if (ahora) pares.push({ rotulo: "Precio", valor: ahora });
 	if (hasta) pares.push({ rotulo: "Hasta el", valor: hasta, tipo: "texto" });
 	return (
-		<article
-			className="flex h-full flex-col gap-(--espacio-md) overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)"
-			aria-labelledby={`promo-${p.id}`}
-		>
+		<article className="marco-etiqueta flex h-full flex-col" aria-labelledby={`promo-${p.id}`}>
+			<div className="marco-etiqueta__interior esquinas-imprenta flex flex-1 flex-col gap-(--espacio-md) p-(--espacio-lg)">
+			<span aria-hidden="true" className="esquinas-imprenta__cruz" />
 			{p.imageUrl && (
-				<div className="relative -mx-(--espacio-lg) -mt-(--espacio-lg) aspect-[3/2] overflow-hidden">
+				<div className="lamina-fotografia aspect-[3/2]">
 					<Imagen src={p.imageUrl} decorativa fill sizes="(min-width: 48rem) 30vw, 100vw" className="object-cover" />
 				</div>
 			)}
@@ -40,6 +39,7 @@ export function TarjetaPromocion({ promocion: p, nivelTitulo = 3 }: { promocion:
 			</Titulo>
 			{p.description && <p className="m-0 text-(length:--texto-pequeno) leading-[1.5] text-texto-secundario [text-wrap:pretty]">{p.description}</p>}
 			{pares.length > 0 && <Contraetiqueta pares={pares} sinFileteFinal className="mt-auto" />}
+			</div>
 		</article>
 	);
 }
@@ -52,7 +52,7 @@ export function TarjetaPromocion({ promocion: p, nivelTitulo = 3 }: { promocion:
 export function PromocionesLanding({ promociones, error, cargando = false }: { promociones: Promotion[]; error?: ReactNode; cargando?: boolean }) {
 	const visibles = promociones.slice(0, MAXIMO);
 	return (
-		<SeccionLanding id="promociones" lote={3} rotulo="Promociones" titulo="Para esta temporada" entradilla="Las propuestas vigentes de la casa.">
+		<SeccionLanding id="promociones" lote={3} edicion="Temporada" rotulo="Promociones" titulo="Para esta temporada" entradilla="Las propuestas vigentes de la casa.">
 			{cargando ? (
 				<EsqueletoTarjetas columnas="md:grid-cols-3" cuantas={3} />
 			) : (
@@ -66,7 +66,8 @@ export function PromocionesLanding({ promociones, error, cargando = false }: { p
 						))}
 					</ul>
 				) : (
-					<p className="m-0 text-texto-secundario" data-prueba="promociones-vacias">
+					<p className="m-0 flex items-center gap-(--espacio-sm) text-texto-secundario" data-prueba="promociones-vacias">
+						<span aria-hidden="true" className="rombo-acento" />
 						Ahora mismo no hay promociones vigentes.
 					</p>
 				))

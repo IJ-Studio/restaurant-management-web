@@ -10,7 +10,7 @@ export function PaginaLegal({ ruta, titulo, entradilla, children }: { ruta: stri
 	return (
 		<>
 			<EncabezadoPublico ruta={ruta} titulo={titulo} entradilla={entradilla} />
-			<div className="flex flex-col">{children}</div>
+			<div className="secciones-legales flex flex-col">{children}</div>
 		</>
 	);
 }

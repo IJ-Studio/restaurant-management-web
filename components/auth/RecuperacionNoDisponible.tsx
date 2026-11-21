@@ -14,11 +14,13 @@ export function RecuperacionNoDisponible({ ruta, titulo }: { ruta: string; titul
 	return (
 		<div className="contenedor-pagina max-w-[40rem] pb-(--espacio-entre-secciones)">
 			<EncabezadoPublico ruta={ruta} titulo={titulo} />
-			<div className="flex flex-col gap-(--espacio-lg)">
+			<div className="marco-etiqueta">
+			<div className="marco-etiqueta__interior esquinas-imprenta flex flex-col gap-(--espacio-lg) p-(--espacio-lg) sm:p-(--espacio-xl)">
+				<span aria-hidden="true" className="esquinas-imprenta__cruz" />
 				<Aviso tono="info" titulo="Todavía no puedes hacerlo desde aquí" rol={null}>
 					La recuperación de contraseña en línea no está disponible por ahora. Llámanos y te ayudamos a recuperar el acceso a tu cuenta.
 				</Aviso>
-				<div className="flex flex-col gap-3 sm:flex-row">
+				<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap [&>*]:sm:shrink-0">
 					<BotonEnlace href={contact.phoneHref} variante="primario" icono={<Phone />}>
 						{`Llamar al ${contact.phone}`}
 					</BotonEnlace>
@@ -26,6 +28,7 @@ export function RecuperacionNoDisponible({ ruta, titulo }: { ruta: string; titul
 						Ir a iniciar sesión
 					</BotonEnlace>
 				</div>
+			</div>
 			</div>
 		</div>
 	);

@@ -18,6 +18,7 @@ import { EncabezadoPublico } from "@/components/marca/EncabezadoPublico";
 import OnlineOnly from "@/components/pwa/OnlineOnly";
 import { formatearPrecio } from "@/lib/formato/precio";
 import { registrarError } from "@/lib/registro/registrar-error";
+import { cn } from "@/lib/utils";
 import { pedirSesion } from "@/lib/sesion/sesion-cliente";
 
 /**
@@ -396,11 +397,23 @@ function TarjetaPedido({
 }) {
 	const nombre = titulo ?? (referencia ? `Pedido ${referencia.slice(0, 8).toUpperCase()}` : "Pedido");
 	const totalTexto = total !== undefined ? precio(total) : null;
-	return (
-		<article aria-label={nombre} className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
+	// El pedido que aún se arma va en un marco de etiqueta; los ya enviados, en tarjetas atenuadas.
+	const activo = estatus === "pendiente";
+	const cuerpo = (
+		<>
+			{activo && <span aria-hidden="true" className="esquinas-imprenta__cruz" />}
 			<header className="flex flex-wrap items-center justify-between gap-2 border-b border-borde-sutil pb-(--espacio-sm)">
-				<div className="flex flex-col">
-					<h2 className="m-0 font-texto text-(length:--texto-titulo-interfaz) font-semibold numeros-tabulares">{nombre}</h2>
+				<div className="flex flex-col gap-1">
+					{/* Activo: el identificador real va en la cartela (sin repetirlo en otra); «Lo que llevas», en Fraunces. */}
+					<h2
+						className={cn(
+							"m-0",
+							!activo && "font-texto text-(length:--texto-titulo-interfaz) font-semibold numeros-tabulares",
+							activo && (titulo ? "font-titulos text-(length:--texto-titulo-3) font-normal" : "cartela-metadato self-start numeros-tabulares"),
+						)}
+					>
+						{nombre}
+					</h2>
 					{fecha && <span className="text-(length:--texto-pequeno) text-texto-tenue">{new Date(fecha).toLocaleDateString("es-MX", { day: "numeric", month: "long" })}</span>}
 				</div>
 				<EstadoPedido estatus={estatus} />
@@ -411,14 +424,14 @@ function TarjetaPedido({
 					const subtotal = precio((item.cantidad ?? 1) * Number(item.precioUnitario));
 					const nombrePlato: string = item.platillo?.nombre ?? "Plato";
 					return (
-						<li key={item.id} className="flex items-center gap-3 border-b border-borde-sutil py-2 last:border-b-0">
+						<li key={item.id} className="fila-tabular items-center gap-3 px-0 last:border-b-0">
 							{item.platillo?.imagenUrl !== undefined && (
-								<div className="relative size-12 shrink-0 overflow-hidden rounded-control bg-superficie-cafe">
+								<div className="lamina-fotografia size-11 shrink-0 rounded-control">
 									<Imagen src={item.platillo.imagenUrl} decorativa fill sizes="3rem" className="object-cover" />
 								</div>
 							)}
 							<div className="min-w-0 flex-1">
-								<p className="m-0 truncate font-medium">{nombrePlato}</p>
+								<p className="m-0 font-medium break-words [text-wrap:pretty]">{nombrePlato}</p>
 								<p className="m-0 text-(length:--texto-pequeno) text-texto-secundario numeros-tabulares">
 									{item.cantidad ?? 1} × {unitario ?? "precio por confirmar"}
 								</p>
@@ -435,11 +448,20 @@ function TarjetaPedido({
 			</ul>
 			{totalTexto && (
 				<p className="m-0 flex items-baseline justify-between border-t border-borde-sutil pt-(--espacio-sm)">
-					<span className="text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] text-texto-secundario">Total</span>
+					<span className="texto-rotulo text-texto-secundario">Total</span>
 					<span className="font-titulos text-(length:--texto-titulo-3) numeros-tabulares">{totalTexto}</span>
 				</p>
 			)}
 			{children && <div className="flex flex-wrap items-center gap-3">{children}</div>}
+		</>
+	);
+	return activo ? (
+		<article aria-label={nombre} className="marco-etiqueta">
+			<div className="marco-etiqueta__interior esquinas-imprenta flex flex-col gap-(--espacio-md) p-(--espacio-lg)">{cuerpo}</div>
+		</article>
+	) : (
+		<article aria-label={nombre} className="flex flex-col gap-(--espacio-md) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg)">
+			{cuerpo}
 		</article>
 	);
 }

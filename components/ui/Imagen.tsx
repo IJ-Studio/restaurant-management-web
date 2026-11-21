@@ -22,7 +22,8 @@ export type ImagenProps = PropsBase &
 /**
  * `next/image` con el cargador de Cloudinary y un respaldo que sí existe (DESIGN.md § Components).
  * Si el origen no es válido o la imagen no carga, pinta en la misma caja un panel café con el
- * molino, que conserva el `alt`: nunca una caja vacía ni el icono de imagen rota.
+ * molino (y el rótulo «El Quijote» si la caja es amplia), que conserva el `alt`: nunca una caja
+ * vacía ni el icono de imagen rota.
  */
 export function Imagen({ src, alt, decorativa = false, className, style, fill, width, height, recorte, ...resto }: ImagenProps) {
 	const origen = useMemo(() => resolverOrigen(src), [src]);
@@ -58,7 +59,7 @@ export function Imagen({ src, alt, decorativa = false, className, style, fill, w
 				aria-label={decorativa ? undefined : texto}
 				aria-hidden={decorativa || undefined}
 				className={cn(
-					"flex items-center justify-center overflow-hidden bg-superficie-cafe text-borde-control",
+					"flex flex-col items-center justify-center gap-(--espacio-xs) overflow-hidden bg-superficie-cafe text-borde-control [container-type:inline-size]",
 					fill && "absolute inset-0 size-full",
 					className,
 				)}
@@ -67,6 +68,9 @@ export function Imagen({ src, alt, decorativa = false, className, style, fill, w
 				<svg viewBox={MOLINO.viewBox} aria-hidden="true" focusable="false" className="h-1/3 max-h-16 min-h-5 w-auto">
 					<path d={MOLINO.d} fill="currentColor" />
 				</svg>
+				<span aria-hidden="true" className="lamina-respaldo__rotulo numero-lote text-texto-tenue">
+					El Quijote
+				</span>
 			</span>
 		);
 	}

@@ -313,8 +313,15 @@ function Asistente() {
 					const actual = pasoActual === n;
 					return (
 						<li key={nombre} aria-current={actual ? "step" : undefined} className="relative flex min-w-0 flex-col gap-2 overflow-hidden">
-							<span aria-hidden="true" className={cn("h-0.5 w-full", pasoActual >= n ? "bg-acento" : "bg-borde-sutil")} />
-							<span className={cn("flex items-center gap-1 text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.12em]", actual ? "text-texto-principal" : "text-texto-tenue")}>
+							{/* Paso activo con filete doble de acento; hechos con filete simple; pendientes, sutil. */}
+							<span
+								aria-hidden="true"
+								className={cn("w-full", actual ? "filete-doble" : cn("h-px", hecho ? "bg-acento" : "bg-borde-sutil"))}
+							/>
+							<span aria-hidden="true" className={cn("font-titulos text-(length:--texto-numero-lote) italic leading-none numeros-tabulares", actual || hecho ? "text-acento" : "text-texto-tenue")}>
+								{String(n).padStart(2, "0")}
+							</span>
+							<span className={cn("texto-rotulo flex items-center gap-1 tracking-[0.12em]", actual ? "text-acento" : hecho ? "text-texto-secundario" : "text-texto-tenue")}>
 								{hecho && <Check aria-hidden="true" className="size-3.5 stroke-[1.5]" />}
 								<span className="max-sm:solo-lectores">{nombre}</span>
 								<span className="solo-lectores">{hecho ? " (hecho)" : ""}</span>
@@ -327,7 +334,14 @@ function Asistente() {
 				Paso {pasoActual} de 5 · {PASOS[pasoActual - 1]}
 			</p>
 
-			<section aria-labelledby="paso-titulo" className="flex flex-col gap-(--espacio-lg) rounded-tarjeta border border-borde-sutil bg-superficie p-(--espacio-lg) sm:p-(--espacio-xl)">
+			<section aria-labelledby="paso-titulo" className="marco-etiqueta">
+				<div className="marco-etiqueta__interior esquinas-imprenta flex flex-col gap-(--espacio-lg) p-(--espacio-lg) sm:p-(--espacio-xl)">
+				<span aria-hidden="true" className="esquinas-imprenta__cruz" />
+				{orden?.id && (
+					<span aria-hidden="true" className="cartela-metadato self-start numeros-tabulares">
+						Pedido Nº {String(orden.id).slice(0, 8).toUpperCase()}
+					</span>
+				)}
 				{pasoActual === 1 && <PasoResumen orden={orden} />}
 				{pasoActual === 2 && (
 					<PasoDireccion
@@ -393,6 +407,7 @@ function Asistente() {
 						</Boton>
 					)}
 				</div>
+				</div>
 			</section>
 			<p className="m-0 flex items-center gap-2 text-(length:--texto-pequeno) text-texto-tenue [&_svg]:size-4 [&_svg]:stroke-[1.5]">
 				<Lock aria-hidden="true" />
@@ -416,16 +431,19 @@ function PasoResumen({ orden }: { orden: any }) {
 			<TituloPaso>Resumen de tu pedido</TituloPaso>
 			<ul className="m-0 flex list-none flex-col p-0">
 				{orden?.items?.map((item: any) => (
-					<li key={item.id} className="flex items-baseline justify-between gap-3 border-b border-borde-sutil py-(--espacio-sm)">
-						<span>
-							<span className="numeros-tabulares">{item.cantidad} ×</span> {item.nombre}
+					<li key={item.id} className="flex items-baseline py-(--espacio-sm)">
+						<span className="min-w-0">
+							<span className="numeros-tabulares text-texto-secundario">{item.cantidad} ×</span> {item.nombre}
 						</span>
-						<span className="text-(length:--texto-cifra-tabla) font-medium numeros-tabulares">{precio(item.cantidad * Number(item.precio || item.precioUnitario))}</span>
+						<span aria-hidden="true" className="lider-puntos" />
+						<span className="shrink-0 text-(length:--texto-cifra-tabla) font-medium numeros-tabulares">{precio(item.cantidad * Number(item.precio || item.precioUnitario))}</span>
 					</li>
 				))}
 			</ul>
+			{/* Doble filete antes del total, como en una cuenta impresa. */}
+			<span aria-hidden="true" className="block h-[calc(var(--grosor-filete)*2+3px)] border-y border-borde-acento-fuerte" />
 			<p className="m-0 flex items-baseline justify-between">
-				<span className="text-(length:--texto-etiqueta) font-semibold uppercase tracking-[0.16em] text-texto-secundario">Total</span>
+				<span className="texto-rotulo text-texto-secundario">Total</span>
 				<span className="font-titulos text-(length:--texto-titulo-3) numeros-tabulares">{orden ? precio(orden.total) : "—"}</span>
 			</p>
 		</>

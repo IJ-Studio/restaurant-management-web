@@ -137,7 +137,9 @@ export default function PaginaAcceso() {
 				{success ? (
 					<CargadorMarca tamano="amplio" texto={success} className="py-(--espacio-2xl)" />
 				) : (
-					<form {...propsFormulario} aria-labelledby="titulo-acceso" className="relative flex flex-col gap-(--espacio-md)">
+					<form {...propsFormulario} aria-labelledby="titulo-acceso" className="marco-etiqueta">
+						<div className="marco-etiqueta__interior esquinas-imprenta flex flex-col gap-(--espacio-md) p-(--espacio-lg) sm:p-(--espacio-xl)">
+						<span aria-hidden="true" className="esquinas-imprenta__cruz" />
 						<h2 id="titulo-acceso" className="solo-lectores">
 							Datos de acceso
 						</h2>
@@ -185,11 +187,14 @@ export default function PaginaAcceso() {
 								Crear una cuenta
 							</Link>
 						</p>
+						</div>
 					</form>
 				)}
 			</div>
-			<div className="relative hidden aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full overflow-hidden rounded-tarjeta border border-borde-sutil bg-superficie-cafe lg:mt-(--espacio-xl) lg:block">
-				<FotoAcceso tipo="login" />
+			<div aria-hidden="true" className="marco-etiqueta hidden lg:mt-(--espacio-xl) lg:block">
+				<div className="lamina-fotografia aspect-[4/5] max-h-[calc(100dvh-var(--alto-cabecera)-var(--espacio-3xl))] w-full">
+					<FotoAcceso tipo="login" />
+				</div>
 			</div>
 		</div>
 	);

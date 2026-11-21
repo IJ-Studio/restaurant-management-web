@@ -68,7 +68,13 @@ export function PaginaEstado({
 				className,
 			)}
 		>
-			<Ilustracion className="w-[min(16rem,70vw)] text-texto-principal md:w-72" />
+			{/* La ilustración, como lámina en un marco de etiqueta con marcas de imprenta. */}
+			<div className="marco-etiqueta">
+				<div className="marco-etiqueta__interior esquinas-imprenta px-(--espacio-lg) py-(--espacio-md)">
+					<span aria-hidden="true" className="esquinas-imprenta__cruz" />
+					<Ilustracion className="w-[min(14rem,60vw)] text-texto-principal md:w-64" />
+				</div>
+			</div>
 			<div className="flex flex-col items-center gap-4">
 				{codigo && (
 					<p className="m-0 font-titulos text-(length:--texto-titulo-2) leading-none text-acento italic numeros-tabulares">
