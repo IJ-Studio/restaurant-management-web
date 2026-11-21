@@ -1,4 +1,4 @@
-import { test, expect, type Browser } from "@playwright/test";
+import { test, expect, type Browser, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { archivoSesion } from "./roles";
 
@@ -109,14 +109,18 @@ async function abrirBandeja(browser: Browser, pendientes: unknown[]) {
 	return { contexto, page, acciones };
 }
 
+// El aviso visible, no el anunciador para lectores de pantalla (`aria-live`), que repite el texto
+// unos 50 ms después: buscar en toda la página encontraba los dos según el momento.
+const avisos = (page: Page) => page.getByRole("region", { name: "Notificaciones" });
+
 test("bandeja: emite una solicitud pagada y avisa que el correo está desactivado", async ({ browser }) => {
 	const { contexto, page, acciones } = await abrirBandeja(browser, [solicitud(1), solicitud(2, { estatusOrden: "entregada", cliente: "LUIS PÉREZ" })]);
 	const main = page.locator("main");
 	await expect(main.getByRole("heading", { name: "Solicitudes pendientes" })).toBeVisible();
 	await expect(main.getByRole("button", { name: "Emitir la factura de LUIS PÉREZ" })).toBeDisabled();
 	await main.getByRole("button", { name: "Emitir la factura de ANA LÓPEZ" }).click();
-	await expect(page.getByText("Factura A-12 emitida")).toBeVisible();
-	await expect(page.getByText("El envío por correo está desactivado.")).toBeVisible();
+	await expect(avisos(page).getByText("Factura A-12 emitida")).toBeVisible();
+	await expect(avisos(page).getByText("El envío por correo está desactivado.")).toBeVisible();
 	expect(acciones.map((a) => a.ruta)).toEqual(["/solicitudes-factura/1/emitir"]);
 	await expect(main.getByText("Sin solicitudes pendientes")).toBeVisible();
 	await contexto.close();
@@ -131,7 +135,7 @@ test("bandeja: rechazar exige motivo y lo manda al API", async ({ browser }) => 
 	await expect(dialogo.getByText("Escribe el motivo del rechazo (al menos 5 caracteres).")).toBeVisible();
 	await dialogo.getByLabel("Motivo del rechazo").fill("El RFC no coincide con la razón social");
 	await dialogo.getByRole("button", { name: "Rechazar solicitud" }).click();
-	await expect(page.getByText("Solicitud rechazada")).toBeVisible();
+	await expect(avisos(page).getByText("Solicitud rechazada")).toBeVisible();
 	expect(acciones).toEqual([{ ruta: "/solicitudes-factura/1/rechazar", cuerpo: { motivo: "El RFC no coincide con la razón social" } }]);
 	await contexto.close();
 });
@@ -161,7 +165,7 @@ test("cancelar una factura vigente: elige el motivo del SAT y la lista se actual
 	await dialogo.getByRole("button", { name: "Cancelar factura" }).click();
 	await expect(dialogo).toBeHidden();
 	expect(cancelaciones).toEqual([{ ruta: "/facturas/f-1/cancelar", cuerpo: { motivo: "03" } }]);
-	await expect(page.getByText("Factura A-1 cancelada")).toBeVisible();
+	await expect(avisos(page).getByText("Factura A-1 cancelada")).toBeVisible();
 	await expect(main.getByRole("button", { name: "Cancelar la factura A-1" })).toHaveCount(0);
 	await contexto.close();
 });
