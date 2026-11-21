@@ -95,3 +95,29 @@ for (const tema of ["oscuro", "claro"] as const) {
 		});
 	}
 }
+
+// DT-09: el panel llega en streaming tras app/loading.tsx; si un contexto de la raíz cambia de valor
+// antes de que llegue su HTML, React lo pinta en el cliente y la copia del servidor queda oculta en
+// el DOM: dos <main id="contenido-panel">. Las preferencias guardadas (tema oscuro) y la sesión de
+// /api/auth/me son los cambios que lo disparaban. Es una carrera: se repite la carga para atraparla.
+test("al cargar el panel nunca hay dos marcos (un solo main#contenido-panel)", async ({ browser }) => {
+	for (let vez = 0; vez < 10; vez++) {
+		const contexto = await browser.newContext({ storageState: archivoSesion("admin"), viewport: { width: 1440, height: 900 } });
+		const page = await contexto.newPage();
+		await page.addInitScript((clave) => {
+			localStorage.setItem(clave, JSON.stringify({ v: 1, tema: "oscuro" }));
+			const w = window as unknown as { __maxMains: number };
+			w.__maxMains = 0;
+			new MutationObserver(() => {
+				w.__maxMains = Math.max(w.__maxMains, document.querySelectorAll("main#contenido-panel").length);
+			}).observe(document, { subtree: true, childList: true });
+		}, CLAVE);
+		// La ruta antigua redirige a la nueva: el caso donde más se veía.
+		await page.goto("/dashboard/admin/finance", { waitUntil: "load" });
+		await expect(page).toHaveURL(/\/dashboard\/admin\?panel=caja$/);
+		await expect(page.locator("main#contenido-panel")).toHaveCount(1);
+		await page.waitForTimeout(500);
+		expect(await page.evaluate(() => (window as unknown as { __maxMains: number }).__maxMains), `carga ${vez + 1}`).toBe(1);
+		await contexto.close();
+	}
+});
