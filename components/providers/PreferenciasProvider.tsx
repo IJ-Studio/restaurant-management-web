@@ -33,17 +33,18 @@ function instantanea(): Preferencias {
 
 function suscribir(oyente: () => void) {
   oyentes.add(oyente);
-  const alCambiarOtraPestana = (e: StorageEvent) => {
-    if (e.key !== null && e.key !== "elquijote:preferencias") return;
-    actual = leerPreferencias();
-    aplicarPreferencias(actual);
-    oyentes.forEach((o) => o());
-  };
-  window.addEventListener("storage", alCambiarOtraPestana);
   return () => {
     oyentes.delete(oyente);
-    window.removeEventListener("storage", alCambiarOtraPestana);
   };
+}
+
+// Una sola escucha por pestaña, la del provider (montado en todas las páginas): el tema cambiado en
+// otra pestaña se aplica aunque la página no tenga ningún consumidor de las preferencias.
+function alCambiarOtraPestana(e: StorageEvent) {
+  if (e.key !== null && e.key !== "elquijote:preferencias") return;
+  actual = leerPreferencias();
+  aplicarPreferencias(actual);
+  oyentes.forEach((o) => o());
 }
 
 const instantaneaServidor = () => PREFERENCIAS_POR_DEFECTO;
@@ -53,6 +54,8 @@ export function PreferenciasProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     guardarPreferencias(instantanea());
     aplicarPreferencias(instantanea());
+    window.addEventListener("storage", alCambiarOtraPestana);
+    return () => window.removeEventListener("storage", alCambiarOtraPestana);
   }, []);
 
   const actualizar = useCallback((cambios: Partial<Omit<Preferencias, "v">>) => {
