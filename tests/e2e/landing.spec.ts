@@ -14,6 +14,12 @@ async function abrir(page: Page, preferencias: Record<string, string> = {}) {
 	await page.addInitScript(([clave, valor]) => localStorage.setItem(clave, valor), [CLAVE, JSON.stringify({ v: 1, ...preferencias })]);
 	await simularApi(page);
 	await page.goto("/", { waitUntil: "load" });
+	// Cada sección usa su propio esqueleto como fallback de Suspense, con el mismo id, hasta que llega la
+	// real (DT-12): se espera a que termine el streaming (sin plantillas B: ni segmentos S: pendientes) y
+	// a que quede un solo #nosotros visible, para no leer el esqueleto que React está sustituyendo.
+	await page.waitForFunction(() => document.querySelectorAll('template[id^="B:"], [hidden][id^="S:"]').length === 0, undefined, { timeout: 15_000 });
+	await expect(page.locator("#nosotros")).toHaveCount(1);
+	await expect(page.locator("#nosotros")).toBeVisible();
 }
 
 test("las siete secciones llegan en el HTML del servidor, en orden y con un solo h1", async ({ request }) => {
@@ -237,11 +243,6 @@ test("visítanos: dirección, horario y teléfono; mapa enlazado sin iframe y re
 // las secciones no llevan a otras rutas salvo «Ver la carta completa» y las acciones de «Pedir».
 test("ajuste por proximidad y molino en marcha solo con movimiento permitido", async ({ page }) => {
 	await abrir(page);
-	// Cada sección usa su propio esqueleto como fallback de Suspense, con el mismo id, hasta que llega
-	// la real (DT-12): se espera a que termine el streaming y quede un solo #nosotros.
-	await expect.poll(() => page.evaluate(() => document.querySelectorAll('template[id^="B:"], [hidden][id^="S:"]').length)).toBe(0);
-	await expect(page.locator("#nosotros")).toHaveCount(1);
-	await expect(page.locator("#nosotros")).toBeVisible();
 	const ajuste = () => page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType);
 	const giro = () => page.locator(".molino-animado__aspas").first().evaluate((e) => getComputedStyle(e).animationIterationCount);
 	// «proximity» es el valor por defecto: el navegador lo serializa como «y».
