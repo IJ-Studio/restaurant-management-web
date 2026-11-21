@@ -3334,3 +3334,16 @@ Playwright (5 proyectos en verde; build ≈30 min en este equipo de 5,8 GB de RA
   - Cualquier prueba que espere `loading="eager"` en la foto de acceso (no se encontró ninguna).
 - **Sin pruebas** (orden del usuario): ni tsc, ni eslint, ni unitarias, ni e2e, ni Lighthouse.
 - **Retomar:** `cd /home/apex7/source-code/org/IJ-Studio/restaurant-management-web && claude`, y decir: «Lee docs/rediseno/BITACORA.md (Pulido de la UI pública, bloque 4) y docs/rediseno/PULIDO-CHECKLIST.md, y continúa en la rama chore/pulido-ui-publica». Para correr las pruebas: `corepack pnpm typecheck && corepack pnpm lint`, y después las e2e de la lista anterior.
+
+### Pulido UI pública · bloque 5 (verificación, deuda y PR, 20-nov)
+- **Pruebas:**
+  - typecheck sin errores; lint con 0 errores (4 avisos heredados); unitarias 75/75; auditoría § 8: 0 y 0.
+  - Chromium completo (con `developer` y #52 fusionados): 563 pasan, 25 fallan, 133 omitidas; los 25 son exactamente la línea base (DT-02).
+  - Firefox y Pixel 7: solo los fallos que ya existían; WebKit y Safari de iOS no arrancan en este equipo (DT-03).
+  - Integración contra el API local: pública 6/6; Facturapi (DT-04) y Stripe (DT-05) no corren por causas de entorno.
+- **Pruebas puestas al día** (`8a6f60a`): portada (la medición de contraste no oculta el subrayado del enlace del teléfono), índice fijo de `/menu` y carta impresa de la sección.
+- **Prueba de la landing** («ajuste por proximidad…»): ahora espera al fin del streaming. Antes leía `#nosotros` mientras convivían el esqueleto y la sección real (DT-12); fallaba también en `developer`, con carga.
+- **Panel:** capturas de los 4 roles (18 rutas, 390 y 1280 px) antes y después: idénticas salvo diferencias de subpíxel y `/forbidden` (página pública, cambio intencionado).
+- **Lighthouse** (aceptado como deuda, DT-01): landing móvil 94 → 87 y carta 63 → 59 (medianas, misma base local con fotos); escritorio igual o mejor.
+- **Por el camino:** doble marco del panel al cargar, corregido aparte en el PR #52 (contextos de la raíz estables al hidratar). La deuda queda en `docs/DEUDA-TECNICA.md` (DT-01…DT-12) y la línea base de e2e, en 25 pruebas.
+- **Capturas antes/después** (antes = producción del 20-nov, solo lectura): `docs/rediseno/capturas-pulido/`.
