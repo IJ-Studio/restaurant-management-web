@@ -1,0 +1,47 @@
+# Deuda técnica · web
+
+Registro de lo que se publica a sabiendas, con su evidencia y la propuesta para saldarlo. Al saldar una entrada, se marca «Resuelta» con el PR, sin borrarla. Las cifras salen de corridas locales (Chromium de Playwright, `next build` + `next start`).
+
+| Id | Descripción | Evidencia | Impacto | Propuesta | Esfuerzo | Prioridad | Estado |
+|---|---|---|---|---|---|---|---|
+| DT-01 | Rendimiento móvil de Lighthouse tras el pulido de la UI pública (rama `chore/pulido-ui-publica`) | Mediana de 3 corridas, misma base local con fotos (`quijote_respaldo`), developer → pulido: landing **94 → 87**, carta **63 → 59**, ficha 66 → 64, login 77 → 86. En la landing: FCP/LCP ~1,27 s → ~1,44 s (la hoja de estilos, más grande, bloquea el render ~150 ms); estilo y layout 415 → 475–865 ms; DOM ~730 → ~840 nodos; +10 KB. Escritorio igual o mejor; accesibilidad 100, prácticas 96, SEO 100 en las dos. | Primera pintura algo más tardía en móviles lentos. Sin efecto en CLS (0). | (1) Sacar de `styles/componentes.css` las clases de la etiqueta que solo usa la parte pública a una hoja que carguen solo sus layouts; (2) CSS crítico de la portada en línea y el resto diferido; (3) menos nodos decorativos: esquinas de imprenta y ornamentos con pseudoelementos en lugar de `span`, y revisar el sello con texto curvo. | 1–2 días | Media | Abierta |
+| DT-02 | 25 pruebas e2e obsoletas (línea base) | Fallan igual en `developer`/`main` (lista abajo). Causas: `recorrido` no simula `/sitio` ni `/reglas` y cuenta como error el 401 documentado de `/api/auth/me` (DM-26); `layout-paneles` espera 9 entradas en la navegación del admin y hay 10; `marca:9` e `imagenes:88` esperan los colores del tema oscuro, y el claro es el de por defecto; `almacenamiento:167` espera `networkidle` y la página nunca queda inactiva. | La suite no puede ir a un CI en verde; un fallo nuevo se esconde entre los viejos. | Actualizar las pruebas: simular `/sitio` y `/reglas` en `recorrido`, admitir el 401 de `/api/auth/me` sin sesión, 10 entradas en `layout-paneles`, fijar el tema en `marca` e `imagenes`, esperar un elemento en lugar de `networkidle`. | 0,5–1 día | Alta | Abierta |
+| DT-03 | WebKit (Safari de escritorio) y Safari de iOS sin probar | Playwright no arranca WebKit en este equipo: «Host system is missing dependencies to run browsers» (`playwright install-deps` necesita `sudo`). Firefox y Pixel 7: mismos fallos que la línea base. | Un fallo propio de Safari no se detectaría antes de publicar. | Instalar las dependencias de WebKit o correr la suite en un CI con Ubuntu; mientras, revisión manual en Safari. | 1–2 h | Media | Abierta |
+| DT-04 | Facturapi sin suscripción (entorno) | La integración `caja-facturacion.spec.ts` falla al timbrar: Facturapi responde «Esta operación requiere una suscripción activa». | No se puede probar de punta a punta la emisión y cancelación de facturas. | Renovar la cuenta de pruebas de Facturapi o usar otra; después, repetir la integración. | Del responsable de la cuenta | Media | Pendiente de entorno |
+| DT-05 | Llave publicable de Stripe del `.env.local` local inválida (entorno) | La integración `pago-stripe.spec.ts` se detiene con «Invalid API Key provided» de Stripe. No afecta a producción, que usa su propia variable en Vercel. | Las 4 pruebas de pago (aprobada, fondos insuficientes, 3D Secure y con factura) no corren en local. | Poner en el `.env.local` la llave publicable de prueba de la misma cuenta que la secreta del API local. | 10 min | Media | Pendiente de entorno |
+| DT-06 | 4 avisos de lint heredados | `components/IdleLogout.tsx:37` y `hooks/useLockout.ts:67` (`react-hooks/exhaustive-deps`); `lib/session.ts:31` y `public/preferencias.js:29` (variable sin usar). 0 errores. | Ninguno en uso; ruido en el lint. | Corregirlos; `IdleLogout` va con NP-47 (no se monta). | 30 min | Baja | Abierta |
+| DT-07 | `revisar:emojis` falla por un caso de prueba | `tests/unidad/validacion.spec.ts:115` prueba a propósito un nombre con emoji. | El revisor no sirve de compuerta mientras falle. | Escribir el emoji como escape (`\u{1F600}`) o excluir ese caso del revisor. | 10 min | Baja | Abierta |
+| DT-08 | Next.js 16.4.3 con aviso de vulnerabilidad | `next build` se detiene con «Your version of Next.js is affected by a known security vulnerability» cuando lo ejecuta un agente; en Vercel la build no se bloquea. | Versión con una vulnerabilidad conocida en producción. | Rama `chore/actualizar-next`: solo `next` y sus paquetes pareados, dentro de 16.4.x. | 1–2 h | Alta | Abierta |
+| DT-09 | Dos `<main id="contenido-panel">` a la vez al cargar el panel | Con carga (4 workers, 100 ejecuciones) fallaban 18 de 100: `caja-admin.spec.ts:49` y `almacenamiento.spec.ts:117` (cierre de sesión por rol). | Pruebas intermitentes; IDs duplicados y trabajo de más al cargar el panel. | Los contextos de la raíz (sesión y preferencias) ya no cambian de valor al hidratar; prueba de vigilancia en `layout-paneles.spec.ts` («nunca hay dos marcos»), que falla 4 de 5 veces con el código anterior. | — | — | Resuelta (`fix/panel-doble-main`) |
+| DT-10 | Avisos de facturas ambiguos en la prueba | `facturas.spec.ts` (emitir y cancelar) encontraba el aviso visible y el anunciador `aria-live`, según el momento. | Prueba intermitente. | Buscar el aviso en la región «Notificaciones». | — | — | Resuelta (`fix/panel-doble-main`) |
+| DT-11 | `AuthProvider` vacío y `useAuth` sin usos | Tras DT-09, `providers/AuthProvider.tsx` solo devuelve sus hijos; `git grep useAuth` no encuentra consumidores. | Código muerto (~20 líneas) que invita a volver a poner un contexto que cambie en la raíz. | Borrar el archivo y su uso en `app/layout.tsx`. | 10 min | Baja | Abierta |
+
+## DT-02 · línea base de pruebas e2e (Chromium)
+
+Si después de un cambio falla una prueba que no está en esta lista, se detiene la publicación. Las de DT-09 y DT-10 salieron de la lista al resolverse (antes eran 28).
+
+- `tests/e2e/almacenamiento.spec.ts:167:2 › datos del usuario › iniciar sesión no guarda el usuario en localStorage`
+- `tests/e2e/imagenes.spec.ts:88:2 › imágenes en las páginas › si Cloudinary no responde, el login muestra el respaldo y no una caja vacía`
+- `tests/e2e/layout-paneles.spec.ts:20:1 › admin en 1440 px: barra lateral con la entrada activa, un solo main y el salto al contenido`
+- `tests/e2e/layout-paneles.spec.ts:44:1 › admin en 360 px: el contenido ocupa todo el ancho y la navegación entera está a la vista`
+- `tests/e2e/marca.spec.ts:9:2 › logo y sello locales (D-07) › el logo es un SVG local que toma el color del texto en cada tema`
+- `tests/e2e/recorrido.spec.ts:8:3 › / @360`
+- `tests/e2e/recorrido.spec.ts:8:3 › / @390`
+- `tests/e2e/recorrido.spec.ts:8:3 › / @768`
+- `tests/e2e/recorrido.spec.ts:8:3 › / @1024`
+- `tests/e2e/recorrido.spec.ts:8:3 › / @1440`
+- `tests/e2e/recorrido.spec.ts:8:3 › /login @360`
+- `tests/e2e/recorrido.spec.ts:8:3 › /login @390`
+- `tests/e2e/recorrido.spec.ts:8:3 › /login @768`
+- `tests/e2e/recorrido.spec.ts:8:3 › /login @1024`
+- `tests/e2e/recorrido.spec.ts:8:3 › /login @1440`
+- `tests/e2e/recorrido.spec.ts:8:3 › /register @360`
+- `tests/e2e/recorrido.spec.ts:8:3 › /register @390`
+- `tests/e2e/recorrido.spec.ts:8:3 › /register @768`
+- `tests/e2e/recorrido.spec.ts:8:3 › /register @1024`
+- `tests/e2e/recorrido.spec.ts:8:3 › /register @1440`
+- `tests/e2e/recorrido.spec.ts:8:3 › /reservations @360`
+- `tests/e2e/recorrido.spec.ts:8:3 › /reservations @390`
+- `tests/e2e/recorrido.spec.ts:8:3 › /reservations @768`
+- `tests/e2e/recorrido.spec.ts:8:3 › /reservations @1024`
+- `tests/e2e/recorrido.spec.ts:8:3 › /reservations @1440`
